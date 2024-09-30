@@ -21,7 +21,7 @@ INNER JOIN WordList:Synonym as S
 INNER JOIN WordList:Word as tw
 	ON tw.Id = S.TargetWordId
 INNER JOIN WordList:Language as tl
-	ON tl.Id = T.LanguageId
+	ON tl.Id = TL.LanguageId
 WHERE
 	sw.Text = 'gym'
  

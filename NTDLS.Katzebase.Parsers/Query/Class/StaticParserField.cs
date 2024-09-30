@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function aggregate expects parentheses: [{token}]");
                     }
 
-                    var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(token);
+                    var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(parentTokenizer.GetCurrentLineNumber(), token);
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
                     queryFields.DocumentIdentifiers.Add(fieldKey, queryFieldDocumentIdentifier);
 
@@ -45,11 +45,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else if (IsNumericExpression(parentTokenizer, token))
                 {
-                    return new QueryFieldConstantNumeric(token);
+                    return new QueryFieldConstantNumeric(parentTokenizer.GetCurrentLineNumber(), token);
                 }
                 else
                 {
-                    return new QueryFieldConstantString(token);
+                    return new QueryFieldConstantString(parentTokenizer.GetCurrentLineNumber(), token);
                 }
             }
 
@@ -66,13 +66,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             //This field is going to require evaluation, so figure out if its a number or a string.
             if (IsNumericExpression(parentTokenizer, givenFieldText))
             {
-                IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
+                IQueryFieldExpression expression = new QueryFieldExpressionNumeric(parentTokenizer.GetCurrentLineNumber(), givenFieldText);
                 expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
             else
             {
-                IQueryFieldExpression expression = new QueryFieldExpressionString();
+                IQueryFieldExpression expression = new QueryFieldExpressionString(parentTokenizer.GetCurrentLineNumber(), givenFieldText);
                 expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     }
 
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
-                    queryFields.DocumentIdentifiers.Add(fieldKey, new QueryFieldDocumentIdentifier(token));
+                    queryFields.DocumentIdentifiers.Add(fieldKey, new QueryFieldDocumentIdentifier(parentTokenizer.GetCurrentLineNumber(), token));
                     buffer.Append(fieldKey);
                 }
                 else

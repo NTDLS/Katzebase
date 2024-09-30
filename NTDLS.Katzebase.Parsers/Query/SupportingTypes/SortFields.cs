@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     {
         public KbSortDirection SortDirection { get; private set; }
 
-        public SortField Add(string key, KbSortDirection sortDirection)
+        public SortField Add(int? scriptLine, string key, KbSortDirection sortDirection)
         {
             string prefix = string.Empty;
             string field = key;
@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
                 field = parts[1];
             }
 
-            var newField = new SortField(prefix, field)
+            var newField = new SortField(scriptLine, prefix, field)
             {
                 Ordinal = Count,
                 SortDirection = sortDirection

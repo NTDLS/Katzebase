@@ -9,17 +9,17 @@
             return field;
         }
 
-        public PrefixedField Add(string key)
+        public PrefixedField Add(int? scriptLine, string key)
         {
-            var newField = PrefixedField.Parse(key);
+            var newField = PrefixedField.Parse(scriptLine, key);
             newField.Ordinal = Count;
             Add(newField);
             return newField;
         }
 
-        public PrefixedField Add(string prefix, string field)
+        public PrefixedField Add(int? scriptLine, string prefix, string field)
         {
-            var newField = new PrefixedField(prefix, field)
+            var newField = new PrefixedField(scriptLine, prefix, field)
             {
                 Ordinal = Count
             };
@@ -28,9 +28,9 @@
             return newField;
         }
 
-        public PrefixedField Add(string prefix, string field, string alias)
+        public PrefixedField Add(int? scriptLine, string prefix, string field, string alias)
         {
-            var newField = new PrefixedField(prefix, field, alias)
+            var newField = new PrefixedField(scriptLine, prefix, field, alias)
             {
                 Ordinal = Count
             };

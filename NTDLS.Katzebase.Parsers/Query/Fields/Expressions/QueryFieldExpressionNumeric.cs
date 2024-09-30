@@ -13,18 +13,24 @@
         public string SchemaAlias { get; private set; } = string.Empty;
 
         /// <summary>
+        /// If applicable, this is the line from the script that this expression is derived from.
+        /// </summary>
+        public int? ScriptLine { get; set; }
+
+        /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(string value)
+        public QueryFieldExpressionNumeric(int? scriptLine, string value)
         {
+            ScriptLine = scriptLine;
             Value = value;
         }
 
         public IQueryField Clone()
         {
-            var clone = new QueryFieldExpressionNumeric(Value)
+            var clone = new QueryFieldExpressionNumeric(ScriptLine, Value)
             {
                 SchemaAlias = SchemaAlias,
             };

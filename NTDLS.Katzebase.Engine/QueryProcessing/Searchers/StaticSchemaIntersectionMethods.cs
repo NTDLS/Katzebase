@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     if (modelAuxiliaryFields.ContainsKey(sortField.Key) == false)
                     {
-                        throw new KbEngineException($"Sort field was not found: [{sortField.Alias}].");
+                        throw new KbEngineException($"Sort field was not found: [{sortField.FieldAlias}].");
                     }
                     sortingColumns.Add(new(sortField.Key, sortField.SortDirection));
                 }
@@ -597,7 +597,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var fields = new List<PrefixedField>();
                     foreach (var documentValue in documentContent)
                     {
-                        fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
+                        fields.Add(new PrefixedField(null, schemaKey, documentValue.Key, documentValue.Key));
                     }
 
                     instance.Operation.Query.SelectFields.InvalidateDocumentIdentifierFieldsCache();
@@ -612,7 +612,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         if (isFieldAlreadyInCollection == false)
                         {
-                            var additionalField = new QueryField(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier(field.Key));
+                            var additionalField = new QueryField(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier(null, field.Key));
                             instance.Operation.Query.SelectFields.Add(additionalField);
                         }
                     }
@@ -696,11 +696,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             //We have to make sure that we have all of the sort fields too so we can filter on them.
-            foreach (var field in instance.Operation.Query.SortFields.Where(o => o.Prefix == schemaKey || o.Prefix == string.Empty).Distinct())
+            foreach (var field in instance.Operation.Query.SortFields.Where(o => o.SchemaPrefix == schemaKey || o.SchemaPrefix == string.Empty).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
-                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound,
                             $"'{field.Key}' will be treated as null.");

@@ -7,6 +7,7 @@
     {
         string Value { get; set; }
         string SchemaAlias { get; }
+        int? ScriptLine { get; }
 
         public IQueryField Clone();
     }

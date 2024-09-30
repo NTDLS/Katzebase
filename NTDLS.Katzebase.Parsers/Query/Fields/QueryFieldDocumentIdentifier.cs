@@ -23,9 +23,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Fields
         /// </summary>
         public string FieldName { get; private set; }
 
+        /// <summary>
+        /// If applicable, this is the line from the script that this expression is derived from.
+        /// </summary>
+        public int? ScriptLine { get; set; }
+
         public IQueryField Clone()
         {
-            var clone = new QueryFieldDocumentIdentifier(Value.EnsureNotNull())
+            var clone = new QueryFieldDocumentIdentifier(ScriptLine, Value.EnsureNotNull())
             {
                 SchemaAlias = SchemaAlias,
                 FieldName = FieldName,
@@ -34,8 +39,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Fields
             return clone;
         }
 
-        public QueryFieldDocumentIdentifier(string value)
+        public QueryFieldDocumentIdentifier(int? scriptLine, string value)
         {
+            ScriptLine = scriptLine;
             Value = value.Trim();
 
             var values = Value.Split('.');

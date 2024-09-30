@@ -12,14 +12,20 @@
         /// </summary>
         public string SchemaAlias { get; private set; } = string.Empty;
 
-        public QueryFieldConstantNumeric(string value)
+        /// <summary>
+        /// If applicable, this is the line from the script that this expression is derived from.
+        /// </summary>
+        public int? ScriptLine { get; set; }
+
+        public QueryFieldConstantNumeric(int? scriptLine, string value)
         {
+            ScriptLine = scriptLine;
             Value = value;
         }
 
         public IQueryField Clone()
         {
-            var clone = new QueryFieldConstantNumeric(Value)
+            var clone = new QueryFieldConstantNumeric(ScriptLine, Value)
             {
                 SchemaAlias = SchemaAlias,
             };

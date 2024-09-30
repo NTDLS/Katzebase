@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     }
                 }
 
-                sortFields.Add(fieldText, sortDirection);
+                sortFields.Add(tokenizer.GetCurrentLineNumber(), fieldText, sortDirection);
             }
 
             return sortFields;
