@@ -30,12 +30,7 @@ namespace NTDLS.Katzebase.Management.Controls
         private readonly DispatcherTimer _foldingUpdateTimer;
         private readonly DispatcherTimer _staticAnalysisTimer;
         private CompletionWindow? _completionWindow;
-        private TextMarkerService _textMarkerService;
-
-        public FullyFeaturedCodeEditor(TextMarkerService textMarkerService)
-        {
-            _textMarkerService = textMarkerService;
-        }
+        private readonly TextMarkerService _textMarkerService;
 
         public FullyFeaturedCodeEditor(CodeTabPage codeTabPage)
         {
@@ -48,7 +43,6 @@ namespace NTDLS.Katzebase.Management.Controls
             stringReader.Close();
 
             ApplyEditorSettings(this);
-
 
             _textMarkerService = new TextMarkerService(this);
             _foldingManager = FoldingManager.Install(TextArea);
