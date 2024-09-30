@@ -5,14 +5,14 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using NTDLS.Helpers;
+using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
-using NTDLS.Katzebase.Management.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Xml;
 
-namespace NTDLS.Katzebase.Management.Classes
+namespace NTDLS.Katzebase.Management.Controls
 {
     internal class FullyFeaturedCodeEditor : TextEditor
     {
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Management.Classes
             // Set up a timer for batch updates (500ms)
             _foldingUpdateTimer = new DispatcherTimer();
             _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _foldingUpdateTimer.Tick += (object? sender, EventArgs e) =>
+            _foldingUpdateTimer.Tick += (sender, e) =>
             {
                 _foldingUpdateTimer.Stop();
 
@@ -167,9 +167,9 @@ namespace NTDLS.Katzebase.Management.Classes
             }
         }
 
-        private void FullyFeaturedCodeEditor_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void FullyFeaturedCodeEditor_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton != System.Windows.Input.MouseButton.Right)
+            if (e.ChangedButton != MouseButton.Right)
             {
                 return;
             }
@@ -184,29 +184,29 @@ namespace NTDLS.Katzebase.Management.Classes
                     TextArea.Caret.Position = clickPosition.Value;
                 }
 
-                _contextMenu.Items.Add(new ToolStripMenuItem("Cut", null, (object? sender, EventArgs e) => Cut())
+                _contextMenu.Items.Add(new ToolStripMenuItem("Cut", null, (sender, e) => Cut())
                 {
-                    Enabled = !string.IsNullOrEmpty(this.SelectedText)
+                    Enabled = !string.IsNullOrEmpty(SelectedText)
                 });
 
-                _contextMenu.Items.Add(new ToolStripMenuItem("Copy", null, (object? sender, EventArgs e) => Copy())
+                _contextMenu.Items.Add(new ToolStripMenuItem("Copy", null, (sender, e) => Copy())
                 {
-                    Enabled = !string.IsNullOrEmpty(this.SelectedText)
+                    Enabled = !string.IsNullOrEmpty(SelectedText)
                 });
 
-                _contextMenu.Items.Add(new ToolStripMenuItem("Paste", null, (object? sender, EventArgs e) => Paste())
+                _contextMenu.Items.Add(new ToolStripMenuItem("Paste", null, (sender, e) => Paste())
                 {
                     Enabled = Clipboard.ContainsText()
                 });
 
                 _contextMenu.Items.Add(new ToolStripSeparator());
 
-                _contextMenu.Items.Add(new ToolStripMenuItem("Expand All Folds", null, (object? sender, EventArgs e) => ExpandAllFolds())
+                _contextMenu.Items.Add(new ToolStripMenuItem("Expand All Folds", null, (sender, e) => ExpandAllFolds())
                 {
                     Enabled = _foldingManager.AllFoldings.Count() > 0
                 });
 
-                _contextMenu.Items.Add(new ToolStripMenuItem("Collapse All Folds", null, (object? sender, EventArgs e) => CollapseAllFolds())
+                _contextMenu.Items.Add(new ToolStripMenuItem("Collapse All Folds", null, (sender, e) => CollapseAllFolds())
                 {
                     Enabled = _foldingManager.AllFoldings.Count() > 0
                 });
@@ -221,15 +221,15 @@ namespace NTDLS.Katzebase.Management.Classes
 
         private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == System.Windows.Input.Key.F)
+            if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
             {
                 CodeTabPage.StudioForm.ShowFind();
             }
-            else if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == System.Windows.Input.Key.H)
+            else if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
             {
                 CodeTabPage.StudioForm.ShowReplace();
             }
-            else if (e.Key == System.Windows.Input.Key.F3)
+            else if (e.Key == Key.F3)
             {
                 bool forceShowFind = (Control.ModifierKeys & Keys.Control) == Keys.Control;
 

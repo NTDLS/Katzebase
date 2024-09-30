@@ -1,7 +1,7 @@
 ﻿using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
-using NTDLS.Katzebase.Management.Classes;
+using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Persistence;
 using NTDLS.WinFormsHelpers;
