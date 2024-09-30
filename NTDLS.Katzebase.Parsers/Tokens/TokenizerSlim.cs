@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (_caret >= _text.Length)
             {
-                throw new KbParserException("The tokenizer sequence is empty.");
+                throw new Exception("The tokenizer sequence is empty.");
             }
 
             _caret++;

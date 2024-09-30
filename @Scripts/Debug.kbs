@@ -5,7 +5,13 @@
 
 --select 11 + 11 from single
 
-SELECT
+create index ix_ddd
+(
+	56$%^6 $% 
+) on ddd
+
+
+SELECt
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
 	sl.Name as SourceLanguage,

@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         public bool TryIsNextCharacter(NextCharacterProc proc)
         {
-            var next = NextCharacter ?? throw new KbParserException("The tokenizer sequence is empty.");
+            var next = NextCharacter ?? throw new KbParserException(GetCurrentLineNumber(), "The tokenizer sequence is empty.");
             return proc(next);
         }
 

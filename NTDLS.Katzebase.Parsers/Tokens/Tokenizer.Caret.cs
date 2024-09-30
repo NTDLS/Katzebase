@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (_breadCrumbs.Count == 0)
             {
-                throw new KbParserException("Tokenization steps are out of range.");
+                throw new KbParserException(GetCurrentLineNumber(), "Tokenization steps are out of range.");
             }
 
             return _breadCrumbs.Peek();
@@ -54,10 +54,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (_breadCrumbs.Count == 0)
             {
-                throw new KbParserException("Tokenization steps are out of range.");
+                throw new KbParserException(GetCurrentLineNumber(), "Tokenization steps are out of range.");
             }
             Caret = _breadCrumbs.Pop();
-            throw new KbParserException("Tokenization steps are out of range.");
+            throw new KbParserException(GetCurrentLineNumber(), "Tokenization steps are out of range.");
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             {
                 if (_breadCrumbs.Count == 0)
                 {
-                    throw new KbParserException("Tokenization steps are out of range.");
+                    throw new KbParserException(GetCurrentLineNumber(), "Tokenization steps are out of range.");
                 }
                 Caret = _breadCrumbs.Pop();
             }
@@ -80,11 +80,11 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (position > _text.Length)
             {
-                throw new KbParserException("Tokenization caret moved past end of text.");
+                throw new KbParserException(GetCurrentLineNumber(), "Tokenization caret moved past end of text.");
             }
             else if (position < 0)
             {
-                throw new KbParserException("Tokenization caret moved past beginning of text.");
+                throw new KbParserException(GetCurrentLineNumber(), "Tokenization caret moved past beginning of text.");
             }
             Caret = position;
         }
@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             if (Caret >= _text.Length)
             {
-                throw new KbParserException("The tokenizer sequence is empty.");
+                throw new KbParserException(GetCurrentLineNumber(), "The tokenizer sequence is empty.");
             }
 
             Caret++;

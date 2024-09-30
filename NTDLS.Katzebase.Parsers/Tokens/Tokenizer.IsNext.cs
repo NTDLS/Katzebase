@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using NTDLS.Katzebase.Client.Exceptions;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
@@ -9,7 +11,7 @@
         {
             if (!TryIsNext(characters, out var foundCharacter))
             {
-                throw new Exception($"Invalid token, found [{foundCharacter}], expected [{string.Join("],[", characters)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{foundCharacter}], expected [{string.Join("],[", characters)}].");
             }
         }
 
@@ -20,7 +22,7 @@
         {
             if (!TryIsNext(character, out var foundCharacter))
             {
-                throw new Exception($"Invalid token, found [{foundCharacter}], expected [{character}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{foundCharacter}], expected [{character}].");
             }
         }
 
@@ -31,7 +33,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out var outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
             }
         }
 
@@ -42,7 +44,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out var outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
             }
         }
         /// <summary>
@@ -52,7 +54,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out var outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
             }
         }
         /// <summary>
@@ -62,7 +64,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out var outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
             }
         }
         /// <summary>
@@ -73,7 +75,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
             }
         }
         /// <summary>
@@ -84,7 +86,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
             }
         }
         /// <summary>
@@ -95,7 +97,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
             }
         }
         /// <summary>
@@ -106,7 +108,7 @@
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken))
             {
-                throw new Exception($"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
             }
         }
     }

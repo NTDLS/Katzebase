@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using NTDLS.Katzebase.Client.Exceptions;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
@@ -21,7 +23,7 @@
 
             if (_text[Caret] != open)
             {
-                throw new Exception($"Expected scope character not found [{open}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected scope character not found [{open}].");
             }
 
             int startPosition = Caret + 1;
@@ -39,7 +41,7 @@
 
                 if (scope < 0)
                 {
-                    throw new Exception($"Expected scope [{open}] and [{close}] fell below zero.");
+                    throw new KbParserException(GetCurrentLineNumber(), $"Expected scope [{open}] and [{close}] fell below zero.");
                 }
 
                 if (scope == 0)
@@ -53,7 +55,7 @@
                 }
             }
 
-            throw new Exception($"Expected matching scope not found [{open}] and [{close}], ended at scope [{scope}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected matching scope not found [{open}] and [{close}], ended at scope [{scope}].");
         }
     }
 }
