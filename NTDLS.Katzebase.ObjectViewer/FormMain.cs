@@ -1,9 +1,9 @@
 using Newtonsoft.Json;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.ObjectViewer
@@ -156,14 +156,13 @@ namespace NTDLS.Katzebase.ObjectViewer
         {
             try
             {
-                var fileBytes = File.ReadAllBytes(fileName);
-                var serializedData = Engine.Library.Compression.Deflate.DecompressToString(fileBytes);
+                var plainText = File.ReadAllText(fileName);
 
                 var deserializeMethod = typeof(JsonConvert)?
                         .GetMethod("DeserializeObject", [typeof(string), typeof(Type)]);
 
                 // Invoke the DeserializeObject method to deserialize the JSON string
-                var deserializedObject = deserializeMethod?.Invoke(null, [serializedData, type]);
+                var deserializedObject = deserializeMethod?.Invoke(null, [plainText, type]);
 
                 friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;

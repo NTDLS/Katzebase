@@ -7,14 +7,11 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <Version>0.22.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="Icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.8" />
   </ItemGroup>
 
   <ItemGroup>

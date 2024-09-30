@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>NetworkDLS</Company>
+    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
+    <Version>0.22.0</Version>
+    <Authors>NetworkDLS</Authors>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <StartupObject>NTDLS.Katzebase.SQLServerMigration.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="171.30.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Forms\FormAbout.cs" />
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
