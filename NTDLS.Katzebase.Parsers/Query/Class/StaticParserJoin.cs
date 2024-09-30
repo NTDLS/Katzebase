@@ -1,9 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Parsers.Tokens;
-using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -37,7 +34,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [as] (schema alias), found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
 
-
                 if (tokenizer.TryEatIfNext("on", out token) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(token)}].");
@@ -45,48 +41,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 int joinConditionsStartPosition = tokenizer.Caret;
 
-                //Simple validation of join expression and finding the end caret of the join conditions.
-                while (true)
+                if (tokenizer.TryGetFirstIndexOf(["where", "order", "inner", "group"], out var joinConditionsEndPosition) == false)
                 {
-                    if (tokenizer.TryIsNext(["where", "order", "inner", ""]))
-                    {
-                        //Found start of next part of query.
-                        break;
-                    }
-
-                    if (tokenizer.TryCompareNext((o) => StaticParserUtility.IsStartOfQuery(o)))
-                    {
-                        //Found start of next query.
-                        break;
-                    }
-
-                    if (tokenizer.TryIsNext(["and", "or"]))
-                    {
-                        tokenizer.EatNext();
-                    }
-
-                    var joinLeftCondition = tokenizer.EatGetNext();
-                    if (!TokenizerHelpers.IsValidIdentifier(joinLeftCondition, '.'))
-                    {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected left side of join expression, found: [{tokenizer.ResolveLiteral(joinLeftCondition)}].");
-                    }
-
-                    token = tokenizer.EatGetNext();
-                    if (StaticConditionHelpers.ParseLogicalQualifier(tokenizer, token) == LogicalQualifier.None)
-                    {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected logical qualifier, found: [{tokenizer.ResolveLiteral(token)}].");
-                    }
-
-                    var joinRightCondition = tokenizer.EatGetNext();
-                    if (!TokenizerHelpers.IsValidIdentifier(joinRightCondition, '.'))
-                    {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected right side of join expression, found: [{tokenizer.ResolveLiteral(joinRightCondition)}].");
-                    }
+                    joinConditionsEndPosition = tokenizer.Length; //No end marker found, consume the entire query.
                 }
 
-                int joinConditionsEndPosition = tokenizer.Caret;
-
-                int joinConditionsLength = tokenizer.Caret - joinConditionsStartPosition;
+                int joinConditionsLength = joinConditionsEndPosition - joinConditionsStartPosition;
                 var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, joinConditionsLength).Trim();
 
                 tokenizer.Caret = joinConditionsStartPosition;
