@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Client.Types;
 

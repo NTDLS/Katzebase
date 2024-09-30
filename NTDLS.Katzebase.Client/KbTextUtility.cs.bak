@@ -100,10 +100,9 @@ namespace NTDLS.Katzebase.Client
 
             return batches;
         }
-/*
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static string GetCurrentMethod()
             => (new StackTrace())?.GetFrame(1)?.GetMethod()?.Name ?? "{unknown frame}";
-*/            
     }
 }

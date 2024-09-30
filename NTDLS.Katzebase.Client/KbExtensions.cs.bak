@@ -25,39 +25,30 @@ namespace NTDLS.Katzebase.Client
                         {
                             try
                             {
-                                if (property.PropertyType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) == null)
-                                {
-                                    continue; // Skip setting value if property is non-nullable value type
-                                }
-                                else
-                                {
-                                    property.SetValue(obj, null);
-                                }
-                            }
-                            catch
-                            {
-                                throw new Exception($"Failed to convert field [{result.Fields[fieldIndex].Name}] value [{value}] to type [{property.PropertyType.Name}].");
-                            }
+	                            if (property.PropertyType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) == null)
+	                            {
+	                                continue; // Skip setting value if property is non-nullable value type
+	                            }
+	                            else
+	                            {
+	                                property.SetValue(obj, null);
+	                            }
+	                     	}
+	                     	catch 
+	                     	{
+	                     		throw new Exception($"Failed to convert field [{result.Fields[fieldIndex].Name}] value [{value}] to type [{property.PropertyType.Name}].");
+	                     	}
                         }
                         else
                         {
-                            var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-
-                            try
-                            {
-                                property.SetValue(obj, Convert.ChangeType(value, propertyType));
-                            }
-                            catch
-                            {
-                                throw new Exception($"Failed to convert field [{result.Fields[fieldIndex].Name}] value [{value}] to type [{propertyType.Name}].");
-                            }
+                            property.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType));
                         }
                     }
                 }
-                results.Add(obj);
+                list.Add(obj);
             }
 
-            return results;
+            return list;
         }
 
         /// <summary>
