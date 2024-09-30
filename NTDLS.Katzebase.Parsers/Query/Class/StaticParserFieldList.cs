@@ -49,12 +49,15 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //Make sure that the single token was the entire alias, otherwise we have a syntax error.
                     if (!fieldAliasTokenizer.IsExhausted())
                     {
+                        //Breaks here when "comma" is missing. Error line number is INCORRECT.
+
                         throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
                     }
                 }
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
+                //Breaks here when "as" is missing. Error line number is correct.
                 var queryField = StaticParserField.Parse(tokenizer, aliasRemovedFieldText, queryFields);
 
                 //If the query didn't provide an alias, figure one out.

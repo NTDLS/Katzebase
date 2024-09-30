@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
@@ -51,7 +53,7 @@
         /// <summary>
         /// Returns true if the next token causes the given delegate to return true and passes out the index of the found value.
         /// </summary>
-        public bool TryEatCompareNext(GetNextIndexOfProc proc, out int foundIndex)
+        public bool TryEatCompareNext(GetNextIndexOfProc proc, [NotNullWhen(true)] out int? foundIndex)
         {
             int restoreCaret = Caret;
 
@@ -68,7 +70,7 @@
                 }
             }
 
-            foundIndex = -1;
+            foundIndex = null;
             Caret = restoreCaret;
 
             return false;

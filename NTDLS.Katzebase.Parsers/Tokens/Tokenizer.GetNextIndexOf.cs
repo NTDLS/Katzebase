@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using NTDLS.Helpers;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
@@ -8,9 +10,9 @@
         /// </summary>
         public int GetNextIndexOf(char[] characters)
         {
-            if (TryGetNextIndexOfAny(characters, out int foundIndex))
+            if (TryFindNextIndexOfAny(characters, out var foundIndex))
             {
-                return foundIndex;
+                return foundIndex.EnsureNotNull();
             }
 
             throw new Exception($"Tokenizer character not found [{string.Join("],[", characters)}].");
@@ -21,9 +23,9 @@
         /// </summary>
         public int GetNextIndexOf(string[] givenStrings)
         {
-            if (TryGetNextIndexOfAny(givenStrings, out int foundIndex))
+            if (TryFindNextIndexOfAny(givenStrings, out var foundIndex))
             {
-                return foundIndex;
+                return foundIndex.EnsureNotNull();
             }
 
             throw new Exception($"Expected string not found [{string.Join("],[", givenStrings)}].");
@@ -34,9 +36,9 @@
         /// </summary>
         public int GetNextIndexOf(GetNextIndexOfProc proc)
         {
-            if (TryEatCompareNext(proc, out int foundIndex))
+            if (TryEatCompareNext(proc, out var foundIndex))
             {
-                return foundIndex;
+                return foundIndex.EnsureNotNull();
             }
 
             throw new Exception($"Expected string not found: [{proc.GetType().Name}].");
@@ -47,9 +49,9 @@
         /// </summary>
         public int GetNextIndexOf(string givenString)
         {
-            if (TryGetNextIndexOfAny(givenString, out int foundIndex))
+            if (TryFindNextIndexOfAny(givenString, out var foundIndex))
             {
-                return foundIndex;
+                return foundIndex.EnsureNotNull();
             }
 
             throw new Exception($"Expected string not found [{string.Join("],[", givenString)}].");

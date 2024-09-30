@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
@@ -11,23 +12,28 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             //Look for tokens that would mean the end of the where clause
-            if (tokenizer.TryGetNextIndexOfAny([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)
+            if (tokenizer.TryFindNextIndexOfAny([" group ", " order ", " offset ", " inner "], out var nextPartOfQueryCaret) == false)
             {
-                //Maybe we end at the next query?
-                if (tokenizer.TryEatCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out endOfWhere) == false)
-                {
-                    //Well, I suppose we will take the remainder of the query text.
-                    endOfWhere = tokenizer.Length;
-                }
+                nextPartOfQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
             }
 
-            string conditionText = tokenizer.EatSubStringAbsolute(endOfWhere).Trim();
-            if (conditionText == string.Empty)
+            //Maybe we end at the next query?
+            if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{conditionText}], expected: list of conditions.");
+                startOfNextQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
             }
 
-            return StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
+            int?[] carets = [nextPartOfQueryCaret, startOfNextQueryCaret];
+
+            var endOfConditionsCaret = carets.Min().EnsureNotNull();
+
+            string testCondition = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
+            if (testCondition == string.Empty)
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{testCondition}], expected: list of conditions.");
+            }
+
+            return StaticConditionsParser.Parse(queryBatch, tokenizer, testCondition, endOfConditionsCaret);
         }
     }
 }

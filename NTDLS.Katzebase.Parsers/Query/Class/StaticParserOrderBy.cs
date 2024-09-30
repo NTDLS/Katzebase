@@ -15,27 +15,29 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var sortFields = new SortFields();
             var fields = new List<string>();
 
-
             //Look for tokens that would mean the end of the where clause
-            if (tokenizer.TryGetNextIndexOfAny([" group ", " offset "], out int endOfWhere) == false)
+            if (tokenizer.TryFindNextIndexOfAny([" group ", " offset "], out var nextPartOfQueryCaret) == false)
             {
-                //Maybe we end at the next query?
-                if (tokenizer.TryEatCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out endOfWhere) == false)
-                {
-                    //Well, I suppose we will take the remainder of the query text.
-                    endOfWhere = tokenizer.Length;
-                }
+                nextPartOfQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
             }
 
-            string orderByText = tokenizer.EatSubStringAbsolute(endOfWhere).Trim();
-            if (orderByText == string.Empty)
+            //Maybe we end at the next query?
+            if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{orderByText}], expected: list of conditions.");
+                startOfNextQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
             }
 
-            var fieldsTexts = orderByText.ScopeSensitiveSplit(',');
+            int?[] carets = [nextPartOfQueryCaret, startOfNextQueryCaret];
 
-            foreach (var field in fieldsTexts)
+            var endOfOrderByCaret = carets.Min().EnsureNotNull();
+
+            string testOrderBy = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
+            if (testOrderBy == string.Empty)
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{testOrderBy}], expected: list of order by fields.");
+            }
+
+            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfOrderByCaret))
             {
                 var fieldTokenizer = new TokenizerSlim(field);
 

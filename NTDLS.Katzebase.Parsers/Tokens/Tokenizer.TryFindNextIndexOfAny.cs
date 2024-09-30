@@ -1,57 +1,59 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
         /// <summary>
-        /// Returns the position of the any of the given characters, seeks from the current caret position.
+        /// Returns the next found index of the of the given characters.
         /// </summary>
-        public bool TryGetNextIndexOfAny(char[] characters, out int foundIndex)
+        public bool TryFindNextIndexOfAny(char[] characters, [NotNullWhen(true)] out int? foundAtCaret)
         {
             for (int i = Caret; i < _text.Length; i++)
             {
                 if (characters.Contains(_text[i]))
                 {
-                    foundIndex = i;
+                    foundAtCaret = i;
                     return true;
                 }
             }
 
-            foundIndex = -1;
+            foundAtCaret = null;
             return false;
         }
 
         /// <summary>
-        /// Returns the index of the first found of the given strings.
+        /// Returns the next found index of the of the given strings.
         /// </summary>
-        public bool TryGetNextIndexOfAny(string[] givenStrings, out int foundIndex)
+        public bool TryFindNextIndexOfAny(string[] givenStrings, [NotNullWhen(true)] out int? foundAtCaret)
         {
             foreach (var givenString in givenStrings)
             {
                 int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
                 if (index >= 0)
                 {
-                    foundIndex = index;
+                    foundAtCaret = index;
                     return true;
                 }
             }
 
-            foundIndex = -1;
+            foundAtCaret = null;
             return false;
         }
 
 
         /// <summary>
-        /// Returns the index of the given string.
+        /// Returns the next found index of the of the given string.
         /// </summary>
-        public bool TryGetNextIndexOfAny(string givenString, out int foundIndex)
+        public bool TryFindNextIndexOfAny(string givenString, [NotNullWhen(true)] out int? foundAtCaret)
         {
             int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
             if (index >= 0)
             {
-                foundIndex = index;
+                foundAtCaret = index;
                 return true;
             }
-            foundIndex = -1;
+            foundAtCaret = null;
             return false;
         }
     }

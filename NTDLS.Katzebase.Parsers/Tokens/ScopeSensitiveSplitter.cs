@@ -57,32 +57,29 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             int scope = 0;
             var buffer = new StringBuilder();
 
-            int caret = _tokenizer.Caret;
-
-            while (caret < _endAtCaret)
+            while (_tokenizer.Caret < _endAtCaret)
             {
-                if (_tokenizer.Text[caret] == _open)
+                if (_tokenizer.Text[_tokenizer.Caret] == _open)
                 {
                     scope++;
                 }
-                else if (_tokenizer.Text[caret] == _close)
+                else if (_tokenizer.Text[_tokenizer.Caret] == _close)
                 {
                     scope--;
                 }
 
-                if (scope == 0 && _tokenizer.Text[caret] == _splitOn)
+                if (scope == 0 && _tokenizer.Text[_tokenizer.Caret] == _splitOn)
                 {
                     _tokenizer.EatWhiteSpace();
                     yield return buffer.ToString().Trim();
-                    _tokenizer.Caret = caret;
                     buffer.Clear();
                 }
                 else
                 {
-                    buffer.Append(_tokenizer.Text[caret]);
+                    buffer.Append(_tokenizer.Text[_tokenizer.Caret]);
                 }
 
-                caret++;
+                _tokenizer.Caret++;
             }
 
             if (buffer.Length > 0)
@@ -91,7 +88,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 yield return buffer.ToString().Trim();
             }
 
-            _tokenizer.Caret = caret;
             _tokenizer.EatWhiteSpace();
         }
     }

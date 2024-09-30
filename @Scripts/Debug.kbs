@@ -6,19 +6,54 @@
 --select 11 + 11 from single
 
 SELECT
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = T.LanguageId
+WHERE
+	sw.Text = 'gym'
+ 
+
+SELECT
 	Sha1('t'),
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
     6 * -1 as Negative,
     10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
     10 + 10 + 'ten' + 10 * 10,
     'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
-FROm
-	Single  
+FROM
+	Single
+where
+	1 = 1
+	and 1 = 3
+	and (
+		10 = 10
+		and 5 = 5
+			and (
+		10 = 10
+		and 5 = 5
+	)
+	)
+order by
+	10
+	
+select 11 + 11 from single
  
  
-	  
 --endregion
-/*
+/* 
 SELECT
 	U.Id,
 	U.DisplayName,

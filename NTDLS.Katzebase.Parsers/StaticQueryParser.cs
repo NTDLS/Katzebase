@@ -111,13 +111,13 @@ namespace NTDLS.Katzebase.Parsers
 
                 if (lineTokenizer.NextCharacter != '@')
                 {
-                    throw new KbParserException(lineNumber,$"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [@].");
+                    throw new KbParserException(lineNumber, $"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [@].");
                 }
                 lineTokenizer.EatNextCharacter();
 
                 if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
                 {
-                    throw new KbParserException(lineNumber,$"Invalid query. Found [{token}], expected: [constant variable name].");
+                    throw new KbParserException(lineNumber, $"Invalid query. Found [{token}], expected: [constant variable name].");
                 }
 
                 if (lineTokenizer.NextCharacter != '=')

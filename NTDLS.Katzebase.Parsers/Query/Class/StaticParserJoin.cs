@@ -45,6 +45,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 int joinConditionsStartPosition = tokenizer.Caret;
 
+                //Simple validation of join expression and finding the end caret of the join conditions.
                 while (true)
                 {
                     if (tokenizer.TryIsNext(["where", "order", "inner", ""]))
@@ -83,8 +84,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     }
                 }
 
-                var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
-                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, subSchemaAlias);
+                int joinConditionsEndPosition = tokenizer.Caret;
+
+                int joinConditionsLength = tokenizer.Caret - joinConditionsStartPosition;
+                var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, joinConditionsLength).Trim();
+
+                tokenizer.Caret = joinConditionsStartPosition;
+
+                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, joinConditionsEndPosition, subSchemaAlias);
 
                 result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
             }

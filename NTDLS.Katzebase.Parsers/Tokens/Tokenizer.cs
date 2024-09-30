@@ -47,8 +47,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         #endregion
 
         #region Public properties.
-
-        public Tokenizer? ParentTokenizer { get; private set; }
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
         public char? NextCharacter => Caret < _text.Length ? _text[Caret] : null;
         public bool IsExhausted() => Caret >= _text.Length;
@@ -61,14 +59,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; private set; } = new();
 
         #endregion
-
-        public void SetParentTokenizer(Tokenizer tokenizer)
-        {
-            ParentTokenizer = tokenizer;
-
-            LineRanges.Clear();
-            LineRanges.AddRange(tokenizer.LineRanges);
-        }
 
         /// <summary>
         /// Creates a tokenizer which uses only whitespace as a delimiter.
@@ -99,34 +89,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Creates a tokenizer which uses only whitespace as a delimiter.
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="standardTokenDelimiters">Delimiters to stop on when parsing tokens. If not specified, will only stop on whitespace.</param>
-        /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
-        /// This only needs to be done once per query text. For example, if you create another Tokenizer
-        /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(Tokenizer parentTokenizer, string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
-        {
-            SetParentTokenizer(parentTokenizer);
-
-            _text = new string(text.ToCharArray());
-            _standardTokenDelimiters = standardTokenDelimiters;
-            PredefinedConstants = predefinedConstants ?? new();
-
-            PreValidate();
-
-            if (optimizeForTokenization)
-            {
-                OptimizeForTokenization();
-                PostValidate();
-            }
-
-            InternalEatWhiteSpace();
-        }
-
-        /// <summary>
-        /// Creates a tokenizer which uses only whitespace as a delimiter.
-        /// </summary>
         /// <param name="text">Text to tokenize.</param>
         /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
@@ -134,33 +96,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public Tokenizer(string text, bool optimizeForTokenization = false,
             KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
         {
-            _text = new string(text.ToCharArray());
-            _standardTokenDelimiters = ['\r', '\n', ' '];
-            PredefinedConstants = predefinedConstants ?? new();
-
-            PreValidate();
-
-            if (optimizeForTokenization)
-            {
-                OptimizeForTokenization();
-                PostValidate();
-            }
-
-            InternalEatWhiteSpace();
-        }
-
-        /// <summary>
-        /// Creates a tokenizer which uses only whitespace as a delimiter.
-        /// </summary>
-        /// <param name="text">Text to tokenize.</param>
-        /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
-        /// This only needs to be done once per query text. For example, if you create another Tokenizer
-        /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(Tokenizer parentTokenizer, string text, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
-        {
-            SetParentTokenizer(parentTokenizer);
-
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = ['\r', '\n', ' '];
             PredefinedConstants = predefinedConstants ?? new();

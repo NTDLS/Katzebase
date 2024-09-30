@@ -1,9 +1,7 @@
-﻿using System.Windows;
-using ICSharpCode.AvalonEdit;
+﻿using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Editing;
 
 namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
 {

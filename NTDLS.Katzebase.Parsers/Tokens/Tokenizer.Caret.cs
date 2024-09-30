@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using System.Runtime.InteropServices;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {
@@ -16,11 +15,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         public int? GetLineNumber(int caret)
         {
-            if (ParentTokenizer != null)
-            {
-                return LineRanges.FirstOrDefault(o => ParentTokenizer.Caret + caret >= o.Begin && ParentTokenizer.Caret + caret <= o.End)?.Line;
-            }
-
             return LineRanges.FirstOrDefault(o => caret >= o.Begin && caret <= o.End)?.Line;
         }
 
