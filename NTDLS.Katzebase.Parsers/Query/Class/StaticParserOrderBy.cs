@@ -15,6 +15,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var fields = new List<string>();
 
             var endOfOrderByCaret = tokenizer.FindEndOfQuerySegment([" group ", " offset "]);
+            string testText = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
+            if (string.IsNullOrWhiteSpace(testText))
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected ordering expressions, found: [{testText}].");
+            }
 
             try
             {

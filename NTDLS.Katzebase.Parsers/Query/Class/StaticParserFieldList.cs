@@ -23,6 +23,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var queryFields = new QueryFieldCollection(queryBatch);
 
             int endOfScopeCaret = tokenizer.FindEndOfQuerySegment(stopAtTokens, allowEntireConsumption);
+            string testText = tokenizer.SubStringAbsolute(endOfScopeCaret).Trim();
+            if (string.IsNullOrWhiteSpace(testText))
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field list expressions, found: [{testText}].");
+            }
 
             try
             {

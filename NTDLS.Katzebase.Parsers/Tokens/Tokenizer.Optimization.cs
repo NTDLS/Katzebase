@@ -298,7 +298,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             text = CleanLinesAndRecordLineRanges(text);
 
-            _text = text.Trim();
+            //We add a single whitespace at the end so we can match whitespace
+            //  padded string such as " text " even when they are the last word.
+            _text = text.Trim() + ' ';
             _length = _text.Length;
         }
 

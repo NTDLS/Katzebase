@@ -92,6 +92,14 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public static bool IsQueryFieldIdentifier(this string text)
             => string.IsNullOrWhiteSpace(text) == false && text.All(IsQueryIdentifier);
 
+        public static readonly string[] ReservedWords = { "insert", "update", "select", "order",
+            "by", "group", "inner", "outer", "join", "into", "delete", "from", "values", "set", "numeric", "string" };
+        /// <summary>
+        /// Returns true if the text is a a reserved word.
+        /// </summary>
+        public static bool IsReservedWords(this string text)
+            => ReservedWords.Any(o => o.Is(text));
+
         /// <summary>
         /// Returns true if the text is a valid identifier character, such as a schema name, field name etc.
         /// </summary>
@@ -106,7 +114,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// Returns true if the text is a valid identifier string.
         /// </summary>
         public static bool IsIdentifier(this string text)
-            => string.IsNullOrWhiteSpace(text) == false && text.All(IsIdentifier);
+            => string.IsNullOrWhiteSpace(text) == false && text.All(IsIdentifier) && !IsReservedWords(text);
 
         /// <summary>
         /// Returns true if the text is a valid identifier character.

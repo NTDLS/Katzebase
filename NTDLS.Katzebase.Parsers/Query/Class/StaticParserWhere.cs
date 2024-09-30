@@ -10,18 +10,16 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" group ", " order ", " offset ", " inner "]);
+            string conditionText = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
+            if (string.IsNullOrWhiteSpace(conditionText))
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{conditionText}].");
+            }
 
             try
             {
                 tokenizer.PushSyntheticLimit(endOfConditionsCaret);
-
-                string testCondition = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
-                if (testCondition == string.Empty)
-                {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{testCondition}].");
-                }
-
-                return StaticConditionsParser.Parse(queryBatch, tokenizer, testCondition, endOfConditionsCaret);
+                return StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText, endOfConditionsCaret);
             }
             catch
             {

@@ -42,8 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " group "]);
                 string joinConditionsText = tokenizer.SubStringAbsolute(endOfJoinCaret).Trim();
-
-                if (joinConditionsText == string.Empty)
+                if (string.IsNullOrEmpty(joinConditionsText))
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected join conditions, found: [{joinConditionsText}].");
                 }
