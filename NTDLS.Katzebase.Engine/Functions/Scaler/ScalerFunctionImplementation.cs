@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "toupper" => ScalerToUpper.Execute(function),
                 "trim" => ScalerTrim.Execute(function),
 
-                _ => throw new KbParserException($"The scaler function is not implemented: [{functionName}].")
+                _ => throw new KbFunctionException($"The scaler function is not implemented: [{functionName}].")
             };
         }
     }

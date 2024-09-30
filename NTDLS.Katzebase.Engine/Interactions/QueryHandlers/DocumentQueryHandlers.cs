@@ -148,11 +148,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     {
                         if (results.Collection[0].Fields.Count < preparedQuery.InsertFieldNames.Count)
                         {
-                            throw new KbParserException("Values list contains less values than the field list.");
+                            throw new KbEngineException("Values list contains less values than the field list.");
                         }
                         else if (results.Collection[0].Fields.Count > preparedQuery.InsertFieldNames.Count)
                         {
-                            throw new KbParserException("Values list contains more values than the field list.");
+                            throw new KbEngineException("Values list contains more values than the field list.");
                         }
 
                         foreach (var row in results.Collection[0].Rows)

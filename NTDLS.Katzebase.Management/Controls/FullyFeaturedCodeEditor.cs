@@ -4,11 +4,17 @@ using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using ICSharpCode.AvalonEdit.Rendering;
 using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
+using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml;
 
@@ -23,7 +29,14 @@ namespace NTDLS.Katzebase.Management.Controls
         private readonly RegionFoldingStrategy _regionFoldingStrategy;
         private readonly CommentFoldingStrategy _commentFoldingStrategy;
         private readonly DispatcherTimer _foldingUpdateTimer;
+        private readonly DispatcherTimer _staticAnalysisTimer;
         private CompletionWindow? _completionWindow;
+        private TextMarkerService _textMarkerService;
+
+        public FullyFeaturedCodeEditor(TextMarkerService textMarkerService)
+        {
+            _textMarkerService = textMarkerService;
+        }
 
         public FullyFeaturedCodeEditor(CodeTabPage codeTabPage)
         {
@@ -37,11 +50,13 @@ namespace NTDLS.Katzebase.Management.Controls
 
             ApplyEditorSettings(this);
 
+
+            _textMarkerService = new TextMarkerService(this);
             _foldingManager = FoldingManager.Install(TextArea);
             _regionFoldingStrategy = new RegionFoldingStrategy();
             _commentFoldingStrategy = new CommentFoldingStrategy();
 
-            // Set up a timer for batch updates (500ms)
+            // Set up a timer for batch updates.
             _foldingUpdateTimer = new DispatcherTimer();
             _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _foldingUpdateTimer.Tick += (sender, e) =>
@@ -56,10 +71,18 @@ namespace NTDLS.Katzebase.Management.Controls
                 _foldingManager.UpdateFoldings(newFolds, -1);
             };
 
+            _staticAnalysisTimer = new DispatcherTimer();
+            _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _staticAnalysisTimer.Tick += (sender, e) =>
+            {
+                _staticAnalysisTimer.Stop();
+                PerformStaticAnalysis();
+            };
+
             TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
             {
-                _foldingUpdateTimer.Stop();
                 _foldingUpdateTimer.Start();
+                _staticAnalysisTimer.Start();
             };
 
             // Hook into the key down event to trigger completion
@@ -74,6 +97,51 @@ namespace NTDLS.Katzebase.Management.Controls
 
             MouseUp += FullyFeaturedCodeEditor_MouseUp;
         }
+
+        #region Static Analysis.
+
+        public void PerformStaticAnalysis()
+        {
+            try
+            {
+                _textMarkerService.ClearMarkers();
+
+                var scripts = KbTextUtility.SplitQueryBatchesOnGO(Text);
+
+                foreach (var script in scripts)
+                {
+                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(MockEngineCore.Instance, script);
+                }
+            }
+            catch (KbParserException parserEx)
+            {
+                if (parserEx.LineNumber != null)
+                {
+                    AddSyntaxError((int)parserEx.LineNumber, parserEx.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+
+            //Immediately update the TextArea.
+            TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
+        }
+
+        void AddSyntaxError(int lineNumber, string message)
+        {
+            var line = Document.GetLineByNumber(lineNumber);
+            int startOffset = line.Offset;
+            int length = line.Length;
+            _textMarkerService.Create(startOffset, length, message, Colors.Red);
+        }
+
+        void AddSyntaxError(int startOffset, int length, string message)
+        {
+            _textMarkerService.Create(startOffset, length, message, Colors.Red);
+        }
+
+        #endregion
 
         #region Code Completion.
 
@@ -221,17 +289,17 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
+            if ((System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
             {
                 CodeTabPage.StudioForm.ShowFind();
             }
-            else if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
+            else if ((System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
             {
                 CodeTabPage.StudioForm.ShowReplace();
             }
             else if (e.Key == Key.F3)
             {
-                bool forceShowFind = (Control.ModifierKeys & Keys.Control) == Keys.Control;
+                bool forceShowFind = (System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control;
 
                 CodeTabPage.StudioForm.FindNext(forceShowFind);
             }

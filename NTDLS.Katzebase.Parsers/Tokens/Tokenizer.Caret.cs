@@ -12,9 +12,14 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             }
         }
 
+        public int? GetLineNumber(int caret)
+        {
+            return LineRanges.FirstOrDefault(o => _caret >= o.Begin && _caret <= o.End)?.Line;
+        }
+
         public int? GetCurrentLineNumber()
         {
-            return LineRanges.FirstOrDefault(o => o.Start >= _caret && _caret <= o.End)?.Line;
+            return GetLineNumber(_caret);
         }
 
         /// <summary>

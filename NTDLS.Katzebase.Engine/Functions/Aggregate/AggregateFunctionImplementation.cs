@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "sha256agg" => AggregateSha256Agg.Execute(parameters),
                 "sha512agg" => AggregateSha512Agg.Execute(parameters),
 
-                _ => throw new KbParserException($"The aggregate function is not implemented: [{functionName}].")
+                _ => throw new KbFunctionException($"The aggregate function is not implemented: [{functionName}].")
             };
 
             throw new KbFunctionException($"Undefined function: [{functionName}].");

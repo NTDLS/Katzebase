@@ -6,21 +6,22 @@ namespace NTDLS.Katzebase.Parsers.Tokens
     {
         private void PreValidate()
         {
-            ValidateParentheses();
         }
 
         private void PostValidate()
         {
+            ValidateParentheses();
+
             int index = _text.IndexOf('\'');
             if (index > 0)
             {
-                throw new KbParserException($"Invalid syntax at ['] at position: [{index:n0}]");
+                throw new KbParserException(GetLineNumber(index), $"Invalid syntax at ['].");
             }
 
             index = _text.IndexOf('\"');
             if (index > 0)
             {
-                throw new KbParserException($"Invalid syntax at [\"] at position: [{index:n0}]");
+                throw new KbParserException(GetLineNumber(index), $"Invalid syntax at [\"].");
             }
         }
 
@@ -29,26 +30,31 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             int parenOpen = 0;
             int parenClose = 0;
 
+            int lastOpen = 0;
+            int lastClose = 0;
+
             for (int i = 0; i < _text.Length; i++)
             {
                 if (_text[i] == '(')
                 {
+                    lastOpen = i;
                     parenOpen++;
                 }
                 else if (_text[i] == ')')
                 {
+                    lastClose = i;
                     parenClose++;
                 }
 
                 if (parenClose > parenOpen)
                 {
-                    throw new KbParserException($"Parentheses mismatch in expression: [{_text}]");
+                    throw new KbParserException(GetLineNumber(i), $"Parentheses mismatch in expression.");
                 }
             }
 
             if (parenClose != parenOpen)
             {
-                throw new KbParserException($"Parentheses mismatch in expression: [{_text}]");
+                throw new KbParserException(GetLineNumber(lastClose), $"Parentheses mismatch in expression.");
             }
         }
     }
