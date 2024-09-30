@@ -7,7 +7,7 @@
         /// </summary>
         public bool TryGetNextIndexOfAny(char[] characters, out int foundIndex)
         {
-            for (int i = _caret; i < _text.Length; i++)
+            for (int i = Caret; i < _text.Length; i++)
             {
                 if (characters.Contains(_text[i]))
                 {
@@ -27,7 +27,7 @@
         {
             foreach (var givenString in givenStrings)
             {
-                int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
+                int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
                 if (index >= 0)
                 {
                     foundIndex = index;
@@ -45,7 +45,7 @@
         /// </summary>
         public bool TryGetNextIndexOfAny(string givenString, out int foundIndex)
         {
-            int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
+            int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
             if (index >= 0)
             {
                 foundIndex = index;

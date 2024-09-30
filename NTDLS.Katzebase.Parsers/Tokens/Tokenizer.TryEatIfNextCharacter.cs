@@ -7,7 +7,7 @@
             RecordBreadcrumb();
             if (NextCharacter == character)
             {
-                _caret++;
+                Caret++;
                 InternalEatWhiteSpace();
                 return true;
             }

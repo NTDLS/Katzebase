@@ -13,21 +13,21 @@
 
             var token = string.Empty;
 
-            if (_caret == _text.Length)
+            if (Caret == _text.Length)
             {
                 return string.Empty;
             }
 
-            for (; _caret < _text.Length; _caret++)
+            for (; Caret < _text.Length; Caret++)
             {
-                if (delimiters.Contains(_text[_caret]) == true)
+                if (delimiters.Contains(_text[Caret]) == true)
                 {
-                    outStoppedOnDelimiter = _text[_caret];
-                    _caret++; //skip the delimiter.
+                    outStoppedOnDelimiter = _text[Caret];
+                    Caret++; //skip the delimiter.
                     break;
                 }
 
-                token += _text[_caret];
+                token += _text[Caret];
             }
 
             InternalEatWhiteSpace();

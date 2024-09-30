@@ -34,7 +34,7 @@
         /// </summary>
         public bool TryEatValidateNext(TryNextTokenValidationProc validator, char[] delimiters, out string outFoundToken)
         {
-            int restoreCaret = _caret;
+            int restoreCaret = Caret;
             outFoundToken = EatGetNext(delimiters, out _);
 
             if (validator(outFoundToken))
@@ -42,7 +42,7 @@
                 return true;
             }
 
-            _caret = restoreCaret;
+            Caret = restoreCaret;
             return false;
         }
     }

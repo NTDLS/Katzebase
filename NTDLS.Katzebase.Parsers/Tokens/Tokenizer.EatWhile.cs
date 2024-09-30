@@ -8,10 +8,10 @@
         public int EatWhile(char[] characters)
         {
             int count = 0;
-            while (_caret < _text.Length && characters.Contains(_text[_caret]))
+            while (Caret < _text.Length && characters.Contains(_text[Caret]))
             {
                 count++;
-                _caret++;
+                Caret++;
             }
             InternalEatWhiteSpace();
             return count;

@@ -7,9 +7,9 @@
         /// </summary>
         private void InternalEatWhiteSpace()
         {
-            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
+            while (Caret < _text.Length && char.IsWhiteSpace(_text[Caret]))
             {
-                _caret++;
+                Caret++;
             }
         }
 
@@ -20,9 +20,9 @@
         {
             RecordBreadcrumb();
 
-            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
+            while (Caret < _text.Length && char.IsWhiteSpace(_text[Caret]))
             {
-                _caret++;
+                Caret++;
             }
         }
     }

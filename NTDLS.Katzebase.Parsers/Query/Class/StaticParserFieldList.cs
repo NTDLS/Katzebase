@@ -22,11 +22,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out int stopAt) == false)
+            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out int endOfScopeCaret) == false)
             {
                 if (allowEntireConsumption)
                 {
-                    stopAt = tokenizer.Length;
+                    endOfScopeCaret = tokenizer.Length;
                 }
                 else
                 {
@@ -34,13 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
             }
 
-            var fieldsSegment = tokenizer.SubStringAbsolute(stopAt);
-            //var fieldsSegment = tokenizer.EatSubStringAbsolute(stopAt);
-
-            //Split the select fields on the comma, respecting any commas in function scopes.
-            var fields = fieldsSegment.ScopeSensitiveSplit(',');
-
-            foreach (var field in fields)
+            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfScopeCaret))
             {
                 string fieldAlias = string.Empty;
 
@@ -75,16 +69,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         fieldAlias = queryFields.GetNextFieldAlias();
                     }
                 }
-
-                queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
-
-                //TODO: Find a better way to skip this, we are just trying to keep track of the
-                //  caret for error reporting because it is correctly set after the fields are parsed.
-                tokenizer.SetCaret(tokenizer.Caret + field.Length + 4); //Skip this field.
             }
-
-            tokenizer.SetCaret(stopAt); //Skip the fields.
-            tokenizer.EatWhiteSpace();
 
             return queryFields;
         }

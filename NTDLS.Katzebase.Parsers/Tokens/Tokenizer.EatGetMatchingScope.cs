@@ -19,20 +19,20 @@
 
             InternalEatWhiteSpace();
 
-            if (_text[_caret] != open)
+            if (_text[Caret] != open)
             {
                 throw new Exception($"Expected scope character not found [{open}].");
             }
 
-            int startPosition = _caret + 1;
+            int startPosition = Caret + 1;
 
-            for (; _caret < _text.Length; _caret++)
+            for (; Caret < _text.Length; Caret++)
             {
-                if (_text[_caret] == open)
+                if (_text[Caret] == open)
                 {
                     scope++;
                 }
-                else if (_text[_caret] == close)
+                else if (_text[Caret] == close)
                 {
                     scope--;
                 }
@@ -44,9 +44,9 @@
 
                 if (scope == 0)
                 {
-                    var result = _text.Substring(startPosition, _caret - startPosition).Trim();
+                    var result = _text.Substring(startPosition, Caret - startPosition).Trim();
 
-                    _caret++;
+                    Caret++;
                     InternalEatWhiteSpace();
 
                     return result;

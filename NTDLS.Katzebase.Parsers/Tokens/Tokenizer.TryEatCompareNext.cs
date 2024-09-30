@@ -33,7 +33,7 @@
         /// </summary>
         public bool TryEatCompareNext(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters, out string outFoundToken)
         {
-            int restoreCaret = _caret;
+            int restoreCaret = Caret;
             outFoundToken = EatGetNext(delimiters, out _);
 
             foreach (var givenToken in givenTokens)
@@ -44,7 +44,7 @@
                 }
             }
 
-            _caret = restoreCaret;
+            Caret = restoreCaret;
             return false;
         }
 
@@ -53,23 +53,23 @@
         /// </summary>
         public bool TryEatCompareNext(GetNextIndexOfProc proc, out int foundIndex)
         {
-            int restoreCaret = _caret;
+            int restoreCaret = Caret;
 
             while (IsExhausted() == false)
             {
-                int previousCaret = _caret;
+                int previousCaret = Caret;
                 var token = EatGetNext();
 
                 if (proc(token))
                 {
                     foundIndex = previousCaret;
-                    _caret = restoreCaret;
+                    Caret = restoreCaret;
                     return true;
                 }
             }
 
             foundIndex = -1;
-            _caret = restoreCaret;
+            Caret = restoreCaret;
 
             return false;
         }

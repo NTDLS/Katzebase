@@ -25,9 +25,9 @@
         /// </summary>
         public string GetNext(char[] delimiters)
         {
-            int restoreCaret = _caret;
+            int restoreCaret = Caret;
             var token = EatGetNext(delimiters, out _);
-            _caret = restoreCaret;
+            Caret = restoreCaret;
             return token;
         }
 
@@ -37,9 +37,9 @@
         /// </summary>
         public string GetNext(char[] delimiters, out char outStoppedOnDelimiter)
         {
-            int restoreCaret = _caret;
+            int restoreCaret = Caret;
             var token = EatGetNext(delimiters, out outStoppedOnDelimiter);
-            _caret = restoreCaret;
+            Caret = restoreCaret;
             return token;
         }
     }

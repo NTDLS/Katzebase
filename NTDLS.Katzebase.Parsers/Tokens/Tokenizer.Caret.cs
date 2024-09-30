@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         private void RecordBreadcrumb()
         {
-            if (_breadCrumbs.Count == 0 || _breadCrumbs.Peek() != _caret)
+            if (_breadCrumbs.Count == 0 || _breadCrumbs.Peek() != Caret)
             {
-                _breadCrumbs.Push(_caret);
+                _breadCrumbs.Push(Caret);
             }
         }
 
@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         public int? GetCurrentLineNumber()
         {
-            return GetLineNumber(_caret);
+            return GetLineNumber(Caret);
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         public void Rewind()
         {
-            _caret = 0;
+            Caret = 0;
             _breadCrumbs.Clear();
         }
 
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             {
                 throw new KbParserException("Tokenization steps are out of range.");
             }
-            _caret = _breadCrumbs.Pop();
+            Caret = _breadCrumbs.Pop();
             throw new KbParserException("Tokenization steps are out of range.");
         }
 
@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 {
                     throw new KbParserException("Tokenization steps are out of range.");
                 }
-                _caret = _breadCrumbs.Pop();
+                Caret = _breadCrumbs.Pop();
             }
         }
 
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             {
                 throw new KbParserException("Tokenization caret moved past beginning of text.");
             }
-            _caret = position;
+            Caret = position;
         }
 
         /// <summary>
@@ -103,14 +103,14 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             RecordBreadcrumb();
 
-            int index = _caret;
+            int index = Caret;
 
-            if (_caret >= _text.Length)
+            if (Caret >= _text.Length)
             {
                 throw new KbParserException("The tokenizer sequence is empty.");
             }
 
-            _caret++;
+            Caret++;
             InternalEatWhiteSpace();
 
             return _text[index];

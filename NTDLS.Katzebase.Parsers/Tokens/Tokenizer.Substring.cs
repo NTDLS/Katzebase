@@ -9,8 +9,8 @@
         {
             RecordBreadcrumb();
 
-            var result = _text.Substring(_caret);
-            _caret = _text.Length;
+            var result = _text.Substring(Caret);
+            Caret = _text.Length;
 
             InternalEatWhiteSpace();
             return result;
@@ -23,8 +23,8 @@
         {
             RecordBreadcrumb();
 
-            var result = _text.Substring(_caret, length);
-            _caret += length;
+            var result = _text.Substring(Caret, length);
+            Caret += length;
 
             InternalEatWhiteSpace();
             return result;
@@ -35,7 +35,7 @@
         /// </summary>
         public string SubStringAbsolute(int absoluteEndPosition)
         {
-            var result = _text.Substring(_caret, absoluteEndPosition - _caret);
+            var result = _text.Substring(Caret, absoluteEndPosition - Caret);
             return result;
         }
 
@@ -46,8 +46,8 @@
         {
             RecordBreadcrumb();
 
-            var result = _text.Substring(_caret, absoluteEndPosition - _caret);
-            _caret = absoluteEndPosition;
+            var result = _text.Substring(Caret, absoluteEndPosition - Caret);
+            Caret = absoluteEndPosition;
 
             InternalEatWhiteSpace();
             return result;
@@ -61,7 +61,7 @@
             RecordBreadcrumb();
 
             var result = _text.Substring(startPosition, length);
-            _caret = startPosition + length;
+            Caret = startPosition + length;
 
             InternalEatWhiteSpace();
             return result;
@@ -83,7 +83,7 @@
         /// Gets the remainder of the text from current caret position.
         /// </summary>
         public string Remainder()
-            => _text.Substring(_caret);
+            => _text.Substring(Caret);
 
     }
 }

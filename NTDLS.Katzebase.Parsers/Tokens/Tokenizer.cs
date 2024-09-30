@@ -42,7 +42,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         private readonly Stack<int> _breadCrumbs = new();
         private int _literalKey = 0;
         private string _text;
-        private int _caret = 0;
         private readonly char[] _standardTokenDelimiters;
 
         #endregion
@@ -51,10 +50,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         public Tokenizer? ParentTokenizer { get; private set; }
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
-        public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
-        public bool IsExhausted() => _caret >= _text.Length;
+        public char? NextCharacter => Caret < _text.Length ? _text[Caret] : null;
+        public bool IsExhausted() => Caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
-        public int Caret => _caret;
+        public int Caret { get; set; } = 0;
         public int Length => _text.Length;
         public string Text => _text;
         public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);

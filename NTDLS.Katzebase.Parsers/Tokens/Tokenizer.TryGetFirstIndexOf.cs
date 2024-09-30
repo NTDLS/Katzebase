@@ -11,7 +11,7 @@
 
             foreach (var givenString in givenStrings)
             {
-                int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
+                int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
                 if (index >= 0)
                 {
                     indexes.Add(index);
@@ -36,7 +36,7 @@
         {
             var indexes = new List<int>();
 
-            int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
+            int index = _text.IndexOf(givenString, Caret, StringComparison.InvariantCultureIgnoreCase);
             if (index >= 0)
             {
                 indexes.Add(index);

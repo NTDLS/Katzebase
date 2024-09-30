@@ -7,9 +7,9 @@
         /// </summary>
         public bool TryEatIfNext(char[] characters)
         {
-            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            if (Caret < _text.Length && characters.Contains(_text[Caret]))
             {
-                _caret++;
+                Caret++;
                 InternalEatWhiteSpace();
                 return true;
             }
@@ -21,10 +21,10 @@
         /// </summary>
         public bool TryEatIfNext(char[] characters, out char foundCharacter)
         {
-            foundCharacter = _text[_caret];
-            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            foundCharacter = _text[Caret];
+            if (Caret < _text.Length && characters.Contains(_text[Caret]))
             {
-                _caret++;
+                Caret++;
                 InternalEatWhiteSpace();
                 return true;
             }
