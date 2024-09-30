@@ -9,7 +9,7 @@
         }
 
         public KbParserException(int? lineNumber, string message)
-            : base(lineNumber == null ? message : $"Syntax error on line {lineNumber:n0}, {message}")
+            : base(message)
         {
             LineNumber = lineNumber;
         }
