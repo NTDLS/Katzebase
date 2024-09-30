@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var procedureName) == false)
             {
-                throw new KbParserException($"Invalid query. Found [{procedureName}], expected: procedure name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{procedureName}], expected: procedure name.");
             }
 
             var parts = procedureName.Split(':');
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryCompareNext(o => o.StartsWith('$')))
             {
                 //Were just testing for a literal placeholder, as its a common mistake to omit the parentheses when calling a function.
-                throw new KbParserException($"Function call with parameters require parentheses, found: [{tokenizer.EatGetNextEvaluated()}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function call with parameters require parentheses, found: [{tokenizer.EatGetNextEvaluated()}].");
             }
 
             if (tokenizer.TryEatIfNextCharacter('('))

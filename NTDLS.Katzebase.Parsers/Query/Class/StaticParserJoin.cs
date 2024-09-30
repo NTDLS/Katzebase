@@ -18,14 +18,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatIfNext("join") == false)
                 {
-                    throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'join'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.EatGetNext()}], expected: 'join'.");
                 }
 
                 string subSchemaSchema = tokenizer.EatGetNext();
                 string subSchemaAlias = string.Empty;
                 if (!TokenizerHelpers.IsValidIdentifier(subSchemaSchema, ':'))
                 {
-                    throw new KbParserException($"Invalid query. Found [{subSchemaSchema}], expected: schema name.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{subSchemaSchema}], expected: schema name.");
                 }
 
                 if (tokenizer.TryEatIfNext("as"))
@@ -34,13 +34,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else
                 {
-                    throw new KbParserException($"Invalid query. Found [{tokenizer.GetNext()}], expected: [as] (schema alias).");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.GetNext()}], expected: [as] (schema alias).");
                 }
 
 
                 if (tokenizer.TryEatIfNext("on", out token) == false)
                 {
-                    throw new KbParserException($"Invalid query. Found [{token}], expected [on].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected [on].");
                 }
 
                 int joinConditionsStartPosition = tokenizer.Caret;
@@ -67,19 +67,19 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     var joinLeftCondition = tokenizer.EatGetNext();
                     if (!TokenizerHelpers.IsValidIdentifier(joinLeftCondition, '.'))
                     {
-                        throw new KbParserException($"Invalid query. Found [{joinLeftCondition}], expected: left side of join expression.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{joinLeftCondition}], expected: left side of join expression.");
                     }
 
                     token = tokenizer.EatGetNext();
                     if (StaticConditionHelpers.ParseLogicalQualifier(token) == LogicalQualifier.None)
                     {
-                        throw new KbParserException($"Invalid query. Found [{token}], expected logical qualifier.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected logical qualifier.");
                     }
 
                     var joinRightCondition = tokenizer.EatGetNext();
                     if (!TokenizerHelpers.IsValidIdentifier(joinRightCondition, '.'))
                     {
-                        throw new KbParserException($"Invalid query. Found [{joinRightCondition}], expected: right side of join expression.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{joinRightCondition}], expected: right side of join expression.");
                     }
                 }
 

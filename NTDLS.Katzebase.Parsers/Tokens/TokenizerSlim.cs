@@ -39,6 +39,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             _text = text;
             _standardTokenDelimiters = standardTokenDelimiters;
+            EatWhiteSpace();
         }
 
         /// <summary>
@@ -48,6 +49,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             _text = text;
             _standardTokenDelimiters = ['\r', '\n', ' '];
+            EatWhiteSpace();
         }
 
         /// <summary>

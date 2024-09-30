@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
+using System.Text;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -230,7 +231,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         private void OptimizeForTokenization()
         {
-            string text = KbTextUtility.RemoveComments(_text);
+            string text = KbTextUtility.RemoveNonCode(_text);
 
             //var maxNumericLiterals = NumericLiterals.Count > 0 ? NumericLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
             //var maxStringLiterals = StringLiterals.Count > 0 ? StringLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
@@ -289,52 +290,44 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             }
             while (length != text.Length);
 
-            text = text.Trim();
+            //text = text.Trim();
 
             text = text.Replace("(", " ( ").Replace(")", " ) ");
 
-            RemoveComments(ref text);
+            KbTextUtility.RemoveNonCode(text);
 
-            TrimAllLines(ref text);
-            RemoveEmptyLines(ref text);
-            RemoveNewlines(ref text);
-            RemoveDoubleWhitespace(ref text);
+            text = CleanLinesAndRecordLineRanges(text);
 
             _text = text.Trim();
         }
 
-        public static void RemoveComments(ref string query)
+        private string CleanLinesAndRecordLineRanges(string query)
         {
-            query = "\r\n" + query + "\r\n";
+            var result = new StringBuilder();
 
-            var blockComments = @"/\*(.*?)\*/";
-            var lineComments = @"--(.*?)\r?\n";
-            var strings = @"""((\\[^\n]|[^""\n])*)""";
-            var verbatimStrings = @"@(""[^""]*"")+";
+            query = query.Replace("\r\n", "\n");
 
-            query = Regex.Replace(query,
-                blockComments + "|" + lineComments + "|" + strings + "|" + verbatimStrings,
-                me =>
+            int lineNumber = 0;
+
+            foreach (var line in query.Split('\n'))
+            {
+                lineNumber++;
+
+                string cleanedLine = RemoveDoubleWhitespace(line.Trim()) + ' ';
+
+                if (string.IsNullOrWhiteSpace(cleanedLine.Trim()) == false)
                 {
-                    if (me.Value.StartsWith("/*") || me.Value.StartsWith("--"))
-                        return me.Value.StartsWith("--") ? Environment.NewLine : "";
-                    // Keep the literal strings
-                    return me.Value;
-                },
-                RegexOptions.Singleline);
+                    int startIndex = result.Length;
+                    result.Append(cleanedLine);
+                    LineRanges.Add(new(lineNumber, startIndex, result.Length));
+                }
+            }
+
+            return result.ToString();
         }
 
-        public static void RemoveEmptyLines(ref string query)
-            => query = Regex.Replace(query, @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
-
-        public static void TrimAllLines(ref string query)
-            => query = string.Join("\r\n", query.Split('\n').Select(o => o.Trim()));
-
-        public static void RemoveDoubleWhitespace(ref string query)
-            => query = Regex.Replace(query, @"\s+", " ");
-
-        public static void RemoveNewlines(ref string query)
-            => query = query.Replace("\r\n", " ");
+        public static string RemoveDoubleWhitespace(string query)
+            => Regex.Replace(query, @"\s+", " ");
 
         #endregion
     }

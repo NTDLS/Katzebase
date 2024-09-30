@@ -12,6 +12,11 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             }
         }
 
+        public int? GetCurrentLineNumber()
+        {
+            return LineRanges.FirstOrDefault(o => o.Start >= _caret && _caret <= o.End)?.Line;
+        }
+
         /// <summary>
         /// Places the caret back to the beginning.
         /// </summary>

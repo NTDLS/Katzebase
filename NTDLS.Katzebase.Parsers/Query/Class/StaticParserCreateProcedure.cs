@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         var paramName = tokenizer.GetNext();
                         if (tokenizer.GetNext().Is("as") == false)
                         {
-                            throw new KbParserException("Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'AS'.");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'AS'.");
                         }
                         token = tokenizer.GetNext();
 
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                             string acceptableValues = string.Join("', '",
                                 Enum.GetValues<KbProcedureParameterType>().Where(o => o != KbProcedureParameterType.Undefined));
 
-                            throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found '{token}', expected: '{acceptableValues}'.");
                         }
 
                         parameters.Add(new PhysicalProcedureParameter(paramName, paramType));
@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         {
                             if (tokenizer.NextCharacter != ')')
                             {
-                                throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
+                                throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
                             }
                             tokenizer.SkipNextCharacter();
                             break;
@@ -60,30 +60,30 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 if (tokenizer.GetNext().Is("on") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'ON'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'ON'.");
                 }
 
                 token = tokenizer.GetNext();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 query.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
 
                 if (tokenizer.GetNext().Is("as") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'AS'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'AS'.");
                 }
 
                 if (tokenizer.NextCharacter != '(')
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '('.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '('.");
                 }
 
                 if (tokenizer.Remainder().Last() != ')')
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
                 }
 
                 tokenizer.SkipNextCharacter(); // Skip the '('.

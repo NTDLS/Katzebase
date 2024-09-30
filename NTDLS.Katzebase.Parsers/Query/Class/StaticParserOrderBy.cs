@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             string orderByText = tokenizer.EatSubStringAbsolute(endOfWhere).Trim();
             if (orderByText == string.Empty)
             {
-                throw new KbParserException($"Invalid query. Found [{orderByText}], expected: list of conditions.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{orderByText}], expected: list of conditions.");
             }
 
             var fieldsTexts = orderByText.ScopeSensitiveSplit(',');
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (!fieldTokenizer.IsExhausted())
                     {
-                        throw new KbParserException($"Invalid query. Found [{token}], expected: asc or desc.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected: asc or desc.");
                     }
                 }
 

@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Parsers
         }
 
         /// <summary>
-        /// Parse the single.
+        /// Parse the single query in the batch.
         /// </summary>
         static public PreparedQuery ParseQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Parsers
 
             if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
             {
-                throw new KbParserException($"Invalid query. Found [{token}], expected: [{string.Join("],[", Enum.GetValues<QueryType>().Where(o => o != QueryType.None))}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected: [{string.Join("],[", Enum.GetValues<QueryType>().Where(o => o != QueryType.None))}].");
             }
 
             tokenizer.EatNext();
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Parsers
                 QueryType.Kill => StaticParserKill.Parse(queryBatch, tokenizer),
                 QueryType.Exec => StaticParserExec.Parse(queryBatch, tokenizer),
 
-                _ => throw new KbParserException($"The query type is not implemented: [{token}]."),
+                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"The query type is not implemented: [{token}]."),
             };
         }
 
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Parsers
         /// </summary>
         static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbConstant> tokenizerConstants)
         {
-            var lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
+            var lines = queryText.Split("\n").Select(s => s.Trim());
             lines = lines.Where(o => o.StartsWith("const", StringComparison.InvariantCultureIgnoreCase));
 
             foreach (var line in lines)
@@ -142,10 +142,10 @@ namespace NTDLS.Katzebase.Parsers
 
                 tokenizerConstants.Add($"@{variableName}", new KbConstant(variableValue, variableType));
 
-                queryText = queryText.Replace(line, "");
+                queryText = queryText.Replace(line, "\n");
             }
 
-            return queryText.Trim();
+            return queryText.TrimEnd() + "\n";
         }
 
         public static string ComputeSHA256(string rawData)

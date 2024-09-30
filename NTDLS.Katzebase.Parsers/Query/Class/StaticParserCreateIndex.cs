@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var indexName) == false)
             {
-                throw new KbParserException($"Invalid query. Found [{indexName}], expected: index name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{indexName}], expected: index name.");
             }
 
             query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + indexName + "', expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + indexName + "', expected: schema name.");
             }
             query.Schemas.Add(new QuerySchema(schemaName));
             query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);

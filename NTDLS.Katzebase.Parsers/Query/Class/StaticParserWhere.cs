@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             string conditionText = tokenizer.EatSubStringAbsolute(endOfWhere).Trim();
             if (conditionText == string.Empty)
             {
-                throw new KbParserException($"Invalid query. Found [{conditionText}], expected: list of conditions.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{conditionText}], expected: list of conditions.");
             }
 
             return StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);

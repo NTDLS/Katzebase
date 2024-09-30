@@ -1,13 +1,14 @@
-﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 
 namespace NTDLS.Katzebase.Client
 {
     public static class KbTextUtility
     {
-        public static string RemoveComments(string input)
+        /// <summary>
+        /// Removes comments while remaining code line positions, replaces "\r\n" with "\n" and adds a trailing "\n",
+        /// </summary>
+        public static string RemoveNonCode(string input)
         {
             var blockComments = @"/\*(.*?)\*/";
             var lineComments = @"--(.*?)\r?\n";
@@ -18,40 +19,30 @@ namespace NTDLS.Katzebase.Client
                 blockComments + "|" + lineComments + "|" + strings + "|" + verbatimStrings,
                 me =>
                 {
-                    if (me.Value.StartsWith("/*") || me.Value.StartsWith("--"))
-                        return me.Value.StartsWith("--") ? Environment.NewLine : "";
-                    // Keep the literal strings
+                    if (me.Value.StartsWith("/*"))
+                    {
+                        var numberOfNewlines = me.Value.Count(c => c == '\n') + 1;
+                        return string.Concat(Enumerable.Repeat(Environment.NewLine, numberOfNewlines));
+                    }
+                    else if (me.Value.StartsWith("--"))
+                    {
+                        return Environment.NewLine;
+                    }
                     return me.Value;
                 },
                 RegexOptions.Singleline);
 
-            return noComments;
+            return noComments.TrimEnd().Replace("\r\n", "\n") + "\n";
         }
 
-        public static List<string> SplitQueryBatches(string text)
-        {
-            text = RemoveComments(text);
-
-            var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
-
-            for (int i = 0; i < lines.Count; i++)
-            {
-                lines[i] = lines[i].Trim();
-            }
-
-            text = string.Join("\r\n", lines).Trim() + "\r\n";
-
-            var batches = text.Split(";\r\n", StringSplitOptions.RemoveEmptyEntries)
-                .Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
-
-            return batches;
-        }
-
+        /// <summary>
+        /// Splits query text on "GO", removes comments while remaining code line positions, replaces "\r\n" with "\n" and adds a trailing "\n",
+        /// </summary>
         public static List<string> SplitQueryBatchesOnGO(string text)
         {
-            text = RemoveComments(text);
+            text = RemoveNonCode(text);
 
-            var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
+            var lines = text.Replace("\r\n", "\n").Split('\n').ToList();
 
             for (int i = 0; i < lines.Count; i++)
             {
@@ -86,9 +77,5 @@ namespace NTDLS.Katzebase.Client
 
             return batches;
         }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static string GetCurrentMethod()
-            => (new StackTrace())?.GetFrame(1)?.GetMethod()?.Name ?? "{unknown frame}";
     }
 }

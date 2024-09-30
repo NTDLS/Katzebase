@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
 {
@@ -10,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
         {
         }
 
-        public object ValidateAndConvert(string name, string? value)
+        public object ValidateAndConvert(Tokenizer tokenizer, string name, string? value)
         {
             if (TryGetValue(name, out var resultType))
             {
@@ -20,7 +21,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
                     {
                         if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
                         {
-                            throw new KbParserException($"Invalid value passed to with option: [{name}].");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid value passed to with option: [{name}].");
                         }
                         return Convert.ChangeType(enumValue, resultType);
                     }
@@ -37,16 +38,16 @@ namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)
                     {
-                        throw new KbParserException($"Invalid NULL value passed to with option: [{name}].");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid NULL value passed to with option: [{name}].");
                     }
                     return resultingValue;
                 }
                 catch
                 {
-                    throw new KbParserException($"Failed to convert with option [{name}] value to [{resultType.Name}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Failed to convert with option [{name}] value to [{resultType.Name}].");
                 }
             }
-            throw new KbParserException($"Invalid with option: [{name}].");
+            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid with option: [{name}].");
         }
     }
 }

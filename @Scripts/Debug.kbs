@@ -3,7 +3,7 @@
 
 --region TestCode
 
-SELECT
+SELEC
 
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
     6 * -1 as Negative,

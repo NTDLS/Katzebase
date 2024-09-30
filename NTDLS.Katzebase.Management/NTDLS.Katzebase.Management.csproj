@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

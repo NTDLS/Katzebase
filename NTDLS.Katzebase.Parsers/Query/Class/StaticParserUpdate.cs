@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{schemaName}], expected: schema name.");
             }
             if (tokenizer.TryEatIfNext("as"))
             {
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var fieldName) == false)
                 {
-                    throw new KbParserException($"Invalid query. Found [{fieldName}], expected: field name.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{fieldName}], expected: field name.");
                 }
                 query.UpdateFieldNames.Add(fieldName);
 

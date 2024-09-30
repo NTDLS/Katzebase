@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         /// and all conditions in a ConditionGroup will be comprised solely of AND conditions. This way we can use the groups to match indexes
         /// before evaluating the whole expression on the limited set of documents we derived from the indexing operations.
         /// </summary>
-        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
+        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer, string conditionsText, string leftHandAliasOfJoin = "")
         {
             var conditionCollection = new ConditionCollection(queryBatch, conditionsText, leftHandAliasOfJoin);
 
@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-            ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText);
+            ParseRecursive(queryBatch, tokenizer, conditionCollection, conditionCollection, conditionsText);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
             conditionCollection.Hash = StaticParserUtility.GetSHA256Hash(conditionCollection.MathematicalExpression);
@@ -34,26 +34,26 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             return conditionCollection;
         }
 
-        private static void ParseRecursive(QueryBatch queryBatch, Tokenizer parentTokenizer,
+        private static void ParseRecursive(QueryBatch queryBatch, Tokenizer tokenizer,
             ConditionCollection conditionCollection, ConditionGroup parentConditionGroup,
             string conditionsText, ConditionGroup? givenCurrentConditionGroup = null)
         {
-            var tokenizer = new Tokenizer(conditionsText);
+            var conditionTokenizer = new Tokenizer(conditionsText);
 
             var lastLogicalConnector = LogicalConnector.None;
 
             ConditionGroup? currentConditionGroup = givenCurrentConditionGroup;
 
-            while (!tokenizer.IsExhausted())
+            while (!conditionTokenizer.IsExhausted())
             {
-                if (tokenizer.TryIsNextCharacter('('))
+                if (conditionTokenizer.TryIsNextCharacter('('))
                 {
                     //When we encounter an "(", we create a new condition group.
                     currentConditionGroup = new ConditionGroup(lastLogicalConnector);
                     parentConditionGroup.Collection.Add(currentConditionGroup);
 
-                    string subConditionsText = tokenizer.EatMatchingScope();
-                    ParseRecursive(queryBatch, parentTokenizer, conditionCollection,
+                    string subConditionsText = conditionTokenizer.EatMatchingScope();
+                    ParseRecursive(queryBatch, tokenizer, conditionCollection,
                         currentConditionGroup, subConditionsText, currentConditionGroup);
 
                     //After we finish recursively parsing the parentheses, we null out the current group because whatever we find next will need to be in a new group.
@@ -67,13 +67,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         parentConditionGroup.Collection.Add(currentConditionGroup);
                     }
 
-                    var leftAndRight = ParseRightAndLeft(conditionCollection, parentTokenizer, tokenizer);
+                    var leftAndRight = ParseRightAndLeft(conditionCollection, tokenizer, conditionTokenizer);
                     currentConditionGroup.Collection.Add(new ConditionEntry(leftAndRight));
                 }
 
-                if (!tokenizer.IsExhausted())
+                if (!conditionTokenizer.IsExhausted())
                 {
-                    lastLogicalConnector = tokenizer.EatIfNextEnum<LogicalConnector>();
+                    lastLogicalConnector = conditionTokenizer.EatIfNextEnum<LogicalConnector>();
                     if (lastLogicalConnector == LogicalConnector.Or)
                     {
                         //When we encounter an OR, we null out the current group because whatever we find next will need to be in a new group.
@@ -134,7 +134,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
-                        throw new KbParserException($"Function [{token}] must be called with parentheses.");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] must be called with parentheses.");
                     }
                     //This is a scaler function, we're all good.
 
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     {
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.
-                        throw new KbParserException($"Function [{token}] is undefined.");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] is undefined.");
                     }
 
                     //This is a document field, we're all good.
@@ -155,7 +155,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Condition token [{token}] is invalid.");
                 }
             }
 

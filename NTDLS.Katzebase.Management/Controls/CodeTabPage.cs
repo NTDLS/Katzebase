@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Management.Classes;
+using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -179,7 +180,22 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void TextEditor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.F5)
+            if (e.Key == System.Windows.Input.Key.F4)
+            {
+                try
+                {
+                    var scripts = KbTextUtility.SplitQueryBatchesOnGO(Editor.Text);
+
+                    foreach (var script in scripts)
+                    {
+                        var queryBatch = Parsers.StaticQueryParser.ParseBatch(MockEngineCore.Instance, script);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            else if (e.Key == System.Windows.Input.Key.F5)
             {
                 ExecuteCurrentScriptAsync(ExecuteType.Execute);
             }
@@ -330,7 +346,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 }
                 ResultsPanel.Controls.Clear();
 
-                string scriptText = Editor.Text + "\r\n";
+                string scriptText = Editor.Text;
 
                 if (Editor.SelectionLength > 0)
                 {
