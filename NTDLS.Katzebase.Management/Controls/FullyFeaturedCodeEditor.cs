@@ -19,7 +19,7 @@ using System.Xml;
 
 namespace NTDLS.Katzebase.Management.Controls
 {
-    internal class FullyFeaturedCodeEditor : TextEditor
+    public class FullyFeaturedCodeEditor : TextEditor
     {
         public CodeTabPage CodeTabPage { get; private set; }
         private System.Windows.Forms.Integration.ElementHost? _controlHost;
@@ -89,8 +89,6 @@ namespace NTDLS.Katzebase.Management.Controls
                 _foldingUpdateTimer.Stop();
                 _staticAnalysisTimer.Stop();
 
-                _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(500);
-
                 _foldingUpdateTimer.Start();
                 _staticAnalysisTimer.Start();
             };
@@ -109,15 +107,19 @@ namespace NTDLS.Katzebase.Management.Controls
 
         #region Static Analysis.
 
-        public void PerformStaticAnalysis()
+        public void InvokePerformStaticAnalysis()
+        {
+            CodeTabPage.StudioForm.Invoke(PerformStaticAnalysis);
+        }
+
+        private void PerformStaticAnalysis()
         {
             try
             {
-                _textMarkerService.ClearMarkers();
-
                 var scripts = KbTextUtility.SplitQueryBatchesOnGO(Text);
+                var schemaCache = BackgroundSchemaCache.GetCache();
 
-                var schemaCache = BackgroundSchemaCache.Instance.GetCache();
+                _textMarkerService.ClearMarkers();
 
                 foreach (var script in scripts)
                 {
@@ -125,7 +127,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
                     foreach (var query in queryBatch)
                     {
-                        StaticAnalyzer.ClientSideAnalyis(Document, _textMarkerService, schemaCache, queryBatch, query);
+                        StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query);
                     }
                 }
             }
@@ -148,7 +150,11 @@ namespace NTDLS.Katzebase.Management.Controls
             TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
         }
 
-        public void RecursivelyReportExceptions(List<Exception> exceptions)
+        /// <summary>
+        /// Add parsing errors that were reported by the parser.
+        /// </summary>
+        /// <param name="exceptions"></param>
+        private void RecursivelyReportExceptions(List<Exception> exceptions)
         {
             foreach (var exception in exceptions)
             {
@@ -166,8 +172,7 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-
-        void AddSyntaxError(int lineNumber, string message)
+        private void AddSyntaxError(int lineNumber, string message)
         {
             var line = Document.GetLineByNumber(lineNumber);
             int startOffset = line.Offset;
@@ -175,7 +180,7 @@ namespace NTDLS.Katzebase.Management.Controls
             _textMarkerService.Create(startOffset, length, message, Colors.Red);
         }
 
-        void AddSyntaxError(int startOffset, int length, string message)
+        private void AddSyntaxError(int startOffset, int length, string message)
         {
             _textMarkerService.Create(startOffset, length, message, Colors.Red);
         }

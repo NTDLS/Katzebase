@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 {
     internal class StaticAnalyzer
     {
-        public static void ClientSideAnalyis(TextDocument textDocument,
+        public static void ClientSideAnalysis(TextDocument textDocument,
             TextMarkerService textMarkerService, List<CachedSchema> schemaCache, QueryBatch batch, PreparedQuery query)
         {
             if (schemaCache.Count == 0)

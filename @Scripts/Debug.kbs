@@ -2,6 +2,10 @@
 
 --Translation test query.
 
+create schema Temporary:Blah
+
+drop schema Temporary:Blah
+
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,

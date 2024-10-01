@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Management.Controls
     /// <summary>
     /// A code tab contains a code editor, output tab, splitter and a client connection.
     /// </summary>
-    internal class CodeTabPage : TabPage, IDisposable
+    public class CodeTabPage : TabPage, IDisposable
     {
         #region Properties.
 

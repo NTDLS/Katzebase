@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
-using static NTDLS.Katzebase.Management.Classes.Constants;
+﻿using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
 {
@@ -7,16 +6,38 @@ namespace NTDLS.Katzebase.Management.Classes
     {
         public ServerNodeType NodeType { get; set; }
 
-        public string ServerAddress { get; set; } = string.Empty;
-        public int ServerPort { get; set; }
-        public string Username { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
+        public string? SchemaPath { get; set; }
+        public Guid SchemaId { get; set; }
+        public Guid ParentSchemaId { get; set; }
 
-        public KbClient? ServerClient { get; set; }
-
-        public ServerExplorerNode(string name) :
-             base(name)
+        public ServerExplorerNode(ServerNodeType nodeType, string name) :
+            base(name)
         {
+            NodeType = nodeType;
+            Name = name;
+        }
+
+        public static ServerExplorerNode CreateServerNode(string name)
+        {
+            return new ServerExplorerNode(ServerNodeType.Server, name)
+            {
+                NodeType = ServerNodeType.Server,
+                ImageKey = "Server",
+                SelectedImageKey = "Server",
+            };
+        }
+
+        public static ServerExplorerNode CreateSchemaNode(string schemaName, string schemaPath, Guid parentSchemaId, Guid schemaId)
+        {
+            return new ServerExplorerNode(ServerNodeType.Server, schemaName)
+            {
+                NodeType = ServerNodeType.Schema,
+                ImageKey = "Schema",
+                SelectedImageKey = "Schema",
+                SchemaPath = schemaPath,
+                SchemaId = schemaId,
+                ParentSchemaId = parentSchemaId,
+            };
         }
     }
 }

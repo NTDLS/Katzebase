@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
 using System.Diagnostics;
-using System.Text;
 using static NTDLS.Katzebase.Management.Classes.Editor.AutoCompleteFunction;
 using static NTDLS.Katzebase.Management.Controls.CodeTabPage;
 
@@ -15,7 +14,6 @@ namespace NTDLS.Katzebase.Management
     {
         private bool _timerTicking = false;
         private bool _firstShown = true;
-        private readonly ImageList _treeImages = new();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
 
         public string _lastAddress = string.Empty;
@@ -40,25 +38,15 @@ namespace NTDLS.Katzebase.Management
 
         private void FormStudio_Load(object sender, EventArgs e)
         {
-            treeViewProject.Dock = DockStyle.Fill;
+            ServerExplorerManager.Initialize(this, treeViewServerExplorer);
+
+            treeViewServerExplorer.Dock = DockStyle.Fill;
             splitContainerObjectExplorer.Dock = DockStyle.Fill;
             splitContainerMacros.Dock = DockStyle.Fill;
             tabControlBody.Dock = DockStyle.Fill;
             treeViewShortcuts.Dock = DockStyle.Fill;
 
-            _treeImages.ColorDepth = ColorDepth.Depth32Bit;
-            _treeImages.Images.Add("Folder", Resources.TreeFolder);
-            _treeImages.Images.Add("Server", Resources.TreeServer);
-            _treeImages.Images.Add("Schema", Resources.TreeSchema);
-            _treeImages.Images.Add("Index", Resources.TreeIndex);
-            _treeImages.Images.Add("FieldFolder", Resources.TreeDocument);
-            _treeImages.Images.Add("Field", Resources.TreeField);
-            _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
-            _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
-            treeViewProject.ImageList = _treeImages;
-
-            treeViewProject.BeforeExpand += TreeViewProject_BeforeExpand;
-            treeViewProject.NodeMouseClick += TreeViewProject_NodeMouseClick;
+            treeViewServerExplorer.NodeMouseClick += TreeViewProject_NodeMouseClick;
 
             tabControlBody.Click += TabControlParent_Click;
             tabControlBody.TabIndexChanged += TabControlParent_TabIndexChanged;
@@ -216,7 +204,7 @@ namespace NTDLS.Katzebase.Management
                 e.Cancel = true;
             }
 
-            TreeManagement.Close(treeViewProject);
+            ServerExplorerManager.Close(treeViewServerExplorer);
         }
 
         private void FormStudio_Shown(object? sender, EventArgs e)
@@ -288,7 +276,6 @@ namespace NTDLS.Katzebase.Management
             return null;
         }
 
-
         private void TreeViewProject_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
@@ -297,7 +284,7 @@ namespace NTDLS.Katzebase.Management
             }
 
             var popupMenu = new ContextMenuStrip();
-            treeViewProject.SelectedNode = e.Node;
+            treeViewServerExplorer.SelectedNode = e.Node;
 
             popupMenu.ItemClicked += PopupMenu_ItemClicked;
 
@@ -341,11 +328,12 @@ namespace NTDLS.Katzebase.Management
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
 
-            popupMenu.Show(treeViewProject, e.Location);
+            popupMenu.Show(treeViewServerExplorer, e.Location);
         }
 
         private void PopupMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
+            /*
             try
             {
                 var menuStrip = (sender as ContextMenuStrip).EnsureNotNull();
@@ -358,8 +346,8 @@ namespace NTDLS.Katzebase.Management
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
                         node.Nodes.Clear();
-                        TreeManagement.PopulateServer(treeViewProject, node.ServerAddress, node.ServerPort, node.Username, node.PasswordHash);
-                        foreach (TreeNode expandNode in treeViewProject.Nodes)
+                        ServerExplorerManager.Connect(node.ServerAddress, node.ServerPort, node.Username, node.PasswordHash);
+                        foreach (TreeNode expandNode in treeViewServerExplorer.Nodes)
                         {
                             expandNode.Expand();
                         }
@@ -367,74 +355,72 @@ namespace NTDLS.Katzebase.Management
                     else if (node.NodeType == Constants.ServerNodeType.Schema)
                     {
                         node.Nodes.Clear();
-                        TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, node);
+                        ServerExplorerManager.PopulateSchemaNodeOnExpand(treeViewServerExplorer, node);
                     }
                 }
                 else if (e.ClickedItem?.Text == "Delete")
                 {
-                    /*
                     var messageBoxResult = MessageBox.Show($"Delete {node.Text}?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                     if (messageBoxResult == DialogResult.Yes)
                     {
                         node.Remove();
                     }
-                    */
                 }
                 else if (e.ClickedItem?.Text == "Select top n...")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{TreeManagement.FullSchemaPath(node)}\r\n";
+                    tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{ServerExplorerManager.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Analyze Schema")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = $"ANALYZE SCHEMA {TreeManagement.FullSchemaPath(node)} --WITH (IncludePhysicalPages = true)\r\n";
+                    tabFilePage.Editor.Text = $"ANALYZE SCHEMA {ServerExplorerManager.FullSchemaPath(node)} --WITH (IncludePhysicalPages = true)\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Sample Schema")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = $"SAMPLE {TreeManagement.FullSchemaPath(node)} SIZE 100\r\n";
+                    tabFilePage.Editor.Text = $"SAMPLE {ServerExplorerManager.FullSchemaPath(node)} SIZE 100\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Drop Index")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {TreeManagement.FullSchemaPath(node)}\r\n";
+                    tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {ServerExplorerManager.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                 }
                 else if (e.ClickedItem?.Text == "Analyze Index")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {TreeManagement.FullSchemaPath(node)}\r\n";
+                    tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {ServerExplorerManager.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Rebuild Index")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, $"{KbConstants.FriendlyName}.UI.Query"))
                     {
                         client.QueryTimeout = TimeSpan.FromDays(10); //TODO: Make this configurable.
 
-                        var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
+                        var result = client.Schema.Indexes.Get(ServerExplorerManager.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)
                         {
                             var text = new StringBuilder("REBUILD ");
                             text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
-                            text.Append($" {result.Index.Name} ON {TreeManagement.FullSchemaPath(node)}");
+                            text.Append($" {result.Index.Name} ON {ServerExplorerManager.FullSchemaPath(node)}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
@@ -446,12 +432,12 @@ namespace NTDLS.Katzebase.Management
                 }
                 else if (e.ClickedItem?.Text == "Script Index")
                 {
-                    var rootNode = TreeManagement.GetRootNode(node);
+                    var rootNode = ServerExplorerManager.GetRootNode(node);
                     using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, $"{KbConstants.FriendlyName}.UI.Query"))
                     {
                         client.QueryTimeout = TimeSpan.FromDays(10); //TODO: Make this configurable.
 
-                        var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
+                        var result = client.Schema.Indexes.Get(ServerExplorerManager.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)
                         {
                             var text = new StringBuilder("CREATE ");
@@ -463,7 +449,7 @@ namespace NTDLS.Katzebase.Management
                                 text.AppendLine($"    {attribute.Field},");
                             }
                             text.Length -= 3;//Remove trialing ",\r\n"
-                            text.Append($"\r\n) ON {TreeManagement.FullSchemaPath(node)}");
+                            text.Append($"\r\n) ON {ServerExplorerManager.FullSchemaPath(node)}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             var tabFilePage = CreateNewTab(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash, FormUtility.GetNextNewFileName());
@@ -478,25 +464,7 @@ namespace NTDLS.Katzebase.Management
             {
                 MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        #endregion
-
-        #region Project Treeview Events.
-
-        private void TreeViewProject_BeforeExpand(object? sender, TreeViewCancelEventArgs e)
-        {
-            try
-            {
-                if (e.Node != null && (e.Node as ServerExplorerNode)?.NodeType == Classes.Constants.ServerNodeType.Schema)
-                {
-                    TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, (ServerExplorerNode)e.Node);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            */
         }
 
         #endregion
@@ -820,18 +788,20 @@ namespace NTDLS.Katzebase.Management
                     _lastUsername = form.Username;
                     _lastPasswordHash = form.PasswordHash;
 
-                    TreeManagement.PopulateServer(treeViewProject, _lastAddress, _lastPort, _lastUsername, _lastPasswordHash);
+                    ServerExplorerManager.Connect(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash);
 
-                    var kbClient = TreeManagement.GetRootNode(treeViewProject)?.ServerClient;
+                    /*
+                    var kbClient = ServerExplorerManager.GetRootNode(treeViewServerExplorer)?.ServerClient;
                     if (kbClient != null)
                     {
                         PopulateShortcuts(kbClient);
                     }
 
-                    foreach (TreeNode node in treeViewProject.Nodes)
+                    foreach (TreeNode node in treeViewServerExplorer.Nodes)
                     {
                         node.Expand();
                     }
+                    */
                 }
             }
             catch (Exception ex)
@@ -849,7 +819,7 @@ namespace NTDLS.Katzebase.Management
                 return false;
             }
 
-            treeViewProject.Nodes.Clear();
+            treeViewServerExplorer.Nodes.Clear();
 
             return true;
         }
@@ -918,9 +888,16 @@ namespace NTDLS.Katzebase.Management
             return true;
         }
 
-        private CodeTabPage? CurrentTabFilePage()
+        public CodeTabPage? CurrentTabFilePage()
         {
-            return tabControlBody.SelectedTab as CodeTabPage;
+            if (tabControlBody.InvokeRequired)
+            {
+                return tabControlBody.Invoke(new Func<CodeTabPage?>(CurrentTabFilePage));
+            }
+            else
+            {
+                return tabControlBody.SelectedTab as CodeTabPage;
+            }
         }
 
         #endregion
@@ -1370,7 +1347,7 @@ namespace NTDLS.Katzebase.Management
 
                 if (string.IsNullOrEmpty(text) == false)
                 {
-                    treeViewProject.DoDragDrop(text, DragDropEffects.Copy);
+                    treeViewServerExplorer.DoDragDrop(text, DragDropEffects.Copy);
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Management
 {
-    internal partial class FormFindText : Form
+    public partial class FormFindText : Form
     {
         private readonly CodeTabPage? _projectTabPage;
         private int _lastIndex = -1;

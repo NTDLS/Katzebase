@@ -30,7 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStudio));
             splitContainerObjectExplorer = new SplitContainer();
-            treeViewProject = new TreeView();
+            treeViewServerExplorer = new TreeView();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
             treeViewShortcuts = new TreeView();
@@ -114,7 +114,7 @@
             // 
             // splitContainerObjectExplorer.Panel1
             // 
-            splitContainerObjectExplorer.Panel1.Controls.Add(treeViewProject);
+            splitContainerObjectExplorer.Panel1.Controls.Add(treeViewServerExplorer);
             // 
             // splitContainerObjectExplorer.Panel2
             // 
@@ -127,12 +127,12 @@
             // 
             // treeViewProject
             // 
-            treeViewProject.Location = new Point(14, 35);
-            treeViewProject.Name = "treeViewProject";
-            treeViewProject.Size = new Size(256, 292);
-            treeViewProject.TabIndex = 0;
-            treeViewProject.ItemDrag += TreeViewProject_ItemDrag;
-            treeViewProject.DragDrop += FormStudio_DragDrop;
+            treeViewServerExplorer.Location = new Point(14, 35);
+            treeViewServerExplorer.Name = "treeViewProject";
+            treeViewServerExplorer.Size = new Size(256, 292);
+            treeViewServerExplorer.TabIndex = 0;
+            treeViewServerExplorer.ItemDrag += TreeViewProject_ItemDrag;
+            treeViewServerExplorer.DragDrop += FormStudio_DragDrop;
             // 
             // splitContainerMacros
             // 
@@ -669,7 +669,7 @@
         private SplitContainer splitContainerObjectExplorer;
         private TabControl tabControlBody;
         private ToolStrip toolStripButtons;
-        private TreeView treeViewProject;
+        private TreeView treeViewServerExplorer;
         private ToolStripButton toolStripButtonSave;
         private ToolStripButton toolStripButtonSaveAll;
         private ToolStripButton toolStripButtonCloseCurrentTab;

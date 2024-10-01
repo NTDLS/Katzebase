@@ -82,17 +82,8 @@ namespace NTDLS.Katzebase.Engine.Schemas
             };
         }
 
-        public KbSchemaItem ToClientPayload(string parentPath)
-        {
-            return new KbSchemaItem()
-            {
-                Id = Id,
-                Name = Name,
-                ParentPath = parentPath.Trim(':'),
-                Path = $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'),
-                PageSize = PageSize
-            };
-        }
+        public KbSchemaItem ToClientPayload(Guid parentSchemaId, string parentPath)
+            => new KbSchemaItem(Id, Name, $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'), parentPath.Trim(':'), parentSchemaId, PageSize);
 
         public VirtualSchema ToVirtual(PhysicalSchema parentPhysicalSchema)
         {

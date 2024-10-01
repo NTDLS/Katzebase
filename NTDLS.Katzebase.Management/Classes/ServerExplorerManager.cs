@@ -1,6 +1,8 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -8,49 +10,134 @@ namespace NTDLS.Katzebase.Management.Classes
     /// <summary>
     /// Static helpers for dealing with the server explorer tree view and its nodes.
     /// </summary>
-    public static class TreeManagement
+    public static class ServerExplorerManager
     {
-        public static void PopulateServer(TreeView treeView, string serverAddress, int serverPort, string username, string passwordHash)
+        public static TreeView? ServerExplorerTree { get; private set; }
+        public static FormStudio? StudioForm { get; private set; }
+        public static KbClient? Client { get; private set; }
+
+        private static readonly ImageList _treeImages = new();
+
+        public static void Initialize(FormStudio formStudio, TreeView serverExplorerTree)
         {
-            var client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{Client.KbConstants.FriendlyName}.UI");
-            client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
-            client.OnDisconnected += (KbClient sender, Client.Payloads.KbSessionInfo sessionInfo) =>
-            {
-                BackgroundSchemaCache.Instance.Stop();
-            };
+            StudioForm = formStudio;
+            ServerExplorerTree = serverExplorerTree;
 
-            BackgroundSchemaCache.Instance.StartOrReset(client);
-
-            string key = serverAddress.ToLower();
-
-            var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
-            if (foundNode != null)
-            {
-                treeView.Nodes.Remove(foundNode);
-            }
-
-            var serverNode = CreateServerNode(key, serverAddress, serverPort, username, passwordHash, client);
-
-            PopulateSchemaNode(serverNode, client, ":");
-
-            treeView.Nodes.Add(serverNode);
+            _treeImages.ColorDepth = ColorDepth.Depth32Bit;
+            _treeImages.Images.Add("Folder", Resources.TreeFolder);
+            _treeImages.Images.Add("Server", Resources.TreeServer);
+            _treeImages.Images.Add("Schema", Resources.TreeSchema);
+            _treeImages.Images.Add("Index", Resources.TreeIndex);
+            _treeImages.Images.Add("FieldFolder", Resources.TreeDocument);
+            _treeImages.Images.Add("Field", Resources.TreeField);
+            _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
+            _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
+            ServerExplorerTree.ImageList = _treeImages;
         }
 
-        private static void Client_OnConnected(KbClient sender, Client.Payloads.KbSessionInfo sessionInfo)
+        public static void Connect(string serverAddress, int serverPort, string username, string passwordHash)
         {
-            throw new NotImplementedException();
+            Client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI");
+            Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
+            Client.OnDisconnected += (KbClient sender, Client.Payloads.KbSessionInfo sessionInfo) =>
+            {
+                BackgroundSchemaCache.Stop();
+            };
+
+            BackgroundSchemaCache.StartOrReset(Client);
+            BackgroundSchemaCache.OnCacheUpdated += (List<CachedSchema> schemaCache) =>
+            {
+                StudioForm?.CurrentTabFilePage()?.Editor.InvokePerformStaticAnalysis();
+            };
+
+            BackgroundSchemaCache.OnCacheItemAdded += BackgroundSchemaCache_OnCacheItemAdded;
+            BackgroundSchemaCache.OnCacheItemRemoved += BackgroundSchemaCache_OnCacheItemRemoved;
+
+            ServerExplorerTree.EnsureNotNull().Nodes.Clear();
+
+            var serverNode = ServerExplorerNode.CreateServerNode(serverAddress);
+            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode("Root (:)", "", Guid.Empty, EngineConstants.RootSchemaGUID);
+            serverNode.Nodes.Add(rootSchemaNode);
+            ServerExplorerTree.Nodes.Add(serverNode);
+
+            //PopulateSchemaNode(serverNode, ":");
+            //ServerExplorerTree.EnsureNotNull().Nodes.Add(serverNode);
         }
 
         public static void Close(TreeView treeView)
         {
-            BackgroundSchemaCache.Instance.Stop();
-
-            var rootNode = GetRootNode(treeView);
-            if (rootNode != null)
-            {
-                Exceptions.Ignore(() => rootNode.ServerClient?.Dispose());
-            }
+            BackgroundSchemaCache.Stop();
+            Exceptions.Ignore(() => Client?.Dispose());
         }
+
+        private static void BackgroundSchemaCache_OnCacheItemAdded(CachedSchema schemaItem)
+        {
+            ServerExplorerTree.EnsureNotNull().Invoke(() =>
+            {
+                var parentNode = FindNodeBySchemaId(schemaItem.ParentId);
+                if (parentNode != null)
+                {
+                    var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Name, schemaItem.Path, schemaItem.ParentId, schemaItem.Id);
+                    parentNode.Nodes.Add(newSchemaNode);
+
+                    if (parentNode.ParentSchemaId == Guid.Empty && parentNode.Nodes.Count == 1)
+                    {
+                        //Expand the root schema node when we add the first node.
+                        parentNode.Parent.Expand();
+                        parentNode.Expand();
+                    }
+                }
+            });
+        }
+
+        private static void BackgroundSchemaCache_OnCacheItemRemoved(CachedSchema schemaItem)
+        {
+            ServerExplorerTree.EnsureNotNull().Invoke(() =>
+            {
+                var removedSchemaNode = FindNodeBySchemaId(schemaItem.Id);
+                removedSchemaNode?.Remove();
+            });
+        }
+
+        public static ServerExplorerNode? FindNodeBySchemaId(Guid schemaId)
+        {
+            foreach (var node in ServerExplorerTree.EnsureNotNull().Nodes.OfType<ServerExplorerNode>())
+            {
+                var result = FindNodeBySchemaIdRecursive(node, schemaId);
+                if (result != null)
+                {
+                    return result;
+                }
+
+                if (node.NodeType == ServerNodeType.Schema && node.SchemaId == schemaId)
+                {
+                    return node;
+                }
+            }
+
+            static ServerExplorerNode? FindNodeBySchemaIdRecursive(ServerExplorerNode rootNode, Guid schemaId)
+            {
+                foreach (var node in rootNode.Nodes.OfType<ServerExplorerNode>())
+                {
+                    var result = FindNodeBySchemaIdRecursive(node, schemaId);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+
+                    if (node.NodeType == ServerNodeType.Schema && node.SchemaId == schemaId)
+                    {
+                        return node;
+                    }
+                }
+                return null;
+            }
+
+            return null;
+        }
+
+
+        /*
 
         /// <summary>
         /// Populates a schema, its indexes and one level deeper to ensure there is something to expand in the tree.
@@ -99,7 +186,7 @@ namespace NTDLS.Katzebase.Management.Classes
             node.Nodes.Clear(); //Don't clear the node until we hear back from the server.
             if (rootNode.ServerClient == null || !rootNode.ServerClient.IsConnected)
             {
-                PopulateServer(treeView, rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash);
+                Connect(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash);
                 return;
             }
 
@@ -120,22 +207,6 @@ namespace NTDLS.Katzebase.Management.Classes
             return node;
         }
 
-        public static ServerExplorerNode CreateServerNode(string name, string serverAddress, int serverPort, string username, string passwordHash, KbClient serverClient)
-        {
-            var node = new ServerExplorerNode(name)
-            {
-                NodeType = Constants.ServerNodeType.Server,
-                ImageKey = "Server",
-                SelectedImageKey = "Server",
-                ServerAddress = serverAddress,
-                ServerPort = serverPort,
-                Username = username,
-                PasswordHash = passwordHash,
-                ServerClient = serverClient
-            };
-
-            return node;
-        }
 
         public static ServerExplorerNode CreateTreeNotLoadedNode()
         {
@@ -240,9 +311,9 @@ namespace NTDLS.Katzebase.Management.Classes
             return node;
         }
 
-        public static ServerExplorerNode? FindNodeOfType(TreeView treeView, ServerNodeType type, string text)
+        public static ServerExplorerNode? FindNodeOfType(ServerNodeType type, string text)
         {
-            foreach (var node in treeView.Nodes.OfType<ServerExplorerNode>())
+            foreach (var node in ServerExplorerTree.EnsureNotNull().Nodes.OfType<ServerExplorerNode>())
             {
                 var result = FindNodeOfType(node, type, text);
                 if (result != null)
@@ -309,5 +380,6 @@ namespace NTDLS.Katzebase.Management.Classes
 
             return moves;
         }
+        */
     }
 }

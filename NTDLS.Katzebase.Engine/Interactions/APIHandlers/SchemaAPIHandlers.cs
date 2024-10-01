@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 foreach (var item in schemaCatalog.Collection)
                 {
-                    result.Collection.Add(item.ToClientPayload(param.Schema));
+                    result.Collection.Add(item.ToClientPayload(physicalSchema.Id, param.Schema));
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
