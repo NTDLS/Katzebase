@@ -134,7 +134,7 @@ namespace NTDLS.Katzebase.Management.Classes
                             }
                         }
 
-                        //Remove indexes from the tree which are nolonger present on the server.
+                        //Remove indexes from the tree which are no longer present on the server.
                         foreach (var existingSchemaIndexNode in existingSchemaIndexNodes)
                         {
                             if (schemaItem.Indexes.Any(o => o.Id == existingSchemaIndexNode.SchemaIndex?.Id) == false)
