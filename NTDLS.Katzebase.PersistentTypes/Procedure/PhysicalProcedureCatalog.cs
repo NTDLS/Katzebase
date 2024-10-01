@@ -12,31 +12,16 @@ namespace NTDLS.Katzebase.PersistentTypes.Procedure
         public string? DiskPath { get; set; }
 
         public void Remove(PhysicalProcedure item)
-        {
-            Collection.Remove(item);
-        }
+            => Collection.Remove(item);
 
         public void Add(PhysicalProcedure item)
-        {
-            Collection.Add(item);
-        }
+            => Collection.Add(item);
 
         public PhysicalProcedure? GetById(Guid id)
-        {
-            return (from o in Collection where o.Id == id select o).FirstOrDefault();
-        }
+            => Collection.FirstOrDefault(x => x.Id == id);
 
         public PhysicalProcedure? GetByName(string name)
-        {
-            foreach (var item in Collection)
-            {
-                if (item.Name.Is(name))
-                {
-                    return item;
-                }
-            }
-            return null;
-        }
+            => Collection.FirstOrDefault(o => o.Name.Is(name));
 
         public PhysicalProcedureCatalog Clone()
         {

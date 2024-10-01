@@ -23,22 +23,12 @@ namespace NTDLS.Katzebase.Engine.Schemas
             return false;
         }
 
-        public PhysicalSchema? GetByName(string name)
-        {
-            foreach (var item in Collection)
-            {
-                if (item.Name.Is(name))
-                {
-                    return item;
-                }
-            }
-            return null;
-        }
 
         public PhysicalSchema? GetById(Guid id)
-        {
-            return Collection.FirstOrDefault(o => o.Id == id);
-        }
+            => Collection.FirstOrDefault(o => o.Id == id);
+
+        public PhysicalSchema? GetByName(string name)
+            => Collection.FirstOrDefault(o => o.Name.Is(name));
 
         public PhysicalSchemaCatalog Clone()
         {

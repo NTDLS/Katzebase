@@ -27,17 +27,11 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
         [ProtoIgnore]
         public int ContentLength
         {
-            get
-            {
-                _contentLength ??= JsonConvert.SerializeObject(Elements).Length;
-                return (int)_contentLength;
-            }
+            get => _contentLength ??= JsonConvert.SerializeObject(Elements).Length;
         }
 
         public PhysicalDocument()
-        {
-            Elements = new();
-        }
+            => Elements = new();
 
         public PhysicalDocument(string jsonString)
         {

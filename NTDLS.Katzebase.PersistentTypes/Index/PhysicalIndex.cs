@@ -27,8 +27,11 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         {
             uint hash = 0;
             if (string.IsNullOrEmpty(value))
+            {
                 return hash;
+            }
             value = value.ToLowerInvariant();
+
             const uint seed = 131;
             foreach (char c in value)
             {
@@ -66,9 +69,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         }
 
         public void AddAttribute(PhysicalIndexAttribute attribute)
-        {
-            Attributes.Add(attribute);
-        }
+            => Attributes.Add(attribute);
 
         static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
         {

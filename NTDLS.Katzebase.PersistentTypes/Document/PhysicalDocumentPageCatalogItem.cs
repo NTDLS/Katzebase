@@ -3,8 +3,7 @@
 namespace NTDLS.Katzebase.PersistentTypes.Document
 {
     /// <summary>
-    /// This is the collection item that is physically written to disk via PhysicalDocumentPageCatalog. It contains the
-    ///     page number as the number of documents stored in that page.
+    /// This is the collection item that is physically written to disk via PhysicalDocumentPageCatalog.
     /// </summary>
     [ProtoContract]
     [Serializable]
@@ -17,9 +16,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
         public int DocumentCount { get; set; }
 
         public PhysicalDocumentPageCatalogItem(int pageNumber)
-        {
-            PageNumber = pageNumber;
-        }
+            => PageNumber = pageNumber;
 
         public PhysicalDocumentPageCatalogItem()
         {

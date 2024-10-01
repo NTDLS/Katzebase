@@ -9,28 +9,21 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
     [Serializable]
     public class PhysicalDocumentPageMap
     {
-        public PhysicalDocumentPageMap() { }
-
         [ProtoIgnore]
         private HashSet<uint>? _documentIDs;
 
         [ProtoMember(1)]
         public HashSet<uint> DocumentIDs
         {
-            get
-            {
-                _documentIDs ??= new HashSet<uint>();
-                return _documentIDs;
-            }
-            set
-            {
-                _documentIDs = value;
-            }
+            get => _documentIDs ??= new HashSet<uint>();
+            set => _documentIDs = value;
+        }
+
+        public PhysicalDocumentPageMap()
+        {
         }
 
         public int TotalDocumentCount()
-        {
-            return DocumentIDs.Count;
-        }
+            => DocumentIDs.Count;
     }
 }

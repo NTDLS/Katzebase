@@ -12,31 +12,16 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         public string? DiskPath { get; set; }
 
         public void Remove(PhysicalIndex item)
-        {
-            Collection.Remove(item);
-        }
+            => Collection.Remove(item);
 
         public void Add(PhysicalIndex item)
-        {
-            Collection.Add(item);
-        }
+            => Collection.Add(item);
 
         public PhysicalIndex? GetById(Guid id)
-        {
-            return (from o in Collection where o.Id == id select o).FirstOrDefault();
-        }
+            => Collection.FirstOrDefault(o => o.Id == id);
 
         public PhysicalIndex? GetByName(string name)
-        {
-            foreach (var item in Collection)
-            {
-                if (item.Name.Is(name))
-                {
-                    return item;
-                }
-            }
-            return null;
-        }
+            => Collection.FirstOrDefault(o => o.Name.Is(name));
 
         public PhysicalIndexCatalog Clone()
         {

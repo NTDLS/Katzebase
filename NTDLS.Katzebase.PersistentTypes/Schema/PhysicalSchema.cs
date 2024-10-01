@@ -19,9 +19,7 @@ namespace NTDLS.Katzebase.Engine.Schemas
             public PhysicalSchema ParentPhysicalSchema { get; set; }
 
             public VirtualSchema(PhysicalSchema parentPhysicalSchema)
-            {
-                ParentPhysicalSchema = parentPhysicalSchema;
-            }
+                => ParentPhysicalSchema = parentPhysicalSchema;
         }
 
         public uint PageSize { get; set; }

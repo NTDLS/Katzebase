@@ -18,15 +18,8 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
         [ProtoMember(1)]
         public Dictionary<uint, PhysicalDocument> Documents
         {
-            get
-            {
-                _documents ??= new Dictionary<uint, PhysicalDocument>();
-                return _documents;
-            }
-            set
-            {
-                _documents = value;
-            }
+            get => _documents ??= new Dictionary<uint, PhysicalDocument>();
+            set => _documents = value;
         }
     }
 }
