@@ -2,8 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>NetworkDLS</Company>
+    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
+    <Version>0.22.0</Version>
+    <Authors>NetworkDLS</Authors>
   </PropertyGroup>
 
   <ItemGroup>
