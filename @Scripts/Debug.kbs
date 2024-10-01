@@ -1,13 +1,26 @@
 SELECT
-	Sha1('t'),
-    11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
-    6 * -1 as Negative,
-    10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
-    10 + 10 + 'ten' + 10 * 10,
-    'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+ 	tl.Name as TargetLanguage
 FROM
-	Single
-
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+ORDER BY
+	sl.Name ASC
+	tw.Text
+	
 --region TestCode
 
 --region TestCode

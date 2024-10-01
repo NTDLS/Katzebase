@@ -25,5 +25,5 @@ CREATE INDEX ix_TargetWordId(
 CREATE INDEX ix_Translation
 (
     SourceLanguageId,
-    TargetLanguageId,
+    TargetLanguageId
 ) ON WordList:Translation WITH (PARTITIONS = 1000)

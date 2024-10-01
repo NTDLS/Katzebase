@@ -54,6 +54,7 @@ namespace NTDLS.Katzebase.Management.Controls
             _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _foldingUpdateTimer.Tick += (sender, e) =>
             {
+                //Stop, then restart the timer so that the timer is reset for each keystroke.
                 _foldingUpdateTimer.Stop();
 
                 var newFolds = new List<NewFolding>();
@@ -74,11 +75,11 @@ namespace NTDLS.Katzebase.Management.Controls
 
             TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
             {
+                //Stop, then restart the timer so that the timer is reset for each keystroke.
                 _foldingUpdateTimer.Start();
                 _staticAnalysisTimer.Start();
             };
 
-            // Hook into the key down event to trigger completion
             TextArea.TextEntering += TextArea_TextEntering;
             TextArea.TextEntered += TextArea_TextEntered;
 
