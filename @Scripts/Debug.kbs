@@ -18,9 +18,10 @@ INNER JOIN WordList:Language as tl
 WHERE
 	sw.Text = 'Car'
 ORDER BY
-	sl.Name ASC
+	sl.Name ASC,
 	tw.Text
 	
+ 
 --region TestCode
 
 --region TestCode

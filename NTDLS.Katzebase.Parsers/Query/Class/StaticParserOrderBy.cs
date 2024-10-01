@@ -12,7 +12,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         {
             string token;
             var sortFields = new SortFields();
-            var fields = new List<string>();
 
             var endOfOrderByCaret = tokenizer.FindEndOfQuerySegment([" group ", " offset "]);
             string testText = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
