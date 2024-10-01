@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Shared;
 
@@ -138,7 +139,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     }
                     serverSchemas = _client.Schema.List(queued.Path).Collection;
                 }
-                catch
+                catch (Exception ex)
                 {
                     //We ran into an issue with the query, as a dumb safety measure,
                     //  just remove the schema from the queue and abandon the enumeration.

@@ -3,8 +3,14 @@
 --Translation test query.
 
 create schema Temporary:Blah
+create schema Temporary:Blah:One
+create schema Temporary:Blah:Two
+create schema Temporary:Blah:Three
 
 drop schema Temporary:Blah
+drop schema Temporary:Blah:One
+drop schema Temporary:Blah:Two
+drop schema Temporary:Blah:Three
 
 SELECT
 	sw.Id as SourceWordId,
