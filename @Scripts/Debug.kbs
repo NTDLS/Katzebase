@@ -1,6 +1,8 @@
 
 
-/*
+
+
+/* Translation test query.
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -25,8 +27,7 @@ ORDER BY
 	tw.Text
 */	
   
- 
---region TestCode
+ --region TestCode
 
 --region TestCode
 
@@ -98,7 +99,7 @@ select * from single
 
 select * hh single
 */
-
+ 
 --endregion
 /* 
 SELECT

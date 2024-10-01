@@ -191,6 +191,8 @@ namespace NTDLS.Katzebase.Management
             toolStripButtonPaste.Enabled = isTabOpen;
             toolStripButtonRedo.Enabled = isTabOpen;
             toolStripButtonReplace.Enabled = isTabOpen;
+            toolStripButtonExpandAllRegions.Enabled = isTabOpen;
+            toolStripButtonCollapseAllRegions.Enabled = isTabOpen;
             toolStripButtonExecuteScript.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
             toolStripButtonExplainPlan.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
             toolStripButtonStop.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == true);
@@ -924,6 +926,16 @@ namespace NTDLS.Katzebase.Management
         #endregion
 
         #region Toolbar Clicks.
+
+        private void ToolStripButtonCollapseAllRegions_Click(object sender, EventArgs e)
+        {
+            CurrentTabFilePage()?.Editor.CollapseAllFolds();
+        }
+
+        private void ToolStripButtonExpandAllRegions_Click(object sender, EventArgs e)
+        {
+            CurrentTabFilePage()?.Editor.ExpandAllFolds();
+        }
 
         private void SettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {

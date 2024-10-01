@@ -90,6 +90,8 @@
             settingsToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
+            toolStripButtonCollapseAllRegions = new ToolStripButton();
+            toolStripButtonExpandAllRegions = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)splitContainerObjectExplorer).BeginInit();
             splitContainerObjectExplorer.Panel1.SuspendLayout();
             splitContainerObjectExplorer.Panel2.SuspendLayout();
@@ -188,7 +190,7 @@
             // 
             // toolStripButtons
             // 
-            toolStripButtons.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStripButtons.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets, toolStripButtonCollapseAllRegions, toolStripButtonExpandAllRegions });
             toolStripButtons.Location = new Point(0, 24);
             toolStripButtons.Name = "toolStripButtons";
             toolStripButtons.Size = new Size(1184, 25);
@@ -606,6 +608,26 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
+            // toolStripButtonCollapseAllRegions
+            // 
+            toolStripButtonCollapseAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonCollapseAllRegions.Image = (Image)resources.GetObject("toolStripButtonCollapseAllRegions.Image");
+            toolStripButtonCollapseAllRegions.ImageTransparentColor = Color.Magenta;
+            toolStripButtonCollapseAllRegions.Name = "toolStripButtonCollapseAllRegions";
+            toolStripButtonCollapseAllRegions.Size = new Size(23, 22);
+            toolStripButtonCollapseAllRegions.Text = "Collapse all Regions";
+            toolStripButtonCollapseAllRegions.Click += ToolStripButtonCollapseAllRegions_Click;
+            // 
+            // toolStripButtonExpandAllRegions
+            // 
+            toolStripButtonExpandAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonExpandAllRegions.Image = (Image)resources.GetObject("toolStripButtonExpandAllRegions.Image");
+            toolStripButtonExpandAllRegions.ImageTransparentColor = Color.Magenta;
+            toolStripButtonExpandAllRegions.Name = "toolStripButtonExpandAllRegions";
+            toolStripButtonExpandAllRegions.Size = new Size(23, 22);
+            toolStripButtonExpandAllRegions.Text = "Expand all Regions";
+            toolStripButtonExpandAllRegions.Click += ToolStripButtonExpandAllRegions_Click;
+            // 
             // FormStudio
             // 
             AllowDrop = true;
@@ -705,5 +727,7 @@
         private ToolStripMenuItem toolsToolStripMenuItem;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripMenuItem recentFilesToolStripMenuItem;
+        private ToolStripButton toolStripButtonCollapseAllRegions;
+        private ToolStripButton toolStripButtonExpandAllRegions;
     }
 }

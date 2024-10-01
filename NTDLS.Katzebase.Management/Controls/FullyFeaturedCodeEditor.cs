@@ -247,7 +247,7 @@ namespace NTDLS.Katzebase.Management.Controls
             editor.WordWrap = Program.Settings.EditorWordWrap;
         }
 
-        private void CollapseAllFolds()
+        public void CollapseAllFolds()
         {
             foreach (var folding in _foldingManager.AllFoldings)
             {
@@ -255,7 +255,7 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        private void ExpandAllFolds()
+        public void ExpandAllFolds()
         {
             foreach (var folding in _foldingManager.AllFoldings)
             {
