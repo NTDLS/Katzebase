@@ -311,13 +311,13 @@ namespace NTDLS.Katzebase.Management
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Constants.ServerNodeType.IndexFolder)
+            else if (node.NodeType == Constants.ServerNodeType.SchemaIndexFolder)
             {
                 popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Constants.ServerNodeType.Index)
+            else if (node.NodeType == Constants.ServerNodeType.SchemaIndex)
             {
                 popupMenu.Items.Add("Analyze Index", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("Script Index", FormUtility.TransparentImage(Resources.Asset));
@@ -1330,8 +1330,8 @@ namespace NTDLS.Katzebase.Management
                 }
                 return path.Trim(':');
             }
-            else if (node.NodeType == Constants.ServerNodeType.Field
-                || node.NodeType == Constants.ServerNodeType.Index)
+            else if (node.NodeType == Constants.ServerNodeType.SchemaField
+                || node.NodeType == Constants.ServerNodeType.SchemaIndex)
             {
                 return node.Text;
             }

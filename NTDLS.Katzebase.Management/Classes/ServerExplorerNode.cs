@@ -7,7 +7,15 @@ namespace NTDLS.Katzebase.Management.Classes
     {
         public ServerNodeType NodeType { get; set; }
 
+        /// <summary>
+        /// The schema as it exists on the server, only populated when NodeType = ServerNodeType.Schema.
+        /// </summary>
         public KbSchema? Schema { get; set; }
+
+        /// <summary>
+        /// The index as it exists on the server, only populated when NodeType = ServerNodeType.Index.
+        /// </summary>
+        public KbIndex? SchemaIndex { get; set; }
 
         public ServerExplorerNode(ServerNodeType nodeType, string name) :
             base(name)
@@ -17,13 +25,13 @@ namespace NTDLS.Katzebase.Management.Classes
 
             var imageKey = nodeType switch
             {
-                ServerNodeType.Field => "Field",
-                ServerNodeType.FieldFolder => "FieldFolder",
                 ServerNodeType.Folder => "Folder",
-                ServerNodeType.Index => "Index",
-                ServerNodeType.IndexFolder => "IndexFolder",
                 ServerNodeType.None => "TreeNotLoaded",
                 ServerNodeType.Schema => "Schema",
+                ServerNodeType.SchemaField => "SchemaField",
+                ServerNodeType.SchemaFieldFolder => "SchemaFieldFolder",
+                ServerNodeType.SchemaIndex => "SchemaIndex",
+                ServerNodeType.SchemaIndexFolder => "SchemaIndexFolder",
                 ServerNodeType.Server => "Server",
                 _ => throw new Exception("Unsupported node type.")
             };
@@ -39,6 +47,15 @@ namespace NTDLS.Katzebase.Management.Classes
             => new ServerExplorerNode(ServerNodeType.Schema, schema.Name)
             {
                 Schema = schema,
+            };
+
+        public static ServerExplorerNode CreateSchemaIndexFolderNode()
+            => new ServerExplorerNode(ServerNodeType.SchemaIndexFolder, "Indexes");
+
+        public static ServerExplorerNode CreateSchemaIndexNode(KbIndex schemaIndex)
+            => new ServerExplorerNode(ServerNodeType.SchemaIndex, schemaIndex.Name)
+            {
+                SchemaIndex = schemaIndex
             };
     }
 }

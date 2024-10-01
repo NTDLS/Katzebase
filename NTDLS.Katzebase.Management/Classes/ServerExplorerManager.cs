@@ -25,12 +25,12 @@ namespace NTDLS.Katzebase.Management.Classes
 
             _treeImages.ColorDepth = ColorDepth.Depth32Bit;
             _treeImages.Images.Add("Folder", Resources.TreeFolder);
-            _treeImages.Images.Add("Server", Resources.TreeServer);
             _treeImages.Images.Add("Schema", Resources.TreeSchema);
-            _treeImages.Images.Add("Index", Resources.TreeIndex);
-            _treeImages.Images.Add("FieldFolder", Resources.TreeDocument);
-            _treeImages.Images.Add("Field", Resources.TreeField);
-            _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
+            _treeImages.Images.Add("SchemaField", Resources.TreeField);
+            _treeImages.Images.Add("SchemaFieldFolder", Resources.TreeDocument);
+            _treeImages.Images.Add("SchemaIndex", Resources.TreeIndex);
+            _treeImages.Images.Add("SchemaIndexFolder", Resources.TreeIndexFolder);
+            _treeImages.Images.Add("Server", Resources.TreeServer);
             _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
             ServerExplorerTree.ImageList = _treeImages;
         }
@@ -75,17 +75,26 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerTree.EnsureNotNull().Invoke(() =>
             {
-                var parentNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
-                if (parentNode != null && parentNode.Schema != null)
+                var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
+                if (parentSchemaNode != null && parentSchemaNode.Schema != null)
                 {
                     var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
-                    parentNode.Nodes.Add(newSchemaNode);
+                    parentSchemaNode.Nodes.Add(newSchemaNode);
 
-                    if (parentNode.Schema.ParentId == Guid.Empty && parentNode.Nodes.Count == 1)
+                    var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
+                    newSchemaNode.Nodes.Add(schemaIndexFolderNode);
+
+                    foreach (var index in schemaItem.Indexes.OrderBy(o=>o.Name))
+                    {
+                        var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
+                        schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                    }
+
+                    if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
                     {
                         //Expand the root schema node when we add the first node.
-                        parentNode.Parent.Expand();
-                        parentNode.Expand();
+                        parentSchemaNode.Parent.Expand();
+                        parentSchemaNode.Expand();
                     }
                 }
             });
@@ -95,6 +104,11 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerTree.EnsureNotNull().Invoke(() =>
             {
+                var existingSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                if (existingSchemaNode != null)
+                {
+
+                }
             });
         }
 

@@ -168,11 +168,14 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 //The list of schemas we obtained from the current work queue schema.
                 var schemasInParent = new List<KbSchema>();
 
-                foreach (var serverSchema in serverSchemas)
+                foreach (var serverSchema in serverSchemas.OrderBy(o => o.Name))
                 {
                     if (serverSchema.Name != null && serverSchema.Path != null && serverSchema.ParentPath != null)
                     {
                         schemasInParent.Add(serverSchema);
+
+                        bool schemaCacheItemAdded = false;
+                        bool schemaCacheItemRefreshed = false;
 
                         CachedSchema? newlyAddedOrUpdatedSchemaCacheItem = null;
 
@@ -184,9 +187,9 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                             {
                                 //Add newly discovered server schema, add it to the cache.
                                 newlyAddedOrUpdatedSchemaCacheItem = new CachedSchema(serverSchema);
-                                OnCacheItemAdded?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
                                 _schemaCache.Add(newlyAddedOrUpdatedSchemaCacheItem);
                                 wereItemsUpdated = true; //Items were added.
+                                schemaCacheItemAdded = true;
                             }
 
                             if (existingCacheItem != null && (DateTime.UtcNow - existingCacheItem.CachedDateTime).TotalSeconds > ExistingCacheItemRefreshIntervalSeconds)
@@ -197,7 +200,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                                 existingCacheItem.CachedDateTime = DateTime.UtcNow;
                                 existingCacheItem.Schema = serverSchema;
 
-                                OnCacheItemRefreshed?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
+                                schemaCacheItemRefreshed = true;
                             }
                         }
 
@@ -212,6 +215,15 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                             {
                                 //Probably a timeout, carry on...
                             }
+                        }
+
+                        if (schemaCacheItemAdded && newlyAddedOrUpdatedSchemaCacheItem != null)
+                        {
+                            OnCacheItemAdded?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
+                        }
+                        if (schemaCacheItemRefreshed && newlyAddedOrUpdatedSchemaCacheItem != null)
+                        {
+                            OnCacheItemRefreshed?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
                         }
                     }
                 }

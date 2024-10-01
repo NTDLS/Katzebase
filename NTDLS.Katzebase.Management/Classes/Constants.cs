@@ -5,11 +5,11 @@
         public enum ServerNodeType
         {
             None,
-            Field,
-            FieldFolder,
+            SchemaField,
+            SchemaFieldFolder,
             Folder,
-            Index,
-            IndexFolder,
+            SchemaIndex,
+            SchemaIndexFolder,
             Schema,
             Server,
             TreeNotLoaded
