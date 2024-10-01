@@ -52,6 +52,7 @@ namespace NTDLS.Katzebase.Management.Classes
 
             BackgroundSchemaCache.OnCacheItemAdded += BackgroundSchemaCache_OnCacheItemAdded;
             BackgroundSchemaCache.OnCacheItemRemoved += BackgroundSchemaCache_OnCacheItemRemoved;
+            BackgroundSchemaCache.OnCacheItemRefreshed += BackgroundSchemaCache_OnCacheItemRefreshed;
 
             ServerExplorerTree.EnsureNotNull().Nodes.Clear();
 
@@ -87,6 +88,13 @@ namespace NTDLS.Katzebase.Management.Classes
                         parentNode.Expand();
                     }
                 }
+            });
+        }
+
+        private static void BackgroundSchemaCache_OnCacheItemRefreshed(CachedSchema schemaItem)
+        {
+            ServerExplorerTree.EnsureNotNull().Invoke(() =>
+            {
             });
         }
 

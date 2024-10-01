@@ -11,12 +11,28 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
     /// </summary>
     internal static class BackgroundSchemaCache
     {
+        /// <summary>
+        /// The interval in which the lazy-loader will refresh information about already cached schemas.
+        /// </summary>
+        private const int ExistingCacheItemRefreshIntervalSeconds = 10;
+
         public delegate void CacheUpdated(List<CachedSchema> schemaCache);
         public static event CacheUpdated? OnCacheUpdated;
 
         public delegate void CacheItemUpdated(CachedSchema schemaItem);
+
+        /// <summary>
+        /// Event called when a server schema is discovered.
+        /// </summary>
         public static event CacheItemUpdated? OnCacheItemAdded;
+        /// <summary>
+        /// Event called when a server schema is removed from the server.
+        /// </summary>
         public static event CacheItemUpdated? OnCacheItemRemoved;
+        /// <summary>
+        /// Event called when a the background lazy-load is doing a periodic refresh of the schema.
+        /// </summary>
+        public static event CacheItemUpdated? OnCacheItemRefreshed;
 
         private static Thread? _thread;
         private static KbClient? _client;
@@ -139,6 +155,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     }
                     serverSchemas = _client.Schema.List(queued.Path).Collection;
                 }
+                //TODO: Do not remove item when the issue is a timeout.
                 catch (Exception ex)
                 {
                     //We ran into an issue with the query, as a dumb safety measure,
@@ -157,24 +174,44 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     {
                         schemasInParent.Add(serverSchema);
 
-                        CachedSchema? newlyAddedSchemaCacheItem = null;
+                        CachedSchema? newlyAddedOrUpdatedSchemaCacheItem = null;
 
                         lock (_schemaCache)
                         {
-                            //Add newly obtained schemas to the cache.
-                            if (_schemaCache.Any(o => o.Schema.Id == serverSchema.Id) == false)
+                            var existingCacheItem = _schemaCache.FirstOrDefault(o => o.Schema.Id == serverSchema.Id);
+
+                            if (existingCacheItem == null)
                             {
-                                newlyAddedSchemaCacheItem = new CachedSchema(serverSchema);
-                                OnCacheItemAdded?.Invoke(newlyAddedSchemaCacheItem);
-                                _schemaCache.Add(newlyAddedSchemaCacheItem);
+                                //Add newly discovered server schema, add it to the cache.
+                                newlyAddedOrUpdatedSchemaCacheItem = new CachedSchema(serverSchema);
+                                OnCacheItemAdded?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
+                                _schemaCache.Add(newlyAddedOrUpdatedSchemaCacheItem);
                                 wereItemsUpdated = true; //Items were added.
+                            }
+
+                            if (existingCacheItem != null && (DateTime.UtcNow - existingCacheItem.CachedDateTime).TotalSeconds > ExistingCacheItemRefreshIntervalSeconds)
+                            {
+                                //We already have this schema cached, but we want to refresh it incase anything has been added.
+                                newlyAddedOrUpdatedSchemaCacheItem = existingCacheItem;
+
+                                existingCacheItem.CachedDateTime = DateTime.UtcNow;
+                                existingCacheItem.Schema = serverSchema;
+
+                                OnCacheItemRefreshed?.Invoke(newlyAddedOrUpdatedSchemaCacheItem);
                             }
                         }
 
-                        if (newlyAddedSchemaCacheItem != null)
+                        if (newlyAddedOrUpdatedSchemaCacheItem != null)
                         {
-                            var indexes = _client.Schema.Indexes.List(newlyAddedSchemaCacheItem.Schema.Path);
-                            newlyAddedSchemaCacheItem.Indexes = indexes.Collection;
+                            try
+                            {
+                                var indexes = _client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
+                                newlyAddedOrUpdatedSchemaCacheItem.Indexes = indexes.Collection;
+                            }
+                            catch
+                            {
+                                //Probably a timeout, carry on...
+                            }
                         }
                     }
                 }
