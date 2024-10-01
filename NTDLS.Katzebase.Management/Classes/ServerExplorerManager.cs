@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
+using System;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -107,7 +108,52 @@ namespace NTDLS.Katzebase.Management.Classes
                 var existingSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
                 if (existingSchemaNode != null)
                 {
+                    //Update basic schema information.
+                    existingSchemaNode.Text = schemaItem.Schema.Name;
+                    existingSchemaNode.Schema = schemaItem.Schema;
 
+                    var schemaIndexFolderNode = GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaIndexFolder);
+                    if (schemaIndexFolderNode != null)
+                    {
+                        var existingSchemaIndexNodes = GetSingleLevelChildNodesOfType(schemaIndexFolderNode, ServerNodeType.SchemaIndex);
+
+                        //Add/update indexes to the tree.
+                        foreach (var serverSchemaIndex in schemaItem.Indexes)
+                        {
+                            var existingSchemaIndexNode = existingSchemaIndexNodes.FirstOrDefault(o => o.SchemaIndex?.Id == serverSchemaIndex.Id);
+                            if (existingSchemaIndexNode == null)
+                            {
+                                //Add newly discovered schema index to the tree.
+                                var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(serverSchemaIndex);
+                                schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                            }
+                            else
+                            {
+                                //Refresh existing schema index in the tree.
+                                existingSchemaIndexNode.Text = serverSchemaIndex.Name;
+                                existingSchemaIndexNode.SchemaIndex = serverSchemaIndex;
+                            }
+                        }
+
+                        //Remove indexes from the tree.
+                        //var indexNodesToDelete = new List<ServerExplorerNode>();
+                        foreach (var existingSchemaIndexNode in existingSchemaIndexNodes)
+                        {
+                            if (schemaItem.Indexes.Any(o => o.Id == existingSchemaIndexNode.SchemaIndex?.Id) == false)
+                            {
+                                schemaIndexFolderNode.Nodes.Remove(existingSchemaIndexNode);
+                                //indexNodesToDelete.Add(existingSchemaIndexNode);
+                            }
+                        }
+
+                        /*
+                        foreach (var indexNodeToDelete in indexNodesToDelete)
+                        {
+                        }
+                        */
+
+
+                    }
                 }
             });
         }
@@ -131,7 +177,7 @@ namespace NTDLS.Katzebase.Management.Classes
                     return result;
                 }
 
-                if (node.NodeType == ServerNodeType.Schema && node.Schema.Id == schemaId)
+                if (node.NodeType == ServerNodeType.Schema && node.Schema?.Id == schemaId)
                 {
                     return node;
                 }
@@ -147,7 +193,7 @@ namespace NTDLS.Katzebase.Management.Classes
                         return result;
                     }
 
-                    if (node.NodeType == ServerNodeType.Schema && node.Schema.Id == schemaId)
+                    if (node.NodeType == ServerNodeType.Schema && node.Schema?.Id == schemaId)
                     {
                         return node;
                     }
@@ -158,6 +204,11 @@ namespace NTDLS.Katzebase.Management.Classes
             return null;
         }
 
+        public static ServerExplorerNode? GetFirstChildNodeOfType(ServerExplorerNode givenNode, ServerNodeType nodeType)
+            => givenNode.Nodes.OfType<ServerExplorerNode>().Where(o => o.NodeType == nodeType).FirstOrDefault();
+
+        public static List<ServerExplorerNode> GetSingleLevelChildNodesOfType(ServerExplorerNode givenNode, ServerNodeType nodeType)
+            => givenNode.Nodes.OfType<ServerExplorerNode>().Where(o => o.NodeType == nodeType).ToList();
 
         /*
 
