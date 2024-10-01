@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Shared;
 

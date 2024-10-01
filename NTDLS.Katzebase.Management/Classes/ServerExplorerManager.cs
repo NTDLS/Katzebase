@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Management.Classes
                     var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
                     newSchemaNode.Nodes.Add(schemaIndexFolderNode);
 
-                    foreach (var index in schemaItem.Indexes.OrderBy(o=>o.Name))
+                    foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
                     {
                         var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
                         schemaIndexFolderNode.Nodes.Add(schemaIndexNode);

@@ -41,19 +41,19 @@ namespace NTDLS.Katzebase.Management.Classes
         }
 
         public static ServerExplorerNode CreateServerNode(string name)
-            => new ServerExplorerNode(ServerNodeType.Server, name);
+            => new(ServerNodeType.Server, name);
 
         public static ServerExplorerNode CreateSchemaNode(KbSchema schema)
-            => new ServerExplorerNode(ServerNodeType.Schema, schema.Name)
+            => new(ServerNodeType.Schema, schema.Name)
             {
                 Schema = schema,
             };
 
         public static ServerExplorerNode CreateSchemaIndexFolderNode()
-            => new ServerExplorerNode(ServerNodeType.SchemaIndexFolder, "Indexes");
+            => new(ServerNodeType.SchemaIndexFolder, "Indexes");
 
         public static ServerExplorerNode CreateSchemaIndexNode(KbIndex schemaIndex)
-            => new ServerExplorerNode(ServerNodeType.SchemaIndex, schemaIndex.Name)
+            => new(ServerNodeType.SchemaIndex, schemaIndex.Name)
             {
                 SchemaIndex = schemaIndex
             };
