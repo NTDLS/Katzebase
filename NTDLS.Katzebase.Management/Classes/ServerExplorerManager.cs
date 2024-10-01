@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
-using System;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -135,24 +134,14 @@ namespace NTDLS.Katzebase.Management.Classes
                             }
                         }
 
-                        //Remove indexes from the tree.
-                        //var indexNodesToDelete = new List<ServerExplorerNode>();
+                        //Remove indexes from the tree which are nolonger present on the server.
                         foreach (var existingSchemaIndexNode in existingSchemaIndexNodes)
                         {
                             if (schemaItem.Indexes.Any(o => o.Id == existingSchemaIndexNode.SchemaIndex?.Id) == false)
                             {
                                 schemaIndexFolderNode.Nodes.Remove(existingSchemaIndexNode);
-                                //indexNodesToDelete.Add(existingSchemaIndexNode);
                             }
                         }
-
-                        /*
-                        foreach (var indexNodeToDelete in indexNodesToDelete)
-                        {
-                        }
-                        */
-
-
                     }
                 }
             });
