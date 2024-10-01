@@ -1,3 +1,6 @@
+
+
+/*
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -20,7 +23,8 @@ WHERE
 ORDER BY
 	sl.Name ASC,
 	tw.Text
-	
+*/	
+  
  
 --region TestCode
 

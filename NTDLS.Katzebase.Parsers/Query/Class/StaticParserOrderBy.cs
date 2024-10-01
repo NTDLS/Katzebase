@@ -41,12 +41,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     {
                         sortDirection = token.Is("desc") ? KbSortDirection.Descending : KbSortDirection.Ascending;
                     }
-                    else
+
+                    if (!fieldTokenizer.IsExhausted())
                     {
-                        if (!fieldTokenizer.IsExhausted())
-                        {
-                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [asc] or [desc] found: [{tokenizer.ResolveLiteral(token)}].");
-                        }
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [asc] or [desc] found: [{tokenizer.ResolveLiteral(token)}].");
                     }
 
                     sortFields.Add(tokenizer.GetCurrentLineNumber(), fieldText, sortDirection);

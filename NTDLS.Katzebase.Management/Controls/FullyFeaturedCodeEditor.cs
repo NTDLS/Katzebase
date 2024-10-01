@@ -54,23 +54,31 @@ namespace NTDLS.Katzebase.Management.Controls
             _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _foldingUpdateTimer.Tick += (sender, e) =>
             {
-                //Stop, then restart the timer so that the timer is reset for each keystroke.
-                _foldingUpdateTimer.Stop();
+                try
+                {
+                    //Stop, then restart the timer so that the timer is reset for each keystroke.
+                    _foldingUpdateTimer.Stop();
 
-                var newFolds = new List<NewFolding>();
+                    var newFolds = new List<NewFolding>();
 
-                newFolds.AddRange(_regionFoldingStrategy.CreateNewFoldings(Document));
-                newFolds.AddRange(_commentFoldingStrategy.CreateNewFoldings(Document));
+                    newFolds.AddRange(_regionFoldingStrategy.CreateNewFoldings(Document));
+                    newFolds.AddRange(_commentFoldingStrategy.CreateNewFoldings(Document));
 
-                _foldingManager.UpdateFoldings(newFolds, -1);
+                    _foldingManager.UpdateFoldings(newFolds, -1);
+                }
+                catch { }
             };
 
             _staticAnalysisTimer = new DispatcherTimer();
             _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(500);
             _staticAnalysisTimer.Tick += (sender, e) =>
             {
-                _staticAnalysisTimer.Stop();
-                PerformStaticAnalysis();
+                try
+                {
+                    _staticAnalysisTimer.Stop();
+                    PerformStaticAnalysis();
+                }
+                catch { }
             };
 
             TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
