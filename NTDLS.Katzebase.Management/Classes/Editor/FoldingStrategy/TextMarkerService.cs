@@ -3,7 +3,7 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using System.Windows.Media;
 
-namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
+namespace NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy
 {
     public class TextMarkerService : IBackgroundRenderer
     {
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
                 {
                     if (marker.SquigglyLineColor.HasValue)
                     {
-                        var pen = new System.Windows.Media.Pen(new System.Windows.Media.SolidColorBrush(marker.SquigglyLineColor.Value), 1);
+                        var pen = new System.Windows.Media.Pen(new SolidColorBrush(marker.SquigglyLineColor.Value), 1);
                         pen.Freeze();
 
                         double yOffset = rect.Bottom + 2; // Adjust for squiggly line position

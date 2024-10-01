@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
+﻿namespace NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy
 {
     public class SyntaxErrorTextMarker //: ISyntaxErrorTextMarker
     {

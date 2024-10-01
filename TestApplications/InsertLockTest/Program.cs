@@ -37,8 +37,8 @@ namespace InsertLockTest
 
             while (true)
             {
-                Threads.StartThread(clientA, CreateSchemaDeadlockA);
-                Threads.StartThread(clientB, CreateSchemaDeadlockB);
+                Threading.StartThread(clientA, CreateSchemaDeadlockA);
+                Threading.StartThread(clientB, CreateSchemaDeadlockB);
 
                 Thread.Sleep(2500);
             }

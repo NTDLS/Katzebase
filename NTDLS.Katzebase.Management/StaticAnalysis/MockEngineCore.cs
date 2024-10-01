@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Parsers.Functions.Scaler;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using static NTDLS.Katzebase.Client.KbConstants;
 
-namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
+namespace NTDLS.Katzebase.Management.StaticAnalysis
 {
     internal class MockEngineCore
     {

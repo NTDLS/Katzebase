@@ -21,11 +21,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
             }
 
             //Parse joins.

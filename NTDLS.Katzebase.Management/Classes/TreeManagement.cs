@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Management.StaticAnalysis;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -13,6 +14,12 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             var client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{Client.KbConstants.FriendlyName}.UI");
             client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
+            client.OnDisconnected += (KbClient sender, Client.Payloads.KbSessionInfo sessionInfo) =>
+            {
+                BackgroundSchemaCache.Instance.Stop();
+            };
+
+            BackgroundSchemaCache.Instance.StartOrReset(client);
 
             string key = serverAddress.ToLower();
 
@@ -27,11 +34,17 @@ namespace NTDLS.Katzebase.Management.Classes
             PopulateSchemaNode(serverNode, client, ":");
 
             treeView.Nodes.Add(serverNode);
+        }
 
+        private static void Client_OnConnected(KbClient sender, Client.Payloads.KbSessionInfo sessionInfo)
+        {
+            throw new NotImplementedException();
         }
 
         public static void Close(TreeView treeView)
         {
+            BackgroundSchemaCache.Instance.Stop();
+
             var rootNode = GetRootNode(treeView);
             if (rootNode != null)
             {

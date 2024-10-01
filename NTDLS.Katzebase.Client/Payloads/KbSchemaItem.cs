@@ -2,8 +2,10 @@
 {
     public class KbSchemaItem
     {
-        public string? Name { get; set; }
         public Guid? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Path { get; set; }
+        public string? ParentPath { get; set; }
         public uint PageSize { get; set; }
 
         public KbSchemaItem Clone()
@@ -12,6 +14,8 @@
             {
                 Id = Id,
                 Name = Name,
+                Path = Path,
+                ParentPath = ParentPath,
                 PageSize = PageSize
             };
         }

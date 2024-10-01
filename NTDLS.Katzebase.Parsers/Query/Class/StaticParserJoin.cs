@@ -19,6 +19,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [join], found: [{tokenizer.EatGetNextEvaluated()}]");
                 }
 
+                var schemaScriptLine = tokenizer.GetCurrentLineNumber();
+
                 string subSchemaSchema = tokenizer.EatGetNext();
                 string subSchemaAlias = string.Empty;
                 if (!TokenizerHelpers.IsValidIdentifier(subSchemaSchema, ':'))
@@ -50,9 +52,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 try
                 {
                     tokenizer.PushSyntheticLimit(endOfJoinCaret);
-
                     var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
-                    result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
                 catch
                 {

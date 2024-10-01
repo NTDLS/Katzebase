@@ -8,21 +8,26 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         public string Prefix { get; set; } = string.Empty;
         public ConditionCollection? Conditions { get; set; }
 
-        public QuerySchema(string name, string prefix, ConditionCollection conditions)
+        public int? ScriptLine { get; set; }
+
+        public QuerySchema(int? scriptLine, string name, string prefix, ConditionCollection conditions)
         {
+            ScriptLine = scriptLine;
             Name = name;
             Prefix = prefix;
             Conditions = conditions;
         }
 
-        public QuerySchema(string name, string prefix)
+        public QuerySchema(int? scriptLine, string name, string prefix)
         {
+            ScriptLine = scriptLine;
             Name = name;
             Prefix = prefix;
         }
 
-        public QuerySchema(string name)
+        public QuerySchema(int? scriptLine, string name)
         {
+            ScriptLine = scriptLine;
             Name = name;
         }
     }

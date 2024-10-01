@@ -11,7 +11,7 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
-using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
+using NTDLS.Katzebase.Management.StaticAnalysis;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Management.Controls
             {
                 try
                 {
-                    _staticAnalysisTimer.Stop();
+                    _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(2500);
                     PerformStaticAnalysis();
                 }
                 catch { }
@@ -86,6 +86,11 @@ namespace NTDLS.Katzebase.Management.Controls
             TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
             {
                 //Stop, then restart the timer so that the timer is reset for each keystroke.
+                _foldingUpdateTimer.Stop();
+                _staticAnalysisTimer.Stop();
+
+                _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(500);
+
                 _foldingUpdateTimer.Start();
                 _staticAnalysisTimer.Start();
             };
@@ -112,9 +117,16 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 var scripts = KbTextUtility.SplitQueryBatchesOnGO(Text);
 
+                var schemaCache = BackgroundSchemaCache.Instance.GetCache();
+
                 foreach (var script in scripts)
                 {
                     var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
+
+                    foreach (var query in queryBatch)
+                    {
+                        StaticAnalyzer.ClientSideAnalyis(Document, _textMarkerService, schemaCache, queryBatch, query);
+                    }
                 }
             }
             catch (KbParserException parserException)
@@ -152,7 +164,6 @@ namespace NTDLS.Katzebase.Management.Controls
                     RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
                 }
             }
-
         }
 
 

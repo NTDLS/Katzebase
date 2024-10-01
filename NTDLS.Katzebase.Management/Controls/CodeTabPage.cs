@@ -3,7 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
+using NTDLS.Katzebase.Management.StaticAnalysis;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 

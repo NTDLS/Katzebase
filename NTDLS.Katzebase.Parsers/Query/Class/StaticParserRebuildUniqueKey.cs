@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
             }
-            query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant()));
+            query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant()));
 
             if (tokenizer.TryEatIfNext("with"))
             {
