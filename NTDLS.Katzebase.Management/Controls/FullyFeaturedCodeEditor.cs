@@ -64,6 +64,8 @@ namespace NTDLS.Katzebase.Management.Controls
                     newFolds.AddRange(_regionFoldingStrategy.CreateNewFoldings(Document));
                     newFolds.AddRange(_commentFoldingStrategy.CreateNewFoldings(Document));
 
+                    newFolds.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
+
                     _foldingManager.UpdateFoldings(newFolds, -1);
                 }
                 catch { }
