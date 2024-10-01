@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Management.Classes
             ServerExplorerTree.EnsureNotNull().Nodes.Clear();
 
             var serverNode = ServerExplorerNode.CreateServerNode(serverAddress);
-            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode("Root (:)", "", Guid.Empty, EngineConstants.RootSchemaGUID);
+            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root (:)", "", "", Guid.Empty, 100));
             serverNode.Nodes.Add(rootSchemaNode);
             ServerExplorerTree.Nodes.Add(serverNode);
 
@@ -74,13 +74,13 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerTree.EnsureNotNull().Invoke(() =>
             {
-                var parentNode = FindNodeBySchemaId(schemaItem.ParentId);
-                if (parentNode != null)
+                var parentNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
+                if (parentNode != null && parentNode.Schema != null)
                 {
-                    var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Name, schemaItem.Path, schemaItem.ParentId, schemaItem.Id);
+                    var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
                     parentNode.Nodes.Add(newSchemaNode);
 
-                    if (parentNode.ParentSchemaId == Guid.Empty && parentNode.Nodes.Count == 1)
+                    if (parentNode.Schema.ParentId == Guid.Empty && parentNode.Nodes.Count == 1)
                     {
                         //Expand the root schema node when we add the first node.
                         parentNode.Parent.Expand();
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerTree.EnsureNotNull().Invoke(() =>
             {
-                var removedSchemaNode = FindNodeBySchemaId(schemaItem.Id);
+                var removedSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
                 removedSchemaNode?.Remove();
             });
         }
@@ -109,7 +109,7 @@ namespace NTDLS.Katzebase.Management.Classes
                     return result;
                 }
 
-                if (node.NodeType == ServerNodeType.Schema && node.SchemaId == schemaId)
+                if (node.NodeType == ServerNodeType.Schema && node.Schema.Id == schemaId)
                 {
                     return node;
                 }
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Management.Classes
                         return result;
                     }
 
-                    if (node.NodeType == ServerNodeType.Schema && node.SchemaId == schemaId)
+                    if (node.NodeType == ServerNodeType.Schema && node.Schema.Id == schemaId)
                     {
                         return node;
                     }

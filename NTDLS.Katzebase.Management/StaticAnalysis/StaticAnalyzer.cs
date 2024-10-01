@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
             foreach (var querySchema in query.Schemas)
             {
-                var serverMatchedSchema = schemaCache.FirstOrDefault(o => o.Path.Is(querySchema.Name));
+                var serverMatchedSchema = schemaCache.FirstOrDefault(o => o.Schema.Path.Is(querySchema.Name));
 
                 if (serverMatchedSchema == null)
                 {

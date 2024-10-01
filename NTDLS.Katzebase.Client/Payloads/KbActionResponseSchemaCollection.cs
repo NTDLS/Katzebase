@@ -2,6 +2,6 @@
 {
     public class KbActionResponseSchemaCollection : KbBaseActionResponse
     {
-        public List<KbSchemaItem> Collection { get; set; } = new();
+        public List<KbSchema> Collection { get; set; } = new();
     }
 }

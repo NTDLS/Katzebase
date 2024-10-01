@@ -2,11 +2,11 @@
 {
     public class KbActionResponseIndexes : KbBaseActionResponse
     {
-        public List<KbIndex> List { get; set; } = new List<KbIndex>();
+        public List<KbIndex> Collection { get; set; } = new List<KbIndex>();
 
         public void Add(KbIndex value)
         {
-            List.Add(value);
+            Collection.Add(value);
         }
     }
 }

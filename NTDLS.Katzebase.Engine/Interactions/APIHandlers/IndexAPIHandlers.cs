@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 if (indexCatalog != null)
                 {
-                    result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
+                    result.Collection.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result);

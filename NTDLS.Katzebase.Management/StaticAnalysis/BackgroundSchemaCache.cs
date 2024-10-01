@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// <summary>
         /// The schemas that we will lazy load next.
         /// </summary>
-        private static List<QueuedSchema> _schemaWorkQueue = new();
+        private static List<KbSchema> _schemaWorkQueue = new();
 
         /// <summary>
         /// The cache of schemas.
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 var results = new List<CachedSchema>();
                 results.AddRange(_schemaCache);
                 //Mock in a root schema.
-                results.Add(new CachedSchema(EngineConstants.RootSchemaGUID, Guid.Empty, "Root", "", ""));
+                results.Add(new CachedSchema(new(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty, 0)));
             }
             return _schemaCache;
         }
@@ -121,15 +121,15 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
             if (_schemaWorkQueue.Count == 0)
             {
-                _schemaWorkQueue.Add(new(EngineConstants.RootSchemaGUID, Guid.Empty, "", "", ""));
+                _schemaWorkQueue.Add(new KbSchema(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty, 0));
             }
 
-            var newQueue = new List<QueuedSchema>();
+            var newQueue = new List<KbSchema>();
 
             //Create a list of schemas that we need to queue up for retrieval.
             foreach (var queued in _schemaWorkQueue)
             {
-                List<KbSchemaItem>? serverSchemas = null;
+                List<KbSchema>? serverSchemas = null;
 
                 try
                 {
@@ -149,27 +149,32 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 }
 
                 //The list of schemas we obtained from the current work queue schema.
-                var schemasInParent = new List<QueuedSchema>();
+                var schemasInParent = new List<KbSchema>();
 
                 foreach (var serverSchema in serverSchemas)
                 {
                     if (serverSchema.Name != null && serverSchema.Path != null && serverSchema.ParentPath != null)
                     {
-                        var queuedSchema = new QueuedSchema(serverSchema.Id.EnsureNotNull(),
-                            serverSchema.ParentId.EnsureNotNull(), serverSchema.Name, serverSchema.Path, serverSchema.ParentPath);
-                        schemasInParent.Add(queuedSchema);
+                        schemasInParent.Add(serverSchema);
+
+                        CachedSchema? newlyAddedSchemaCacheItem = null;
 
                         lock (_schemaCache)
                         {
                             //Add newly obtained schemas to the cache.
-                            if (_schemaCache.Any(o => o.Id == serverSchema.Id) == false)
+                            if (_schemaCache.Any(o => o.Schema.Id == serverSchema.Id) == false)
                             {
-                                var cachedSchema = new CachedSchema(serverSchema.Id.EnsureNotNull(),
-                                    serverSchema.ParentId.EnsureNotNull(), serverSchema.Name, serverSchema.Path, serverSchema.ParentPath);
-                                OnCacheItemAdded?.Invoke(cachedSchema);
-                                _schemaCache.Add(cachedSchema);
+                                newlyAddedSchemaCacheItem = new CachedSchema(serverSchema);
+                                OnCacheItemAdded?.Invoke(newlyAddedSchemaCacheItem);
+                                _schemaCache.Add(newlyAddedSchemaCacheItem);
                                 wereItemsUpdated = true; //Items were added.
                             }
+                        }
+
+                        if (newlyAddedSchemaCacheItem != null)
+                        {
+                            var indexes = _client.Schema.Indexes.List(newlyAddedSchemaCacheItem.Schema.Path);
+                            newlyAddedSchemaCacheItem.Indexes = indexes.Collection;
                         }
                     }
                 }
@@ -177,7 +182,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 lock (_schemaCache)
                 {
                     //Find all cached schemas in the parent schema that we just scanned, remove cache items that do not exist anymore.
-                    var itemsToRemove = _schemaCache.Where(o => o.ParentPath == queued.Path && schemasInParent.Any(s => s.Id == o.Id) == false).ToList();
+                    var itemsToRemove = _schemaCache.Where(o => o.Schema.ParentPath == queued.Path && schemasInParent.Any(s => s.Id == o.Schema.Id) == false).ToList();
 
                     foreach (var itemToRemove in itemsToRemove)
                     {
