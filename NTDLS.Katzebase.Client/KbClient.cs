@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Client
 
         public bool IsConnected => Connection?.IsConnected == true;
 
-        public string Host { get; private set; } = string.Empty;
+        public string Address { get; private set; } = string.Empty;
         public int Port { get; private set; }
         public ulong ProcessId { get; private set; }
         public string Username { get; private set; } = string.Empty;
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Client
             Procedure = new KbProcedureClient(this);
         }
 
-        public KbClient(string hostName, int serverPort, string userName, string password, string clientName = "")
+        public KbClient(string serverAddress, int serverPort, string userName, string password, string clientName = "")
         {
             Document = new KbDocumentClient(this);
             Schema = new KbSchemaClient(this);
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Client
             Query = new KbQueryClient(this);
             Procedure = new KbProcedureClient(this);
 
-            Connect(hostName, serverPort, userName, password, clientName);
+            Connect(serverAddress, serverPort, userName, password, clientName);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Client
         /// <exception cref="KbGenericException"></exception>
         public void Connect(string hostname, int port, string username, string passwordHash, string clientName)
         {
-            Host = hostname;
+            Address = hostname;
             Port = port;
             Username = username;
             ClientName = clientName;
