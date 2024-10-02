@@ -33,7 +33,7 @@
             treeViewServerExplorer = new TreeView();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
-            treeViewShortcuts = new TreeView();
+            treeViewMacros = new TreeView();
             statusStripDocument = new StatusStrip();
             toolStripStatusLabelServerName = new ToolStripStatusLabel();
             toolStripStatusLabelProcessId = new ToolStripStatusLabel();
@@ -146,7 +146,7 @@
             // 
             // splitContainerMacros.Panel2
             // 
-            splitContainerMacros.Panel2.Controls.Add(treeViewShortcuts);
+            splitContainerMacros.Panel2.Controls.Add(treeViewMacros);
             splitContainerMacros.Size = new Size(529, 236);
             splitContainerMacros.SplitterDistance = 261;
             splitContainerMacros.TabIndex = 1;
@@ -161,10 +161,10 @@
             // 
             // treeViewShortcuts
             // 
-            treeViewShortcuts.Location = new Point(13, 22);
-            treeViewShortcuts.Name = "treeViewShortcuts";
-            treeViewShortcuts.Size = new Size(168, 189);
-            treeViewShortcuts.TabIndex = 0;
+            treeViewMacros.Location = new Point(13, 22);
+            treeViewMacros.Name = "treeViewShortcuts";
+            treeViewMacros.Size = new Size(168, 189);
+            treeViewMacros.TabIndex = 0;
             // 
             // statusStripDocument
             // 
@@ -704,7 +704,7 @@
         private ToolStripButton toolStripButtonMacros;
         private ToolStripButton toolStripButtonSnippets;
         private SplitContainer splitContainerMacros;
-        private TreeView treeViewShortcuts;
+        private TreeView treeViewMacros;
         private ToolStripButton toolStripButtonNewFile;
         private ToolStripButton toolStripButtonProject;
         private ToolStripButton toolStripButtonOutput;

@@ -47,15 +47,15 @@ namespace NTDLS.Katzebase.Management
             splitContainerObjectExplorer.Dock = DockStyle.Fill;
             splitContainerMacros.Dock = DockStyle.Fill;
             tabControlBody.Dock = DockStyle.Fill;
-            treeViewShortcuts.Dock = DockStyle.Fill;
+            treeViewMacros.Dock = DockStyle.Fill;
 
             treeViewServerExplorer.NodeMouseClick += TreeViewProject_NodeMouseClick;
 
             tabControlBody.Click += TabControlParent_Click;
             tabControlBody.TabIndexChanged += TabControlParent_TabIndexChanged;
 
-            treeViewShortcuts.ShowNodeToolTips = true;
-            treeViewShortcuts.ItemDrag += TreeViewMacros_ItemDrag;
+            treeViewMacros.ShowNodeToolTips = true;
+            treeViewMacros.ItemDrag += TreeViewMacros_ItemDrag;
 
             Shown += FormStudio_Shown;
             FormClosing += FormStudio_FormClosing;
@@ -646,13 +646,13 @@ namespace NTDLS.Katzebase.Management
             public string? Description { get; set; }
         }
 
-        private void PopulateShortcuts(KbClient kbClient)
+        private void PopulateMacros(KbClient kbClient)
         {
             GlobalState.AutoCompleteFunctions.Clear();
 
             #region System Functions.
 
-            var systemFunctionsNode = treeViewShortcuts.Nodes.Add("System Functions");
+            var systemFunctionsNode = treeViewMacros.Nodes.Add("System Functions");
             var systemFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowSystemFunctions").OrderBy(o => o.Name);
             foreach (var systemFunction in systemFunctions)
             {
@@ -683,7 +683,7 @@ namespace NTDLS.Katzebase.Management
 
             #region Scaler Functions.
 
-            var scalerFunctionsNode = treeViewShortcuts.Nodes.Add("Scaler Functions");
+            var scalerFunctionsNode = treeViewMacros.Nodes.Add("Scaler Functions");
             var scalerFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowScalerFunctions").OrderBy(o => o.Name);
             foreach (var scalerFunction in scalerFunctions)
             {
@@ -714,7 +714,7 @@ namespace NTDLS.Katzebase.Management
 
             #region Aggregate Functions.
 
-            var aggregateFunctionsNode = treeViewShortcuts.Nodes.Add("Aggregate Functions");
+            var aggregateFunctionsNode = treeViewMacros.Nodes.Add("Aggregate Functions");
             var aggregateFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowAggregateFunctions").OrderBy(o => o.Name);
             foreach (var aggregateFunction in aggregateFunctions)
             {
@@ -790,7 +790,7 @@ namespace NTDLS.Katzebase.Management
                     var kbClient = ServerExplorerManager.GetRootNode(treeViewServerExplorer)?.ServerClient;
                     if (kbClient != null)
                     {
-                        PopulateShortcuts(kbClient);
+                        PopulateMacros(kbClient);
                     }
 
                     foreach (TreeNode node in treeViewServerExplorer.Nodes)
@@ -1317,14 +1317,7 @@ namespace NTDLS.Katzebase.Management
         {
             if (node.NodeType == Constants.ServerNodeType.Schema)
             {
-                string path = string.Empty;
-                while (node != null && node.NodeType != Constants.ServerNodeType.Server)
-                {
-                    path = $"{node.Text}:{path}";
-
-                    node = (ServerExplorerNode)node.Parent;
-                }
-                return path.Trim(':');
+                return node.Schema.EnsureNotNull().Path;
             }
             else if (node.NodeType == Constants.ServerNodeType.SchemaField
                 || node.NodeType == Constants.ServerNodeType.SchemaIndex)
