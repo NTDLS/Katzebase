@@ -26,33 +26,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryQueryExplainPlansReply ExecuteExplainPlans(RmContext context, KbQueryQueryExplainPlans param)
-        {
-            var session = _core.Sessions.GetSession(context.ConnectionId);
-#if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            LogManager.Debug(Thread.CurrentThread.Name);
-#endif
-
-            var results = new KbQueryQueryExplainPlansReply();
-
-            foreach (var statement in param.Statements)
-            {
-                session.SetCurrentQuery(statement);
-
-                foreach (var preparedQuery in StaticQueryParser.ParseBatch(statement, _core.GlobalConstants, param.UserParameters))
-                {
-                    var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
-
-                    results.Add(intermediateResult);
-                }
-            }
-
-            session.ClearCurrentQuery();
-
-            return results;
-        }
-
         public KbQueryQueryExplainPlanReply ExecuteExplainPlan(RmContext context, KbQueryQueryExplainPlan param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
@@ -70,33 +43,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
                 results.Add(intermediateResult);
-            }
-
-            session.ClearCurrentQuery();
-
-            return results;
-        }
-
-        public KbQueryQueryExplainOperationsReply ExecuteExplainOperations(RmContext context, KbQueryQueryExplainOperations param)
-        {
-            var session = _core.Sessions.GetSession(context.ConnectionId);
-#if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            LogManager.Debug(Thread.CurrentThread.Name);
-#endif
-
-            var results = new KbQueryQueryExplainOperationsReply();
-
-            foreach (var statement in param.Statements)
-            {
-                session.SetCurrentQuery(statement);
-
-                foreach (var preparedQuery in StaticQueryParser.ParseBatch(statement, _core.GlobalConstants, param.UserParameters))
-                {
-                    var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
-
-                    results.Add(intermediateResult);
-                }
             }
 
             session.ClearCurrentQuery();
@@ -156,31 +102,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             foreach (var preparedQuery in StaticQueryParser.ParseBatch(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
-            }
-
-            session.ClearCurrentQuery();
-
-            return results;
-        }
-
-        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
-        {
-            var session = _core.Sessions.GetSession(context.ConnectionId);
-#if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            LogManager.Debug(Thread.CurrentThread.Name);
-#endif
-            var results = new KbQueryQueryExecuteQueriesReply();
-
-            foreach (var statement in param.Statements)
-            {
-                session.SetCurrentQuery(statement);
-
-                foreach (var preparedQuery in StaticQueryParser.ParseBatch(statement, _core.GlobalConstants, param.UserParameters))
-                {
-                    var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
-                    results.Add(intermediateResult);
-                }
             }
 
             session.ClearCurrentQuery();

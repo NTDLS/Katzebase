@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Shared;

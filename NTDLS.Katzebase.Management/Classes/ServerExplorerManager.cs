@@ -3,8 +3,6 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
-using Shell32;
-using System.Security.Policy;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes

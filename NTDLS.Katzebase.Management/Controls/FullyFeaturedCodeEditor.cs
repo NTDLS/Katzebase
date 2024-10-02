@@ -116,19 +116,15 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             try
             {
-                var scripts = KbTextUtility.SplitQueryBatchesOnGO(Text);
+                var script = KbTextUtility.RemoveNonCode(Text);
                 var schemaCache = BackgroundSchemaCache.GetCache();
 
                 _textMarkerService.ClearMarkers();
 
-                foreach (var script in scripts)
+                var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
+                foreach (var query in queryBatch)
                 {
-                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
-
-                    foreach (var query in queryBatch)
-                    {
-                        StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query);
-                    }
+                    StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query);
                 }
             }
             catch (KbParserException parserException)

@@ -228,7 +228,7 @@ namespace NTDLS.Katzebase.Management
                     if (string.IsNullOrEmpty(_firstLoadFilename))
                     {
                         var tabFilePage = CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, FormUtility.GetNextNewFileName());
-                        tabFilePage.Editor.Text = "set TraceWaitTimes false\r\nGO\r\n";
+                        tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
                         tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                         tabFilePage.IsSaved = true;
                     }
@@ -1250,7 +1250,7 @@ namespace NTDLS.Katzebase.Management
             try
             {
                 var tabFilePage = CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash);
-                tabFilePage.Editor.Text = "set TraceWaitTimes false\r\nGO\r\n";
+                tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
                 tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
             }
             catch (Exception ex)

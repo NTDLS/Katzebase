@@ -263,7 +263,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
                         //Remove children of the deleted schema.
                         var childSchemasToRemove = _schemaCache.Where(o => o.Schema.Path.StartsWith(schemaToRemove.Schema.Path, StringComparison.InvariantCultureIgnoreCase)).ToList();
-                        _schemaCache.RemoveAll(o=> childSchemasToRemove.Contains(o));
+                        _schemaCache.RemoveAll(o => childSchemasToRemove.Contains(o));
 
                         foreach (var childSchemaToRemove in childSchemasToRemove)
                         {

@@ -44,36 +44,6 @@ namespace NTDLS.Katzebase.Client.Management
 
         #endregion
 
-        #region ExplainOperations.
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationsReply ExplainOperations(List<string> statements, object? userParameters, TimeSpan? queryTimeout = null)
-            => ExplainOperations(statements, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationsReply ExplainOperations(List<string> statements, Dictionary<string, object?>? userParameters = null, TimeSpan? queryTimeout = null)
-            => ExplainOperations(statements, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationsReply ExplainOperations(List<string> statements, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExplainOperations(_client.ServerConnectionId, statements, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
-        }
-
-        #endregion
-
         #region ExplainPlan.
 
         /// <summary>
@@ -99,36 +69,6 @@ namespace NTDLS.Katzebase.Client.Management
 
             return _client.Connection.Query(
                 new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
-        }
-
-        #endregion
-
-        #region ExplainPlans.
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlansReply ExplainPlans(List<string> statements, object? userParameters, TimeSpan? queryTimeout = null)
-            => ExplainPlans(statements, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlansReply ExplainPlans(List<string> statements, Dictionary<string, object?>? userParameters = null, TimeSpan? queryTimeout = null)
-            => ExplainPlans(statements, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlansReply ExplainPlans(List<string> statements, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExplainPlans(_client.ServerConnectionId, statements, userParameters), (TimeSpan)queryTimeout)
                 .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
         }
 
@@ -323,36 +263,6 @@ namespace NTDLS.Katzebase.Client.Management
             var result = Fetch(statement, userParameters, queryTimeout);
             var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
             return Converters.ConvertToNullable<T>(firstValue);
-        }
-
-        #endregion
-
-        #region FetchMultiple.
-
-        /// <summary>
-        /// Executes multiple statements and fetches their results given the supplied statement and optional parameters.
-        /// </summary>
-        public KbQueryQueryExecuteQueriesReply FetchMultiple(List<string> statements, object userParameters, TimeSpan? queryTimeout = null)
-            => FetchMultiple(statements, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Executes multiple statements and fetches their results given the supplied statement and optional parameters.
-        /// </summary>
-        public KbQueryQueryExecuteQueriesReply FetchMultiple(List<string> statements, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
-            => FetchMultiple(statements, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Executes multiple statements and fetches their results given the supplied statement and optional parameters.
-        /// </summary>
-        public KbQueryQueryExecuteQueriesReply FetchMultiple(List<string> statements, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExecuteQueries(_client.ServerConnectionId, statements, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
         }
 
         #endregion

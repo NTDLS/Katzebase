@@ -183,12 +183,8 @@ namespace NTDLS.Katzebase.Management.Controls
             {
                 try
                 {
-                    var scripts = KbTextUtility.SplitQueryBatchesOnGO(Editor.Text);
-
-                    foreach (var script in scripts)
-                    {
-                        var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
-                    }
+                    var script = KbTextUtility.RemoveNonCode(Editor.Text);
+                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
                 }
                 catch (Exception ex)
                 {
@@ -528,13 +524,13 @@ namespace NTDLS.Katzebase.Management.Controls
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                var scripts = KbTextUtility.SplitQueryBatchesOnGO(scriptText);
+                var script = KbTextUtility.RemoveNonCode(scriptText);
 
                 var startTime = DateTime.UtcNow;
 
                 if (executeType == ExecuteType.ExplainPlan)
                 {
-                    var results = client.Query.ExplainPlans(scripts, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
+                    var results = client.Query.ExplainPlan(script, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
 
                     int batchNumber = 1;
                     foreach (var result in results.Collection)
@@ -549,7 +545,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 }
                 else if (executeType == ExecuteType.ExplainOperations)
                 {
-                    var results = client.Query.ExplainOperations(scripts, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
+                    var results = client.Query.ExplainOperation(script, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
 
                     int batchNumber = 1;
                     foreach (var result in results.Collection)
@@ -564,7 +560,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 }
                 else if (executeType == ExecuteType.Execute)
                 {
-                    var results = client.Query.FetchMultiple(scripts, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
+                    var results = client.Query.Fetch(script, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
 
                     int batchNumber = 1;
                     foreach (var result in results.Collection)
