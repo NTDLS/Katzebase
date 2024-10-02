@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
             }
             if (this[ordinal] != null)
             {
-                throw new KbEngineException($"Ambiguous field [{fieldNameForException}].");
+                throw new KbProcessingException($"Ambiguous field [{fieldNameForException}].");
             }
 
             this[ordinal] = value;

@@ -8,8 +8,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 {
     internal class StaticAnalyzer
     {
-        public static void ClientSideAnalysis(TextDocument textDocument,
-            TextMarkerService textMarkerService, List<CachedSchema> schemaCache, QueryBatch batch, PreparedQuery query)
+        public static void ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
+            List<CachedSchema> schemaCache, QueryBatch batch, PreparedQuery query)
         {
             if (schemaCache.Count == 0)
             {
@@ -20,13 +20,25 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             {
                 var serverMatchedSchema = schemaCache.FirstOrDefault(o => o.Schema.Path.Is(querySchema.Name));
 
-                if (serverMatchedSchema == null)
+                if (query.QueryType == Parsers.Constants.QueryType.Create && query.SubQueryType == Parsers.Constants.SubQueryType.Schema)
+                {
+                    if (serverMatchedSchema != null)
+                    {
+                        AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]");
+                    }
+                }
+                //else if (serverMatchedSchema != null
+                //    && query.QueryType == Parsers.Constants.QueryType.Create
+                //    && query.SubQueryType == Parsers.Constants.SubQueryType.Schema)
+                //{
+                //    AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]");
+                //}
+                else if (serverMatchedSchema == null)
                 {
                     AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema does not exist: [{querySchema.Name}]");
                 }
             }
 
-            /*
             //Validation (field list):
             foreach (var documentIdentifier in query.SelectFields.DocumentIdentifiers)
             {
@@ -34,8 +46,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
+                        //exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        //    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                     }
                 }
             }
@@ -47,8 +59,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
+                        //exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        //    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                     }
                 }
             }
@@ -64,8 +76,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                         {
                             if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                             {
-                                exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                                    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
+                                //exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                                //    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                             }
                         }
                     }
@@ -79,12 +91,11 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
+                        //exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        //    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                     }
                 }
             }
-            */
         }
 
         static void AddSyntaxError(TextDocument textDocument, TextMarkerService textMarkerService, int? lineNumber, string message)

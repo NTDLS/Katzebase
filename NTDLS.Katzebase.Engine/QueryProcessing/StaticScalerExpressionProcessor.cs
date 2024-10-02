@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             }
             else
             {
-                throw new KbEngineException($"Field expression type is not implemented: [{queryField.GetType().Name}].");
+                throw new KbNotImplementedException($"Field expression type is not implemented: [{queryField.GetType().Name}].");
             }
         }
 
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             }
             else
             {
-                throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
+                throw new KbNotImplementedException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
             }
         }
 
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             }
             else
             {
-                throw new KbEngineException($"Field expression type is not implemented: [{expression.FieldExpression.GetType().Name}].");
+                throw new KbNotImplementedException($"Field expression type is not implemented: [{expression.FieldExpression.GetType().Name}].");
             }
         }
 
@@ -182,20 +182,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
                     //This is a string placeholder, get the literal value and complain about it.
-
-                    throw new KbEngineException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
+                    throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a numeric placeholder, get the literal value and append it.
-
                     string mathVariable = $"v{variableNumber++}";
                     expressionString = expressionString.Replace(token, mathVariable);
                     expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
-                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                    throw new KbNotImplementedException($"Function parameter string sub-type is not implemented: [{token}].");
                 }
             }
 
@@ -321,7 +319,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
-                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                    throw new KbNotImplementedException($"Function parameter string sub-type is not implemented: [{token}].");
                 }
                 else
                 {
@@ -376,7 +374,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                             //  trailing '+' operator. So if the last character is a closing parentheses, just process the math,
                             //  otherwise throw an exception because we only allow ')' and '+' as the trailing expression character.
 
-                            throw new KbEngineException($"Cannot perform [{mathBuffer[mathBuffer.Length - 1]}] math on string.");
+                            throw new KbProcessingException($"Cannot perform [{mathBuffer[mathBuffer.Length - 1]}] math on string.");
                         }
                     }
 
@@ -409,7 +407,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))
             {
-                throw new KbEngineException($"Cannot perform scaler operation on aggregate result of: [{function.FunctionName}].");
+                throw new KbProcessingException($"Cannot perform scaler operation on aggregate result of: [{function.FunctionName}].");
             }
 
             //Execute function with the parameters from above ↑

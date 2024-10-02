@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             }
             else
             {
-                throw new KbEngineException($"Field expression type is not implemented: [{queryField.Expression.GetType().Name}].");
+                throw new KbNotImplementedException($"Field expression type is not implemented: [{queryField.Expression.GetType().Name}].");
             }
         }
 
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             var token = tokenizer.EatGetNext();
             if (!tokenizer.IsExhausted())
             {
-                throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
+                throw new KbProcessingException($"The aggregate function expression was not collapsed as expected.");
             }
 
             if (token.StartsWith("$x_") && token.EndsWith('$'))
@@ -68,10 +68,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
 
-            string token = tokenizer.EatGetNext();
+            var token = tokenizer.EatGetNext();
             if (!tokenizer.IsExhausted())
             {
-                throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
+                throw new KbProcessingException($"The aggregate function expression was not collapsed as expected.");
             }
 
             if (token.StartsWith("$x_") && token.EndsWith('$'))

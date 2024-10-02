@@ -6,17 +6,20 @@
 
         public KbParserException()
         {
+            Severity = KbConstants.KbLogSeverity.Verbose;
         }
 
         public KbParserException(int? lineNumber, string message)
             : base(message)
         {
+            Severity = KbConstants.KbLogSeverity.Verbose;
             LineNumber = lineNumber;
         }
 
         public KbParserException(string message)
             : base(message)
         {
+            Severity = KbConstants.KbLogSeverity.Verbose;
         }
     }
 }

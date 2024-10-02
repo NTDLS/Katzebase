@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
 
             var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
-                ?? throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
+                ?? throw new KbProcessingException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
 
             if (physicalProcedure.Parameters.Count > 0)
             {
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     else
                     {
-                        throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
+                        throw new KbProcessingException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
                     }
                 }
                 statement.Length--; //Remove the trailing ','.
@@ -162,7 +162,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var batch = StaticQueryParser.ParseBatch(statement.ToString(), _core.GlobalConstants);
             if (batch.Count > 1)
             {
-                throw new KbEngineException("Expected only one procedure call per batch.");
+                throw new KbProcessingException("Expected only one procedure call per batch.");
             }
             return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
         }

@@ -215,16 +215,16 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
             {
                 if (!double.TryParse(input, out value))
                 {
-                    throw new KbEngineException("Value could not be converted to double.");
+                    throw new KbProcessingException("Value could not be converted to double.");
                 }
             }
             if (!double.TryParse(range[0], out var rangeLeft))
             {
-                throw new KbEngineException("Left of range could not be converted to double.");
+                throw new KbProcessingException("Left of range could not be converted to double.");
             }
             if (!double.TryParse(range[1], out var rangeRight))
             {
-                throw new KbEngineException("Right of range could not be converted to double.");
+                throw new KbProcessingException("Right of range could not be converted to double.");
             }
 
             return value >= rangeLeft && value <= rangeRight;
@@ -281,7 +281,7 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
             }
             else
             {
-                throw new KbEngineException("Unsupported condition type.");
+                throw new KbNotImplementedException("Condition type is not implemented.");
             }
         }
     }

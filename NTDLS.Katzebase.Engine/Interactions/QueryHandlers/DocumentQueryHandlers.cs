@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (duplicateFields.Count != 0)
                 {
-                    throw new KbEngineException($"Field(s) [{string.Join("],[", duplicateFields)}] were specified more than once.");
+                    throw new KbProcessingException($"Field(s) [{string.Join("],[", duplicateFields)}] were specified more than once.");
                 }
 
                 foreach (var row in result.Rows)
@@ -148,11 +148,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     {
                         if (results.Collection[0].Fields.Count < preparedQuery.InsertFieldNames.Count)
                         {
-                            throw new KbEngineException("Values list contains less values than the field list.");
+                            throw new KbProcessingException("Values list contains less values than the field list.");
                         }
                         else if (results.Collection[0].Fields.Count > preparedQuery.InsertFieldNames.Count)
                         {
-                            throw new KbEngineException("Values list contains more values than the field list.");
+                            throw new KbProcessingException("Values list contains more values than the field list.");
                         }
 
                         foreach (var row in results.Collection[0].Rows)
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     }
                 }
 
-                throw new KbEngineException("Insert statement must be accompanied by a values list or a source select statement.");
+                throw new KbProcessingException("Insert statement must be accompanied by a values list or a source select statement.");
             }
             catch (Exception ex)
             {

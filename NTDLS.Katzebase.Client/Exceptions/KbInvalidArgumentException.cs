@@ -4,11 +4,13 @@
     {
         public KbInvalidArgumentException()
         {
+            Severity = KbConstants.KbLogSeverity.Verbose;
         }
 
         public KbInvalidArgumentException(string message)
             : base(message)
         {
+            Severity = KbConstants.KbLogSeverity.Verbose;
         }
     }
 }

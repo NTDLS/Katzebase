@@ -113,7 +113,7 @@ namespace NTDLS.Katzebase.Parsers
                 QueryType.Kill => StaticParserKill.Parse(queryBatch, tokenizer),
                 QueryType.Exec => StaticParserExec.Parse(queryBatch, tokenizer),
 
-                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Query type is not implemented: [{token}]."),
+                _ => throw new KbNotImplementedException($"Query type is not implemented: [{token}]."),
             };
         }
 

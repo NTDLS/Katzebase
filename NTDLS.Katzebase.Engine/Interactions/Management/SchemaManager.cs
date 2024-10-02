@@ -155,7 +155,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to alter schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -234,7 +234,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to drop single for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

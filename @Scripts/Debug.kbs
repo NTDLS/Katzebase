@@ -1,23 +1,21 @@
-
-
---Translation test query.
-
+/*
 create index ix_temp (
 	Id
 ) on Temporary
 
 drop index ix_temp on Temporary
+*/
+--create schema Temporary:Blah
+--create schema Temporary:Blah:One
+--create schema Temporary:Blah:Two
+--create schema Temporary:Blah:Three
 
-create schema Temporary:Blah
-create schema Temporary:Blah:One
-create schema Temporary:Blah:Two
-create schema Temporary:Blah:Three
+--drop schema Temporary:Blah:One
+--drop schema Temporary:Blah:Two
+--drop schema Temporary:Blah:Three
+--drop schema Temporary:Blah
 
-drop schema Temporary:Blah
-drop schema Temporary:Blah:One
-drop schema Temporary:Blah:Two
-drop schema Temporary:Blah:Three
-
+--Translation test query.
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -33,8 +31,8 @@ INNER JOIN WordList:Synonym as s
 	ON s.SourceWordId = sw.Id
 INNER JOIN WordList:Word as tw
 	ON tw.Id = s.TargetWordId
-INNER JOIN Temporary:Blah as fs
-	ON fs.Id = tw.LanguageId
+--INNER JOIN Temporary:Blah as fs
+--	ON fs.Id = tw.LanguageId
 INNER JOIN WordList:Language as tl
 	ON tl.Id = tw.LanguageId
 WHERE

@@ -1,6 +1,8 @@
-﻿using Serilog;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using Serilog;
 using System.Diagnostics;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -36,33 +38,83 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return $"{namespaceName}.{className}.{methodName}";
         }
 
-        public static void Trace(string message, Exception ex) => Log.Verbose($"{GetCallerFunctionName()}: {message} {GetExceptionText(ex)}");
         public static void Trace(string message) => Log.Verbose($"{GetCallerFunctionName()}: {message}");
-        public static void Trace(Exception ex) => Log.Verbose($"{GetCallerFunctionName()}: {GetExceptionText(ex)}");
-
-        public static void Verbose(string message, Exception ex) => Log.Verbose($"{message} {GetExceptionText(ex)}");
         public static void Verbose(string message) => Log.Verbose(message);
-        public static void Verbose(Exception ex) => Log.Verbose(GetExceptionText(ex));
-
-        public static void Debug(string message, Exception ex) => Log.Debug($"{message} {GetExceptionText(ex)}");
         public static void Debug(string message) => Log.Debug(message);
-        public static void Debug(Exception ex) => Log.Debug(GetExceptionText(ex));
-
-        public static void Information(string message, Exception ex) => Log.Information($"{message} {GetExceptionText(ex)}");
         public static void Information(string message) => Log.Information(message);
-        public static void Information(Exception ex) => Log.Information(GetExceptionText(ex));
-
-        public static void Warning(string message, Exception ex) => Log.Warning($"{message} {GetExceptionText(ex)}");
         public static void Warning(string message) => Log.Warning(message);
-        public static void Warning(Exception ex) => Log.Warning(GetExceptionText(ex));
 
-        public static void Error(string message, Exception ex) => Log.Error($"{message} {GetExceptionText(ex)}");
+        public static void Error(string message, Exception ex) => Exception(message, ex);
         public static void Error(string message) => Log.Error(message);
         public static void Error(Exception ex) => Log.Error(GetExceptionText(ex));
 
         public static void Fatal(string message, Exception ex) => Log.Fatal($"{message} {GetExceptionText(ex)}");
         public static void Fatal(string message) => Log.Fatal(message);
         public static void Fatal(Exception ex) => Log.Fatal(GetExceptionText(ex));
+
+        public static void Exception(string message, Exception givenException)
+        {
+            if (givenException is KbExceptionBase kbException)
+            {
+                switch (kbException.Severity)
+                {
+                    case KbLogSeverity.Verbose:
+                        Log.Verbose($"{message} {GetExceptionText(kbException)}");
+                        break;
+                    case KbLogSeverity.Debug:
+                        Log.Debug($"{message} {GetExceptionText(kbException)}");
+                        break;
+                    case KbLogSeverity.Information:
+                        Log.Information($"{message} {GetExceptionText(kbException)}");
+                        break;
+                    case KbLogSeverity.Warning:
+                        Log.Warning($"{message} {GetExceptionText(kbException)}");
+                        break;
+                    case KbLogSeverity.Error:
+                        Log.Error($"{message} {GetExceptionText(kbException)}");
+                        break;
+                    case KbLogSeverity.Fatal:
+                        Log.Fatal($"{message} {GetExceptionText(kbException)}");
+                        break;
+                }
+            }
+            else
+            {
+                Log.Error($"{message} {GetExceptionText(givenException)}");
+            }
+        }
+
+        public static void Exception(Exception givenException)
+        {
+            if (givenException is KbExceptionBase kbException)
+            {
+                switch (kbException.Severity)
+                {
+                    case KbLogSeverity.Verbose:
+                        Log.Verbose(GetExceptionText(kbException));
+                        break;
+                    case KbLogSeverity.Debug:
+                        Log.Debug(GetExceptionText(kbException));
+                        break;
+                    case KbLogSeverity.Information:
+                        Log.Information(GetExceptionText(kbException));
+                        break;
+                    case KbLogSeverity.Warning:
+                        Log.Warning(GetExceptionText(kbException));
+                        break;
+                    case KbLogSeverity.Error:
+                        Log.Error(GetExceptionText(kbException));
+                        break;
+                    case KbLogSeverity.Fatal:
+                        Log.Fatal(GetExceptionText(kbException));
+                        break;
+                }
+            }
+            else
+            {
+                Log.Error(GetExceptionText(givenException));
+            }
+        }
 
         private static string GetExceptionText(Exception exception)
         {

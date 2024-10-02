@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     if (modelAuxiliaryFields.ContainsKey(sortField.Key) == false)
                     {
-                        throw new KbEngineException($"Sort field was not found: [{sortField.FieldAlias}].");
+                        throw new KbProcessingException($"Sort field was not found: [{sortField.FieldAlias}].");
                     }
                     sortingColumns.Add(new(sortField.Key, sortField.SortDirection));
                 }
@@ -426,7 +426,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
             });
 
-            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
+            if (expression == null) throw new KbProcessingException($"Expression cannot be null.");
 
             //Create a reference to the entire document catalog.
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -444,7 +444,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var documentContent = joinScopedContentCache[documentIdentifier.SchemaAlias ?? ""];
                     if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
                     {
-                        throw new KbEngineException($"Join clause field not found in document: [{currentSchemaKVP.Key}].");
+                        throw new KbProcessingException($"Join clause field not found in document: [{currentSchemaKVP.Key}].");
                     }
                     joinClauseKeyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
                 }
@@ -732,7 +732,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
             });
 
-            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
+            if (expression == null) throw new KbProcessingException($"Expression cannot be null.");
 
             var rowsToRemove = new List<SchemaIntersectionRow>();
 

@@ -147,37 +147,7 @@ namespace NTDLS.Katzebase.Server
 
         private void RmServer_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
-            if (ex is KbExceptionBase kbEx)
-            {
-                switch (kbEx.Severity)
-                {
-                    case Client.KbConstants.KbLogSeverity.Verbose:
-                        LogManager.Verbose(ex);
-                        break;
-                    case Client.KbConstants.KbLogSeverity.Debug:
-                        LogManager.Debug(ex);
-                        break;
-                    case Client.KbConstants.KbLogSeverity.Information:
-                        LogManager.Information(ex);
-                        break;
-                    case Client.KbConstants.KbLogSeverity.Warning:
-                        LogManager.Warning(ex);
-                        break;
-                    case Client.KbConstants.KbLogSeverity.Error:
-                        LogManager.Error(ex);
-                        break;
-                    case Client.KbConstants.KbLogSeverity.Fatal:
-                        LogManager.Fatal(ex);
-                        break;
-                    default:
-                        LogManager.Warning(ex);
-                        break;
-                }
-            }
-            else
-            {
-                LogManager.Warning(ex);
-            }
+            LogManager.Exception(ex);
         }
     }
 }

@@ -254,15 +254,24 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 lock (_schemaCache)
                 {
                     //Find all cached schemas in the parent schema that we just scanned, remove cache items that do not exist anymore.
-                    var itemsToRemove = _schemaCache.Where(o => o.Schema.ParentPath == queued.Path && schemasInParent.Any(s => s.Id == o.Schema.Id) == false).ToList();
+                    var schemasToRemove = _schemaCache.Where(o => o.Schema.ParentPath == queued.Path && schemasInParent.Any(s => s.Id == o.Schema.Id) == false).ToList();
 
-                    foreach (var itemToRemove in itemsToRemove)
+                    foreach (var schemaToRemove in schemasToRemove)
                     {
-                        _schemaCache.Remove(itemToRemove);
-                        OnCacheItemRemoved?.Invoke(itemToRemove);
+                        _schemaCache.Remove(schemaToRemove);
+                        OnCacheItemRemoved?.Invoke(schemaToRemove);
+
+                        //Remove children of the deleted schema.
+                        var childSchemasToRemove = _schemaCache.Where(o => o.Schema.Path.StartsWith(schemaToRemove.Schema.Path, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                        _schemaCache.RemoveAll(o=> childSchemasToRemove.Contains(o));
+
+                        foreach (var childSchemaToRemove in childSchemasToRemove)
+                        {
+                            OnCacheItemRemoved?.Invoke(childSchemaToRemove);
+                        }
                     }
 
-                    wereItemsUpdated = wereItemsUpdated || itemsToRemove.Any(); //Items were removed.
+                    wereItemsUpdated = wereItemsUpdated || schemasToRemove.Any(); //Items were removed.
                 }
 
                 newQueue.AddRange(schemasInParent);
