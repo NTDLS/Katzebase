@@ -26,6 +26,11 @@ namespace NTDLS.Katzebase.Management.Controls
         public KbClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
 
+        /// <summary>
+        /// Tells us whether the tab page is selected in the parent tab control.
+        /// </summary>
+        public bool IsSelected => TabControlParent.SelectedTab == this;
+
         private bool _isSaved = false;
         public bool IsSaved
         {

@@ -21,6 +21,17 @@ namespace NTDLS.Katzebase.Management.Controls
 {
     public class FullyFeaturedCodeEditor : TextEditor
     {
+        /// <summary>
+        /// How long we delay performing static analysis after the user finishes typing.
+        /// </summary>
+        const int AfterKeyStrokeAnalysisDelay = 250;
+
+        /// <summary>
+        /// How often we perform static analyis even if the user has not changed any text,
+        /// this is to support new information coming from the lazy schema loader.
+        /// </summary>
+        const int IntermittentAnalysisDelay = 2500;
+
         public CodeEditorTabPage CodeTabPage { get; private set; }
         private System.Windows.Forms.Integration.ElementHost? _controlHost;
         private readonly ContextMenuStrip _contextMenu;
@@ -51,7 +62,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
             // Set up a timer for batch updates.
             _foldingUpdateTimer = new DispatcherTimer();
-            _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _foldingUpdateTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
             _foldingUpdateTimer.Tick += (sender, e) =>
             {
                 try
@@ -72,12 +83,12 @@ namespace NTDLS.Katzebase.Management.Controls
             };
 
             _staticAnalysisTimer = new DispatcherTimer();
-            _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
             _staticAnalysisTimer.Tick += (sender, e) =>
             {
                 try
                 {
-                    _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(2500);
+                    _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(IntermittentAnalysisDelay);
                     PerformStaticAnalysis();
                 }
                 catch { }
@@ -85,6 +96,8 @@ namespace NTDLS.Katzebase.Management.Controls
 
             TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
             {
+                _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
+
                 //Stop, then restart the timer so that the timer is reset for each keystroke.
                 _foldingUpdateTimer.Stop();
                 _staticAnalysisTimer.Stop();
@@ -114,6 +127,11 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void PerformStaticAnalysis()
         {
+            if (!CodeTabPage.IsSelected)
+            {
+                return;
+            }
+
             try
             {
                 var schemaCache = CodeTabPage?.ExplorerConnection?.LazySchemaCache.GetCache();

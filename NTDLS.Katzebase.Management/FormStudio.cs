@@ -865,10 +865,10 @@ namespace NTDLS.Katzebase.Management
                     {
                         Threading.StartThread(() =>
                         {
-                            using var macrosConnection = explorerConnection.CreateNewConnection();
+                            //using var macrosConnection = explorerConnection.CreateNewConnection();
                             Invoke(() =>
                             {
-                                PopulateMacros(macrosConnection);
+                                PopulateMacros(explorerConnection.Client);
                             });
                         });
                     }
