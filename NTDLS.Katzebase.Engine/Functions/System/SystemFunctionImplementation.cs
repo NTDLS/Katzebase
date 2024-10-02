@@ -37,6 +37,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showversion" => SystemShowVersion.Execute(core, transaction, function),
                 "showwaitinglocks" => SystemShowWaitingLocks.Execute(core, transaction, function),
                 "terminate" => SystemTerminate.Execute(core, transaction, function),
+                "cancel" => SystemCancel.Execute(core, transaction, function),
 
                 _ => throw new KbNotImplementedException($"The system function is not implemented: [{functionName}].")
             };

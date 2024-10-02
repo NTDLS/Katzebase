@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     tokenizer.EatNext();
 
-                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    if (!tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scaler function must be called with parentheses: [{token}]");
                     }
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
                     tokenizer.EatNext();
-                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    if (!tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Aggregate function must be called with parentheses: [{token}]");
                     }
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 else if (token.IsQueryFieldIdentifier())
                 {
                     tokenizer.EatNext();
-                    if (tokenizer.IsNextNonIdentifier(['(']))
+                    if (tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         //tokenizer.EatNext();
                         //The character after this identifier is an open parenthesis, so this

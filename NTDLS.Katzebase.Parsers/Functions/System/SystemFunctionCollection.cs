@@ -28,7 +28,8 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 "ShowTransactions(Numeric processId=null)|'Shows all transactions that are current active. Optionally specifying a process id.'",
                 "ShowVersion(Boolean showAll=false)|'Shows the names and versions of all loaded assemblies.'",
                 "ShowWaitingLocks(Numeric processId=null)|'Shows all processes that are currently waiting on a lock an provides information about those locks.'",
-                "Terminate(Numeric processId)|'The terminate directive terminates (or kills) an existing running process. This termination will terminate any in-progress transaction, roll it back, disconnect the process and free any resources associated with it.'",
+                "Cancel(Numeric processId)|'Cancels any transaction associated with a given process, leaving the process connected.'",
+                "Terminate(Numeric processId)|'Terminates an existing running process, rolls back any in-progress transaction, disconnect the process and frees any resources associated with it.'",
             };
 
         private static List<SystemFunction>? _protypes = null;

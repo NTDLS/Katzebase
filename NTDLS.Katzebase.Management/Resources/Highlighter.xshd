@@ -66,7 +66,8 @@
 		</Keywords>
 		
 		<Keywords color="KbConfig">
-			<Word>CheckpointHealthCounters</Word>
+      <Word>Cancel</Word>
+      <Word>CheckpointHealthCounters</Word>
 			<Word>ClearCacheAllocations</Word>
 			<Word>ClearHealthCounters</Word>
 			<Word>MinQueryThreads</Word>

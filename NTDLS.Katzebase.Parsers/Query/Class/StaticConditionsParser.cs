@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
-                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    if (!tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function must be called with parentheses: [{token}].");
                     }
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else if (token.IsQueryFieldIdentifier())
                 {
-                    if (tokenizer.IsNextNonIdentifier(['(']))
+                    if (tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.

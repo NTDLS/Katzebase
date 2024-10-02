@@ -40,53 +40,53 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatIfNextCharacter('('))
             {
-                query.ProcedureParameters = new QueryFieldCollection(queryBatch);
-
-                //var parametersScope = tokenizer.EatGetMatchingScope();
-                //var paramTokenizer = new TokenizerSlim(parametersScope);
-
-                while (!tokenizer.IsExhausted())
+                if (tokenizer.TryEatIfNextCharacter(')') == false)
                 {
-                    string token;
-                    int startCaret = tokenizer.Caret;
-                    int endCaret = 0;
+                    query.ProcedureParameters = new QueryFieldCollection(queryBatch);
 
                     while (!tokenizer.IsExhausted())
                     {
-                        token = tokenizer.GetNext();
-                        if (token == "(")
+                        string token;
+                        int startCaret = tokenizer.Caret;
+                        int endCaret = 0;
+
+                        while (!tokenizer.IsExhausted())
                         {
-                            tokenizer.EatMatchingScope();
+                            token = tokenizer.GetNext();
+                            if (token == "(")
+                            {
+                                tokenizer.EatMatchingScope();
+                            }
+                            else if (token == ")")
+                            {
+                                endCaret = tokenizer.Caret;
+                                break; //exit loop to parse, found: end of parameter list.
+                            }
+                            else if (token.Length == 1 && token[0] == ',')
+                            {
+                                endCaret = tokenizer.Caret;
+                                tokenizer.EatNext();
+                                break; //exit loop to parse next field.
+                            }
+                            else if (token.Length == 1 && (token[0].IsTokenConnectorCharacter() || token[0].IsMathematicalOperator()))
+                            {
+                                tokenizer.EatNext();
+                            }
+                            else
+                            {
+                                tokenizer.EatNext();
+                            }
                         }
-                        else if (token == ")")
+
+                        var fieldValue = tokenizer.Substring(startCaret, endCaret - startCaret).Trim();
+                        var queryField = StaticParserField.Parse(tokenizer, fieldValue, query.ProcedureParameters);
+
+                        query.ProcedureParameters.Add(new QueryField($"p{query.ProcedureParameters.Count}", query.ProcedureParameters.Count, queryField));
+
+                        if (tokenizer.TryEatIfNextCharacter(')'))
                         {
-                            endCaret = tokenizer.Caret;
                             break; //exit loop to parse, found: end of parameter list.
                         }
-                        else if (token.Length == 1 && token[0] == ',')
-                        {
-                            endCaret = tokenizer.Caret;
-                            tokenizer.EatNext();
-                            break; //exit loop to parse next field.
-                        }
-                        else if (token.Length == 1 && (token[0].IsTokenConnectorCharacter() || token[0].IsMathematicalOperator()))
-                        {
-                            tokenizer.EatNext();
-                        }
-                        else
-                        {
-                            tokenizer.EatNext();
-                        }
-                    }
-
-                    var fieldValue = tokenizer.Substring(startCaret, endCaret - startCaret).Trim();
-                    var queryField = StaticParserField.Parse(tokenizer, fieldValue, query.ProcedureParameters);
-
-                    query.ProcedureParameters.Add(new QueryField($"p{query.ProcedureParameters.Count}", query.ProcedureParameters.Count, queryField));
-
-                    if (tokenizer.TryEatIfNextCharacter(')'))
-                    {
-                        break; //exit loop to parse, found: end of parameter list.
                     }
                 }
             }
