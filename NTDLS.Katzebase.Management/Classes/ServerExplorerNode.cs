@@ -17,6 +17,11 @@ namespace NTDLS.Katzebase.Management.Classes
         /// </summary>
         public KbIndex? SchemaIndex { get; set; }
 
+        /// <summary>
+        /// Only populated when NodeType = ServerNodeType.Server.
+        /// </summary>
+        public ServerExplorerConnection? ExplorerManager { get; set; }
+
         public ServerExplorerNode(ServerNodeType nodeType, string name) :
             base(name)
         {
@@ -40,8 +45,11 @@ namespace NTDLS.Katzebase.Management.Classes
             SelectedImageKey = imageKey;
         }
 
-        public static ServerExplorerNode CreateServerNode(string name)
-            => new(ServerNodeType.Server, name);
+        public static ServerExplorerNode CreateServerNode(ServerExplorerConnection explorerManager)
+            => new(ServerNodeType.Server, explorerManager.ServerAddress)
+            {
+                ExplorerManager = explorerManager
+            };
 
         public static ServerExplorerNode CreateSchemaNode(KbSchema schema)
             => new(ServerNodeType.Schema, schema.Name)

@@ -3,6 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -12,7 +13,7 @@ namespace NTDLS.Katzebase.Management.Controls
     /// <summary>
     /// A code tab contains a code editor, output tab, splitter and a client connection.
     /// </summary>
-    public class CodeTabPage : TabPage, IDisposable
+    public class CodeEditorTabPage : TabPage, IDisposable
     {
         #region Properties.
 
@@ -20,7 +21,8 @@ namespace NTDLS.Katzebase.Management.Controls
         public TabControl TabControlParent { get; private set; }
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
-        public string ServerHost { get; set; }
+
+        public ServerExplorerConnection? ExplorerConnection { get; private set; }
         public KbClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
 
@@ -125,15 +127,16 @@ namespace NTDLS.Katzebase.Management.Controls
 
         #endregion
 
-        public CodeTabPage(FormStudio studioForm, TabControl tabControlParent, string serverHost, int serverPort, string username, string passwordHash, string tabText) :
+        public CodeEditorTabPage(FormStudio studioForm, TabControl tabControlParent, KbClient? client, ServerExplorerConnection? explorerConnection, string tabText) :
              base(tabText)
         {
             StudioForm = studioForm;
             TabControlParent = tabControlParent;
+            Client = client;
+            ExplorerConnection = explorerConnection;
             Editor = new FullyFeaturedCodeEditor(this);
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
-            ServerHost = serverHost;
 
             BottomTabControl.Resize += (object? sender, EventArgs e) =>
             {
@@ -162,14 +165,6 @@ namespace NTDLS.Katzebase.Management.Controls
             BottomTabControl.TabPages.Add(ResultsTab); //Add results tab to bottom.
             ResultsTab.Controls.Add(ResultsPanel);
             ResultsPanel.Dock = DockStyle.Fill;
-
-
-            if (string.IsNullOrEmpty(serverHost) == false)
-            {
-                Client = new KbClient(serverHost, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI.Query");
-                Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
-            }
-
 
             Editor.KeyUp += TextEditor_KeyUp;
             Editor.TextChanged += TextEditor_TextChanged;
@@ -221,9 +216,9 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        private CodeTabPage? EditorToTab(TextEditor editor)
+        private CodeEditorTabPage? EditorToTab(TextEditor editor)
         {
-            foreach (CodeTabPage tab in TabControlParent.TabPages)
+            foreach (CodeEditorTabPage tab in TabControlParent.TabPages)
             {
                 if (tab.Editor == editor)
                 {
@@ -362,13 +357,13 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        private void PreExecuteEvent(CodeTabPage tabFilePage)
+        private void PreExecuteEvent(CodeEditorTabPage tabFilePage)
         {
             try
             {
                 if (InvokeRequired)
                 {
-                    Invoke(new Action<CodeTabPage>(PreExecuteEvent), this);
+                    Invoke(new Action<CodeEditorTabPage>(PreExecuteEvent), this);
                     return;
                 }
 
@@ -386,13 +381,13 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        private void PostExecuteEvent(CodeTabPage tabFilePage)
+        private void PostExecuteEvent(CodeEditorTabPage tabFilePage)
         {
             try
             {
                 if (InvokeRequired)
                 {
-                    Invoke(new Action<CodeTabPage>(PostExecuteEvent), tabFilePage);
+                    Invoke(new Action<CodeEditorTabPage>(PostExecuteEvent), tabFilePage);
                     return;
                 }
 

@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Management
 {
     public partial class FormReplaceText : Form
     {
-        private readonly CodeTabPage? _projectTabPage;
+        private readonly CodeEditorTabPage? _projectTabPage;
         private int _lastIndex = -1;
 
         public FormReplaceText()
@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Management
             InitializeComponent();
         }
 
-        public FormReplaceText(CodeTabPage projectTabPage)
+        public FormReplaceText(CodeEditorTabPage projectTabPage)
         {
             InitializeComponent();
             _projectTabPage = projectTabPage;

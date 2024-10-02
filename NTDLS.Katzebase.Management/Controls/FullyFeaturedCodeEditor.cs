@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Management.Controls
 {
     public class FullyFeaturedCodeEditor : TextEditor
     {
-        public CodeTabPage CodeTabPage { get; private set; }
+        public CodeEditorTabPage CodeTabPage { get; private set; }
         private System.Windows.Forms.Integration.ElementHost? _controlHost;
         private readonly ContextMenuStrip _contextMenu;
         private readonly FoldingManager _foldingManager;
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Management.Controls
         private CompletionWindow? _completionWindow;
         private readonly TextMarkerService _textMarkerService;
 
-        public FullyFeaturedCodeEditor(CodeTabPage codeTabPage)
+        public FullyFeaturedCodeEditor(CodeEditorTabPage codeTabPage)
         {
             CodeTabPage = codeTabPage;
 
@@ -116,8 +116,9 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             try
             {
+                var schemaCache = CodeTabPage?.ExplorerConnection?.LazySchemaCache.GetCache();
+
                 var script = KbTextUtility.RemoveNonCode(Text);
-                var schemaCache = BackgroundSchemaCache.GetCache();
 
                 _textMarkerService.ClearMarkers();
 

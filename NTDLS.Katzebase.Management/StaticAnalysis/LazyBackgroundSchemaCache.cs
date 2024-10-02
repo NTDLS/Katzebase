@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Management.StaticAnalysis
@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
     /// <summary>
     /// Maintains a cache of schema information from the server.
     /// </summary>
-    internal static class BackgroundSchemaCache
+    public class LazyBackgroundSchemaCache
     {
         /// <summary>
         /// The interval in which the lazy-loader will refresh information about already cached schemas.
@@ -16,40 +16,41 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         private const int ExistingCacheItemRefreshIntervalSeconds = 10;
 
         public delegate void CacheUpdated(List<CachedSchema> schemaCache);
-        public static event CacheUpdated? OnCacheUpdated;
+        public event CacheUpdated? OnCacheUpdated;
 
         public delegate void CacheItemUpdated(CachedSchema schemaItem);
+
+        public ServerExplorerConnection ServerExplorerConnection { get; private set; }
 
         /// <summary>
         /// Event called when a server schema is discovered.
         /// </summary>
-        public static event CacheItemUpdated? OnCacheItemAdded;
+        public event CacheItemUpdated? OnCacheItemAdded;
         /// <summary>
         /// Event called when a server schema is removed from the server.
         /// </summary>
-        public static event CacheItemUpdated? OnCacheItemRemoved;
+        public event CacheItemUpdated? OnCacheItemRemoved;
         /// <summary>
         /// Event called when a the background lazy-load is doing a periodic refresh of the schema.
         /// </summary>
-        public static event CacheItemUpdated? OnCacheItemRefreshed;
+        public event CacheItemUpdated? OnCacheItemRefreshed;
 
-        private static Thread? _thread;
-        private static KbClient? _client;
-        private static bool _keepRunning = false;
-        private static bool _resetState = false;
-        private static string? _refreshSchemaPath = null;
+        private Thread? _thread;
+        private bool _keepRunning = false;
+        private bool _resetState = false;
+        private string? _refreshSchemaPath = null;
 
         /// <summary>
         /// The schemas that we will lazy load next.
         /// </summary>
-        private static List<KbSchema> _schemaWorkQueue = new();
+        private List<KbSchema> _schemaWorkQueue = new();
 
         /// <summary>
         /// The cache of schemas.
         /// </summary>
-        private static readonly List<CachedSchema> _schemaCache = new();
+        private readonly List<CachedSchema> _schemaCache = new();
 
-        public static List<CachedSchema> GetCache()
+        public List<CachedSchema> GetCache()
         {
             lock (_schemaCache)
             {
@@ -65,18 +66,18 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// Removes all cache items that start with the given schema path.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public static void Refresh(string? schemaPath)
+        public void Refresh(string? schemaPath)
         {
             _refreshSchemaPath = schemaPath;
         }
 
         /// <summary>
-        /// Starts the background worker or changes the client if its already running.
+        /// Starts the background schema lazy loader process.
         /// </summary>
-        public static void StartOrReset(KbClient client)
+        public LazyBackgroundSchemaCache(ServerExplorerConnection _serverExplorerConnection)
         {
-            _client = client;
-            _resetState = true;
+            ServerExplorerConnection = _serverExplorerConnection;
+
             OnCacheUpdated = null;
             OnCacheItemAdded = null;
             OnCacheItemRemoved = null;
@@ -142,7 +143,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             }
         }
 
-        public static void Stop()
+        public void Stop()
         {
             _keepRunning = false;
 
@@ -154,7 +155,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             _thread = null;
         }
 
-        private static bool ProcessSchemaQueue()
+        private bool ProcessSchemaQueue()
         {
             bool wereItemsUpdated = false;
 
@@ -172,11 +173,11 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
                 try
                 {
-                    if (_client == null || _client.IsConnected == false)
+                    if (ServerExplorerConnection.Client == null || ServerExplorerConnection.Client.IsConnected == false)
                     {
                         return false;
                     }
-                    serverSchemas = _client.Schema.List(queued.Path).Collection;
+                    serverSchemas = ServerExplorerConnection.Client.Schema.List(queued.Path).Collection;
                 }
                 //TODO: Do not remove item when the issue is a timeout.
                 catch (Exception ex)
@@ -231,7 +232,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                         {
                             try
                             {
-                                var indexes = _client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
+                                var indexes = ServerExplorerConnection.Client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
                                 newlyAddedOrUpdatedSchemaCacheItem.Indexes = indexes.Collection;
                             }
                             catch

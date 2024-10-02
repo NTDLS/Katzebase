@@ -66,10 +66,11 @@
             toolStripButtonMacros = new ToolStripButton();
             toolStripSeparator7 = new ToolStripSeparator();
             toolStripButtonSnippets = new ToolStripButton();
+            toolStripButtonCollapseAllRegions = new ToolStripButton();
+            toolStripButtonExpandAllRegions = new ToolStripButton();
             menuStripMain = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectToolStripMenuItem = new ToolStripMenuItem();
-            closeProjectToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripSeparator();
             openToolStripMenuItem = new ToolStripMenuItem();
             recentFilesToolStripMenuItem = new ToolStripMenuItem();
@@ -90,8 +91,6 @@
             settingsToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            toolStripButtonCollapseAllRegions = new ToolStripButton();
-            toolStripButtonExpandAllRegions = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)splitContainerObjectExplorer).BeginInit();
             splitContainerObjectExplorer.Panel1.SuspendLayout();
             splitContainerObjectExplorer.Panel2.SuspendLayout();
@@ -125,10 +124,10 @@
             splitContainerObjectExplorer.TabIndex = 0;
             splitContainerObjectExplorer.SplitterMoved += SplitContainerProject_SplitterMoved;
             // 
-            // treeViewProject
+            // treeViewServerExplorer
             // 
             treeViewServerExplorer.Location = new Point(14, 35);
-            treeViewServerExplorer.Name = "treeViewProject";
+            treeViewServerExplorer.Name = "treeViewServerExplorer";
             treeViewServerExplorer.Size = new Size(256, 292);
             treeViewServerExplorer.TabIndex = 0;
             treeViewServerExplorer.ItemDrag += TreeViewProject_ItemDrag;
@@ -159,10 +158,10 @@
             tabControlBody.Size = new Size(216, 189);
             tabControlBody.TabIndex = 0;
             // 
-            // treeViewShortcuts
+            // treeViewMacros
             // 
             treeViewMacros.Location = new Point(13, 22);
-            treeViewMacros.Name = "treeViewShortcuts";
+            treeViewMacros.Name = "treeViewMacros";
             treeViewMacros.Size = new Size(168, 189);
             treeViewMacros.TabIndex = 0;
             // 
@@ -443,6 +442,26 @@
             toolStripButtonSnippets.Visible = false;
             toolStripButtonSnippets.Click += ToolStripButtonSnippets_Click;
             // 
+            // toolStripButtonCollapseAllRegions
+            // 
+            toolStripButtonCollapseAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonCollapseAllRegions.Image = (Image)resources.GetObject("toolStripButtonCollapseAllRegions.Image");
+            toolStripButtonCollapseAllRegions.ImageTransparentColor = Color.Magenta;
+            toolStripButtonCollapseAllRegions.Name = "toolStripButtonCollapseAllRegions";
+            toolStripButtonCollapseAllRegions.Size = new Size(23, 22);
+            toolStripButtonCollapseAllRegions.Text = "Collapse all Regions";
+            toolStripButtonCollapseAllRegions.Click += ToolStripButtonCollapseAllRegions_Click;
+            // 
+            // toolStripButtonExpandAllRegions
+            // 
+            toolStripButtonExpandAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonExpandAllRegions.Image = (Image)resources.GetObject("toolStripButtonExpandAllRegions.Image");
+            toolStripButtonExpandAllRegions.ImageTransparentColor = Color.Magenta;
+            toolStripButtonExpandAllRegions.Name = "toolStripButtonExpandAllRegions";
+            toolStripButtonExpandAllRegions.Size = new Size(23, 22);
+            toolStripButtonExpandAllRegions.Text = "Expand all Regions";
+            toolStripButtonExpandAllRegions.Click += ToolStripButtonExpandAllRegions_Click;
+            // 
             // menuStripMain
             // 
             menuStripMain.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, documentToolStripMenuItem, queryToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
@@ -454,7 +473,7 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToolStripMenuItem, closeProjectToolStripMenuItem, toolStripMenuItem2, openToolStripMenuItem, recentFilesToolStripMenuItem, saveToolStripMenuItem1, saveAsToolStripMenuItem, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToolStripMenuItem, toolStripMenuItem2, openToolStripMenuItem, recentFilesToolStripMenuItem, saveToolStripMenuItem1, saveAsToolStripMenuItem, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(37, 20);
             fileToolStripMenuItem.Text = "File";
@@ -462,65 +481,58 @@
             // connectToolStripMenuItem
             // 
             connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            connectToolStripMenuItem.Size = new Size(136, 22);
+            connectToolStripMenuItem.Size = new Size(180, 22);
             connectToolStripMenuItem.Text = "Connect";
             connectToolStripMenuItem.Click += ConnectToolStripMenuItem_Click;
-            // 
-            // closeProjectToolStripMenuItem
-            // 
-            closeProjectToolStripMenuItem.Name = "closeProjectToolStripMenuItem";
-            closeProjectToolStripMenuItem.Size = new Size(136, 22);
-            closeProjectToolStripMenuItem.Text = "Disconnect";
-            closeProjectToolStripMenuItem.Click += DisconnectToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(133, 6);
+            toolStripMenuItem2.Size = new Size(177, 6);
             // 
             // openToolStripMenuItem
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(136, 22);
+            openToolStripMenuItem.Size = new Size(180, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
             // 
             // recentFilesToolStripMenuItem
             // 
             recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
-            recentFilesToolStripMenuItem.Size = new Size(136, 22);
+            recentFilesToolStripMenuItem.Size = new Size(180, 22);
             recentFilesToolStripMenuItem.Text = "Recent Files";
             // 
             // saveToolStripMenuItem1
             // 
             saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
-            saveToolStripMenuItem1.Size = new Size(136, 22);
+            saveToolStripMenuItem1.Size = new Size(180, 22);
             saveToolStripMenuItem1.Text = "Save";
             saveToolStripMenuItem1.Click += SaveToolStripMenuItem1_Click;
             // 
             // saveAsToolStripMenuItem
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(136, 22);
+            saveAsToolStripMenuItem.Size = new Size(180, 22);
             saveAsToolStripMenuItem.Text = "Save As";
             saveAsToolStripMenuItem.Click += SaveAsToolStripMenuItem_Click;
             // 
             // saveAllToolStripMenuItem
             // 
             saveAllToolStripMenuItem.Name = "saveAllToolStripMenuItem";
-            saveAllToolStripMenuItem.Size = new Size(136, 22);
+            saveAllToolStripMenuItem.Size = new Size(180, 22);
             saveAllToolStripMenuItem.Text = "Save All";
             saveAllToolStripMenuItem.Click += SaveAllToolStripMenuItem_Click;
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(133, 6);
+            toolStripMenuItem1.Size = new Size(177, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(136, 22);
+            exitToolStripMenuItem.Size = new Size(180, 22);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += ExitToolStripMenuItem_Click;
             // 
@@ -608,26 +620,6 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
-            // toolStripButtonCollapseAllRegions
-            // 
-            toolStripButtonCollapseAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonCollapseAllRegions.Image = (Image)resources.GetObject("toolStripButtonCollapseAllRegions.Image");
-            toolStripButtonCollapseAllRegions.ImageTransparentColor = Color.Magenta;
-            toolStripButtonCollapseAllRegions.Name = "toolStripButtonCollapseAllRegions";
-            toolStripButtonCollapseAllRegions.Size = new Size(23, 22);
-            toolStripButtonCollapseAllRegions.Text = "Collapse all Regions";
-            toolStripButtonCollapseAllRegions.Click += ToolStripButtonCollapseAllRegions_Click;
-            // 
-            // toolStripButtonExpandAllRegions
-            // 
-            toolStripButtonExpandAllRegions.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonExpandAllRegions.Image = (Image)resources.GetObject("toolStripButtonExpandAllRegions.Image");
-            toolStripButtonExpandAllRegions.ImageTransparentColor = Color.Magenta;
-            toolStripButtonExpandAllRegions.Name = "toolStripButtonExpandAllRegions";
-            toolStripButtonExpandAllRegions.Size = new Size(23, 22);
-            toolStripButtonExpandAllRegions.Text = "Expand all Regions";
-            toolStripButtonExpandAllRegions.Click += ToolStripButtonExpandAllRegions_Click;
-            // 
             // FormStudio
             // 
             AllowDrop = true;
@@ -675,7 +667,6 @@
         private ToolStripButton toolStripButtonCloseCurrentTab;
         private MenuStrip menuStripMain;
         private ToolStripMenuItem fileToolStripMenuItem;
-        private ToolStripMenuItem closeProjectToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem2;
         private ToolStripMenuItem saveAllToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem1;

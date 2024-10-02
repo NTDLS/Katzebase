@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Management
 {
     public partial class FormFindText : Form
     {
-        private readonly CodeTabPage? _projectTabPage;
+        private readonly CodeEditorTabPage? _projectTabPage;
         private int _lastIndex = -1;
         public string SearchText => textBoxFindText.Text;
 
@@ -14,7 +14,7 @@ namespace NTDLS.Katzebase.Management
             textBoxFindText.TextChanged += TextBoxFindText_TextChanged;
         }
 
-        public FormFindText(CodeTabPage projectTabPage)
+        public FormFindText(CodeEditorTabPage projectTabPage)
         {
             InitializeComponent();
             _projectTabPage = projectTabPage;

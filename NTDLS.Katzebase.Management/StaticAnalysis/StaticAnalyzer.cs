@@ -9,9 +9,9 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
     internal class StaticAnalyzer
     {
         public static void ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
-            List<CachedSchema> schemaCache, QueryBatch batch, PreparedQuery query)
+            List<CachedSchema>? schemaCache, QueryBatch batch, PreparedQuery query)
         {
-            if (schemaCache.Count == 0)
+            if (schemaCache?.Any() != true)
             {
                 return;
             }

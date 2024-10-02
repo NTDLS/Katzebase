@@ -9,27 +9,25 @@ using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Management.Classes.Editor.AutoCompleteFunction;
-using static NTDLS.Katzebase.Management.Controls.CodeTabPage;
+using static NTDLS.Katzebase.Management.Controls.CodeEditorTabPage;
 
 namespace NTDLS.Katzebase.Management
 {
     public partial class FormStudio : Form
     {
+        private readonly ImageList _treeImages = new();
+        private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
+        private readonly string _firstLoadFilename = string.Empty;
+        private readonly ServerExplorerManager _serverExplorerManager;
+
         private bool _timerTicking = false;
         private bool _firstShown = true;
-        private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
-
-        public string _lastAddress = string.Empty;
-        public int _lastPort;
-        public string _lastUsername = string.Empty;
-        public string _lastPasswordHash = string.Empty;
-
-        private readonly string _firstLoadFilename = string.Empty;
 
         public FormStudio()
         {
             InitializeComponent();
             Text = KbConstants.FriendlyName;
+            _serverExplorerManager = new ServerExplorerManager(this, treeViewServerExplorer);
         }
 
         public FormStudio(string firstLoadFilename)
@@ -37,11 +35,21 @@ namespace NTDLS.Katzebase.Management
             InitializeComponent();
             _firstLoadFilename = firstLoadFilename;
             Text = KbConstants.FriendlyName;
+            _serverExplorerManager = new ServerExplorerManager(this, treeViewServerExplorer);
         }
 
         private void FormStudio_Load(object sender, EventArgs e)
         {
-            ServerExplorerManager.Initialize(this, treeViewServerExplorer);
+            _treeImages.ColorDepth = ColorDepth.Depth32Bit;
+            _treeImages.Images.Add("Folder", Resources.TreeFolder);
+            _treeImages.Images.Add("Schema", Resources.TreeSchema);
+            _treeImages.Images.Add("SchemaField", Resources.TreeField);
+            _treeImages.Images.Add("SchemaFieldFolder", Resources.TreeDocument);
+            _treeImages.Images.Add("SchemaIndex", Resources.TreeIndex);
+            _treeImages.Images.Add("SchemaIndexFolder", Resources.TreeIndexFolder);
+            _treeImages.Images.Add("Server", Resources.TreeServer);
+            _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
+            treeViewServerExplorer.ImageList = _treeImages;
 
             treeViewServerExplorer.Dock = DockStyle.Fill;
             splitContainerObjectExplorer.Dock = DockStyle.Fill;
@@ -92,7 +100,7 @@ namespace NTDLS.Katzebase.Management
             {
                 if (sender is TabControl tabControl && tabControl.SelectedTab != null)
                 {
-                    ((CodeTabPage)tabControl.SelectedTab).Editor.Focus();
+                    ((CodeEditorTabPage)tabControl.SelectedTab).Editor.Focus();
                 }
             }
             catch
@@ -106,7 +114,7 @@ namespace NTDLS.Katzebase.Management
             {
                 if (sender is TabControl tabControl && tabControl.SelectedTab != null)
                 {
-                    ((CodeTabPage)tabControl.SelectedTab).Editor.Focus();
+                    ((CodeEditorTabPage)tabControl.SelectedTab).Editor.Focus();
                 }
             }
             catch
@@ -128,7 +136,7 @@ namespace NTDLS.Katzebase.Management
                         {
                             if (File.Exists(fileName))
                             {
-                                CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, Path.GetFileName(fileName)).OpenFile(fileName);
+                                CreateNewTabBasedOnLastSelectedNode(Path.GetFileName(fileName)).OpenFile(fileName);
                             }
                             else
                             {
@@ -207,7 +215,7 @@ namespace NTDLS.Katzebase.Management
                 e.Cancel = true;
             }
 
-            ServerExplorerManager.Disconnect();
+            _serverExplorerManager.DisconnectAll();
         }
 
         private void FormStudio_Shown(object? sender, EventArgs e)
@@ -223,11 +231,11 @@ namespace NTDLS.Katzebase.Management
                 {
                     _firstShown = false;
 
-                    Connect();
+                    var explorerConnection = Connect();
 
                     if (string.IsNullOrEmpty(_firstLoadFilename))
                     {
-                        var tabFilePage = CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, FormUtility.GetNextNewFileName());
+                        var tabFilePage = CreateNewTab(explorerConnection);
                         tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
                         tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                         tabFilePage.IsSaved = true;
@@ -236,7 +244,7 @@ namespace NTDLS.Katzebase.Management
                     {
                         Preferences.Instance.AddRecentFile(_firstLoadFilename);
                         ReloadRecentFileList();
-                        CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, Path.GetFileName(_firstLoadFilename)).OpenFile(_firstLoadFilename);
+                        CreateNewTab(explorerConnection, Path.GetFileName(_firstLoadFilename)).OpenFile(_firstLoadFilename);
                     }
                 }
                 catch (Exception ex)
@@ -274,6 +282,8 @@ namespace NTDLS.Katzebase.Management
 
             if (node.NodeType == Constants.ServerNodeType.Server)
             {
+                popupMenu.Items.Add("Disconnect", FormUtility.TransparentImage(Resources.Workload));
+                popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
             else if (node.NodeType == Constants.ServerNodeType.Schema)
@@ -318,17 +328,35 @@ namespace NTDLS.Katzebase.Management
 
                 menuStrip.Hide();
 
-                if (e.ClickedItem?.Text == "Refresh")
+                if (e.ClickedItem?.Text == "Disconnect")
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
-                        var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
-                        if (rootSchema != null)
+                        node.ExplorerManager?.Disconnect();
+                        node.Remove();
+
+                        if (_serverExplorerManager.LastSelectedNode == node)
                         {
-                            rootSchema.Nodes.Clear();
-                            BackgroundSchemaCache.Refresh(string.Empty);
+                            _serverExplorerManager.LastSelectedNode = null;
                         }
                     }
+                }
+                else if (e.ClickedItem?.Text == "Refresh")
+                {
+                    if (node.NodeType == Constants.ServerNodeType.Server)
+                    {
+                        var serverNode = ServerExplorerManager.GetServerNode(node);
+                        if (serverNode != null && serverNode.ExplorerManager != null)
+                        {
+                            var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
+                            if (rootSchema != null)
+                            {
+                                rootSchema.Nodes.Clear();
+                                serverNode.ExplorerManager.LazySchemaCache.Refresh(string.Empty);
+                            }
+                        }
+                    }
+                    /*
                     else if (node.NodeType == Constants.ServerNodeType.Schema && node.Schema?.Path != null)
                     {
                         if (node.Schema?.Id == EngineConstants.RootSchemaGUID)
@@ -340,7 +368,7 @@ namespace NTDLS.Katzebase.Management
                             node.Remove();
                         }
 
-                        BackgroundSchemaCache.Refresh(node.Schema?.Path);
+                        LazySchemaCache.Refresh(node.Schema?.Path);
                     }
                     else if (node.NodeType == Constants.ServerNodeType.SchemaFieldFolder || node.NodeType == Constants.ServerNodeType.SchemaIndexFolder)
                     {
@@ -358,33 +386,34 @@ namespace NTDLS.Katzebase.Management
                                 parentNode.Remove();
                             }
 
-                            BackgroundSchemaCache.Refresh(parentNode.Schema?.Path);
+                            LazySchemaCache.Refresh(parentNode.Schema?.Path);
                         }
                     }
+                    */
                 }
                 else if (e.ClickedItem?.Text == "Select top n..." && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{node.Schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Drop Schema" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"DROP SCHEMA {node.Schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                 }
                 else if (e.ClickedItem?.Text == "Analyze Schema" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"ANALYZE SCHEMA {node.Schema.Path} --WITH (IncludePhysicalPages = true)\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
                 else if (e.ClickedItem?.Text == "Sample Schema" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"SAMPLE {node.Schema.Path} SIZE 100\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -392,14 +421,14 @@ namespace NTDLS.Katzebase.Management
                 }
                 else if (e.ClickedItem?.Text == "Drop Index" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {node.Schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                 }
                 else if (e.ClickedItem?.Text == "Analyze Index" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {node.Schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -407,7 +436,7 @@ namespace NTDLS.Katzebase.Management
                 }
                 else if (e.ClickedItem?.Text == "Rebuild Index" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
                     if (tabFilePage.Client != null)
                     {
                         var result = tabFilePage.Client.Schema.Indexes.Get(node.Schema.Path, node.Text);
@@ -426,7 +455,7 @@ namespace NTDLS.Katzebase.Management
                 }
                 else if (e.ClickedItem?.Text == "Script Index" && node.Schema != null)
                 {
-                    var tabFilePage = ConnectNewTab(FormUtility.GetNextNewFileName());
+                    var tabFilePage = CreateNewTabBasedOn(node);
 
                     if (tabFilePage.Client != null)
                     {
@@ -517,7 +546,7 @@ namespace NTDLS.Katzebase.Management
                 return;
             }
 
-            CodeTabPage? clickedTab = contextMenu.Tag as CodeTabPage;
+            CodeEditorTabPage? clickedTab = contextMenu.Tag as CodeEditorTabPage;
             if (clickedTab == null)
             {
                 return;
@@ -548,14 +577,14 @@ namespace NTDLS.Katzebase.Management
             }
             else if (clickedItem.Text == "Close all but this")
             {
-                var tabsToClose = new List<CodeTabPage>();
+                var tabsToClose = new List<CodeEditorTabPage>();
 
                 //Minimize the number of "SelectedIndexChanged" events that get fired.
                 //We get a big ol' thread exception when we don't do  Looks like an internal control exception.
                 tabControlBody.SelectedTab = clickedTab;
                 System.Windows.Forms.Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 
-                foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeTabPage>())
+                foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
                 {
                     if (tabFilePage != clickedTab)
                     {
@@ -579,22 +608,22 @@ namespace NTDLS.Katzebase.Management
             //UpdateToolbarButtonStates();
         }
 
-        private CodeTabPage? GetClickedTab(Point mouseLocation)
+        private CodeEditorTabPage? GetClickedTab(Point mouseLocation)
         {
             for (int i = 0; i < tabControlBody.TabCount; i++)
             {
                 Rectangle r = tabControlBody.GetTabRect(i);
                 if (r.Contains(mouseLocation))
                 {
-                    return (CodeTabPage)tabControlBody.TabPages[i];
+                    return (CodeEditorTabPage)tabControlBody.TabPages[i];
                 }
             }
             return null;
         }
 
-        private CodeTabPage? FindTabByFileName(string filePath)
+        private CodeEditorTabPage? FindTabByFileName(string filePath)
         {
-            foreach (var tab in tabControlBody.TabPages.OfType<CodeTabPage>())
+            foreach (var tab in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
             {
                 if (tab.FilePath.ToLower() == filePath.ToLower())
                 {
@@ -604,18 +633,57 @@ namespace NTDLS.Katzebase.Management
             return null;
         }
 
-        private CodeTabPage ConnectNewTab(string tabText = "")
-            => CreateNewTab(ServerExplorerManager.ServerAddress.EnsureNotNull(), ServerExplorerManager.ServerPort,
-                            ServerExplorerManager.Username.EnsureNotNull(), ServerExplorerManager.PasswordHash.EnsureNotNull(), FormUtility.GetNextNewFileName());
-
-        private CodeTabPage CreateNewTab(string serverAddress, int serverPort, string username, string passwordHash, string tabText = "")
+        /// <summary>
+        /// Creates a new empty code tab based on the latest selected node in
+        ///     the server explorer, will create a new client from that manager.
+        /// </summary>
+        private CodeEditorTabPage CreateNewFileEmptyTab()
         {
+            var serverNode = _serverExplorerManager.GetServerNodeForLastSelectedNode();
+            return CreateNewTab(serverNode?.ExplorerManager, FormUtility.GetNextNewFileName());
+        }
+
+        /// <summary>
+        /// Creates a new empty code tab based on the the server connection associated
+        ///     with the given node, will create a new client from that manager.
+        /// </summary>
+        /// <param name="basedOnNode"></param>
+        /// <returns></returns>
+        private CodeEditorTabPage CreateNewTabBasedOn(ServerExplorerNode basedOnNode)
+        {
+            if (basedOnNode.NodeType != Constants.ServerNodeType.Server)
+            {
+                throw new Exception("The supplied node is not of the correct type.");
+            }
+            return CreateNewTab(basedOnNode?.ExplorerManager, FormUtility.GetNextNewFileName());
+        }
+
+        /// <summary>
+        /// Creates a new empty code tab based on the latest selected node in the
+        ///     server explorer, will create a new client from that manager.
+        /// </summary>
+        private CodeEditorTabPage CreateNewTabBasedOnLastSelectedNode(string tabText = "")
+        {
+            var serverNode = _serverExplorerManager.GetServerNodeForLastSelectedNode();
+            return CreateNewTab(serverNode?.ExplorerManager, tabText);
+        }
+
+        /// <summary>
+        /// Creates a new tab using the specified server explorer manager, will create a new client from that manager.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="tabText"></param>
+        /// <returns></returns>
+        private CodeEditorTabPage CreateNewTab(ServerExplorerConnection? explorerManager, string tabText = "")
+        {
+            var client = explorerManager?.CreateNewConnection();
+
             if (string.IsNullOrWhiteSpace(tabText))
             {
                 tabText = FormUtility.GetNextNewFileName();
             }
 
-            var codeTabPage = new CodeTabPage(this, tabControlBody, serverAddress, serverPort, username, passwordHash, tabText);
+            var codeTabPage = new CodeEditorTabPage(this, tabControlBody, client, explorerManager, tabText);
 
             tabControlBody.TabPages.Add(codeTabPage);
             tabControlBody.SelectedTab = codeTabPage;
@@ -628,7 +696,7 @@ namespace NTDLS.Katzebase.Management
         /// Removes a tab, saved or not - no prompting.
         /// </summary>
         /// <param name="tab"></param>
-        private void RemoveTab(CodeTabPage? tab)
+        private void RemoveTab(CodeEditorTabPage? tab)
         {
             if (tab != null)
             {
@@ -772,19 +840,17 @@ namespace NTDLS.Katzebase.Management
             }
         }
 
-        private bool Connect()
+        private ServerExplorerConnection? Connect()
         {
             try
             {
                 using var form = new FormConnect();
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    _lastAddress = form.ServerHost;
-                    _lastPort = form.ServerPort;
-                    _lastUsername = form.Username;
-                    _lastPasswordHash = form.PasswordHash;
+                    var explorerConnection = new ServerExplorerConnection(this,
+                        _serverExplorerManager, form.ServerHost, form.ServerPort, form.Username, form.PasswordHash);
 
-                    ServerExplorerManager.Connect(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash);
+                    return explorerConnection;
 
                     /*
                     var kbClient = ServerExplorerManager.GetRootNode(treeViewServerExplorer)?.ServerClient;
@@ -805,22 +871,7 @@ namespace NTDLS.Katzebase.Management
                 MessageBox.Show(ex.Message, KbConstants.FriendlyName);
             }
 
-            return false;
-        }
-
-        bool Disconnect()
-        {
-
-            ServerExplorerManager.Disconnect();
-
-            if (CloseAllTabs() == false)
-            {
-                return false;
-            }
-
-            treeViewServerExplorer.Nodes.Clear();
-
-            return true;
+            return null;
         }
 
         bool CloseAllTabs()
@@ -835,7 +886,7 @@ namespace NTDLS.Katzebase.Management
             bool result = true;
             while (tabControlBody.TabPages.Count != 0)
             {
-                if (!CloseTab(tabControlBody.TabPages[tabControlBody.TabPages.Count - 1] as CodeTabPage))
+                if (!CloseTab(tabControlBody.TabPages[tabControlBody.TabPages.Count - 1] as CodeEditorTabPage))
                 {
                     result = false;
                     break;
@@ -853,7 +904,7 @@ namespace NTDLS.Katzebase.Management
         /// User friendly tab close.
         /// </summary>
         /// <param name="tab"></param>
-        private bool CloseTab(CodeTabPage? tab)
+        private bool CloseTab(CodeEditorTabPage? tab)
         {
             if (tab != null)
             {
@@ -887,15 +938,15 @@ namespace NTDLS.Katzebase.Management
             return true;
         }
 
-        public CodeTabPage? CurrentTabFilePage()
+        public CodeEditorTabPage? CurrentTabFilePage()
         {
             if (tabControlBody.InvokeRequired)
             {
-                return tabControlBody.Invoke(new Func<CodeTabPage?>(CurrentTabFilePage));
+                return tabControlBody.Invoke(new Func<CodeEditorTabPage?>(CurrentTabFilePage));
             }
             else
             {
-                return tabControlBody.SelectedTab as CodeTabPage;
+                return tabControlBody.SelectedTab as CodeEditorTabPage;
             }
         }
 
@@ -918,7 +969,7 @@ namespace NTDLS.Katzebase.Management
             using var form = new FormSettings();
             if (form.ShowDialog() == DialogResult.OK)
             {
-                foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeTabPage>())
+                foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
                 {
                     //CodeTabPage.ApplyEditorSettings(tabFilePage.Editor);
                 }
@@ -998,7 +1049,7 @@ namespace NTDLS.Katzebase.Management
             }
         }
 
-        bool SaveTab(CodeTabPage tab)
+        bool SaveTab(CodeEditorTabPage tab)
         {
             if (tab.IsFileOpen == false)
             {
@@ -1020,7 +1071,7 @@ namespace NTDLS.Katzebase.Management
             return tab.Save();
         }
 
-        bool SaveTabAs(CodeTabPage tab)
+        bool SaveTabAs(CodeEditorTabPage tab)
         {
             using (var sfd = new SaveFileDialog())
             {
@@ -1050,7 +1101,7 @@ namespace NTDLS.Katzebase.Management
                     {
                         Preferences.Instance.AddRecentFile(ofd.FileName);
                         ReloadRecentFileList();
-                        CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, Path.GetFileName(ofd.FileName)).OpenFile(ofd.FileName);
+                        CreateNewTabBasedOnLastSelectedNode(Path.GetFileName(ofd.FileName)).OpenFile(ofd.FileName);
                     }
                     else
                     {
@@ -1067,7 +1118,7 @@ namespace NTDLS.Katzebase.Management
 
         private void ToolStripButtonSaveAll_Click(object sender, EventArgs e)
         {
-            foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeTabPage>())
+            foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
             {
                 if (SaveTab(tabFilePage) == false)
                 {
@@ -1239,7 +1290,7 @@ namespace NTDLS.Katzebase.Management
 
         private void SaveAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeTabPage>())
+            foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
             {
                 if (SaveTab(tabFilePage) == false)
                 {
@@ -1252,7 +1303,7 @@ namespace NTDLS.Katzebase.Management
         {
             try
             {
-                var tabFilePage = CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash);
+                var tabFilePage = CreateNewTabBasedOnLastSelectedNode();
                 tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
                 tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
             }
@@ -1265,11 +1316,6 @@ namespace NTDLS.Katzebase.Management
         private void ConnectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Connect();
-        }
-
-        private void DisconnectToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Disconnect();
         }
 
         private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1291,7 +1337,7 @@ namespace NTDLS.Katzebase.Management
             {
                 Preferences.Instance.AddRecentFile(fileName);
                 ReloadRecentFileList();
-                CreateNewTab(_lastAddress, _lastPort, _lastUsername, _lastPasswordHash, Path.GetFileName(fileName)).OpenFile(fileName);
+                CreateNewTabBasedOnLastSelectedNode(Path.GetFileName(fileName)).OpenFile(fileName);
             }
             else
             {

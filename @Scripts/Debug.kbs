@@ -35,8 +35,8 @@ INNER JOIN WordList:Synonym as s
 	ON s.SourceWordId = sw.Id
 INNER JOIN WordList:Word as tw
 	ON tw.Id = s.TargetWordId
---INNER JOIN Temporary:Blah as fs
---	ON fs.Id = tw.LanguageId
+INNER JOIN Temporary:Blah as fs
+	ON fs.Id = tw.LanguageId
 INNER JOIN WordList:Language as tl
 	ON tl.Id = tw.LanguageId
 WHERE

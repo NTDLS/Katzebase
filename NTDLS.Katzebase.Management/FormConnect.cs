@@ -46,7 +46,6 @@ namespace NTDLS.Katzebase.Management
         private void FormConnect_Shown(object? sender, EventArgs e)
         {
             textBoxPassword.Focus();
-
         }
 
         private void ButtonOk_Click(object sender, EventArgs e)
