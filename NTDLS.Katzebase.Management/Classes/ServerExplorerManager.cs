@@ -3,6 +3,8 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
+using Shell32;
+using System.Security.Policy;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -12,11 +14,17 @@ namespace NTDLS.Katzebase.Management.Classes
     /// </summary>
     public static class ServerExplorerManager
     {
+        public static string? ServerAddress { get; private set; }
+        public static int ServerPort { get; private set; }
+        public static string? Username { get; private set; }
+        public static string? PasswordHash { get; private set; }
+
         public static TreeView? ServerExplorerTree { get; private set; }
         public static FormStudio? StudioForm { get; private set; }
         public static KbClient? Client { get; private set; }
 
         private static readonly ImageList _treeImages = new();
+
 
         public static void Initialize(FormStudio formStudio, TreeView serverExplorerTree)
         {
@@ -37,6 +45,11 @@ namespace NTDLS.Katzebase.Management.Classes
 
         public static void Connect(string serverAddress, int serverPort, string username, string passwordHash)
         {
+            ServerAddress = serverAddress;
+            ServerPort = serverPort;
+            Username = username;
+            PasswordHash = passwordHash;
+
             Client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI");
             Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
             Client.OnDisconnected += (KbClient sender, Client.Payloads.KbSessionInfo sessionInfo) =>
@@ -57,7 +70,7 @@ namespace NTDLS.Katzebase.Management.Classes
             ServerExplorerTree.EnsureNotNull().Nodes.Clear();
 
             var serverNode = ServerExplorerNode.CreateServerNode(serverAddress);
-            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root (:)", "", "", Guid.Empty, 100));
+            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root :", "", "", Guid.Empty, 100));
             serverNode.Nodes.Add(rootSchemaNode);
             ServerExplorerTree.Nodes.Add(serverNode);
 
@@ -78,6 +91,12 @@ namespace NTDLS.Katzebase.Management.Classes
                 var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
                 if (parentSchemaNode != null && parentSchemaNode.Schema != null)
                 {
+                    var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                    if (existingNode != null)
+                    {
+                        return;
+                    }
+
                     var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
                     parentSchemaNode.Nodes.Add(newSchemaNode);
 
@@ -96,6 +115,7 @@ namespace NTDLS.Katzebase.Management.Classes
                         parentSchemaNode.Parent.Expand();
                         parentSchemaNode.Expand();
                     }
+                    SortChildNodes(parentSchemaNode); //Sort the indexes.
                 }
             });
         }
@@ -108,13 +128,22 @@ namespace NTDLS.Katzebase.Management.Classes
                 if (existingSchemaNode != null)
                 {
                     //Update basic schema information.
-                    existingSchemaNode.Text = schemaItem.Schema.Name;
+                    bool schemaNameChanged = existingSchemaNode.Text != schemaItem.Schema.Name;
                     existingSchemaNode.Schema = schemaItem.Schema;
+
+                    if (schemaNameChanged)
+                    {
+                        existingSchemaNode.Text = schemaItem.Schema.Name;
+                        SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
+                    }
 
                     var schemaIndexFolderNode = GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaIndexFolder);
                     if (schemaIndexFolderNode != null)
                     {
                         var existingSchemaIndexNodes = GetSingleLevelChildNodesOfType(schemaIndexFolderNode, ServerNodeType.SchemaIndex);
+
+                        bool indexNameChanged = false;
+                        bool indexAdded = false;
 
                         //Add/update indexes to the tree.
                         foreach (var serverSchemaIndex in schemaItem.Indexes)
@@ -125,11 +154,17 @@ namespace NTDLS.Katzebase.Management.Classes
                                 //Add newly discovered schema index to the tree.
                                 var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(serverSchemaIndex);
                                 schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                                indexAdded = true;
                             }
                             else
                             {
                                 //Refresh existing schema index in the tree.
-                                existingSchemaIndexNode.Text = serverSchemaIndex.Name;
+                                indexNameChanged = indexNameChanged || (existingSchemaIndexNode.Text != serverSchemaIndex.Name);
+
+                                if (indexNameChanged)
+                                {
+                                    existingSchemaIndexNode.Text = serverSchemaIndex.Name;
+                                }
                                 existingSchemaIndexNode.SchemaIndex = serverSchemaIndex;
                             }
                         }
@@ -141,6 +176,11 @@ namespace NTDLS.Katzebase.Management.Classes
                             {
                                 schemaIndexFolderNode.Nodes.Remove(existingSchemaIndexNode);
                             }
+                        }
+
+                        if (indexNameChanged || indexAdded)
+                        {
+                            SortChildNodes(schemaIndexFolderNode);
                         }
                     }
                 }
@@ -199,249 +239,29 @@ namespace NTDLS.Katzebase.Management.Classes
         public static List<ServerExplorerNode> GetSingleLevelChildNodesOfType(ServerExplorerNode givenNode, ServerNodeType nodeType)
             => givenNode.Nodes.OfType<ServerExplorerNode>().Where(o => o.NodeType == nodeType).ToList();
 
-        /*
-
-        /// <summary>
-        /// Populates a schema, its indexes and one level deeper to ensure there is something to expand in the tree.
-        /// </summary>
-        /// <param name="client"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        private static void PopulateSchemaNode(ServerExplorerNode nodeToPopulate, KbClient client, string schema)
+        public static void SortChildNodes(TreeNode parentNode)
         {
-            var schemaIndexes = client.Schema.Indexes.List(schema);
-            var schemaIndexesNode = CreateIndexFolderNode();
-            foreach (var index in schemaIndexes.List)
-            {
-                schemaIndexesNode.Nodes.Add(CreateIndexNode(index.Name));
-            }
-            nodeToPopulate.Nodes.Add(schemaIndexesNode);
-
-            var schemaFields = client.Document.List(schema, 1);
-            var schemaFieldNode = CreateFieldFolderNode();
-            foreach (var field in schemaFields.Fields)
-            {
-                schemaFieldNode.Nodes.Add(CreateFieldNode(field.Name));
-            }
-            nodeToPopulate.Nodes.Add(schemaFieldNode);
-
-            var schemas = client.Schema.List(schema);
-            foreach (var item in schemas.Collection)
-            {
-                var schemaNode = CreateSchemaNode(item.Name ?? "");
-                schemaNode.Nodes.Add(CreateTreeNotLoadedNode());
-                nodeToPopulate.Nodes.Add(schemaNode);
-            }
-        }
-
-        public static void PopulateSchemaNodeOnExpand(TreeView treeView, ServerExplorerNode node)
-        {
-            //We only populate nodes that do not contain schemas.
-            if (node.Nodes.OfType<ServerExplorerNode>().Where(o => o.NodeType == ServerNodeType.Schema).Any())
-            {
-                return;
-            }
-
-            var rootNode = GetRootNode(node);
-            string schema = FullSchemaPath(node);
-
-            node.Nodes.Clear(); //Don't clear the node until we hear back from the server.
-            if (rootNode.ServerClient == null || !rootNode.ServerClient.IsConnected)
-            {
-                Connect(rootNode.ServerAddress, rootNode.ServerPort, rootNode.Username, rootNode.PasswordHash);
-                return;
-            }
-
-            PopulateSchemaNode(node, rootNode.ServerClient, schema);
-        }
-
-        #region Tree node factories.
-
-        public static ServerExplorerNode CreateSchemaNode(string name)
-        {
-            var node = new ServerExplorerNode(name)
-            {
-                NodeType = Constants.ServerNodeType.Schema,
-                ImageKey = "Schema",
-                SelectedImageKey = "Schema"
+            ServerNodeType[] sortFirst = {
+                ServerNodeType.SchemaFieldFolder,
+                ServerNodeType.Folder,
+                ServerNodeType.SchemaIndexFolder
             };
 
-            return node;
-        }
-
-
-        public static ServerExplorerNode CreateTreeNotLoadedNode()
-        {
-            var node = new ServerExplorerNode("TreeNotLoaded")
+            if (parentNode.Nodes.Count > 0)
             {
-                NodeType = Constants.ServerNodeType.TreeNotLoaded,
-                ImageKey = "TreeNotLoaded",
-                SelectedImageKey = "TreeNotLoaded"
-            };
+                // Copy the child nodes to an array
+                TreeNode[] childNodes = new TreeNode[parentNode.Nodes.Count];
+                parentNode.Nodes.CopyTo(childNodes, 0);
 
-            return node;
-        }
+                // Sort the child nodes by their Text property
+                var sortedNodes = childNodes.OfType<ServerExplorerNode>()
+                    .OrderBy(n => sortFirst.Contains(n.NodeType) ? $"000{n.Text}" : n.Text).ToArray();
 
-        public static ServerExplorerNode CreateIndexFolderNode()
-        {
-            var node = new ServerExplorerNode("Indexes")
-            {
-                NodeType = Constants.ServerNodeType.IndexFolder,
-                ImageKey = "IndexFolder",
-                SelectedImageKey = "IndexFolder"
-            };
-
-            return node;
-        }
-
-        public static ServerExplorerNode CreateFieldFolderNode()
-        {
-            var node = new ServerExplorerNode("Fields")
-            {
-                NodeType = Constants.ServerNodeType.FieldFolder,
-                ImageKey = "FieldFolder",
-                SelectedImageKey = "FieldFolder"
-            };
-
-            return node;
-        }
-
-        public static ServerExplorerNode CreateIndexNode(string name)
-        {
-            var node = new ServerExplorerNode(name)
-            {
-                NodeType = Constants.ServerNodeType.Index,
-                ImageKey = "Index",
-                SelectedImageKey = "Index"
-            };
-
-            return node;
-        }
-
-        public static ServerExplorerNode CreateFieldNode(string name)
-        {
-            var node = new ServerExplorerNode(name)
-            {
-                NodeType = Constants.ServerNodeType.Field,
-                ImageKey = "Field",
-                SelectedImageKey = "Field"
-            };
-
-            return node;
-        }
-
-        #endregion
-
-        public static string FullSchemaPath(ServerExplorerNode node)
-        {
-            string result = string.Empty;
-
-            if (node is ServerExplorerNode { NodeType: ServerNodeType.Schema })
-            {
-                result = node.Text;
+                // Clear the existing nodes and re-add them in sorted order
+                parentNode.Nodes.Clear();
+                parentNode.Nodes.AddRange(sortedNodes);
             }
-
-            while (node.Parent != null && (node.Parent as ServerExplorerNode)?.NodeType != ServerNodeType.Schema)
-            {
-                node = (ServerExplorerNode)node.Parent;
-            }
-
-            while (node.Parent != null && node.Parent is ServerExplorerNode { NodeType: ServerNodeType.Schema })
-            {
-                node = (ServerExplorerNode)node.Parent;
-                result = $"{node.Text}:{result}";
-            }
-
-            return result.Trim([':']);
         }
 
-        public static ServerExplorerNode? GetRootNode(TreeView treeView)
-        {
-            if (treeView.Nodes.Count > 0 && treeView.Nodes[0] is ServerExplorerNode treeNode)
-            {
-                return GetRootNode(treeNode);
-            }
-            return null;
-        }
-
-        public static ServerExplorerNode GetRootNode(ServerExplorerNode node)
-        {
-            while (node.Parent != null)
-            {
-                node = (ServerExplorerNode)node.Parent;
-            }
-            return node;
-        }
-
-        public static ServerExplorerNode? FindNodeOfType(ServerNodeType type, string text)
-        {
-            foreach (var node in ServerExplorerTree.EnsureNotNull().Nodes.OfType<ServerExplorerNode>())
-            {
-                var result = FindNodeOfType(node, type, text);
-                if (result != null)
-                {
-                    return result;
-                }
-
-                if (node.NodeType == type && node.Text == text)
-                {
-                    return node;
-                }
-            }
-            return null;
-        }
-
-        public static ServerExplorerNode? FindNodeOfType(ServerExplorerNode rootNode, ServerNodeType type, string text)
-        {
-            foreach (var node in rootNode.Nodes.OfType<ServerExplorerNode>())
-            {
-                var result = FindNodeOfType(node, type, text);
-                if (result != null)
-                {
-                    return result;
-                }
-
-                if (node.NodeType == type && node.Text == text)
-                {
-                    return node;
-                }
-            }
-            return null;
-        }
-
-        public static int SortChildNodes(TreeNode node)
-        {
-            int moves = 0;
-
-            for (int i = 0; i < node.Nodes.Count - 1; i++)
-            {
-                if (node.Nodes[i].Text.CompareTo(node.Nodes[i + 1].Text) > 0)
-                {
-                    int nodeIndex = node.Nodes[i].Index;
-                    var nodeCopy = node.Nodes[i].Clone() as TreeNode;
-                    node.Nodes.Remove(node.Nodes[i]);
-
-                    node.Nodes.Insert(nodeIndex + 1, nodeCopy.EnsureNotNull());
-                    moves++;
-                }
-                else if (node.Nodes[i + 1].Text.CompareTo(node.Nodes[i].Text) < 0)
-                {
-                    int nodeIndex = node.Nodes[i].Index;
-                    var nodeCopy = node.Nodes[i].Clone() as TreeNode;
-                    node.Nodes.Remove(node.Nodes[i]);
-
-                    node.Nodes.Insert(nodeIndex - 1, nodeCopy.EnsureNotNull());
-                    moves++;
-                }
-            }
-
-            if (moves > 0)
-            {
-                return SortChildNodes(node);
-            }
-
-            return moves;
-        }
-        */
     }
 }

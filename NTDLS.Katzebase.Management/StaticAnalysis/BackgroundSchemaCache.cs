@@ -37,6 +37,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         private static KbClient? _client;
         private static bool _keepRunning = false;
         private static bool _resetState = false;
+        private static string? _refreshSchemaPath = null;
 
         /// <summary>
         /// The schemas that we will lazy load next.
@@ -61,6 +62,15 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         }
 
         /// <summary>
+        /// Removes all cache items that start with the given schema path.
+        /// </summary>
+        /// <param name="schemaPath"></param>
+        public static void Refresh(string? schemaPath)
+        {
+            _refreshSchemaPath = schemaPath;
+        }
+
+        /// <summary>
         /// Starts the background worker or changes the client if its already running.
         /// </summary>
         public static void StartOrReset(KbClient client)
@@ -79,20 +89,34 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 {
                     while (_keepRunning)
                     {
-                        if (_resetState)
-                        {
-                            _schemaWorkQueue.Clear();
-                            lock (_schemaCache)
-                            {
-                                _schemaCache.Clear();
-                            }
-                            _resetState = false;
-                        }
-
                         try
                         {
                             while (_keepRunning)
                             {
+                                if (_resetState)
+                                {
+                                    _resetState = false;
+                                    lock (_schemaCache)
+                                    {
+                                        _schemaWorkQueue.Clear();
+                                        _schemaCache.Clear();
+                                    }
+                                }
+
+                                if (_refreshSchemaPath != null)
+                                {
+                                    lock (_schemaCache)
+                                    {
+                                        _schemaWorkQueue.Clear();
+
+                                        _schemaCache.RemoveAll(o => o.Schema.Path.StartsWith(_refreshSchemaPath, StringComparison.InvariantCultureIgnoreCase));
+
+                                        _schemaCache.Clear();
+                                    }
+
+                                    _refreshSchemaPath = null;
+                                }
+
                                 if (ProcessSchemaQueue())
                                 {
                                     var schemaCache = GetCache();
