@@ -1,10 +1,13 @@
-/*
+/* Create index.
+
 create index ix_temp (
 	Id
 ) on Temporary
 
 drop index ix_temp on Temporary
 */
+
+/* Test create/drop schemas.
 --create schema Temporary:Blah
 --create schema Temporary:Blah:One
 --create schema Temporary:Blah:Two
@@ -14,6 +17,7 @@ drop index ix_temp on Temporary
 --drop schema Temporary:Blah:Two
 --drop schema Temporary:Blah:Three
 --drop schema Temporary:Blah
+*/
 
 --Translation test query.
 SELECT
@@ -31,12 +35,13 @@ INNER JOIN WordList:Synonym as s
 	ON s.SourceWordId = sw.Id
 INNER JOIN WordList:Word as tw
 	ON tw.Id = s.TargetWordId
-INNER JOIN Temporary:Blah as fs
-	ON fs.Id = tw.LanguageId
+--INNER JOIN Temporary:Blah as fs
+--	ON fs.Id = tw.LanguageId
 INNER JOIN WordList:Language as tl
 	ON tl.Id = tw.LanguageId
 WHERE
 	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
 ORDER BY
 	sl.Name ASC,
 	tw.Text
