@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
-            using var transactionReference = _core.Transactions.Acquire(session);
+            using var transactionReference = _core.Transactions.APIAcquire(session);
 
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
 

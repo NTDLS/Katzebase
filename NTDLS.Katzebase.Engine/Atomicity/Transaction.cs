@@ -800,7 +800,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 if (obj.Count != 0)
                 {
-                    using var ephemeralTxRef = _core.Transactions.Acquire(Session);
+                    using var ephemeralTxRef = _core.Transactions.APIAcquire(Session);
                     foreach (var tempSchema in obj)
                     {
                         _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);

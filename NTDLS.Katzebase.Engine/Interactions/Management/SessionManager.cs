@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal InternalSystemSessionTransaction CreateEphemeralSystemSession()
         {
             var session = _core.Sessions.CreateSession(Guid.NewGuid(), "system", "system", true);
-            var transactionReference = _core.Transactions.Acquire(session);
+            var transactionReference = _core.Transactions.APIAcquire(session);
             return new InternalSystemSessionTransaction(_core, session, transactionReference);
         }
 

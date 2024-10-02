@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var physicalIndex = indexCatalog.GetByName(param.IndexName);
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var result = new KbQueryIndexListReply();
 
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
@@ -93,7 +93,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 bool value = indexCatalog.GetByName(param.IndexName) != null;
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexExistsReply(value));
@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.CreateIndex(transactionReference.Transaction, param.Schema, param.Index, out Guid newId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexCreateReply(newId), 0);
             }
@@ -134,7 +134,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName, param.NewPartitionCount);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexRebuildReply());
             }
@@ -154,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.DropIndex(transactionReference.Transaction, param.Schema, param.IndexName);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexDropReply());
             }

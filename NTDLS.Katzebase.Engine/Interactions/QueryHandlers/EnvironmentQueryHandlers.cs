@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Configuration)
                 {

@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 foreach (var variable in preparedQuery.VariableValues)
                 {

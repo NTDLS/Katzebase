@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var result = new KbQueryDocumentListResult();
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var result = new KbQueryDocumentListResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)

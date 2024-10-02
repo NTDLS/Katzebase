@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                 {
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var schemaName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
                 var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
 
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var collapsedParameters = new List<string?>();
 
@@ -86,7 +86,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 {
                     if (SystemFunctionCollection.TryGetFunction(objectName, out var systemFunction))
                     {
-                        return SystemFunctionImplementation.ExecuteFunction(_core, transactionReference.Transaction, objectName, collapsedParameters);
+                        var systemFunctionResult = SystemFunctionImplementation.ExecuteFunction(
+                            _core, transactionReference.Transaction, objectName, collapsedParameters);
+
+                        return transactionReference.CommitAndApplyMetricsThenReturnResults(systemFunctionResult, 0);
                     }
                 }
 

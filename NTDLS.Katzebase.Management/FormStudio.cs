@@ -719,7 +719,7 @@ namespace NTDLS.Katzebase.Management
             #region System Functions.
 
             var systemFunctionsNode = treeViewMacros.Nodes.Add("System Functions");
-            var systemFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowSystemFunctions").OrderBy(o => o.Name);
+            var systemFunctions = client.Query.Fetch<KbFunctionDescription>("EXEC ShowSystemFunctions").OrderBy(o => o.Name);
             foreach (var systemFunction in systemFunctions)
             {
                 var node = new TreeNode(systemFunction.Name)
@@ -750,7 +750,7 @@ namespace NTDLS.Katzebase.Management
             #region Scaler Functions.
 
             var scalerFunctionsNode = treeViewMacros.Nodes.Add("Scaler Functions");
-            var scalerFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowScalerFunctions").OrderBy(o => o.Name);
+            var scalerFunctions = client.Query.Fetch<KbFunctionDescription>("EXEC ShowScalerFunctions").OrderBy(o => o.Name);
             foreach (var scalerFunction in scalerFunctions)
             {
                 var node = new TreeNode(scalerFunction.Name)
@@ -781,7 +781,7 @@ namespace NTDLS.Katzebase.Management
             #region Aggregate Functions.
 
             var aggregateFunctionsNode = treeViewMacros.Nodes.Add("Aggregate Functions");
-            var aggregateFunctions = kbClient.Query.Fetch<KbFunctionDescription>("EXEC ShowAggregateFunctions").OrderBy(o => o.Name);
+            var aggregateFunctions = client.Query.Fetch<KbFunctionDescription>("EXEC ShowAggregateFunctions").OrderBy(o => o.Name);
             foreach (var aggregateFunction in aggregateFunctions)
             {
                 var node = new TreeNode(aggregateFunction.Name)
@@ -863,9 +863,14 @@ namespace NTDLS.Katzebase.Management
 
                     if (explorerConnection.Client != null)
                     {
-                        using var macrosConnection = explorerConnection.CreateNewConnection();
-
-                        PopulateMacros(macrosConnection);
+                        Threading.StartThread(() =>
+                        {
+                            using var macrosConnection = explorerConnection.CreateNewConnection();
+                            Invoke(() =>
+                            {
+                                PopulateMacros(macrosConnection);
+                            });
+                        });
                     }
 
                     return explorerConnection;

@@ -23,20 +23,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactionAPIHandlers APIHandlers { get; private set; }
 
-        internal TransactionReference Acquire(SessionState session)
-        {
-            var transactionReference = Acquire(session, false);
-
-            var stackFrames = (new StackTrace()).GetFrames();
-            if (stackFrames.Length >= 2)
-            {
-                //Since we go though Interactions.APIHandlers, the top level function will be the name of the API.
-                transactionReference.Transaction.TopLevelOperation = stackFrames[1].GetMethod()?.Name ?? string.Empty;
-            }
-
-            return transactionReference;
-        }
-
         internal List<TransactionSnapshot> Snapshot()
         {
             var collectionClone = new List<Transaction>();
@@ -179,9 +165,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Begin an atomic operation. If the session already has an open transaction then its
         /// reference count is incremented and then decremented on TransactionReference.Dispose();
+        /// 
+        /// Keep in mind that while transactions do support multithreaded client operations, that 
+        /// all operations for a single client share the same transaction, therefore it is important
+        /// that multithreaded client operations be aware that if any one client rolls back an operation
+        /// that this will cause all active processes for that client connection to also be cancelled.
         /// </summary>
-        /// <param name="processId"></param>
-        /// <returns></returns>
+        internal TransactionReference APIAcquire(SessionState session)
+        {
+            var transactionReference = Acquire(session, false);
+
+            var stackFrames = (new StackTrace()).GetFrames();
+            if (stackFrames.Length >= 2)
+            {
+                //Since we go though Interactions.APIHandlers, the top level function will be the name of the API.
+                transactionReference.Transaction.TopLevelOperation = stackFrames[1].GetMethod()?.Name ?? string.Empty;
+            }
+
+            return transactionReference;
+        }
+
+        /// <summary>
+        /// Begin an atomic operation. If the session already has an open transaction then its
+        /// reference count is incremented and then decremented on TransactionReference.Dispose();
+        /// 
+        /// Keep in mind that while transactions do support multithreaded client operations, that 
+        /// all operations for a single client share the same transaction, therefore it is important
+        /// that multithreaded client operations be aware that if any one client rolls back an operation
+        /// that this will cause all active processes for that client connection to also be cancelled.
+        /// </summary>
         internal TransactionReference Acquire(SessionState session, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;

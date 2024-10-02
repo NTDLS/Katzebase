@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
 
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var physicalSchema = _core.Schemas.Acquire(
                     transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
@@ -195,7 +195,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 var firstSchema = preparedQuery.Schemas.Single();
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
@@ -242,7 +242,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
                 var result = StaticSearcherMethods.SampleSchemaDocuments(
                     _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
@@ -260,7 +260,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
                 var result = StaticSearcherMethods.ListSchemaDocuments(
                     _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
@@ -278,7 +278,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var result = new KbQueryExplain();
 
@@ -310,7 +310,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var result = new KbQueryExplain();
 
@@ -338,7 +338,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 var firstSchema = preparedQuery.Schemas.First();
 
-                using var transactionReference = _core.Transactions.Acquire(session);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
                     _core, transactionReference.Transaction, preparedQuery, [firstSchema.Prefix]);
