@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Management.Classes
         /// <summary>
         /// Only populated when NodeType = ServerNodeType.Server.
         /// </summary>
-        public ServerExplorerConnection? ExplorerManager { get; set; }
+        public ServerExplorerConnection? ExplorerConnection { get; set; }
 
         public ServerExplorerNode(ServerNodeType nodeType, string name) :
             base(name)
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Management.Classes
         public static ServerExplorerNode CreateServerNode(ServerExplorerConnection explorerManager)
             => new(ServerNodeType.Server, explorerManager.ServerAddress)
             {
-                ExplorerManager = explorerManager
+                ExplorerConnection = explorerManager
             };
 
         public static ServerExplorerNode CreateSchemaNode(KbSchema schema)

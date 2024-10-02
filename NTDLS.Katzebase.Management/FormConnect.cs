@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Management
 {
     public partial class FormConnect : Form
     {
-        public string ServerHost => textBoxServerAddress.Text.Trim();
+        public string ServerAddress => textBoxServerAddress.Text.Trim();
         public string Username => textBoxUsername.Text.Trim();
         public string PasswordHash => KbClient.HashPassword(textBoxPassword.Text.Trim());
 
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Management
         {
             try
             {
-                using var client = new KbClient(ServerHost, ServerPort, Username, PasswordHash, $"{KbConstants.FriendlyName}.UI.Query");
+                using var client = new KbClient(ServerAddress, ServerPort, Username, PasswordHash, $"{KbConstants.FriendlyName}.UI.Query");
                 DialogResult = DialogResult.OK;
                 Close();
             }

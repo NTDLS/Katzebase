@@ -305,14 +305,14 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     try
                     {
-                        using var form = new FormConnect(Client?.Host ?? "", Client?.Port ?? 6858, string.IsNullOrWhiteSpace(Client?.Username) ? "admin" : Client.Username);
+                        using var form = new FormConnect(Client?.Address ?? "", Client?.Port ?? 6858, string.IsNullOrWhiteSpace(Client?.Username) ? "admin" : Client.Username);
                         if (form.ShowDialog() != DialogResult.OK)
                         {
                             IsScriptExecuting = false;
                             return;
                         }
 
-                        Client = new KbClient(form.ServerHost, form.ServerPort, form.Username, form.PasswordHash, $"{KbConstants.FriendlyName}.UI.Query");
+                        Client = new KbClient(form.ServerAddress, form.ServerPort, form.Username, form.PasswordHash, $"{KbConstants.FriendlyName}.UI.Query");
                         Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
                     }
                     catch (Exception ex)

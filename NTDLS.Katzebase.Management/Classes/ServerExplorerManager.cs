@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+﻿using NTDLS.Helpers;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -32,8 +32,29 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             foreach (var serverNode in ServerExplorerTree.Nodes.OfType<ServerExplorerNode>())
             {
-                serverNode.ExplorerManager?.Disconnect();
+                serverNode.ExplorerConnection?.Disconnect();
             }
+        }
+
+        /// <summary>
+        /// Finds an existing connected server explorer server node based on the given connection details.
+        /// </summary>
+        public ServerExplorerNode? FindServerNode(string serverAddress, int serverPort, string username)
+        {
+            foreach (var serverNode in ServerExplorerTree.Nodes.OfType<ServerExplorerNode>())
+            {
+                if (serverNode.ExplorerConnection != null)
+                {
+                    if (serverNode.ExplorerConnection.ServerAddress.Is(serverAddress)
+                        && serverNode.ExplorerConnection.ServerPort == serverPort
+                        && serverNode.ExplorerConnection.Username.Is(username))
+                    {
+                        return serverNode;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

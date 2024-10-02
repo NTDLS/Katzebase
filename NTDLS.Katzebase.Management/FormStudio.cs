@@ -4,8 +4,6 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
-using NTDLS.Katzebase.Management.StaticAnalysis;
-using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Management.Classes.Editor.AutoCompleteFunction;
@@ -177,7 +175,7 @@ namespace NTDLS.Katzebase.Management
         {
             var tabFilePage = CurrentTabFilePage();
 
-            toolStripStatusLabelServerName.Text = $"Server: {tabFilePage?.Client?.Host}:{tabFilePage?.Client?.Port}";
+            toolStripStatusLabelServerName.Text = $"Server: {tabFilePage?.Client?.Address}:{tabFilePage?.Client?.Port}";
             toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client?.ProcessId.ToString("N0") ?? string.Empty;
 
             bool isTabOpen = (tabFilePage != null);
@@ -332,7 +330,7 @@ namespace NTDLS.Katzebase.Management
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
-                        node.ExplorerManager?.Disconnect();
+                        node.ExplorerConnection?.Disconnect();
                         node.Remove();
 
                         if (_serverExplorerManager.LastSelectedNode == node)
@@ -346,13 +344,13 @@ namespace NTDLS.Katzebase.Management
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
                         var serverNode = ServerExplorerManager.GetServerNode(node);
-                        if (serverNode != null && serverNode.ExplorerManager != null)
+                        if (serverNode != null && serverNode.ExplorerConnection != null)
                         {
                             var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
                             if (rootSchema != null)
                             {
                                 rootSchema.Nodes.Clear();
-                                serverNode.ExplorerManager.LazySchemaCache.Refresh(string.Empty);
+                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(string.Empty);
                             }
                         }
                     }
@@ -640,7 +638,7 @@ namespace NTDLS.Katzebase.Management
         private CodeEditorTabPage CreateNewFileEmptyTab()
         {
             var serverNode = _serverExplorerManager.GetServerNodeForLastSelectedNode();
-            return CreateNewTab(serverNode?.ExplorerManager, FormUtility.GetNextNewFileName());
+            return CreateNewTab(serverNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
         }
 
         /// <summary>
@@ -655,7 +653,7 @@ namespace NTDLS.Katzebase.Management
             {
                 throw new Exception("The supplied node is not of the correct type.");
             }
-            return CreateNewTab(basedOnNode?.ExplorerManager, FormUtility.GetNextNewFileName());
+            return CreateNewTab(basedOnNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
         }
 
         /// <summary>
@@ -665,7 +663,7 @@ namespace NTDLS.Katzebase.Management
         private CodeEditorTabPage CreateNewTabBasedOnLastSelectedNode(string tabText = "")
         {
             var serverNode = _serverExplorerManager.GetServerNodeForLastSelectedNode();
-            return CreateNewTab(serverNode?.ExplorerManager, tabText);
+            return CreateNewTab(serverNode?.ExplorerConnection, tabText);
         }
 
         /// <summary>
@@ -674,16 +672,16 @@ namespace NTDLS.Katzebase.Management
         /// <param name="client"></param>
         /// <param name="tabText"></param>
         /// <returns></returns>
-        private CodeEditorTabPage CreateNewTab(ServerExplorerConnection? explorerManager, string tabText = "")
+        private CodeEditorTabPage CreateNewTab(ServerExplorerConnection? explorerConnection, string tabText = "")
         {
-            var client = explorerManager?.CreateNewConnection();
+            var client = explorerConnection?.CreateNewConnection();
 
             if (string.IsNullOrWhiteSpace(tabText))
             {
                 tabText = FormUtility.GetNextNewFileName();
             }
 
-            var codeTabPage = new CodeEditorTabPage(this, tabControlBody, client, explorerManager, tabText);
+            var codeTabPage = new CodeEditorTabPage(this, tabControlBody, client, explorerConnection, tabText);
 
             tabControlBody.TabPages.Add(codeTabPage);
             tabControlBody.SelectedTab = codeTabPage;
@@ -714,7 +712,7 @@ namespace NTDLS.Katzebase.Management
             public string? Description { get; set; }
         }
 
-        private void PopulateMacros(KbClient kbClient)
+        private void PopulateMacros(KbClient client)
         {
             GlobalState.AutoCompleteFunctions.Clear();
 
@@ -847,23 +845,30 @@ namespace NTDLS.Katzebase.Management
                 using var form = new FormConnect();
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    var explorerConnection = new ServerExplorerConnection(this,
-                        _serverExplorerManager, form.ServerHost, form.ServerPort, form.Username, form.PasswordHash);
-
-                    return explorerConnection;
-
-                    /*
-                    var kbClient = ServerExplorerManager.GetRootNode(treeViewServerExplorer)?.ServerClient;
-                    if (kbClient != null)
+                    var existingExplorerConnection = _serverExplorerManager.FindServerNode(form.ServerAddress, form.ServerPort, form.Username);
+                    if (existingExplorerConnection != null && existingExplorerConnection.ExplorerConnection != null)
                     {
-                        PopulateMacros(kbClient);
+                        //Recycle already connected server explorer connections.
+                        treeViewServerExplorer.SelectedNode = existingExplorerConnection;
+                        return existingExplorerConnection.ExplorerConnection;
                     }
+
+                    var explorerConnection = new ServerExplorerConnection(this,
+                        _serverExplorerManager, form.ServerAddress, form.ServerPort, form.Username, form.PasswordHash);
 
                     foreach (TreeNode node in treeViewServerExplorer.Nodes)
                     {
                         node.Expand();
                     }
-                    */
+
+                    if (explorerConnection.Client != null)
+                    {
+                        using var macrosConnection = explorerConnection.CreateNewConnection();
+
+                        PopulateMacros(macrosConnection);
+                    }
+
+                    return explorerConnection;
                 }
             }
             catch (Exception ex)
