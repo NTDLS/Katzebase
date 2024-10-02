@@ -207,7 +207,7 @@ namespace NTDLS.Katzebase.Management
                 e.Cancel = true;
             }
 
-            ServerExplorerManager.Close(treeViewServerExplorer);
+            ServerExplorerManager.Disconnect();
         }
 
         private void FormStudio_Shown(object? sender, EventArgs e)
@@ -810,6 +810,9 @@ namespace NTDLS.Katzebase.Management
 
         bool Disconnect()
         {
+
+            ServerExplorerManager.Disconnect();
+
             if (CloseAllTabs() == false)
             {
                 return false;

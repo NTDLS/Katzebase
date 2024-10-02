@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Management.Classes
             //ServerExplorerTree.EnsureNotNull().Nodes.Add(serverNode);
         }
 
-        public static void Close(TreeView treeView)
+        public static void Disconnect()
         {
             BackgroundSchemaCache.Stop();
             Exceptions.Ignore(() => Client?.Dispose());
