@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var resultingRows = new SchemaIntersectionRowCollection();
 
-            IntersectAllSchemas(instance, instance.DocumentPointer, ref resultingRows);
+            IntersectAllSchemas(instance, instance.DocumentPointer, resultingRows);
 
             if (instance.Operation.Query.GroupFields.Any() == false && instance.Operation.Query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
@@ -332,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         #endregion
 
         private static void IntersectAllSchemas(DocumentLookupOperation.Instance instance,
-            DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
+            DocumentPointer topLevelDocumentPointer, SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
 
@@ -359,7 +359,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             FillInSchemaResultDocumentValues(instance, topLevelSchemaMap.Key,
-                topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
+                topLevelDocumentPointer, resultingRow, threadScopedContentCache);
 
             //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
@@ -371,8 +371,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (instance.Operation.SchemaMap.Count > 1)
             {
-                IntersectAllSchemasRecursive(instance, 1, ref resultingRow,
-                    ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+                IntersectAllSchemasRecursive(instance, 1, resultingRow,
+                    resultingRows, threadScopedContentCache, joinScopedContentCache);
             }
 
             //Limit the results by the rows that have the correct number of schema matches.
@@ -404,9 +404,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
         private static void IntersectAllSchemasRecursive(DocumentLookupOperation.Instance instance,
-            int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+            int skipSchemaCount, SchemaIntersectionRow resultingRow, SchemaIntersectionRowCollection resultingRows,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             var currentSchemaKVP = instance.Operation.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -512,14 +512,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
 
                     //We fill in the values for the single working row: resultingRow
-                    FillInSchemaResultDocumentValues(instance, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
+                    FillInSchemaResultDocumentValues(instance, currentSchemaKVP.Key, documentPointer, resultingRow, threadScopedContentCache);
 
                     if (skipSchemaCount < instance.Operation.SchemaMap.Count - 1)
                     {
                         //We continue to recursively fill in the values for the single working row: resultingRow
                         //Note that "resultingRow" is a reference, but in the case of a one-to-many, then it is a reference to the resultingRow clone.
                         IntersectAllSchemasRecursive(instance, skipSchemaCount + 1,
-                            ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+                            resultingRow, resultingRows, threadScopedContentCache, joinScopedContentCache);
                     }
                 }
 
@@ -569,12 +569,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// This function will "produce" a single row by filling in the document values with the values from the given schema.
         /// </summary>
         private static void FillInSchemaResultDocumentValues(DocumentLookupOperation.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
+            DocumentPointer documentPointer, SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
 
-            FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+            FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, schemaResultRow, threadScopedContentCache);
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
         }
@@ -583,7 +583,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupOperation.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
+            DocumentPointer documentPointer, SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
