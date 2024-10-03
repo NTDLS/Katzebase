@@ -331,51 +331,37 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, query, indexLookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
 
-                    if (indexPartitions.Count > 1)
+                    #region Threading.
+
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+
+                    foreach (var indexPartition in indexPartitions)
                     {
-                        var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                        var parameter = new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartition);
 
-                        foreach (var indexPartition in indexPartitions)
-                        {
-                            var parameter = new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartition);
-
-                            var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                            queue.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
+                        var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
+                        queue.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
                         {
                             LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
                         }*/);
-                            ptThreadQueue?.StopAndAccumulate();
-                        }
-
-                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.IndexSelection.PhysicalIndex.Name}");
-                        queue.WaitForCompletion();
-                        ptThreadCompletion?.StopAndAccumulate();
-
-                        var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                        accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
-                        ptDocumentPointerIntersect?.StopAndAccumulate();
-
-                        //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
-                        if (accumulatedResults.Count == 0)
-                        {
-                            break; //Condition eliminated all possible results on this level.
-                        }
+                        ptThreadQueue?.StopAndAccumulate();
                     }
-                    else
+
+                    var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.IndexSelection.PhysicalIndex.Name}");
+                    queue.WaitForCompletion();
+                    ptThreadCompletion?.StopAndAccumulate();
+
+                    var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                    accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
+
+                    //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
+                    if (accumulatedResults.Count == 0)
                     {
-                        //No need for additional threads, its just a single partition.
-                        MatchSchemaDocumentsByIndexingConditionLookupThread(new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartitions.First()));
-
-                        var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                        accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
-                        ptDocumentPointerIntersect?.StopAndAccumulate();
-
-                        //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
-                        if (accumulatedResults.Count == 0)
-                        {
-                            break; //Condition eliminated all possible results on this level.
-                        }
+                        break; //Condition eliminated all possible results on this level.
                     }
+
+                    #endregion
                 }
 
                 return accumulatedResults ?? new();

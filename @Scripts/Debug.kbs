@@ -1,7 +1,8 @@
 
-exec ShowTransactions()
+exec ShowThreadPools()
 
-exec Cancel(7)
+--exec ShowTransactions()
+--exec Cancel(7)
 
 /* Create index.
 
@@ -24,7 +25,7 @@ drop index ix_temp on Temporary
 --drop schema Temporary:Blah
 */
 
---Translation test query.
+/*--Translation test query.
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -40,8 +41,8 @@ INNER JOIN WordList:Synonym as s
 	ON s.SourceWordId = sw.Id
 INNER JOIN WordList:Word as tw
 	ON tw.Id = s.TargetWordId
-INNER JOIN Temporary:Blah as fs
-	ON fs.Id = tw.LanguageId
+--INNER JOIN Temporary:Blah as fs
+--	ON fs.Id = tw.LanguageId
 INNER JOIN WordList:Language as tl
 	ON tl.Id = tw.LanguageId
 WHERE
@@ -50,7 +51,7 @@ WHERE
 ORDER BY
 	sl.Name ASC,
 	tw.Text
-
+*/
  
  --region TestCode
 

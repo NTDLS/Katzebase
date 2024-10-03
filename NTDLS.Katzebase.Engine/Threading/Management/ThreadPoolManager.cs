@@ -9,6 +9,7 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
     {
         public DelegateThreadPool Lookup { get; set; }
         public DelegateThreadPool Indexing { get; set; }
+        public DelegateThreadPool Intersection { get; set; }
 
         private readonly EngineCore _core;
 
@@ -18,6 +19,7 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
 
             Indexing = new DelegateThreadPool(_core.Settings.IndexingThreadPoolSize <= 0 ? Environment.ProcessorCount : _core.Settings.IndexingThreadPoolSize, _core.Settings.IndexingThreadPoolQueueDepth);
             Lookup = new DelegateThreadPool(_core.Settings.LookupThreadPoolSize <= 0 ? Environment.ProcessorCount : _core.Settings.LookupThreadPoolSize, _core.Settings.LookupThreadPoolQueueDepth);
+            Intersection = new DelegateThreadPool(_core.Settings.IntersectionThreadPoolSize <= 0 ? Environment.ProcessorCount : _core.Settings.IntersectionThreadPoolSize, _core.Settings.IntersectionThreadPoolQueueDepth);
         }
 
         public void Stop()

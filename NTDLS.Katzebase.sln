@@ -49,7 +49,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{7ADB6C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Parsers", "NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj", "{B308A7AE-2836-481B-ADA8-4076CD13DC2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.PersistentTypes", "NTDLS.Katzebase.PersistentTypes\NTDLS.Katzebase.PersistentTypes.csproj", "{4D7E5071-C089-4A44-AD26-23C00FA5B6A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.PersistentTypes", "NTDLS.Katzebase.PersistentTypes\NTDLS.Katzebase.PersistentTypes.csproj", "{4D7E5071-C089-4A44-AD26-23C00FA5B6A6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.DelegateThreadPooling", "..\NTDLS.DelegateThreadPooling\NTDLS.DelegateThreadPooling\NTDLS.DelegateThreadPooling.csproj", "{9D364A2B-1B18-43B6-9DEE-A4415CBD5768}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -109,6 +111,10 @@ Global
 		{4D7E5071-C089-4A44-AD26-23C00FA5B6A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D7E5071-C089-4A44-AD26-23C00FA5B6A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D7E5071-C089-4A44-AD26-23C00FA5B6A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D364A2B-1B18-43B6-9DEE-A4415CBD5768}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D364A2B-1B18-43B6-9DEE-A4415CBD5768}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D364A2B-1B18-43B6-9DEE-A4415CBD5768}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D364A2B-1B18-43B6-9DEE-A4415CBD5768}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -73,7 +73,8 @@
 			<Word>MinQueryThreads</Word>
 			<Word>QueryThreadWeight</Word>
 			<Word>ReleaseCacheAllocations</Word>
-			<Word>ShowAggregateFunctions</Word>
+      <Word>ShowThreadPools</Word>
+      <Word>ShowAggregateFunctions</Word>
 			<Word>ShowBlockTree</Word>
 			<Word>ShowBlocks</Word>
 			<Word>ShowCacheAllocations</Word>
