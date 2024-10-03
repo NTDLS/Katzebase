@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
-using static NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping.QuerySchemaMap;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping

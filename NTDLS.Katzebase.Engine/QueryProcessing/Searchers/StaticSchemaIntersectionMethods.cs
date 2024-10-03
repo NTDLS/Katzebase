@@ -46,7 +46,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var primarySchema = schemaMappings.First();
             IEnumerable<DocumentPointer>? documentPointers = null;
 
-            #region Optimization.
             if (primarySchema.Value.Optimization?.IndexingConditionGroup.Count > 0)
             {
                 //We are going to create a limited document catalog using the indexes.
@@ -55,7 +54,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 documentPointers = indexMatchedDocuments.Select(o => o.Value);
             }
-            #endregion
 
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
@@ -163,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
             }
         }
-         */
+        */
 
         private static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
             ConditionCollection? givenConditions, KbInsensitiveDictionary<string?> documentElements)
