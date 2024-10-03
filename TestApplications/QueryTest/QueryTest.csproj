@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\NTDLS.DelegateThreadPooling\NTDLS.DelegateThreadPooling\NTDLS.DelegateThreadPooling.csproj" />
     <ProjectReference Include="..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
