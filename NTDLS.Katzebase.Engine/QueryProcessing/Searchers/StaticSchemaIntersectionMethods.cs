@@ -15,7 +15,6 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
-using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
