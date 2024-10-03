@@ -79,7 +79,7 @@ module DMLExecutionBasicTests =
         | :? Fields.QueryFieldConstantString as str -> 
             equals "$s_1$" str.Value
            
-        let transactionReference = _core.Transactions.Acquire(preLogin)
+        let transactionReference = _core.Transactions.APIAcquire(preLogin)
         let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
         let auxiliaryFields = KbInsensitiveDictionary<string> ()
         let collapsed01 = 
