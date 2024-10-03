@@ -371,8 +371,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (instance.Operation.SchemaMap.Count > 1)
             {
-                IntersectAllSchemasRecursive(instance, 1, resultingRow,
-                    resultingRows, threadScopedContentCache, joinScopedContentCache);
+                IntersectAllSchemasRecursive(instance, 1, resultingRow, resultingRows, threadScopedContentCache, joinScopedContentCache, 0);
             }
 
             //Limit the results by the rows that have the correct number of schema matches.
@@ -406,7 +405,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void IntersectAllSchemasRecursive(DocumentLookupOperation.Instance instance,
             int skipSchemaCount, SchemaIntersectionRow resultingRow, SchemaIntersectionRowCollection resultingRows,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
-            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache, int recursionLevel)
         {
             var currentSchemaKVP = instance.Operation.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -518,8 +517,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         //We continue to recursively fill in the values for the single working row: resultingRow
                         //Note that "resultingRow" is a reference, but in the case of a one-to-many, then it is a reference to the resultingRow clone.
-                        IntersectAllSchemasRecursive(instance, skipSchemaCount + 1,
-                            resultingRow, resultingRows, threadScopedContentCache, joinScopedContentCache);
+                        IntersectAllSchemasRecursive(instance, skipSchemaCount + 1, resultingRow, resultingRows, threadScopedContentCache, joinScopedContentCache, recursionLevel + 1);
                     }
                 }
 
