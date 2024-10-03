@@ -21,6 +21,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal static class StaticSchemaIntersectionMethods
     {
+
+        private static void ExperimentalSchemaSearcher(EngineCore core, Transaction transaction,
+        QuerySchemaMap schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+        {
+        }
+
+
         /// <summary>
         /// Build a generic key/value dataset which is the combined field-set from each inner joined document.
         /// </summary>
@@ -30,6 +37,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
         {
+            if (schemaMap.Count > 1)
+            {
+                ExperimentalSchemaSearcher(core, transaction,schemaMap, query,  gatherDocumentsIdsForSchemaPrefixes);
+            }
+
             var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;

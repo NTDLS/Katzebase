@@ -217,7 +217,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Used for indexing operations for a groups of conditions.
         /// </summary>
-        /// <param name="keyValues">For JOIN operations, contains the values of the joining document.</param>
+        /// <param name="keyValues">For JOIN operations, contains the values of the joining document.
+        /// For WHERE clause, values are stored in the conditions so this is not needed.</param>
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
