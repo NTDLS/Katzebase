@@ -10,6 +10,6 @@ module KatzebaseTests =
     if true then
         ParserBasicTests.``Parse "SELECT * FROM MASTER:ACCOUNT"`` None 
         ParserBasicTests.``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ?Username AND PasswordHash = ?PasswordHash"`` None
-        DDLExecutionBasicTests.``Execute "CREATE SCHEMA testSch"`` None
-    DMLExecutionBasicTests.``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` None
+        DMLExecutionBasicTests.``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` None
+    DDLExecutionBasicTests.``Execute "CREATE SCHEMA testSch"`` None
     printfn "Done!"        

@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
                 //Prototype Format: "returnDataType functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
                 //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
                 "Numeric Avg (AggregationArray values)|'Returns the average value for the set.'",
-                "Numeric Count (AggregationArray values)|'Returns the count of values in the set.'",
+                "Numeric Count (AggregationArray values, boolean countDistinct = false)|'Returns the count of values in the set.'",
                 "Numeric CountDistinct (AggregationArray values, boolean caseSensitive = false)|'Returns the count of distinct values in the set.'",
                 "Numeric GeometricMean (AggregationArray values)|'Returns the average that is used to calculate the central tendency of a the set.'",
                 "Numeric Max (AggregationArray values)|'Returns the maximum value for the set.'",

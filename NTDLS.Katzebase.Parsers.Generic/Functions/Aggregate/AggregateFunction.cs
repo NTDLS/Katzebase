@@ -20,6 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
         public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype<TData>> parameters, string description)
         {
             Name = name;
+            Description = description;
             ReturnType = returnType;
             Parameters.AddRange(parameters);
         }
