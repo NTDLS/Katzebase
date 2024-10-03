@@ -1,0 +1,170 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Functions\Aggregate\Implementations\**" />
+    <Compile Remove="Functions\Parameters\**" />
+    <Compile Remove="Functions\Procedures\**" />
+    <Compile Remove="Functions\Scaler\Implementations\**" />
+    <Compile Remove="Functions\System\Implementations\**" />
+    <EmbeddedResource Remove="Functions\Aggregate\Implementations\**" />
+    <EmbeddedResource Remove="Functions\Parameters\**" />
+    <EmbeddedResource Remove="Functions\Procedures\**" />
+    <EmbeddedResource Remove="Functions\Scaler\Implementations\**" />
+    <EmbeddedResource Remove="Functions\System\Implementations\**" />
+    <None Remove="Functions\Aggregate\Implementations\**" />
+    <None Remove="Functions\Parameters\**" />
+    <None Remove="Functions\Procedures\**" />
+    <None Remove="Functions\Scaler\Implementations\**" />
+    <None Remove="Functions\System\Implementations\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Functions\Aggregate\AggregateFunctionImplementation.cs" />
+    <Compile Remove="Functions\Scaler\ScalerFunctionImplementation.cs" />
+    <Compile Remove="Functions\System\SystemFunctionImplementation.cs" />
+    <Compile Remove="Tokens\Tokenizer.TryEatIfNextContains.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Functions\Aggregate\AggregateFunction.cs.bak" />
+    <None Remove="Functions\Aggregate\AggregateFunctionCollection.cs.bak" />
+    <None Remove="Functions\Aggregate\AggregateFunctionParameterPrototype.cs.bak" />
+    <None Remove="Functions\Aggregate\AggregateFunctionParameterValue.cs.bak" />
+    <None Remove="Functions\Aggregate\AggregateFunctionParameterValueCollection.cs.bak" />
+    <None Remove="Functions\Aggregate\AggregateFunctionTypes.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunction.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionCollection.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionParameterPrototype.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionParameterValue.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionParameterValueCollection.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionTypes.cs.bak" />
+    <None Remove="Functions\System\SystemFunction.cs.bak" />
+    <None Remove="Functions\System\SystemFunctionCollection.cs.bak" />
+    <None Remove="Functions\System\SystemFunctionImplementation.cs.bak" />
+    <None Remove="Interfaces\IEngineCore.cs.bak" />
+    <None Remove="Query\Class\Helpers\StaticParserUtility.cs.bak" />
+    <None Remove="Query\Class\StaticConditionsParser.cs.bak" />
+    <None Remove="Query\Class\StaticParserAlter.cs.bak" />
+    <None Remove="Query\Class\StaticParserAlterSchema.cs.bak" />
+    <None Remove="Query\Class\StaticParserAnalyze.cs.bak" />
+    <None Remove="Query\Class\StaticParserAnalyzeIndex.cs.bak" />
+    <None Remove="Query\Class\StaticParserAnalyzeSchema.cs.bak" />
+    <None Remove="Query\Class\StaticParserCreate.cs.bak" />
+    <None Remove="Query\Class\StaticParserCreateIndex.cs.bak" />
+    <None Remove="Query\Class\StaticParserCreateProcedure.cs.bak" />
+    <None Remove="Query\Class\StaticParserCreateSchema.cs.bak" />
+    <None Remove="Query\Class\StaticParserCreateUniqueKey.cs.bak" />
+    <None Remove="Query\Class\StaticParserDelete.cs.bak" />
+    <None Remove="Query\Class\StaticParserDrop.cs.bak" />
+    <None Remove="Query\Class\StaticParserDropIndex.cs.bak" />
+    <None Remove="Query\Class\StaticParserDropProcedure.cs.bak" />
+    <None Remove="Query\Class\StaticParserDropSchema.cs.bak" />
+    <None Remove="Query\Class\StaticParserDropUniqueKey.cs.bak" />
+    <None Remove="Query\Class\StaticParserExec.cs.bak" />
+    <None Remove="Query\Class\StaticParserField.cs.bak" />
+    <None Remove="Query\Class\StaticParserInsert.cs.bak" />
+    <None Remove="Query\Class\StaticParserJoin.cs.bak" />
+    <None Remove="Query\Class\StaticParserKill.cs.bak" />
+    <None Remove="Query\Class\StaticParserList.cs.bak" />
+    <None Remove="Query\Class\StaticParserListDocuments.cs.bak" />
+    <None Remove="Query\Class\StaticParserListSchemas.cs.bak" />
+    <None Remove="Query\Class\StaticParserOrderBy.cs.bak" />
+    <None Remove="Query\Class\StaticParserRebuild.cs.bak" />
+    <None Remove="Query\Class\StaticParserRebuildIndex.cs.bak" />
+    <None Remove="Query\Class\StaticParserRebuildUniqueKey.cs.bak" />
+    <None Remove="Query\Class\StaticParserSample.cs.bak" />
+    <None Remove="Query\Class\StaticParserSelect.cs.bak" />
+    <None Remove="Query\Class\StaticParserSet.cs.bak" />
+    <None Remove="Query\Class\StaticParserUpdate.cs.bak" />
+    <None Remove="Query\Class\StaticParserWhere.cs.bak" />
+    <None Remove="Query\Class\StaticParserWithOptions.cs.bak" />
+    <None Remove="Query\Class\WithOptions\ExpectedWithOptions.cs.bak" />
+    <None Remove="Query\Class\WithOptions\WithOption.cs.bak" />
+    <None Remove="Query\Exposed\ExposedAggregateFunction.cs.bak" />
+    <None Remove="Query\Exposed\ExposedConstant.cs.bak" />
+    <None Remove="Query\Exposed\ExposedDocumentIdentifier.cs.bak" />
+    <None Remove="Query\Exposed\ExposedExpression.cs.bak" />
+    <None Remove="Query\Exposed\ExposedFunction.cs.bak" />
+    <None Remove="Query\Fields\IQueryField.cs.bak" />
+    <None Remove="Query\Fields\QueryFieldCollapsedValue.cs.bak" />
+    <None Remove="Query\Fields\QueryFieldConstantNumeric.cs.bak" />
+    <None Remove="Query\Fields\QueryFieldConstantString.cs.bak" />
+    <None Remove="Query\Fields\QueryFieldDocumentIdentifier.cs.bak" />
+    <None Remove="Query\Functions\ExpressionFunctionParameterFunction.cs.bak" />
+    <None Remove="Query\Functions\ExpressionFunctionParameterNumeric.cs.bak" />
+    <None Remove="Query\Functions\ExpressionFunctionParameterString.cs.bak" />
+    <None Remove="Query\Functions\IExpressionFunctionParameter.cs.bak" />
+    <None Remove="Query\QueryField.cs.bak" />
+    <None Remove="Query\QueryFieldCollection.cs.bak" />
+    <None Remove="Query\QueryFieldLiteral.cs.bak" />
+    <None Remove="Query\SupportingTypes\PreparedQuery.cs.bak" />
+    <None Remove="Query\SupportingTypes\QueryBatch.cs.bak" />
+    <None Remove="Query\SupportingTypes\QuerySchema.cs.bak" />
+    <None Remove="Query\SupportingTypes\SortFields.cs.bak" />
+    <None Remove="Query\SupportingTypes\UpsertKeyValue.cs.bak" />
+    <None Remove="Query\SupportingTypes\UpsertKeyValues.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\ConditionCollection.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\ConditionEntry.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\ConditionGroup.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\Helpers\ConditionExtensions.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\Helpers\StaticConditionHelpers.cs.bak" />
+    <None Remove="Query\WhereAndJoinConditions\ICondition.cs.bak" />
+    <None Remove="StaticQueryParser.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Caret.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Contains.cs.bak" />
+    <None Remove="Tokens\Tokenizer.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatGetMatchingScope.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatGetNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatGetNextEvaluated.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatGetSingleFieldExpression.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatIfNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatIfNextEnum.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatMatchingScope.cs.bak" />
+    <None Remove="Tokens\Tokenizer.EatWhile.cs.bak" />
+    <None Remove="Tokens\Tokenizer.GetNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.GetNextIndexOf.cs.bak" />
+    <None Remove="Tokens\Tokenizer.IsNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.IsNextNonIdentifier.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Optimization.cs.bak" />
+    <None Remove="Tokens\Tokenizer.SetText.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Skip.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Substring.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryCompareNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatCompareNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatIfNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatIfNextCharacter.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatIfNextContains.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatIfNextEnum.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatNextEndsWith.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatNextStartsWith.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryEatValidateNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryGetFirstIndexOf.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryGetNextIndexOfAny.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryIsNext.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryIsNextCharacter.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryNextContains.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryNextEndsWith.cs.bak" />
+    <None Remove="Tokens\Tokenizer.TryNextStartsWith.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Validation.cs.bak" />
+    <None Remove="Tokens\Tokenizer.Whitespace.cs.bak" />
+    <None Remove="Tokens\TokenizerExtensions.cs.bak" />
+    <None Remove="Tokens\TokenizerHelpers.cs.bak" />
+    <None Remove="Tokens\TokenizerSlim.cs.bak" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />
+    <PackageReference Include="NTDLS.Helpers" Version="1.2.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+  </ItemGroup>
+
+</Project>

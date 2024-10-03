@@ -1,9 +1,10 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Functions.System;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowLocks<TData> where TData : IStringable
+    public static class SystemShowLocks<TData> where TData : IStringable
     {
         public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {

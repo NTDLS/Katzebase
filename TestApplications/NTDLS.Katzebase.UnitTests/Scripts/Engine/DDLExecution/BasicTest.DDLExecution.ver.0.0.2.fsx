@@ -20,8 +20,8 @@ open System
 open System.Collections.Generic
 
 module DDLExecutionBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
-    
+    open NTDLS.Katzebase.Parsers
+    open NTDLS.Katzebase.Engine
     //open NTDLS.Katzebase.Client.Payloads
     open NTDLS.Katzebase.Client.Types
 
@@ -45,7 +45,11 @@ module DDLExecutionBasicTests =
 
         let countTest sql expectedCount = 
             try
+#if GENERIC_TDATA
+                let preparedQueries = StaticQueryParser.ParseBatch(_core, sql, EngineCore<fstring>.StrParse, EngineCore<fstring>.StrCast, userParameters)
+#else
                 let preparedQueries = StaticQueryParser.ParseBatch(_core, sql, userParameters)
+#endif
                 let preparedQuery = preparedQueries.Item 0
         
                 let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
@@ -63,8 +67,8 @@ module DDLExecutionBasicTests =
                 equals expectedCount sc.Count
             with
             | exn ->
-                testPrint outputOpt "[By design] %s" exn.InnerException.InnerException.Message
                 equals "Value should not be null. (Parameter 'textValue')" exn.InnerException.InnerException.Message
+                testPrint outputOpt "[By design] %s" exn.InnerException.InnerException.Message
 
         testPrint outputOpt "count scalar"
         countTest $"SELECT COUNT(1) as Count FROM {testSchemaDDL}" 2

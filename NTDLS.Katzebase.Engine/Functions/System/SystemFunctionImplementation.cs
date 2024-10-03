@@ -1,16 +1,18 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Engine.Functions.System.Implementations;
 
-namespace NTDLS.Katzebase.Engine.Functions.System
+namespace NTDLS.Katzebase.Parsers.Functions.System
 {
     /// <summary>
     /// Contains all system function protype definitions, function implementations and expression collapse functionality.
     /// </summary>
     internal class SystemFunctionImplementation
     {
-        internal static string[] PrototypeStrings = {
+        public static string[] PrototypeStrings = {
                 //Prototype Format: "functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
                 //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
                 "CheckpointHealthCounters()|Writes the health counters to disk. This can be useful when performance monitoring and you need to get the metrics out of the database engine and into the json file.",

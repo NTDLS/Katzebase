@@ -1,5 +1,6 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-
+﻿
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     /// <summary>

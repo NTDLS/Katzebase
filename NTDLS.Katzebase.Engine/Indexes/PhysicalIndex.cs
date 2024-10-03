@@ -1,22 +1,22 @@
 ﻿using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]
-    public class PhysicalIndex<TData> where TData : IStringable
+    public class PhysicalIndex<TData> : IPhysicalIndex<TData> where TData : IStringable
     {
-        public List<PhysicalIndexAttribute> Attributes { get; set; } = new List<PhysicalIndexAttribute>();
+        public List<IPhysicalIndexAttribute> Attributes { get; set; } = new List<IPhysicalIndexAttribute>();
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modified { get; set; }
         public uint Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
-        public string GetPartitionPagesPath(PhysicalSchema<TData> physicalSchema)
+        public string GetPartitionPagesPath(IPhysicalSchema physicalSchema)
             => Path.Combine(physicalSchema.DiskPath, $"@Index_{Library.Helpers.MakeSafeFileName(Name)}");
 
-        public string GetPartitionPagesFileName(PhysicalSchema<TData> physicalSchema, uint indexPartition)
+        public string GetPartitionPagesFileName(IPhysicalSchema physicalSchema, uint indexPartition)
             => Path.Combine(physicalSchema.DiskPath, $"@Index_{Library.Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}{EngineConstants.IndexPageExtension}");
 
         public PhysicalIndex()

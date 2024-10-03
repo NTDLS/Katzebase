@@ -1,4 +1,5 @@
-﻿namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
+﻿using NTDLS.Katzebase.Parsers.Interfaces;
+namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
     /// Internal class methods for handling query requests related to health.

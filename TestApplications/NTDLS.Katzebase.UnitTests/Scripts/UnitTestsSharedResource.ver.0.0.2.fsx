@@ -17,11 +17,12 @@ module Shared
 open Newtonsoft.Json
 open NTDLS.Katzebase.Shared
 open NTDLS.Katzebase.Engine
-open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+open NTDLS.Katzebase.Parsers.Query.Fields
 open System
 open System.IO
 open System.Reflection
 open ProtoBuf
+open NTDLS.Katzebase.Parsers.Interfaces
 
 let json = 
     try
@@ -108,7 +109,7 @@ type QueryFieldConstantNumeric      = QueryFieldConstantNumeric<fstring>
 type QueryFieldConstantString       = QueryFieldConstantString<fstring>
 type QueryFieldDocumentIdentifier   = QueryFieldDocumentIdentifier<fstring>
 
-open NTDLS.Katzebase.Engine.Parsers
+open NTDLS.Katzebase.Parsers
 type StaticQueryParser = StaticQueryParser<fstring>
 
 type QueryFieldConstantNumeric<'T 

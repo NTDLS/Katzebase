@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.ReliableMessaging;
 using ProtoBuf;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Server
 {
     [ProtoContract]

@@ -3,6 +3,7 @@ using NTDLS.FastMemoryCache.Metrics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

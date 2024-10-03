@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using ProtoBuf;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     //TODO: This should be a struct.

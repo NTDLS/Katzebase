@@ -1,7 +1,8 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations;
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     /// <summary>
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// </summary>
     internal class AggregateFunctionImplementation<TData> where TData : IStringable
     {
-        internal static string[] PrototypeStrings = {
+        public static string[] PrototypeStrings = {
                 //Prototype Format: "returnDataType functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
                 //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
                 "Numeric Avg (AggregationArray values)",

@@ -13,8 +13,9 @@ open System.Collections.Generic
 
 
 module ParserBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
-    open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+    open NTDLS.Katzebase.Parsers
+    open NTDLS.Katzebase.Parsers.Query.Fields
+    open NTDLS.Katzebase.Engine
     open NTDLS.Katzebase.Client
     open NTDLS.Katzebase.Client.Types
     open NTDLS.Katzebase.Client.Exceptions
@@ -22,14 +23,18 @@ module ParserBasicTests =
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =
         let userParameters = null
+#if GENERIC_TDATA
+        let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT", EngineCore<fstring>.StrParse, EngineCore<fstring>.StrCast, userParameters.ToUserParametersInsensitiveDictionary())
+#else
         let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT", userParameters.ToUserParametersInsensitiveDictionary())
+#endif
         
         equals 1 preparedQueries.Count 
 
         let pq0 = preparedQueries[0]
 
         equals "master:account" (pq0.Schemas.Item 0).Name
-        equals EngineConstants.QueryType.Select pq0.QueryType
+        equals Constants.QueryType.Select pq0.QueryType
         equals 0 pq0.Conditions.Collection.Count
 
         testPrint outputOpt "[PASSED] SELECT * FROM MASTER:ACCOUNT"
@@ -37,7 +42,11 @@ module ParserBasicTests =
     let ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (outputOpt:ITestOutputHelper option) =
         try
             let userParameters = null
+#if GENERIC_TDATA
+            let _ = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", EngineCore<fstring>.StrParse, EngineCore<fstring>.StrCast, userParameters.ToUserParametersInsensitiveDictionary())
+#else
             let _ = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters.ToUserParametersInsensitiveDictionary())
+#endif
             ()
         with
         | :? KbParserException as pe ->
@@ -47,13 +56,16 @@ module ParserBasicTests =
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
         userParameters.Add("@Username", new KbConstant("testUser", KbConstants.KbBasicDataType.String))
         userParameters.Add("@PasswordHash", new KbConstant("testPassword", KbConstants.KbBasicDataType.String))
+#if GENERIC_TDATA
+        let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", EngineCore<fstring>.StrParse, EngineCore<fstring>.StrCast, userParameters)
+#else
         let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters)
-
+#endif
         equals 1 preparedQueries.Count 
 
         let pq0 = preparedQueries[0]
         equals "master:account" (pq0.Schemas.Item 0).Name
-        equals EngineConstants.QueryType.Select pq0.QueryType
+        equals Constants.QueryType.Select pq0.QueryType
         equals 1 pq0.Conditions.Collection.Count
         equals 4 pq0.Conditions.FieldCollection.Count
 

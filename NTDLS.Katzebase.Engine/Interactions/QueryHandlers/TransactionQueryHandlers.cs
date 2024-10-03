@@ -1,7 +1,7 @@
 ﻿
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Sessions;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>

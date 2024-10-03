@@ -1,0 +1,26 @@
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Parsers.Interfaces;
+namespace NTDLS.Katzebase.Parsers.Tokens
+{
+    public partial class Tokenizer<TData> where TData : IStringable
+    {
+        public void SetText(string text, int caret)
+        {
+            _text = text;
+            _caret = caret;
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("Caret position is greater than text length.");
+            }
+        }
+
+        public void SetText(string text)
+        {
+            _text = text;
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("Caret position is greater than text length.");
+            }
+        }
+    }
+}

@@ -1,10 +1,10 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using System.Security.Cryptography;
 using System.Text;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateSha1Agg<TData> where TData : IStringable
+    public static class AggregateSha1Agg<TData> where TData : IStringable
     {
         public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {

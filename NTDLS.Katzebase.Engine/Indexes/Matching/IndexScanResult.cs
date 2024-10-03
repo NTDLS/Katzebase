@@ -1,5 +1,5 @@
 ﻿using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexScanResult<TData> where TData : IStringable

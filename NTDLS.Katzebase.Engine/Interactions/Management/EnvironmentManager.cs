@@ -6,7 +6,8 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Shared;
 using System.Text.Json;
 //using static NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes.PreparedQuery;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

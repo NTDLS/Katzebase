@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
+//using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
@@ -25,6 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
             };
         }
 
+        /* 202410: Katzebase has no this method here anymore
         internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
         {
             int requiredParameterCount = Parameters.Count(o => o.Type.ToString().ContainsInsensitive("optional") == false);
@@ -85,5 +86,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
 
             return result;
         }
+        */
     }
 }

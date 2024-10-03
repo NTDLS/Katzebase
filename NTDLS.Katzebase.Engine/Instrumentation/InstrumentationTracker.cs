@@ -4,19 +4,19 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Instrumentation
 {
-    internal class InstrumentationTracker
+    public class InstrumentationTracker
     {
         public bool Enabled { get; private set; }
 
         private readonly OptimisticCriticalResource<Dictionary<string, KbMetric>> _metrics = new();
 
-        internal enum DiscretePerformanceCounter
+        public enum DiscretePerformanceCounter
         {
             ThreadCount,
             TransactionDuration
         }
 
-        internal enum PerformanceCounter
+        public enum PerformanceCounter
         {
             IndexSearch,
             IndexDistillation,
@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
         /// </summary>
         /// <param name="counter">The performance category for instrumentation.</param>
         /// <returns></returns>
-        internal InstrumentationDurationToken? CreateToken(PerformanceCounter counter)
+        public InstrumentationDurationToken? CreateToken(PerformanceCounter counter)
             => Enabled ? new(this, counter, $"{counter}") : null;
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
         /// <param name="counter">The performance category for instrumentation.</param>
         /// <typeparam name="subCategory">Text will be used as the sub-category of the given performance counter.</typeparam>
         /// <returns>Token which is used to track time and via a call to StopAndAccumulate when finished.</returns>
-        internal InstrumentationDurationToken? CreateToken(PerformanceCounter counter, string subCategory)
+        public InstrumentationDurationToken? CreateToken(PerformanceCounter counter, string subCategory)
             => Enabled ? new(this, counter, $"{counter}:{subCategory}") : null;
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
         /// <typeparam name="SubCategoryT">Type whose name will be used as the sub-category of the given performance counter.</typeparam>
         /// <param name="counter">The performance category for instrumentation.</param>
         /// <returns>Token which is used to track time and via a call to StopAndAccumulate when finished.</returns>
-        internal InstrumentationDurationToken? CreateToken<SubCategoryT>(PerformanceCounter counter)
+        public InstrumentationDurationToken? CreateToken<SubCategoryT>(PerformanceCounter counter)
             => Enabled ? new(this, counter, $"{counter}:{typeof(SubCategoryT).Name}") : null;
 
         /// <summary>
@@ -313,7 +313,7 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
             });
         }
 
-        internal KbMetricCollection ToCollection()
+        public KbMetricCollection ToCollection()
         {
             return _metrics.Read(o =>
             {

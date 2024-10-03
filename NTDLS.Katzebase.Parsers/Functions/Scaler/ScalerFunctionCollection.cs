@@ -46,7 +46,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scaler
                 "String ToUpper (String text)|'Returns the upper cased variant of the given value.'",
                 "String Trim (String text, String characters = null)|'Returns the given value with white space stripped from the beginning and end, optionally specifying the character to trim.'",
             };
-
         private static List<ScalerFunction>? _protypes = null;
         public static List<ScalerFunction> Prototypes
         {

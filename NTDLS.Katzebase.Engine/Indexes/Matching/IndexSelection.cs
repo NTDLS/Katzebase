@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-
+﻿using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexSelection<TData> where TData : IStringable

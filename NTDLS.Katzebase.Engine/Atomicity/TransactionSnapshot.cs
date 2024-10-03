@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// <summary>
     /// Snapshot class for Transaction, used to snapshot the state of the associated class.
     /// </summary>
-    internal class TransactionSnapshot
+    public class TransactionSnapshot
     {
         public ObjectLockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;

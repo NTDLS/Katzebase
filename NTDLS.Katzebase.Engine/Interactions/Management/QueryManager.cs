@@ -3,18 +3,20 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Functions.Aggregate;
-using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.Functions.System;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
+using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
-using NTDLS.Katzebase.Engine.Parsers;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging.Internal;
 using System.Reflection;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using NTDLS.Katzebase.Parsers.Interfaces;
+using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -122,9 +124,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
             KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
-            SystemFunctionCollection<TData>.Initialize();
-            ScalerFunctionCollection<TData>.Initialize();
-            AggregateFunctionCollection<TData>.Initialize();
+            SystemFunctionCollection<TData>.Initialize(EngineCore<TData>.StrParse);
+            ScalerFunctionCollection<TData>.Initialize(EngineCore<TData>.StrParse);
+            AggregateFunctionCollection<TData>.Initialize(EngineCore<TData>.StrParse);
         }
 
         #region Internal helpers.
@@ -139,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText, userParameters.ToUserParametersInsensitiveDictionary());
+            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -162,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal void ExecuteNonQuery(SessionState session, string queryText)
         {
-            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText);
+            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast);
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -254,7 +256,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticQueryParser<TData>.ParseBatch(_core, statement.ToString());
+            var batch = StaticQueryParser<TData>.ParseBatch(_core, statement.ToString(), parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast);
             if (batch.Count > 1)
             {
                 throw new KbEngineException("Expected only one procedure call per batch.");

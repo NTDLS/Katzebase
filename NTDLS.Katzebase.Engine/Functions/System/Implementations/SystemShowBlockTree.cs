@@ -2,10 +2,11 @@
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Functions.System;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowBlockTree
+    public static class SystemShowBlockTree
     {
         public static KbQueryResultCollection<TData> Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
         {

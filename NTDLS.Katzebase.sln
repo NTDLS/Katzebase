@@ -47,7 +47,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Management", "Management", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{7ADB6C27-7022-46C9-A0BD-FF2667492931}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Parsers", "NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj", "{B308A7AE-2836-481B-ADA8-4076CD13DC2E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Parsers_Generic", "NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj", "{B308A7AE-2836-481B-ADA8-4076CD13DC2E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Parsers", "NTDLS.Katzebase.Parsers.Generic\NTDLS.Katzebase.Parsers.Generic.csproj", "{AB59190F-D1BF-46E7-98F0-F4E29C48B738}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -103,6 +105,10 @@ Global
 		{B308A7AE-2836-481B-ADA8-4076CD13DC2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B308A7AE-2836-481B-ADA8-4076CD13DC2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B308A7AE-2836-481B-ADA8-4076CD13DC2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB59190F-D1BF-46E7-98F0-F4E29C48B738}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB59190F-D1BF-46E7-98F0-F4E29C48B738}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB59190F-D1BF-46E7-98F0-F4E29C48B738}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB59190F-D1BF-46E7-98F0-F4E29C48B738}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,6 +126,7 @@ Global
 		{7323B8B9-9CFE-4DBC-A0E4-318032F5EC09} = {974A1B62-A4F1-463B-A231-56DB241E2C79}
 		{45F95764-BD7B-4CE5-99AE-40A61C470B8A} = {B64FD573-E392-4B4D-867C-6A6758EE6B64}
 		{B308A7AE-2836-481B-ADA8-4076CD13DC2E} = {7ADB6C27-7022-46C9-A0BD-FF2667492931}
+		{AB59190F-D1BF-46E7-98F0-F4E29C48B738} = {7ADB6C27-7022-46C9-A0BD-FF2667492931}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16ADDA6D-28A3-4730-94D0-61E6D3E723B0}

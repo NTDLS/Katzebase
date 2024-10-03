@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    internal class ObjectLockKey<TData> where TData : IStringable
+    public class ObjectLockKey<TData> where TData : IStringable
     {
         public DateTime IssueTime { get; set; }
 

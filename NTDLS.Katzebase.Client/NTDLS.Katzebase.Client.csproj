@@ -33,7 +33,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Exceptions\KbParserException.cs.bak" />
+    <None Remove="KbExtensions.cs.bak" />
+    <None Remove="KbTextUtility.cs.bak" />
+    <None Remove="Management\KbQueryClient.cs.bak" />
+    <None Remove="NTDLS.Katzebase.Client.csproj.bak" />
     <None Remove="NTDLS.Katzebase.ico" />
+    <None Remove="README.md.bak" />
   </ItemGroup>
 
   <ItemGroup>

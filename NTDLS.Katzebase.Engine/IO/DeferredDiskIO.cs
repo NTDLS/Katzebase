@@ -3,10 +3,10 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.IO
 {
-    internal class DeferredDiskIO<TData> where TData : IStringable
+    public class DeferredDiskIO<TData> where TData : IStringable
     {
         private class DeferredDiskIOObject
         {

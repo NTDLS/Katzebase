@@ -3,7 +3,7 @@ using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 
 namespace NTDLS.Katzebase.Engine.Instrumentation
 {
-    internal class InstrumentationDurationToken(InstrumentationTracker owner, PerformanceCounter type, string key)
+    public class InstrumentationDurationToken(InstrumentationTracker owner, PerformanceCounter type, string key)
     {
         public string Key { get; private set; } = key;
         public InstrumentationTracker Owner { get; private set; } = owner;

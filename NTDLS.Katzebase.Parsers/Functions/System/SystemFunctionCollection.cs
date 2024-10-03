@@ -30,7 +30,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 "ShowWaitingLocks(Numeric processId=null)|'Shows all processes that are currently waiting on a lock an provides information about those locks.'",
                 "Terminate(Numeric processId)|'The terminate directive terminates (or kills) an existing running process. This termination will terminate any in-progress transaction, roll it back, disconnect the process and free any resources associated with it.'",
             };
-
         private static List<SystemFunction>? _protypes = null;
         public static List<SystemFunction> Prototypes
         {

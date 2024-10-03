@@ -4,9 +4,9 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 
-namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
+namespace NTDLS.Katzebase.Parsers.Functions.System.Implementations
 {
-    internal static class SystemShowScalerFunctions<TData> where TData : IStringable
+    public static class SystemShowScalerFunctions<TData> where TData : IStringable
     {
         public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {

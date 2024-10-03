@@ -3,10 +3,12 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Functions.System;
+using NTDLS.Katzebase.Parsers.Functions.Scaler;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowScalerFunctions<TData> where TData : IStringable
+    public static class SystemShowScalerFunctions<TData> where TData : IStringable
     {
         public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {

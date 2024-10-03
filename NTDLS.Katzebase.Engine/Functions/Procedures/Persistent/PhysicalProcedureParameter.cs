@@ -12,10 +12,10 @@
         {
         }
 
-        internal ProcedureParameterPrototype ToProcedureParameterPrototype()
-        {
-            return new ProcedureParameterPrototype(Type, Name, DefaultValue);
-        }
+        //internal ProcedureParameterPrototype ToProcedureParameterPrototype()
+        //{
+        //    return new ProcedureParameterPrototype(Type, Name, DefaultValue);
+        //}
 
         public PhysicalProcedureParameter(string name, KbProcedureParameterType type)
         {

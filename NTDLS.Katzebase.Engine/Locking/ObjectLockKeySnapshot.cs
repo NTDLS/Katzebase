@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     /// <summary>
     /// Snapshot class for ObjectLockKey, used to snapshot the state of the associated class.
     /// </summary>
-    internal class ObjectLockKeySnapshot
+    public class ObjectLockKeySnapshot
     {
         public DateTime IssueTime { get; set; }
         public ObjectLockSnapshot ObjectLock { get; set; } = new();

@@ -1,0 +1,16 @@
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.deps.json
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.dll
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.pdb
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\bin\Debug\net8.0\NTDLS.Katzebase.Client.dll
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\bin\Debug\net8.0\NTDLS.Katzebase.Client.pdb
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.csproj.AssemblyReference.cache
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.GeneratedMSBuildEditorConfig.editorconfig
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.AssemblyInfoInputs.cache
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.AssemblyInfo.cs
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.csproj.CoreCompileInputs.cache
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.sourcelink.json
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Ka.2189BBF5.Up2Date
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.dll
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\refint\NTDLS.Katzebase.Parsers.dll
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.pdb
+G:\coldfar_py\NTDLS.Katzebase_end\NTDLS.Katzebase.Parsers\obj\Debug\net8.0\ref\NTDLS.Katzebase.Parsers.dll

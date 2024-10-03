@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.IO
     /// <summary>
     /// Snapshot class for DeferredDiskIO, used to snapshot the state of the associated class.
     /// </summary>
-    internal class DeferredDiskIOSnapshot
+    public class DeferredDiskIOSnapshot
     {
         /// <summary>
         /// Snapshot class for DeferredDiskIOObject, used to snapshot the state of the associated class.

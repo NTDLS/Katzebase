@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     public class SchemaIntersectionRowDocumentIdentifier<TData> where TData : IStringable

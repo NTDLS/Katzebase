@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     internal class SchemaIntersectionRow<TData> : List<TData?> where TData :IStringable

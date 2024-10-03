@@ -1,16 +1,18 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class;
-using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers;
+using NTDLS.Katzebase.Parsers.Query.Class;
+using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Indexes.Matching;
+using static NTDLS.Katzebase.Parsers.Constants;
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexingConditionOptimization<TData> where TData : IStringable
@@ -105,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
                                 flattenedGroup.Collection.OfType<ConditionEntry<TData>>()
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField<TData>.IsConstantExpression(o.Right.Value.ToT<string>())));
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField<TData>.IsConstantExpression(o.Right.Value.ToT<string>(), EngineCore<TData>.StrParse)));
                         }
                         else
                         {
@@ -121,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             {
                                 if (leftValue.FieldName?.Is(attribute.Field) == true)
                                 {
-                                    if (StaticParserField<TData>.IsConstantExpression(condition.Right.Value.ToT<string>()))
+                                    if (StaticParserField<TData>.IsConstantExpression(condition.Right.Value.ToT<string>(), EngineCore<TData>.StrParse))
                                     {
                                         //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
                                         var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new());

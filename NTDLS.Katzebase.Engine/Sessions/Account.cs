@@ -1,4 +1,5 @@
-﻿namespace NTDLS.Katzebase.Engine.Sessions
+﻿using NTDLS.Katzebase.Parsers.Interfaces;
+namespace NTDLS.Katzebase.Engine.Sessions
 {
     public class Account
     {

@@ -17,10 +17,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Indexes\Matching\IndexingConditionLookup.cs" />
+    <Compile Remove="Indexes\Matching\IndexSelection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.5.2\contentFiles\any\net8.0\%40Art\IconFull.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="EngineCore.cs.bak" />
     <None Remove="Functions\Aggregate\AggregateFunction.cs.bak" />
     <None Remove="Functions\Scaler\ScalerFunction.cs.bak" />
     <None Remove="Functions\System\Implementations\SystemShowAggregateFunctions.cs.bak" />
@@ -57,7 +63,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Parsers.Generic\NTDLS.Katzebase.Parsers.Generic.csproj" />
     <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
   </ItemGroup>
 

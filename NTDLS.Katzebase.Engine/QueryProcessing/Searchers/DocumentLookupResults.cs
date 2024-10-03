@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal class DocumentLookupResults<TData> where TData : IStringable

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Katzebase.Shared;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Helpers;
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]

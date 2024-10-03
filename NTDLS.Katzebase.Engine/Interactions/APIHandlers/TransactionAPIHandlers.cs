@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.ReliableMessaging;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>

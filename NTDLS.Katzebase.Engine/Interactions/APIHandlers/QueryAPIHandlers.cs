@@ -1,8 +1,8 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Parsers;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.ReliableMessaging;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
             {
                 var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
 
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
             {
                 var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
 
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteQueryReply<TData>();
-            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
             }
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
                     results.Add(intermediateResult);
@@ -199,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteNonQueryReply();
-            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, parseStringToDoc: EngineCore<TData>.StrParse, castStringToDoc: EngineCore<TData>.StrCast, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteNonQuery(session, preparedQuery));
             }

@@ -11,3 +11,5 @@ All methods inside "management" namespaces should handle exceptions for logging 
 All API controllers (not the API management classes, but the service controller) should catch and handle exceptions. Do not throw them.
 
 All long running processes should run Transaction.EnsureActive() often to throw an exception if the transaction has been killed.
+
+Generic Alligned Non-Generic commit: 055663dad86ad1d3685c472a76c6afd999975637

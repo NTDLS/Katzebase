@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Functions\Aggregate\AggregateFunctionCollection.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunctionCollection.cs.bak" />
+    <None Remove="Functions\System\SystemFunctionCollection.cs.bak" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />
     <PackageReference Include="NTDLS.Helpers" Version="1.2.11" />
   </ItemGroup>
 

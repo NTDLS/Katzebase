@@ -2,10 +2,10 @@
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Schemas
 {
-    public class PhysicalSchema<TData> where TData : IStringable
+    public class PhysicalSchema<TData> : IPhysicalSchema where TData : IStringable
     {
         /// <summary>
         /// VirtualSchema is used in the cases where we need to lock a schema that may not exist yet.

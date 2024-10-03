@@ -1,4 +1,5 @@
 ﻿using NTDLS.DelegateThreadPooling;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Threading.Management
 {

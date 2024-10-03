@@ -1,10 +1,10 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    internal class ObjectLock<TData> where TData : IStringable
+    public class ObjectLock<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
         public string DiskPath { get; private set; }

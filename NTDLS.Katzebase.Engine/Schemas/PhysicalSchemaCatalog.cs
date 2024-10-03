@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Shared;
-
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Schemas
 {
     public class PhysicalSchemaCatalog<TData> where TData : IStringable

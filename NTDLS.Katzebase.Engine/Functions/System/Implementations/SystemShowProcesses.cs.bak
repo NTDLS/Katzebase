@@ -1,9 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 
-namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
+namespace NTDLS.Katzebase.Parsers.Functions.System.Implementations
 {
-    internal static class SystemShowProcesses<TData> where TData : IStringable
+    public static class SystemShowProcesses<TData> where TData : IStringable
     {
         public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {

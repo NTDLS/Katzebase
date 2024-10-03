@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using static NTDLS.Katzebase.Client.KbConstants;
-
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
 {
     internal static class SchemaIntersectionRowComparer

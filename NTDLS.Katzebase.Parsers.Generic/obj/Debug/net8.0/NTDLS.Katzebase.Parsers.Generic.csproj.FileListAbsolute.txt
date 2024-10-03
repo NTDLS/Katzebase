@@ -1,0 +1,16 @@
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.csproj.AssemblyReference.cache
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.GeneratedMSBuildEditorConfig.editorconfig
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.AssemblyInfoInputs.cache
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.AssemblyInfo.cs
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.csproj.CoreCompileInputs.cache
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.sourcelink.json
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.deps.json
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.dll
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\bin\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.pdb
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\bin\Debug\net8.0\NTDLS.Katzebase.Client.dll
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\bin\Debug\net8.0\NTDLS.Katzebase.Client.pdb
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Ka.6314A0A3.Up2Date
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.dll
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\refint\NTDLS.Katzebase.Parsers.Generic.dll
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\NTDLS.Katzebase.Parsers.Generic.pdb
+G:\coldfar_py\NTDLS.Katzebase_generic\NTDLS.Katzebase.Parsers.Generic\obj\Debug\net8.0\ref\NTDLS.Katzebase.Parsers.Generic.dll

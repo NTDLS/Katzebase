@@ -26,8 +26,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
                 "String Sha256Agg (AggregationArray values)|'Returns the SHA256 hash for the for the set.'",
                 "String Sha512Agg (AggregationArray values)|'Returns the SHA512 hash for the for the set.'",
             };
-
-
         private static List<AggregateFunction>? _protypes = null;
 
         public static List<AggregateFunction> Prototypes

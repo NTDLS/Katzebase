@@ -60,7 +60,7 @@
             Write,   //Do not allow other reads, writes or deletes.
             Delete   //Do not allow read, write, delete or observe.
         }
-
+/*
         public enum QueryType
         {
             None,
@@ -118,5 +118,6 @@
             LessThanOrEqual,
             GreaterThanOrEqual
         }
+*/        
     }
 }

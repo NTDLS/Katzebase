@@ -12,11 +12,12 @@ open Xunit
 open Xunit.Abstractions
 open System
 open System.Collections.Generic
+open NTDLS.Katzebase.Engine
 
 module DMLExecutionBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
-    open NTDLS.Katzebase.Engine.Parsers.Query    
-    open NTDLS.Katzebase.Engine.Parsers.Query.Fields    
+    open NTDLS.Katzebase.Parsers
+    open NTDLS.Katzebase.Parsers.Query    
+    open NTDLS.Katzebase.Parsers.Query.Fields    
     open NTDLS.Katzebase.Client.Types
     open NTDLS.Katzebase.Engine.QueryProcessing
 
@@ -39,7 +40,11 @@ module DMLExecutionBasicTests =
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
+#if GENERIC_TDATA
+        let preparedQueries = StaticQueryParser.ParseBatch(_core, plainInsert, EngineCore<fstring>.StrParse, EngineCore<fstring>.StrCast,   userParameters)
+#else
         let preparedQueries = StaticQueryParser.ParseBatch(_core, plainInsert, userParameters)
+#endif
         let preparedQuery = preparedQueries.Item 0
         
         equals [|"COL1"; "COL2"|] (preparedQuery.InsertFieldNames |> Seq.toArray)
