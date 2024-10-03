@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
+                schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
             /*
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
+                schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
             return StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, getDocumentsIdsForSchemaPrefixes).RowDocumentIdentifiers;

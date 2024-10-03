@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// </summary>
         public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; private set; } = new();
 
-        public void AddRange(SchemaIntersectionRowCollection rowCollection)
+        public void AddRange(OLD_SchemaIntersectionRowCollection rowCollection)
         {
             RowValues = rowCollection.Select(o => o.ToList()).ToList();
         }

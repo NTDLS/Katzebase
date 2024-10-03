@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -29,11 +30,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaName.ToLowerInvariant()));
             }
             tokenizer.EatIfNext("set");
 

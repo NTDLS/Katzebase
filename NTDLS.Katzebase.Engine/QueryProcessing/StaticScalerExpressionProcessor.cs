@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Resolves all of the query expressions (string concatenation, math and all recursive
         ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
-        public static void CollapseScalerRowExpressions(this SchemaIntersectionRowCollection resultingRows, Transaction transaction,
+        public static void CollapseScalerRowExpressions(this OLD_SchemaIntersectionRowCollection resultingRows, Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection)
         {
             //Resolve all expressions and fill in the row fields.

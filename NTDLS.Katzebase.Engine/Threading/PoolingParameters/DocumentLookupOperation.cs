@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public Dictionary<string, GroupRowCollection> GroupRows { get; set; } = new();
 
         public string[]? GatherDocumentsIdsForSchemaPrefixes { get; set; } = null;
-        public SchemaIntersectionRowCollection ResultingRows { get; set; } = new();
+        public OLD_SchemaIntersectionRowCollection ResultingRows { get; set; } = new();
         public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; set; } = new();
         public QuerySchemaMap SchemaMap { get; private set; }
         public EngineCore Core { get; private set; }

@@ -4,7 +4,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    internal class SchemaIntersectionRow : List<string?>
+    internal class OLD_SchemaIntersectionRow : List<string?>
     {
         public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
 
@@ -42,9 +42,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
             SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
         }
 
-        public SchemaIntersectionRow Clone()
+        public OLD_SchemaIntersectionRow Clone()
         {
-            var newRow = new SchemaIntersectionRow
+            var newRow = new OLD_SchemaIntersectionRow
             {
                 SchemaKeys = new HashSet<string>(SchemaKeys)
             };

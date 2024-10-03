@@ -1,29 +1,3 @@
---exec ShowThreadPools()
-
---exec ShowTransactions()
---exec Cancel(7)
-
-/* Create index.
-
-create index ix_temp (
-	Id
-) on Temporary
-
-drop index ix_temp on Temporary
-*/
-
-/* Test create/drop schemas.
---create schema Temporary:Blah
---create schema Temporary:Blah:One
---create schema Temporary:Blah:Two
---create schema Temporary:Blah:Three
-
---drop schema Temporary:Blah:One
---drop schema Temporary:Blah:Two
---drop schema Temporary:Blah:Three
---drop schema Temporary:Blah
-*/
-
 --Translation test query.
 SELECT
 	sw.Id as SourceWordId,
@@ -50,6 +24,33 @@ WHERE
 ORDER BY
 	sl.Name ASC,
 	tw.Text
+	
+--exec ShowThreadPools()
+
+--exec ShowTransactions()
+--exec Cancel(7)
+
+/* Create index.
+
+create index ix_temp (
+	Id
+) on Temporary
+
+drop index ix_temp on Temporary
+*/
+
+/* Test create/drop schemas.
+--create schema Temporary:Blah
+--create schema Temporary:Blah:One
+--create schema Temporary:Blah:Two
+--create schema Temporary:Blah:Three
+
+--drop schema Temporary:Blah:One
+--drop schema Temporary:Blah:Two
+--drop schema Temporary:Blah:Three
+--drop schema Temporary:Blah
+*/
+
  
  --region TestCode
 

@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
 {
     internal static class SchemaIntersectionRowComparer
     {
-        public static int Compare(List<(string fieldName, KbSortDirection sortDirection)> sortingColumns, SchemaIntersectionRow? x, SchemaIntersectionRow? y)
+        public static int Compare(List<(string fieldName, KbSortDirection sortDirection)> sortingColumns, OLD_SchemaIntersectionRow? x, OLD_SchemaIntersectionRow? y)
         {
             foreach (var (fieldName, sortDirection) in sortingColumns)
             {

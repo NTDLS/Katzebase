@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -53,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     tokenizer.PushSyntheticLimit(endOfJoinCaret);
                     var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
-                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema.ToLowerInvariant(), QuerySchemaUsageType.InnerJoin, subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
                 catch
                 {
