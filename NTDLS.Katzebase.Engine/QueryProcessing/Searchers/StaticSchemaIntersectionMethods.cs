@@ -23,6 +23,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
     {
         class SchemaIntersectionRowCollection : List<SchemaIntersectionRow>
         {
+            public SchemaIntersectionRowCollection Clone()
+            {
+                var clone = new SchemaIntersectionRowCollection();
+
+                foreach (var item in this)
+                {
+                    clone.Add(item.Clone());
+                }
+
+                return clone;
+            }
         }
 
         class SchemaIntersectionRow
@@ -37,9 +48,103 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             public SchemaIntersectionRow()
             {
             }
+
+            public SchemaIntersectionRow Clone()
+            {
+                return new SchemaIntersectionRow()
+                {
+                    DocumentPointers = DocumentPointers.Clone(),
+                    SchemaElements = SchemaElements.Clone(),
+                };
+            }
         }
 
-        private static void GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
+        private static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
+            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+        {
+            var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentsIdsForSchemaPrefixes);
+
+            foreach (var schemaMap in schemaMappings.Skip(1))
+            {
+                var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
+
+                foreach (var templateRow in resultingRowCollection)
+                {
+                    var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue();
+
+                    childThreadPool.Enqueue(() =>
+                    {
+                        var templateRowClone = templateRow.Clone();
+
+                        IEnumerable<DocumentPointer>? documentPointers = null;
+
+                        if (schemaMap.Value.Optimization?.IndexingConditionGroup.Count > 0)
+                        {
+                            var keyValues = new KbInsensitiveDictionary<string?>();
+
+                            //Grab the values from the right-hand-schema join clause and create a lookup of the values.
+                            var rightHandDocumentIdentifiers = schemaMap.Value.Optimization.Conditions.FlattenToRightDocumentIdentifiers();
+                            foreach (var documentIdentifier in rightHandDocumentIdentifiers)
+                            {
+                                var documentContent = templateRowClone.SchemaElements[documentIdentifier.SchemaAlias ?? ""];
+                                if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
+                                {
+                                    throw new KbProcessingException($"Join clause field not found in document: [{schemaMap.Key}].");
+                                }
+                                keyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
+                            }
+
+                            //We are going to create a limited document catalog using the indexes.
+                            var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
+                                schemaMap.Value.PhysicalSchema, schemaMap.Value.Optimization, query, schemaMap.Value.Prefix, keyValues);
+
+                            documentPointers = indexMatchedDocuments.Select(o => o.Value);
+                        }
+
+                        //If we do not have any documents, then get the whole schema.
+                        documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
+
+                        foreach (var documentPointer in documentPointers)
+                        {
+                            var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
+
+                            templateRowClone.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = physicalDocument.Elements;
+
+                            if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, templateRowClone))
+                            {
+                                //Found a document that matched the where clause, add row to the results collection.
+                                if (gatherDocumentsIdsForSchemaPrefixes?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                                {
+                                    templateRowClone.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
+                                }
+
+                                lock (schemaIntersectionRowCollection)
+                                {
+                                    schemaIntersectionRowCollection.Add(templateRowClone);
+                                }
+                            }
+                            else
+                            {
+                                //TODO: Implement left-outer join.
+                            }
+                        }
+                    });
+
+                    var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                    childThreadPool.WaitForCompletion();
+                    ptThreadCompletion?.StopAndAccumulate();
+                }
+
+                resultingRowCollection = schemaIntersectionRowCollection.Clone();
+            }
+
+            return resultingRowCollection;
+        }
+
+        /// <summary>
+        /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
+        /// </summary>
+        private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
         {
             var primarySchema = schemaMappings.First();
@@ -85,82 +190,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 });
             }
 
+            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
             childThreadPool.WaitForCompletion();
+            ptThreadCompletion?.StopAndAccumulate();
+
+            return schemaIntersectionRowCollection;
         }
-
-        /*
-        private static void ExperimentalSchemaSearcher(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
-        {
-
-            foreach (var schemaMap in schemaMappings)
-            {
-                var matchExpression = new NCalc.Expression(schemaMap.Value.Conditions?.MathematicalExpression);
-
-                IEnumerable<DocumentPointer>? documentPointers = null;
-
-                #region Optimization.
-
-                if (schemaMap.Value.Optimization?.IndexingConditionGroup.Count > 0)
-                {
-                    KbInsensitiveDictionary<string?>? keyValues = null;
-
-                    if (schemaMap.Value.SchemaUsageType == QuerySchemaUsageType.InnerJoin)
-                    {
-                        keyValues = new();
-
-                        //Grab the values from the right-hand-schema join clause and create a lookup of the values.
-                        var rightHandDocumentIdentifiers = schemaMap.Value.Optimization.Conditions.FlattenToRightDocumentIdentifiers();
-                        foreach (var documentIdentifier in rightHandDocumentIdentifiers)
-                        {
-                            var documentContent = joinScopedContentCache[documentIdentifier.SchemaAlias ?? ""];
-                            if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
-                            {
-                                throw new KbProcessingException($"Join clause field not found in document: [{schemaMap.Key}].");
-                            }
-                            keyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
-                        }
-                    }
-
-                    //We are going to create a limited document catalog using the indexes.
-                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                        schemaMap.Value.PhysicalSchema, schemaMap.Value.Optimization, query, schemaMap.Value.Prefix, keyValues);
-
-                    documentPointers = indexMatchedDocuments.Select(o => o.Value);
-                }
-
-                #endregion
-
-                //If we do not have any documents, then get the whole schema.
-                documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
-
-                foreach (var documentPointer in documentPointers)
-                {
-                    var schemaIntersectionRow = new NextGenSchemaIntersectionRow();
-
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
-
-                    if (schemaMap.Value.Conditions != null)
-                    {
-                        SetExpressionParameters(transaction, query, matchExpression, schemaMap.Value.Conditions, schemaIntersectionRow);
-
-                        var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                        bool evaluation = (bool)matchExpression.Evaluate();
-                        ptEvaluate?.StopAndAccumulate();
-
-                        if (evaluation)
-                        {
-                            //Add row to the results?
-                        }
-                    }
-                    else
-                    {
-                        //No conditions, add row to the results?
-                    }
-                }
-            }
-        }
-        */
 
         private static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
             ConditionCollection? givenConditions, KbInsensitiveDictionary<string?> documentElements)
@@ -207,18 +242,32 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
-        private static void SetJoinExpressionParameters(Transaction transaction, PreparedQuery query, NCalc.Expression matchExpression,
-             ConditionCollection givenConditions, SchemaIntersectionRow schemaIntersectionRow)
+        private static bool IsJoinExpressionMatch(Transaction transaction,
+            PreparedQuery query, ConditionCollection? givenConditions, SchemaIntersectionRow schemaIntersectionRow)
         {
-            SetExpressionParametersRecursive(givenConditions.Collection);
+            if (givenConditions == null)
+            {
+                //There are no conditions, so this is a match.
+                return true;
+            }
 
-            void SetExpressionParametersRecursive(List<ICondition> conditions)
+            var matchExpression = new NCalc.Expression(givenConditions.MathematicalExpression);
+
+            SetJoinExpressionParametersRecursive(givenConditions.Collection);
+
+            var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
+            bool evaluation = (bool)matchExpression.Evaluate();
+            ptEvaluate?.StopAndAccumulate();
+
+            return evaluation;
+
+            void SetJoinExpressionParametersRecursive(List<ICondition> conditions)
             {
                 foreach (var condition in conditions)
                 {
                     if (condition is ConditionGroup group)
                     {
-                        SetExpressionParametersRecursive(group.Collection);
+                        SetJoinExpressionParametersRecursive(group.Collection);
                     }
                     else if (condition is ConditionEntry entry)
                     {
@@ -240,7 +289,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
         }
 
-
         //////////////////////BEGIN LEGACY CODE/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /// <summary>
@@ -254,7 +302,42 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             if (schemaMap.Count > 1)
             {
-                GatherPrimarySchemaRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
+                var lookupResults = new DocumentLookupResults();
+
+                var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
+
+                var selectFields = query.SelectFields.DocumentIdentifierFields;
+
+
+                foreach (var row in intersectedRowCollection)
+                {
+                    var rowFieldValues = new List<string?>();
+
+                    foreach (var field in selectFields)
+                    {
+                        var fieldValue = row.SchemaElements[field.SchemaAlias][field.Name];
+
+                        rowFieldValues.InsertWithPadding(field.Name, field.Ordinal, fieldValue);
+                    }
+
+                    lookupResults.RowValues.Add(rowFieldValues);
+
+                    /*
+                    //Grab all of the selected fields from the document for this schema.
+                    foreach (var field in query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey || o.SchemaAlias == string.Empty))
+                    {
+                        if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
+                        {
+                            instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
+                                $"'{field.Name}' will be treated as null.");
+                        }
+                        schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
+                    }
+                    */
+                }
+
+                //TODO: Fill in all row values.
+                return lookupResults;
             }
 
             var topLevelSchemaMap = schemaMap.First().Value;
