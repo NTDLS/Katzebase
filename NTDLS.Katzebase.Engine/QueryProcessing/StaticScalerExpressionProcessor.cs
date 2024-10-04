@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Exposed;
@@ -14,30 +13,11 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
     internal static class StaticScalerExpressionProcessor
     {
-        /// <summary>
-        /// Resolves all of the query expressions (string concatenation, math and all recursive
-        ///     function calls) on a row level and fills in the values in the resultingRows.
-        /// </summary>
-        public static void CollapseScalerRowExpressions(this OLD_SchemaIntersectionRowCollection resultingRows, Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection)
-        {
-            //Resolve all expressions and fill in the row fields.
-            foreach (var expressionField in fieldCollection.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
-            {
-                foreach (var row in resultingRows)
-                {
-                    var collapsedResult = CollapseScalerExpression(transaction, query, fieldCollection, row.AuxiliaryFields, expressionField);
-                    row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
-                }
-            }
-        }
-
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
@@ -395,7 +375,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        static string CollapseScalerFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
+        private static string CollapseScalerFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
             KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
             var collapsedParameters = new List<string?>();

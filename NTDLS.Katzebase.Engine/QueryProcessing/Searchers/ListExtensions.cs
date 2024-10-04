@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {

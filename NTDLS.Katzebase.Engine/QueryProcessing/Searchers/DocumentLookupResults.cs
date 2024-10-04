@@ -10,10 +10,5 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// This is only used when we just want to return a list of document pointers and no fields.
         /// </summary>
         public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; private set; } = new();
-
-        public void AddRange(OLD_SchemaIntersectionRowCollection rowCollection)
-        {
-            RowValues = rowCollection.Select(o => o.ToList()).ToList();
-        }
     }
 }
