@@ -1,15 +1,17 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
-using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Document;
-
+using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -79,57 +81,164 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static MaterializedRowValues MaterializeRowValues(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, SchemaIntersectionRowCollection intersectedRowCollection)
         {
-            var lookupResults = new MaterializedRowValues();
-
             var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
-            foreach (var row in intersectedRowCollection)
+            var groupRows = new Dictionary<string, GroupRowCollection>();
+
+            if (query.GroupFields.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
-                childPool.Enqueue(() =>
+                #region No Grouping.
+
+                var lookupResults = new MaterializedRowValues();
+
+                foreach (var row in intersectedRowCollection)
                 {
+                    childPool.Enqueue(() =>
+                    {
+                        var rowFieldValues = new List<string?>();
+                        var flattenedSchemaElements = row.SchemaElements.Flatten();
+
+                        foreach (var field in query.SelectFields)
+                        {
+                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+                            {
+                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                            }
+                            else if (field.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                                {
+                                    var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+
+                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                }
+                                else
+                                {
+                                    throw new KbEngineException("Aggregate function found during scaler materialization.");
+                                }
+                            }
+                        }
+
+                        lock (childPool)
+                        {
+                            lookupResults.Values.Add(rowFieldValues);
+                        }
+                    });
+                }
+
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                childPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
+
+                return lookupResults;
+
+                #endregion
+            }
+            else
+            {
+                #region Grouping.
+
+                foreach (var row in intersectedRowCollection)
+                {
+                    //childPool.Enqueue(() =>
+                    //{
                     var rowFieldValues = new List<string?>();
                     var flattenedSchemaElements = row.SchemaElements.Flatten();
 
-                    foreach (var field in query.SelectFields)
-                    {
-                        if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                        {
-                            var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                            rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
-                        }
-                        else if (field.Expression is IQueryFieldExpression fieldExpression)
-                        {
-                            if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                            {
-                                var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
-                                    fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+                    var groupKey = new StringBuilder();
 
-                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                    foreach (var groupField in query.GroupFields)
+                    {
+                        var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(transaction,
+                            query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements);
+
+                        groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
+                    }
+
+                    if (groupRows.TryGetValue(groupKey.ToString(), out var groupRowCollection) == false)
+                    {
+                        groupRowCollection = new(); //Group does not yet exist, create it.
+                        groupRows.Add(groupKey.ToString(), groupRowCollection);
+
+                        //This is where we need to collapse the non aggregated field expressions. We only do this
+                        //  when we CREATE the GroupRow because these values should be distinct since we are grouping.
+                        //TODO: We should check these fields/expression to make sure that they are either constant or being referenced by the group clause.
+                        foreach (var field in query.SelectFields)
+                        {
+                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+                            {
+                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                            }
+                            else if (field.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                                {
+                                    var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+
+                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                }
+                                else
+                                {
+                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, string.Empty); //To be filled in with aggregate result later.
+                                }
+                            }
+                        }
+
+                        foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
+                        {
+                            var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
+
+                            //All aggregation parameters are collapsed here at query processing time.
+                            var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(transaction,
+                                query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
+
+                            if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(
+                                aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
+                            {
+                                //Create a new group detail.
+                                groupAggregateFunctionParameter = new();
+
+                                //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
+                                //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
+                                //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
+                                foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
+                                {
+                                    var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
+                                        transaction, query, query.SelectFields, flattenedSchemaElements, new());
+
+                                    groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
+                                }
+
+                                groupRowCollection.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
+                            }
+
+                            //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
+                            if (collapsedAggregationParameterValue != null)
+                            {
+                                groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
                             }
                             else
                             {
-                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, "implement me!");
+                                transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
                             }
                         }
 
-                        foreach (var orderByField in query.SortFields)
-                        {
-                        }
-
                     }
+                    //});
+                }
 
-                    lock (childPool)
-                    {
-                        lookupResults.Values.Add(rowFieldValues);
-                    }
-                });
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                childPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
+
+                return new();
+
+                #endregion
             }
-
-            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childPool.WaitForCompletion();
-            ptThreadCompletion?.StopAndAccumulate();
-
-            return lookupResults;
         }
 
         /// <summary>

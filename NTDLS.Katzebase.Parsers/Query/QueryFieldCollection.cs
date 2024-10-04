@@ -1,5 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 
 namespace NTDLS.Katzebase.Parsers.Query
@@ -41,5 +43,115 @@ namespace NTDLS.Katzebase.Parsers.Query
         {
             QueryBatch = queryBatch;
         }
+
+        #region Collection: FieldsWithAggregateFunctionCalls.
+
+        private List<QueryField>? _exposedAggregateFunctions = null;
+        private readonly object _exposedAggregateFunctionsLock = new();
+
+        public void InvalidateFieldsWithAggregateFunctionCallsCache()
+        {
+            lock (_exposedAggregateFunctionsLock)
+            {
+                _exposedAggregateFunctions = null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of fields that have function call dependencies.
+        /// </summary>
+        public List<QueryField> FieldsWithAggregateFunctionCalls
+        {
+            get
+            {
+                if (_exposedAggregateFunctions == null)
+                {
+                    lock (_exposedAggregateFunctionsLock)
+                    {
+                        if (_exposedAggregateFunctions != null)
+                        {
+                            //We check again here because other threads may have started waiting on the lock
+                            //  with the intention of hydrating _exposedAggregateFunctions themselves, we do this because
+                            //  we don't want to lock on reads once this _exposedAggregateFunctions is hydrated.
+                            return _exposedAggregateFunctions;
+                        }
+
+                        var results = new List<QueryField>();
+
+                        foreach (var queryField in this)
+                        {
+                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any())
+                                {
+                                    results.Add(queryField);
+                                }
+                            }
+                        }
+
+                        _exposedAggregateFunctions = results;
+                    }
+                }
+
+                return _exposedAggregateFunctions;
+            }
+        }
+
+        #endregion
+
+        #region Collection: AggregationFunctions.
+
+        private List<ExposedAggregateFunction>? _aggregationFunctions = null;
+        private readonly object _aggregationFunctionsLock = new();
+
+        public void InvalidateAggregationFunctionsCache()
+        {
+            lock (_aggregationFunctionsLock)
+            {
+                _aggregationFunctions = null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of fields that have function call dependencies.
+        /// </summary>
+        public List<ExposedAggregateFunction> AggregationFunctions
+        {
+            get
+            {
+                if (_aggregationFunctions == null)
+                {
+                    lock (_aggregationFunctionsLock)
+                    {
+                        if (_aggregationFunctions != null)
+                        {
+                            //We check again here because other threads may have started waiting on the lock
+                            //  with the intention of hydrating _aggregationFunctions themselves, we do this because
+                            //  we don't want to lock on reads once this _aggregationFunctions is hydrated.
+                            return _aggregationFunctions;
+                        }
+
+                        var results = new List<ExposedAggregateFunction>();
+
+                        foreach (var queryField in this)
+                        {
+                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                foreach (var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
+                                {
+                                    results.Add(new ExposedAggregateFunction(function, fieldExpression.FunctionDependencies));
+                                }
+                            }
+                        }
+
+                        _aggregationFunctions = results;
+                    }
+                }
+
+                return _aggregationFunctions;
+            }
+        }
+
+        #endregion
     }
 }
