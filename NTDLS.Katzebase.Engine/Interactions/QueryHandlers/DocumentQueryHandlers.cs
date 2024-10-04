@@ -214,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
                     {
                         var collapsedValue = updateValue.Expression.CollapseScalarQueryField(
-                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, rowDocumentIdentifier.AuxiliaryFields);
+                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, rowDocumentIdentifier.SchemaElements);
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {

@@ -20,38 +20,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             return results;
         }
 
-
-        public static bool TryGetMultipart(this KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> collection, string multiPartField, out string? returnValue)
-        {
-            var parts = multiPartField.Split('.');
-
-            if (parts.Length == 1)
-            {
-                if (collection.TryGetValue(string.Empty, out var schemaElements)) //Empty schema lookup.
-                {
-                    if (schemaElements.TryGetValue(parts[0], out var documentValue))
-                    {
-                        returnValue = documentValue;
-                        return true;
-                    }
-                }
-            }
-            else if (parts.Length == 2)
-            {
-                if (collection.TryGetValue(parts[0], out var schemaElements))
-                {
-                    if (schemaElements.TryGetValue(parts[1], out var documentValue))
-                    {
-                        returnValue = documentValue;
-                        return true;
-                    }
-                }
-            }
-
-            returnValue = null;
-            return false;
-        }
-
         public static void InsertWithPadding(this List<string?> list, string fieldNameForException, int ordinal, string? value)
         {
             if (list.Count <= ordinal)
