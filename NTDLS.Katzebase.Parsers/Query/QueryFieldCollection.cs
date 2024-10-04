@@ -49,16 +49,8 @@ namespace NTDLS.Katzebase.Parsers.Query
         private List<QueryField>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
 
-        public void InvalidateFieldsWithAggregateFunctionCallsCache()
-        {
-            lock (_exposedAggregateFunctionsLock)
-            {
-                _exposedAggregateFunctions = null;
-            }
-        }
-
         /// <summary>
-        /// Returns a list of fields that have function call dependencies.
+        /// Returns a list of fields that have aggregate function call dependencies.
         /// </summary>
         public List<QueryField> FieldsWithAggregateFunctionCalls
         {
@@ -104,16 +96,8 @@ namespace NTDLS.Katzebase.Parsers.Query
         private List<ExposedAggregateFunction>? _aggregationFunctions = null;
         private readonly object _aggregationFunctionsLock = new();
 
-        public void InvalidateAggregationFunctionsCache()
-        {
-            lock (_aggregationFunctionsLock)
-            {
-                _aggregationFunctions = null;
-            }
-        }
-
         /// <summary>
-        /// Returns a list of fields that have function call dependencies.
+        /// Returns a list of fields that have aggregate function call dependencies.
         /// </summary>
         public List<ExposedAggregateFunction> AggregationFunctions
         {

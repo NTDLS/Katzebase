@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Query;
-using NTDLS.Katzebase.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
@@ -83,26 +82,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             else
             {
                 throw new KbNotImplementedException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
-            }
-        }
-
-        /// <summary>
-        /// Collapses a string or numeric expression into a single value. This includes doing string concatenation, math and all recursive function calls.
-        /// </summary>
-        private static string? CollapseScalarExpression(Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, ExposedExpression expression)
-        {
-            if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
-            {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
-            }
-            else if (expression.FieldExpression is QueryFieldExpressionString expressionString)
-            {
-                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
-            }
-            else
-            {
-                throw new KbNotImplementedException($"Field expression type is not implemented: [{expression.FieldExpression.GetType().Name}].");
             }
         }
 

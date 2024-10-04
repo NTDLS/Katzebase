@@ -21,7 +21,6 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         public string Prefix { get; set; } = string.Empty;
         public ConditionCollection? Conditions { get; set; }
         public QuerySchemaUsageType SchemaUsageType { get; private set; }
-
         public int? ScriptLine { get; set; }
 
         public QuerySchema(int? scriptLine, string name, QuerySchemaUsageType schemaUsageType, string prefix, ConditionCollection conditions)

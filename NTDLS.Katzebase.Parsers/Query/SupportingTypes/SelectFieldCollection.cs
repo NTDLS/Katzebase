@@ -3,7 +3,7 @@
     public class SelectFieldCollection : QueryFieldCollection
     {
         public SelectFieldCollection(QueryBatch queryBatch)
-            :base(queryBatch)
+            : base(queryBatch)
         {
         }
     }

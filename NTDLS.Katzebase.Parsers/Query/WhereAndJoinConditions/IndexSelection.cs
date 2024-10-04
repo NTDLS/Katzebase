@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+﻿using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Index;
 
 namespace NTDLS.Katzebase.Parsers.Indexes.Matching
@@ -18,20 +17,6 @@ namespace NTDLS.Katzebase.Parsers.Indexes.Matching
         public IndexSelection(PhysicalIndex index)
         {
             PhysicalIndex = index;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is PrefixedField other)
-            {
-                return PhysicalIndex.Name.Equals(other.Key);
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return PhysicalIndex.Name.GetHashCode();
         }
 
         public IndexSelection Clone()

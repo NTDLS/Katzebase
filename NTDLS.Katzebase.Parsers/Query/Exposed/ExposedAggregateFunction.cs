@@ -2,7 +2,6 @@
 
 namespace NTDLS.Katzebase.Parsers.Query.Exposed
 {
-
     public class ExposedAggregateFunction
     {
         public QueryFieldExpressionFunctionAggregate Function { get; set; }
