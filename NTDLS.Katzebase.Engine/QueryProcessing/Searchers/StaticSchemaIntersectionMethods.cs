@@ -41,13 +41,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static MaterializedRowValues MaterializeRowValues(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, SchemaIntersectionRowCollection intersectedRowCollection)
         {
-            var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
-
             var materializedRowValues = new MaterializedRowValues();
 
             if (query.GroupFields.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 #region No Grouping.
+
+                var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
                 foreach (var row in intersectedRowCollection)
                 {
