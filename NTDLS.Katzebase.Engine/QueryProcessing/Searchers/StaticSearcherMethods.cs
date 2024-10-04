@@ -105,8 +105,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// </summary>
         internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
-            var result = new KbQueryDocumentListResult();
-
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
@@ -117,21 +115,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            /*
-             *  We need to build a generic key/value dataset which is the combined field-set from each inner joined document.
-             *  Then we use the conditions that were supplied to eliminate results from that dataset.
-            */
+            var lookupResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
-            var subConditionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
+            var result = new KbQueryDocumentListResult();
 
             foreach (var field in query.SelectFields)
             {
                 result.Fields.Add(new KbQueryField(field.Alias));
             }
 
-            foreach (var subConditionResult in subConditionResults.Values)
+            foreach (var row in lookupResults.Rows)
             {
-                result.Rows.Add(new KbQueryRow(subConditionResult));
+                result.Rows.Add(new KbQueryRow(row.Values));
             }
 
             return result;
