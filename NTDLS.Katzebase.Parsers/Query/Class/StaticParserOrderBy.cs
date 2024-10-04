@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         public static OrderByFieldCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            return StaticParserFieldList.Parse(queryBatch, tokenizer, [], true, (p) => new OrderByFieldCollection(p));
+            return StaticParserFieldList.Parse(queryBatch, tokenizer, [" offset "], true, (p) => new OrderByFieldCollection(p));
         }
     }
 }

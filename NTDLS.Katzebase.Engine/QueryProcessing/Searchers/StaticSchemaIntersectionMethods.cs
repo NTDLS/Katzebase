@@ -51,7 +51,48 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
-            // Create the result list
+            #region Enforce row limits.
+
+            if (query.RowLimit > 0 && materializedRowCollection.Rows.Count > query.RowLimit)
+            {
+                if (query.RowOffset == 0)
+                {
+                    materializedRowCollection.Rows.RemoveRange(query.RowLimit, materializedRowCollection.Rows.Count - query.RowLimit);
+                }
+                else
+                {
+                    if (query.RowOffset > materializedRowCollection.Rows.Count)
+                    {
+                        materializedRowCollection.Rows.Clear();
+                    }
+                    else
+                    {
+                        materializedRowCollection.Rows.RemoveRange(0, query.RowOffset);
+
+                        if (materializedRowCollection.Rows.Count > query.RowLimit)
+                        {
+                            materializedRowCollection.Rows.RemoveRange(query.RowLimit, materializedRowCollection.Rows.Count - query.RowLimit);
+                        }
+                    }
+                }
+            }
+            else if (query.RowOffset > 0)
+            {
+                if (query.RowOffset > materializedRowCollection.Rows.Count)
+                {
+                    materializedRowCollection.Rows.Clear();
+                }
+                else
+                {
+                    materializedRowCollection.Rows.RemoveRange(0, query.RowOffset);
+                }
+            }
+
+            #endregion
+
+            //TODO: Offset
+
+            // Create the final results.
             var finalResults = new DocumentLookupResults()
             {
                 DocumentIdentifiers = materializedRowCollection.DocumentIdentifiers
@@ -61,10 +102,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 finalResults.Values.Add(row.Values);
             }
-
-            //TODO: Limiting
-
-            //TODO: Offset
 
             return finalResults;
         }
@@ -79,6 +116,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 #region No Grouping.
 
                 var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
+
+                bool rowLimitExceeded = false;
 
                 foreach (var row in intersectedRowCollection)
                 {
@@ -154,8 +193,21 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         lock (childPool)
                         {
                             materializedRowCollection.Rows.Add(materializedRow);
+
+                            //Test to see if we've hit a row limit.
+                            //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
+                            if (materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                            {
+                                rowLimitExceeded = true;
+                                return; //Break out of thread.
+                            }
                         }
                     });
+
+                    if (rowLimitExceeded)
+                    {
+                        break;
+                    }
                 }
 
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
@@ -338,6 +390,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
 
                     materializedRowCollection.Rows.Add(materializedRow);
+
+                    //Test to see if we've hit a row limit.
+                    //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
+                    if (materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                    {
+                        break;
+                    }
                 }
 
                 #endregion

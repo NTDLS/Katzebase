@@ -1,4 +1,4 @@
-SELECT
+SELECT top 10
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
 	length(sl.Name) as Len,
@@ -23,7 +23,10 @@ WHERE
 	OR sw.Text = 'Gym'
 ORDER BY
 	sl.Name ASC,
-	tw.Text
+	tw.Text,
+	tw.Id
+OFFSET
+	110
 
 /*
 SELECT
