@@ -1,7 +1,8 @@
 --Translation test query.
 SELECT
-	tw.Id as TargetWordId,	
+	sw.Text as SourceWord,
 	tw.Text as TargetWord,
+	--Avg(sw.Id) as Average,
 	Count(0) as Number
 FROM
 	WordList:Word as sw
@@ -19,7 +20,7 @@ WHERE
 	sw.Text = 'Car'
 	OR sw.Text = 'Gym'
 GROUP BY
-	tw.Id,
+	sw.Text,
 	tw.Text
 ORDER BY
 	sl.Name ASC,

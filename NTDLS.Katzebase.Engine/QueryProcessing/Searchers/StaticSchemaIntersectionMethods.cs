@@ -10,6 +10,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -83,13 +84,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
-            var groupRows = new Dictionary<string, GroupRowCollection>();
-
             if (query.GroupFields.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 #region No Grouping.
 
-                var lookupResults = new MaterializedRowValues();
+                var scalerResults = new MaterializedRowValues();
 
                 foreach (var row in intersectedRowCollection)
                 {
@@ -123,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         lock (childPool)
                         {
-                            lookupResults.Values.Add(rowFieldValues);
+                            scalerResults.Values.Add(rowFieldValues);
                         }
                     });
                 }
@@ -132,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 childPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                return lookupResults;
+                return scalerResults;
 
                 #endregion
             }
@@ -140,27 +139,34 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 #region Grouping.
 
+                /// <summary>
+                /// Contains the list of field values for the grouping fields, and the need-to-be aggregated values for fields
+                /// that are needed to collapse aggregation functions. The key is the concatenated values from the grouping fields.
+                /// </summary>
+                var groupRows = new Dictionary<string, GroupRow>();
+
                 foreach (var row in intersectedRowCollection)
                 {
                     //childPool.Enqueue(() =>
                     //{
-                    var rowFieldValues = new List<string?>();
                     var flattenedSchemaElements = row.SchemaElements.Flatten();
 
                     var groupKey = new StringBuilder();
 
                     foreach (var groupField in query.GroupFields)
                     {
-                        var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(transaction,
-                            query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements);
+                        var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(
+                            transaction, query, query.SelectFields, flattenedSchemaElements);
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
                     }
 
-                    if (groupRows.TryGetValue(groupKey.ToString(), out var groupRowCollection) == false)
+                    Console.WriteLine(groupKey);
+
+                    if (groupRows.TryGetValue(groupKey.ToString(), out var groupRow) == false)
                     {
-                        groupRowCollection = new(); //Group does not yet exist, create it.
-                        groupRows.Add(groupKey.ToString(), groupRowCollection);
+                        groupRow = new(); //Group does not yet exist, create it.
+                        groupRows.Add(groupKey.ToString(), groupRow);
 
                         //This is where we need to collapse the non aggregated field expressions. We only do this
                         //  when we CREATE the GroupRow because these values should be distinct since we are grouping.
@@ -170,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
                                 var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -179,54 +185,53 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
-                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                    groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                                 }
                                 else
                                 {
-                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, string.Empty); //To be filled in with aggregate result later.
+                                    groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, null); //To be filled in with aggregate result later.
                                 }
                             }
                         }
+                    }
 
-                        foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
+                    foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
+                    {
+                        var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
+
+                        //All aggregation parameters are collapsed here at query processing time.
+                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(transaction,
+                            query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
+
+                        if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
+                            aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                         {
-                            var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
+                            //Create a new group detail.
+                            groupAggregateFunctionParameter = new();
 
-                            //All aggregation parameters are collapsed here at query processing time.
-                            var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(transaction,
-                                query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
-
-                            if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(
-                                aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
+                            //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
+                            //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
+                            //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
+                            foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                             {
-                                //Create a new group detail.
-                                groupAggregateFunctionParameter = new();
+                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
+                                    transaction, query, query.SelectFields, flattenedSchemaElements, new());
 
-                                //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
-                                //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
-                                //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
-                                foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
-                                {
-                                    var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
-                                        transaction, query, query.SelectFields, flattenedSchemaElements, new());
-
-                                    groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
-                                }
-
-                                groupRowCollection.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
+                                groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
                             }
 
-                            //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
-                            if (collapsedAggregationParameterValue != null)
-                            {
-                                groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
-                            }
-                            else
-                            {
-                                transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
-                            }
+                            groupRow.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
                         }
 
+                        //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
+                        if (collapsedAggregationParameterValue != null)
+                        {
+                            groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
+                        }
+                        else
+                        {
+                            transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
+                        }
                     }
                     //});
                 }
@@ -235,7 +240,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 childPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                return new();
+                var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+                var groupedResults = new MaterializedRowValues();
+
+                //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
+                //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
+                foreach (var groupRow in groupRows)
+                {
+                    groupedResults.Values.Add(groupRow.Value.Values);
+
+                    foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
+                    {
+                        var aggregateExpressionResult = aggregateFunctionField.CollapseAggregateQueryField(
+                            transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
+
+                        groupRow.Value.Values.InsertWithPadding(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
+                    }
+
+                    groupedResults.Values.Add(groupRow.Value.Values);
+                }
+
+                return groupedResults;
 
                 #endregion
             }
@@ -302,14 +327,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentsIdsForSchemaPrefixes);
 
+            var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
+
             foreach (var schemaMap in schemaMappings.Skip(1))
             {
                 var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
                 foreach (var templateRow in resultingRowCollection)
                 {
-                    var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
-
                     childThreadPool.Enqueue(() =>
                     {
                         var templateRowClone = templateRow.Clone();
@@ -358,7 +383,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                                 lock (schemaIntersectionRowCollection)
                                 {
-                                    schemaIntersectionRowCollection.Add(templateRowClone);
+                                    schemaIntersectionRowCollection.Add(templateRowClone.Clone());
                                 }
                             }
                             else
@@ -367,11 +392,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
                         }
                     });
-
-                    var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-                    childThreadPool.WaitForCompletion();
-                    ptThreadCompletion?.StopAndAccumulate();
                 }
+
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                childThreadPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
 
                 resultingRowCollection = schemaIntersectionRowCollection.Clone();
             }
