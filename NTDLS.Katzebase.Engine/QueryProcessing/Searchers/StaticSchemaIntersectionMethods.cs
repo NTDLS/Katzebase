@@ -35,6 +35,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //This is just for debugging.
             var lookupResults = new DocumentLookupResults(materializedRows.Values, materializedRows.DocumentIdentifiers);
 
+            //TODO: Sorting
+
+            //TODO: Limiting
+
+            //TODO: Offset
+
             return lookupResults;
         }
 
