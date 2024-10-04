@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
                                 {
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+                                        fieldExpression, transaction, query, query.OrderBy, flattenedSchemaElements);
                                     if (double.TryParse(collapsedValue, out _))
                                     {
                                         //Pad numeric values for proper sorting.

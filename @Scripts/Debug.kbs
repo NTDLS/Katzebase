@@ -24,8 +24,8 @@ WHERE
 --	tw.Text
 ORDER BY
 	sw.Text,
-	tw.Text,
-	10 + Length(sl.Name) ASC
+	Length(tw.Text) + 10 desc,
+	tw.Text
  
 /*
 --Translation test query.
