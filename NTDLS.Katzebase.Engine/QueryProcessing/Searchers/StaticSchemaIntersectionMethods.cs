@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
+using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -30,10 +31,36 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
-            var materializedRows = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
+            var materializedRowCollection = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
 
-            //This is just for debugging.
-            var lookupResults = new DocumentLookupResults(materializedRows.Values, materializedRows.DocumentIdentifiers);
+            #region Sorting.
+
+            if (query.OrderBy.Any() && materializedRowCollection.Rows.Count != 0)
+            {
+                var sortingColumns = new List<(string fieldAlias, KbSortDirection sortDirection)>();
+                foreach (var sortField in query.OrderBy)
+                {
+                    sortingColumns.Add(new(sortField.Alias, sortField.SortDirection));
+                }
+
+                //Sort the results:
+                var ptSorting = transaction.Instrumentation.CreateToken(PerformanceCounter.Sorting);
+                materializedRowCollection.Rows.Sort((x, y) => MaterializedRowComparer.Compare(sortingColumns, x, y));
+                ptSorting?.StopAndAccumulate();
+            }
+
+            #endregion
+
+            // Create the result list
+            var finalResults = new DocumentLookupResults()
+            {
+                DocumentIdentifiers = materializedRowCollection.DocumentIdentifiers
+            };
+
+            foreach (var row in materializedRowCollection.Rows)
+            {
+                finalResults.Values.Add(row.Values);
+            }
 
             //TODO: Sorting
 
@@ -41,13 +68,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             //TODO: Offset
 
-            return lookupResults;
+            return finalResults;
         }
 
-        private static MaterializedRowValues MaterializeRowValues(EngineCore core, Transaction transaction,
+        private static MaterializedRowCollection MaterializeRowValues(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, SchemaIntersectionRowCollection intersectedRowCollection)
         {
-            var materializedRowValues = new MaterializedRowValues();
+            var materializedRowCollection = new MaterializedRowCollection();
 
             if (query.GroupBy.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
@@ -59,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     childPool.Enqueue(() =>
                     {
-                        var rowFieldValues = new List<string?>();
+                        var materializedRow = new MaterializedRow();
                         var flattenedSchemaElements = row.SchemaElements.Flatten();
 
                         foreach (var field in query.SelectFields)
@@ -67,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
                                 var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -76,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
-                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                    materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                                 }
                                 else
                                 {
@@ -87,11 +114,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         foreach (var field in query.OrderBy)
                         {
-                            /*
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
                                 var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                                if (double.TryParse(fieldValue, out _))
+                                {
+                                    //Pad numeric values for proper sorting.
+                                    fieldValue = fieldValue.PadLeft(25 + fieldValue.Length, '0');
+                                }
+                                materializedRow.OrderByValues.Add(field.Alias, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -99,20 +130,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 {
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
-
-                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                    if (double.TryParse(collapsedValue, out _))
+                                    {
+                                        //Pad numeric values for proper sorting.
+                                        collapsedValue = collapsedValue.PadLeft(25 + collapsedValue.Length, '0');
+                                    }
+                                    materializedRow.OrderByValues.Add(field.Alias, collapsedValue);
                                 }
                                 else
                                 {
                                     throw new KbEngineException("Aggregate function found during scalar materialization sort.");
                                 }
                             }
-                            */
                         }
 
                         lock (childPool)
                         {
-                            materializedRowValues.Values.Add(rowFieldValues);
+                            materializedRowCollection.Rows.Add(materializedRow);
                         }
                     });
                 }
@@ -225,21 +259,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
                 foreach (var groupRow in groupRows)
                 {
-                    materializedRowValues.Values.Add(groupRow.Value.Values);
+                    var materializedRow = new MaterializedRow(groupRow.Value.Values);
 
                     foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
                     {
                         var aggregateExpressionResult = aggregateFunctionField.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
-                        groupRow.Value.Values.InsertWithPadding(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
+                        materializedRow.Values.InsertWithPadding(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
+
+                    materializedRowCollection.Rows.Add(materializedRow);
                 }
 
                 #endregion
             }
 
-            return materializedRowValues;
+            return materializedRowCollection;
         }
 
         /// <summary>

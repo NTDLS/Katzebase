@@ -1,8 +1,10 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -33,8 +35,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             try
             {
                 tokenizer.PushSyntheticLimit(endOfScopeCaret);
-
                 var exceptions = new List<Exception>();
+                var sortDirection = KbSortDirection.Ascending;
 
                 foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfScopeCaret.EnsureNotNull()))
                 {
@@ -45,14 +47,16 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                         if (queryFields is OrderByFieldCollection sortFieldCollection)
                         {
+                            fieldAlias = queryFields.GetNextFieldAlias();
+
                             if (field.EndsWith(" asc", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                sortFieldCollection.SortDirection = Client.KbConstants.KbSortDirection.Ascending;
+                                sortDirection = KbSortDirection.Ascending;
                                 suffixRemovedFieldText = field[..^4].Trim();
                             }
                             else if (field.EndsWith(" desc", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                sortFieldCollection.SortDirection = Client.KbConstants.KbSortDirection.Descending;
+                                sortDirection = KbSortDirection.Descending;
                                 suffixRemovedFieldText = field[..^5].Trim();
                             }
                             else
@@ -98,7 +102,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                             }
                         }
 
-                        queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
+                        queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField)
+                        {
+                            SortDirection = sortDirection
+                        });
                     }
                     catch (Exception e)
                     {

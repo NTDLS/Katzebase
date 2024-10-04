@@ -19,12 +19,13 @@ INNER JOIN WordList:Language as tl
 WHERE
 	sw.Text = 'Car'
 	OR sw.Text = 'Gym'
-GROUP BY
-	sw.Text,
-	tw.Text
+--GROUP BY
+--	sw.Text,
+--	tw.Text
 ORDER BY
-	10 + Length(sl.Name) ASC,
-	tw.Text
+	sw.Text,
+	tw.Text,
+	10 + Length(sl.Name) ASC
  
 /*
 --Translation test query.

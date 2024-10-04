@@ -2,9 +2,12 @@
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
-    internal class MaterializedRowValues
+
+
+
+    internal class MaterializedRowCollection
     {
-        public List<List<string?>> Values { get; private set; } = new();
+        public List<MaterializedRow> Rows { get; private set; } = new();
 
         /// <summary>
         /// This is only used when we just want to return a list of document pointers and no fields.
