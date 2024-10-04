@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 result.Fields.Add(new KbQueryField(field.Alias));
             }
 
-            foreach (var subConditionResult in subConditionResults.RowValues)
+            foreach (var subConditionResult in subConditionResults.Values)
             {
                 result.Rows.Add(new KbQueryRow(subConditionResult));
             }
@@ -159,7 +159,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            return StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, getDocumentsIdsForSchemaPrefixes).RowDocumentIdentifiers;
+            return StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, getDocumentsIdsForSchemaPrefixes).DocumentIdentifiers;
         }
     }
 }

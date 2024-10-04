@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Document;
+
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -64,7 +65,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
-            var lookupResults = new DocumentLookupResults();
+            var materializedRows = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
+
+            var lookupResults = new DocumentLookupResults(materializedRows.Values, materializedRows.DocumentIdentifiers);
+
+            return lookupResults;
+        }
+
+        private static MaterializedRowValues MaterializeRowValues(EngineCore core, Transaction transaction,
+            QuerySchemaMap schemaMap, PreparedQuery query, SchemaIntersectionRowCollection intersectedRowCollection)
+        {
+            var lookupResults = new MaterializedRowValues();
 
             foreach (var row in intersectedRowCollection)
             {
@@ -93,12 +104,73 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             //This is an aggregate function.
                         }
                     }
+
+                    foreach (var orderByField in query.SortFields)
+                    {
+                    }
+
                 }
 
-                lookupResults.RowValues.Add(rowFieldValues);
+                lookupResults.Values.Add(rowFieldValues);
             }
 
             return lookupResults;
+        }
+
+        /// <summary>
+        /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
+        /// </summary>
+        private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
+            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+        {
+            var primarySchema = schemaMappings.First();
+            IEnumerable<DocumentPointer>? documentPointers = null;
+
+            if (primarySchema.Value.Optimization?.IndexingConditionGroup.Count > 0)
+            {
+                //We are going to create a limited document catalog using the indexes.
+                var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
+                    primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.Prefix);
+
+                documentPointers = indexMatchedDocuments.Select(o => o.Value);
+            }
+
+            //If we do not have any documents, then get the whole schema.
+            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
+
+            var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
+
+            var childThreadPool = core.ThreadPool.Lookup.CreateChildQueue();
+
+            foreach (var documentPointer in documentPointers)
+            {
+                childThreadPool.Enqueue(() =>
+                {
+                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
+
+                    if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
+                    {
+                        //Found a document that matched the where clause, add row to the results collection.
+                        var schemaIntersectionRow = new SchemaIntersectionRow();
+                        schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.Prefix.ToLowerInvariant(), physicalDocument.Elements);
+                        if (gatherDocumentsIdsForSchemaPrefixes?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                        {
+                            schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), documentPointer);
+                        }
+
+                        lock (schemaIntersectionRowCollection)
+                        {
+                            schemaIntersectionRowCollection.Add(schemaIntersectionRow);
+                        }
+                    }
+                });
+            }
+
+            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+            childThreadPool.WaitForCompletion();
+            ptThreadCompletion?.StopAndAccumulate();
+
+            return schemaIntersectionRowCollection;
         }
 
         private static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
@@ -181,62 +253,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             return resultingRowCollection;
-        }
-
-        /// <summary>
-        /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
-        /// </summary>
-        private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
-        {
-            var primarySchema = schemaMappings.First();
-            IEnumerable<DocumentPointer>? documentPointers = null;
-
-            if (primarySchema.Value.Optimization?.IndexingConditionGroup.Count > 0)
-            {
-                //We are going to create a limited document catalog using the indexes.
-                var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                    primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.Prefix);
-
-                documentPointers = indexMatchedDocuments.Select(o => o.Value);
-            }
-
-            //If we do not have any documents, then get the whole schema.
-            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
-
-            var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
-
-            var childThreadPool = core.ThreadPool.Lookup.CreateChildQueue();
-
-            foreach (var documentPointer in documentPointers)
-            {
-                childThreadPool.Enqueue(() =>
-                {
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
-
-                    if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
-                    {
-                        //Found a document that matched the where clause, add row to the results collection.
-                        var schemaIntersectionRow = new SchemaIntersectionRow();
-                        schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.Prefix.ToLowerInvariant(), physicalDocument.Elements);
-                        if (gatherDocumentsIdsForSchemaPrefixes?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
-                        {
-                            schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), documentPointer);
-                        }
-
-                        lock (schemaIntersectionRowCollection)
-                        {
-                            schemaIntersectionRowCollection.Add(schemaIntersectionRow);
-                        }
-                    }
-                });
-            }
-
-            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childThreadPool.WaitForCompletion();
-            ptThreadCompletion?.StopAndAccumulate();
-
-            return schemaIntersectionRowCollection;
         }
 
         private static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
