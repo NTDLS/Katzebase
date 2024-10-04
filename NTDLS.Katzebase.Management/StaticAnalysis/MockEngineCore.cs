@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             GlobalTokenizerConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
             SystemFunctionCollection.Initialize();
-            ScalerFunctionCollection.Initialize();
+            ScalarFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
         }
     }

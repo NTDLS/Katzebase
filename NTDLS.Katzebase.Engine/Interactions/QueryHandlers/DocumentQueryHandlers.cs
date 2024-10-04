@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                         foreach (var insertValue in insertFieldValues)
                         {
-                            var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
+                            var collapsedValue = insertValue.Expression.CollapseScalarQueryField(
                                 transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new());
 
                             keyValuePairs.Add(insertValue.Alias, collapsedValue);
@@ -213,7 +213,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                     foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
                     {
-                        var collapsedValue = updateValue.Expression.CollapseScalerQueryField(
+                        var collapsedValue = updateValue.Expression.CollapseScalarQueryField(
                             transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, rowDocumentIdentifier.AuxiliaryFields);
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Alias))

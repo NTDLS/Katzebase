@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     if (StaticParserField.IsConstantExpression(condition.Right.Value))
                                     {
                                         //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                                        var constantValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
 
                                         //TODO: Think about the nullability of constantValue.
                                         condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue.EnsureNotNull());

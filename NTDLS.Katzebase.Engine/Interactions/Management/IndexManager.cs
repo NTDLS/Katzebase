@@ -310,7 +310,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
                             else
                             {
-                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
+                                keyValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
                             }
                         }
                         else
@@ -492,7 +492,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
+                    keyValue = condition.Right.CollapseScalarQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
                 }
             }
 

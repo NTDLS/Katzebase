@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 {
                     foreach (var parameter in preparedQuery.ProcedureParameters)
                     {
-                        var collapsedParameter = StaticScalerExpressionProcessor.CollapseScalerQueryField(parameter.Expression,
+                        var collapsedParameter = StaticScalarExpressionProcessor.CollapseScalarQueryField(parameter.Expression,
                             transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new());
 
                         collapsedParameters.Add(collapsedParameter);

@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 return CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
             }
 
-            //All aggregation parameters are collapsed as scaler expressions at query processing time.
+            //All aggregation parameters are collapsed as scalar expressions at query processing time.
             //There should never be anything to do here.
             throw new KbNotImplementedException();
         }
@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 return CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
             }
 
-            //All aggregation parameters are collapsed as scaler expressions at query processing time.
+            //All aggregation parameters are collapsed as scalar expressions at query processing time.
             //There should never be anything to do here.
             throw new KbNotImplementedException();
         }

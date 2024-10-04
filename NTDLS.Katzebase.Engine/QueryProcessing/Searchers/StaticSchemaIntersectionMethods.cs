@@ -73,14 +73,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
                                 {
-                                    var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
                                     rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                                 }
                                 else
                                 {
-                                    throw new KbEngineException("Aggregate function found during scaler materialization.");
+                                    throw new KbEngineException("Aggregate function found during scalar materialization.");
                                 }
                             }
                         }
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     foreach (var groupField in query.GroupFields)
                     {
-                        var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(
+                        var collapsedGroupField = groupField.Expression.CollapseScalarQueryField(
                             transaction, query, query.SelectFields, flattenedSchemaElements);
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
                                 {
-                                    var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
                                     groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
@@ -159,7 +159,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
                         //All aggregation parameters are collapsed here at query processing time.
-                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(transaction,
+                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalarExpressionFunctionParameter(transaction,
                             query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
 
                         if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
@@ -173,7 +173,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
                             foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                             {
-                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
+                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalarExpressionFunctionParameter(
                                     transaction, query, query.SelectFields, flattenedSchemaElements, new());
 
                                 groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
@@ -193,10 +193,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
                 }
-
-                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-                childPool.WaitForCompletion();
-                ptThreadCompletion?.StopAndAccumulate();
 
                 var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
 
@@ -388,8 +384,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
                     else if (condition is ConditionEntry entry)
                     {
-                        var collapsedLeft = entry.Left.CollapseScalerQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
-                        var collapsedRight = entry.Right.CollapseScalerQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
+                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
+                        var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
 
                         matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(transaction, collapsedLeft, collapsedRight);
                     }
@@ -434,11 +430,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     else if (condition is ConditionEntry entry)
                     {
                         var leftDocumentContent = schemaIntersectionRow.SchemaElements[entry.Left.SchemaAlias];
-                        var collapsedLeft = entry.Left.CollapseScalerQueryField(transaction,
+                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction,
                             query, givenConditions.FieldCollection, leftDocumentContent)?.ToLowerInvariant();
 
                         var rightDocumentContent = schemaIntersectionRow.SchemaElements[entry.Right.SchemaAlias];
-                        var collapsedRight = entry.Right.CollapseScalerQueryField(transaction,
+                        var collapsedRight = entry.Right.CollapseScalarQueryField(transaction,
                             query, givenConditions.FieldCollection, rightDocumentContent)?.ToLowerInvariant();
 
                         matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(transaction, collapsedLeft, collapsedRight);

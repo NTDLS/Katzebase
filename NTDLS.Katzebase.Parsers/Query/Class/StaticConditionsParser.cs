@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
@@ -139,13 +139,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //This is a numeric placeholder, we're all good.
                     tokenizer.EatNext();
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalarFunctionCollection.TryGetFunction(token, out var scalarFunction))
                 {
                     if (!tokenizer.TryIsNextNonIdentifier(['(']))
                     {
                         throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function must be called with parentheses: [{token}].");
                     }
-                    //This is a scaler function, we're all good.
+                    //This is a scalar function, we're all good.
 
                     tokenizer.EatNext();
                     tokenizer.EatGetMatchingScope('(', ')');
