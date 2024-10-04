@@ -2,8 +2,8 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scaler.Implementations;
-using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     /// <summary>

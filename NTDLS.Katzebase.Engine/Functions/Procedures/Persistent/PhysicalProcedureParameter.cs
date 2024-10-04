@@ -8,19 +8,19 @@
         public bool HasDefault { get; set; } = false;
 
 
-        public PhysicalProcedureParameter()
-        {
-        }
+        //public PhysicalProcedureParameter()
+        //{
+        //}
 
         //internal ProcedureParameterPrototype ToProcedureParameterPrototype()
         //{
         //    return new ProcedureParameterPrototype(Type, Name, DefaultValue);
         //}
 
-        public PhysicalProcedureParameter(string name, KbProcedureParameterType type)
-        {
-            Name = name;
-            Type = type;
-        }
+        //public PhysicalProcedureParameter(string name, KbProcedureParameterType type)
+        //{
+        //    Name = name;
+        //    Type = type;
+        //}
     }
 }

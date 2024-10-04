@@ -1,10 +1,12 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Parsers.Constants;
+
+
+using NTDLS.Katzebase.Parsers.Interfaces;
+
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>

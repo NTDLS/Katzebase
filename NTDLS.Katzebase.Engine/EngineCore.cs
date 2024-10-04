@@ -1,12 +1,12 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading.Management;
+using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
-using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Client.Types;
 using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine
@@ -39,6 +39,7 @@ namespace NTDLS.Katzebase.Engine
         static public Func<string, TData>? StrCast;
         static public Func<string, TData>? StrParse;
         static public Func<TData, TData, int>? Compare;
+        static public IEqualityComparer<TData>? Comparer;
         static public object Locker = new object();
         internal IOManager<TData> IO;
         internal LockManager<TData> Locking;
@@ -61,7 +62,12 @@ namespace NTDLS.Katzebase.Engine
         public KbInsensitiveDictionary<KbConstant> GlobalConstants { get; private set; } = new();
         internal OptimisticSemaphore LockManagementSemaphore { get; private set; } = new();
 
-        public EngineCore(KatzebaseSettings settings, Func<string, TData>? cast, Func<string, TData>? parse, Func<TData, TData, int>? compare)
+        public EngineCore(KatzebaseSettings settings
+            , Func<string, TData>? cast
+            , Func<string, TData>? parse
+            , Func<TData, TData, int>? compare
+            , IEqualityComparer<TData> comparer
+            )
         {
             lock (Locker)
             {
@@ -96,6 +102,17 @@ namespace NTDLS.Katzebase.Engine
                 else
                 {
                     Compare = compare;
+                }
+            }
+            lock (Locker)
+            {
+                if (cast == null)
+                {
+                    Comparer = (IEqualityComparer<TData>)StringComparer.InvariantCultureIgnoreCase;
+                }
+                else
+                {
+                    Comparer = comparer;
                 }
             }
             Settings = settings;

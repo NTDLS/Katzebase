@@ -159,7 +159,7 @@ namespace NTDLS.Katzebase.Engine.Library
                 Directory.Delete(diskPath);
             }
         }
-
+		/*
         public static string ComputeSHA256(string rawData)
         {
             byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
@@ -171,5 +171,6 @@ namespace NTDLS.Katzebase.Engine.Library
             }
             return builder.ToString();
         }
+        */
     }
 }

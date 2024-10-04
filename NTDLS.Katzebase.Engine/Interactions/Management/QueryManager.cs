@@ -3,20 +3,21 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scaler;
 using NTDLS.Katzebase.Parsers.Functions.System;
-using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
-using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.ReliableMessaging.Internal;
-using System.Reflection;
+
+
+using System.Reflection; //Reflection for TData is needed (? maybe??? ?)
 using System.Text;
-using static NTDLS.Katzebase.Client.KbConstants;
+//using static NTDLS.Katzebase.Client.KbConstants //decouple from KbGlobalConstants.Add
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using NTDLS.Katzebase.Parsers.Interfaces;
 using static NTDLS.Katzebase.Parsers.Constants;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -120,9 +121,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             APIHandlers = new QueryAPIHandlers<TData>(core);
 
             //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
-            KbGlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
-            KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
-            KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
+            //KbGlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
+            //KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
+            //KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
             SystemFunctionCollection<TData>.Initialize(EngineCore<TData>.StrParse);
             ScalerFunctionCollection<TData>.Initialize(EngineCore<TData>.StrParse);

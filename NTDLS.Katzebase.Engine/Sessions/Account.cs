@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.Sessions
 {
+	/*
     public class Account
     {
         public string? Username { get; set; }
@@ -16,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
             PasswordHash = passwordHash;
         }
     }
-
+    */
     public class Account<TData> where TData : IStringable
     {
         public TData? Username { get; set; }

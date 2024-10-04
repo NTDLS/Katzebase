@@ -1,8 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-//using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Shared;
-
-namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
+﻿namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
 {
     [Serializable]
     public class PhysicalProcedure

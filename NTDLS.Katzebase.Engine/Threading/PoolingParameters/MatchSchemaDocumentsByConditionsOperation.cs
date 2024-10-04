@@ -1,12 +1,12 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Engine.Schemas;
+
 using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Parsers.Indexes.Matching;
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>

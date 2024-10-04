@@ -5,6 +5,9 @@ using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
+using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Client.Types;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -28,20 +31,10 @@ namespace NTDLS.Katzebase.Engine
             return cast(value);
         }
         public static IStringable? Empty => null;
-    }
-    public interface IStringable
-    {
-        bool IsNullOrEmpty();
-        IStringable ToLowerInvariant();
-        string GetKey();
-        //char[] ToCharArr();
-        //Func<string, IStringable?> Converter { get; }
-        T ToT<T>();
-        object ToT(Type t);
-        T ToNullableT<T>();
+    
     }
 
-    public class EngineCore<TData> where TData : IStringable, IEngineCore
+    public class EngineCore<TData> : IEngineCore where TData : IStringable
     {
         static public Func<string, TData>? StrCast;
         static public Func<string, TData>? StrParse;
@@ -109,6 +102,11 @@ namespace NTDLS.Katzebase.Engine
 
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
             var fileVersion = string.Join(".", (fileVersionInfo.FileVersion?.Split('.').Take(3)).EnsureNotNull());
+
+            //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
+            GlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
+            GlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
+            GlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
             LogManager.Information($"{fileVersionInfo.ProductName} v{fileVersion} PID:{System.Environment.ProcessId}");
 

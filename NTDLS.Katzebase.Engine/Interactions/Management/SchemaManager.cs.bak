@@ -10,11 +10,11 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using NTDLS.Katzebase.Engine.Schemas;
+//using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema<TData>;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -374,7 +374,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Opens a schema for a desired access even if it does not exist. Takes a virtual 
         ///     schema path (schema:schema2:schema3) and converts to to a physical location.
         /// </summary>
-        internal PhysicalSchema<TData>.VirtualSchema AcquireVirtual(Transaction<TData> transaction, string schemaName,
+        internal PhysicalSchema<TData>.VirtualSchema<TData> AcquireVirtual(Transaction<TData> transaction, string schemaName,
             LockOperation intendedOperation, LockOperation parentIntendedOperation)
         {
             InstrumentationDurationToken? ptLockSchema = null;
@@ -391,55 +391,53 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 ptLockSchema = transaction.Instrumentation.CreateToken<PhysicalSchema<TData>>(PerformanceCounter.Lock);
                 schemaName = schemaName.Trim([':']).Trim();
-
-                if (schemaName == string.Empty)
+                if (string.IsNullOrEmpty(schemaName))
                 {
-                    return RootPhysicalSchema.ToVirtual();
+                    throw new KbEngineException("Cannot acquire virtual lock of root schema.");
+                }
+
+                var schemaSegments = schemaName.Split(':');
+                var thisSchema = schemaSegments[schemaSegments.Length - 1];
+                var parentSchema = string.Join(':', schemaSegments.Take(schemaSegments.Length - 1));
+
+                var parentPhysicalSchema = Acquire(transaction, parentSchema, parentIntendedOperation);
+
+                var parentCatalogDiskPath = parentPhysicalSchema.SchemaCatalogFilePath();
+
+                if (_core.IO.FileExists(transaction, parentCatalogDiskPath, parentIntendedOperation, out var _) == false)
+                {
+                    throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
+                }
+                var parentSchemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog<TData>>(transaction, parentCatalogDiskPath, parentIntendedOperation);
+
+                var virtualSchema = parentSchemaCatalog?.GetByName(thisSchema)?.ToVirtual(parentPhysicalSchema);
+
+
+                if (virtualSchema != null)
+                {
+                    virtualSchema.Name = thisSchema;
+                    virtualSchema.DiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", schemaSegments));
+                    virtualSchema.VirtualPath = schemaName;
+                    virtualSchema.Exists = true;
+                    virtualSchema.IsTemporary = isTemporary;
                 }
                 else
                 {
-                    var segments = schemaName.Split(':');
-                    var parentSchemaName = segments[segments.Count() - 1];
-
-                    var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
-                    var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
-
-                    var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
-
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var _) == false)
+                    virtualSchema = new PhysicalSchema<TData>.VirtualSchema<TData>(parentPhysicalSchema)
                     {
-                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
-                    }
+                        Name = thisSchema,
+                        DiskPath = _core.Settings.DataRootPath + "\\" + schemaName.Replace(':', '\\'),
+                        VirtualPath = schemaName,
+                        Exists = false,
+                        IsTemporary = isTemporary
 
-                    var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog<TData>>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var _);
-
-                    var virtualSchema = parentCatalog.GetByName(parentSchemaName)?.ToVirtual();
-                    if (virtualSchema != null)
-                    {
-                        virtualSchema.Name = parentSchemaName;
-                        virtualSchema.DiskPath = schemaDiskPath;
-                        virtualSchema.VirtualPath = schemaName;
-                        virtualSchema.Exists = true;
-                        virtualSchema.IsTemporary = isTemporary;
-                    }
-                    else
-                    {
-                        virtualSchema = new PhysicalSchema<TData>.VirtualSchema()
-                        {
-                            Name = parentSchemaName,
-                            DiskPath = _core.Settings.DataRootPath + "\\" + schemaName.Replace(':', '\\'),
-                            VirtualPath = schemaName,
-                            Exists = false,
-                            IsTemporary = isTemporary
-
-                        };
-                    }
-
-                    transaction.LockDirectory(intendedOperation, virtualSchema.DiskPath);
-
-                    return virtualSchema;
+                    };
                 }
+
+                transaction.LockDirectory(intendedOperation, virtualSchema.DiskPath);
+
+                return virtualSchema;
+
             }
             catch (Exception ex)
             {

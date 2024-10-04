@@ -1,5 +1,4 @@
-﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Parsers.Constants;
+﻿using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

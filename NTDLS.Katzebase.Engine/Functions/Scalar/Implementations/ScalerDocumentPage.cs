@@ -1,9 +1,10 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Parsers.Functions.Scaler;
 using NTDLS.Katzebase.Parsers.Interfaces;
 
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
+
 namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     public static class ScalerDocumentPage

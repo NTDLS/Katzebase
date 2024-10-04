@@ -1,9 +1,16 @@
 module Shared
+(*
+
+Please remeber to add --define:GENERIC_TDATA to F# fsi when doing generic version engine core debugging
+
+*)
+
 #if INTERACTIVE
 #r @"nuget: Newtonsoft.Json, 13.0.3"
 #r @"nuget: NTDLS.DelegateThreadPooling, 1.4.8"
 #r @"nuget: NTDLS.FastMemoryCache, 1.7.5"
-#r @"nuget: NTDLS.Katzebase.Client, 1.7.8"
+#r @"nuget: NTDLS.Helpers, Version=1.2.11"
+//#r @"nuget: NTDLS.Katzebase.Client, 1.7.8"
 //#r @"nuget: NTDLS.Katzebase.Client.dev, 1.7.8.1"
 //#r @"G:\coldfar_py\NTDLS.Katzebase.Client\bin\Debug\net8.0\NTDLS.Katzebase.Client.dll"
 
@@ -13,6 +20,12 @@ module Shared
 #r @"nuget: protobuf-net"
 #r @"../../../NTDLS.Katzebase.Shared/bin/Debug/net8.0/NTDLS.Katzebase.Shared.dll"
 #r @"../../../NTDLS.Katzebase.Engine/bin/Debug/net8.0/NTDLS.Katzebase.Engine.dll"
+#r @"../../../NTDLS.Katzebase.Engine/bin/Debug/net8.0/NTDLS.Katzebase.Client.dll"
+#if GENERIC_TDATA
+#r @"../../../NTDLS.Katzebase.Engine/bin/Debug/net8.0/NTDLS.Katzebase.Parsers.Generic.dll"
+#else
+#r @"../../../NTDLS.Katzebase.Engine/bin/Debug/net8.0/NTDLS.Katzebase.Parsers.dll"
+#endif
 #endif
 open Newtonsoft.Json
 open NTDLS.Katzebase.Shared
@@ -85,6 +98,21 @@ type fstring (s) =
                 failwithf "type %s not supported" t.Name
     new () =
         fstring (null)
+
+open System.Collections.Generic
+
+type fstringComparer () =
+    interface IEqualityComparer<fstring> with
+        member this.Equals(x: fstring, y: fstring) =
+            if obj.ReferenceEquals(x, y) then true
+            elif obj.ReferenceEquals(x, null) || obj.ReferenceEquals(y, null) then false
+            else x.Value = y.Value
+
+        member this.GetHashCode(obj: fstring) =
+            if box obj = null then 0
+            else obj.Value.GetHashCode()
+
+
 #endif
 
 let inline getValue<'S, 'T when 'S : (member Value : 'T)> (v:'S) =
@@ -142,6 +170,7 @@ let _core =
         , Func<string, fstring>(fun s -> fstring(s))
         , Func<string, fstring>(fun s -> fstring(s))
         , Func<fstring, fstring, int> (fun s1 s2 -> String.Compare(s1.Value, s2.Value))
+        , fstringComparer ()
         )
 let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
 open NTDLS.Katzebase.Engine.Sessions

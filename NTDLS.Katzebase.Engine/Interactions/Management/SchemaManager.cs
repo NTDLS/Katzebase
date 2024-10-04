@@ -10,11 +10,9 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using NTDLS.Katzebase.Engine.Schemas;
 //using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema<TData>;
 using NTDLS.Katzebase.Parsers.Interfaces;
 
@@ -413,8 +411,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var parentSchemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog<TData>>(transaction, parentCatalogDiskPath, parentIntendedOperation);
 
                 var virtualSchema = parentSchemaCatalog?.GetByName(thisSchema)?.ToVirtual(parentPhysicalSchema);
-
-
                 if (virtualSchema != null)
                 {
                     virtualSchema.Name = thisSchema;

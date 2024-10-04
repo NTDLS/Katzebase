@@ -106,6 +106,26 @@ namespace NTDLS.Katzebase.Server
             }
         }
     }
+
+    public class FStringComparer : IEqualityComparer<FString>
+    {
+        public bool Equals(FString? x, FString? y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x is null || y is null) return false;
+            return x.Value == y.Value;
+        }
+
+        public int GetHashCode(FString? obj)
+        {
+            if (obj == null || string.IsNullOrEmpty(obj.Value))
+            {
+                return 0;
+            }
+            return obj.Value.GetHashCode();
+        }
+    }
+
     internal class APIService
     {
         private readonly EngineCore<FString> _core;
@@ -132,7 +152,7 @@ namespace NTDLS.Katzebase.Server
 
                 _settings = settings;
 
-                _core = new EngineCore<FString>(settings, cast, parse, compare);
+                _core = new EngineCore<FString>(settings, cast, parse, compare, new FStringComparer());
 
                 _messageServer = new RmServer();
                 _messageServer.OnException += RmServer_OnException;

@@ -3,21 +3,22 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-//using NTDLS.Katzebase.Engine.Parsers.Query;
-using NTDLS.Katzebase.Parsers.Query.Fields;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
+
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Parsers.Query;
+
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal static class StaticSchemaIntersectionMethods

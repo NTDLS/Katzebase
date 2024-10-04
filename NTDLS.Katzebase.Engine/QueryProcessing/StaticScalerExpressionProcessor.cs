@@ -2,8 +2,9 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Parsers.Query.Fields;
@@ -11,12 +12,11 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Parsers.Query.Fields.Expressions.ExpressionConstants;
 using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Engine.Functions.Scaler;
+
 namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
     internal static class StaticScalerExpressionProcessor

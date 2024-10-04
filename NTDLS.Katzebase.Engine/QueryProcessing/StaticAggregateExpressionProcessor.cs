@@ -3,11 +3,11 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Interfaces;
 namespace NTDLS.Katzebase.Engine.QueryProcessing
 {

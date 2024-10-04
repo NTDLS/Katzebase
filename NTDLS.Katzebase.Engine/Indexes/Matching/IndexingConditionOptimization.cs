@@ -1,18 +1,19 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using NTDLS.Katzebase.Parsers.Query.Class;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
-using NTDLS.Katzebase.Engine.QueryProcessing;
-using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using static NTDLS.Katzebase.Parsers.Constants;
+using NTDLS.Katzebase.Parsers.Interfaces;
+
+
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexingConditionOptimization<TData> where TData : IStringable
