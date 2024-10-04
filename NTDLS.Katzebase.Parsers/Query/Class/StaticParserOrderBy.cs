@@ -1,15 +1,15 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
     public static class StaticParserOrderBy
     {
-        public static SortFields Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static SortFieldCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
+            return StaticParserFieldList.Parse(queryBatch, tokenizer, [], true, (p) => new SortFieldCollection(p));
+
+            /*
             string token;
             var sortFields = new SortFields();
 
@@ -60,6 +60,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 tokenizer.EatWhiteSpace();
             }
             return sortFields;
+            */
         }
     }
 }

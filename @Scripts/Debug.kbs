@@ -3,7 +3,7 @@ SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,
 	--Avg(sw.Id) as Average,
-	Count(0) as Number
+	--Count(0) as Number
 FROM
 	WordList:Word as sw
 INNER JOIN WordList:Language as sl
@@ -23,9 +23,9 @@ GROUP BY
 	sw.Text,
 	tw.Text
 ORDER BY
-	sl.Name ASC,
+	10 + Length(sl.Name) ASC,
 	tw.Text
-
+ 
 /*
 --Translation test query.
 SELECT

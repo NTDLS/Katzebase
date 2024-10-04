@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         public QueryFieldCollection SelectFields { get; set; }
         public QueryFieldCollection GroupFields { get; set; }
-        public SortFields SortFields { get; set; } = new();
+        public SortFieldCollection SortFields { get; set; }
 
         #endregion
 

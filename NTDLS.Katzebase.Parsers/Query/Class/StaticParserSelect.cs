@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             }
             else
             {
-                query.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
+                query.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false, (p) => new QueryFieldCollection(p));
             }
 
             //Parse "into".
