@@ -12,6 +12,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         /// </summary>
         public KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> SchemaElements { get; private set; } = new();
 
+        /// <summary>
+        /// Keeps track of the schemas that this row is comprised of, contains the schema prefixes.
+        /// Another way to put it: this is the schemas that have been matched for this row.
+        /// </summary>
+        public HashSet<string> MatchedSchemas { get; set; } = new();
+
         public SchemaIntersectionRow()
         {
         }
@@ -20,6 +26,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         {
             return new SchemaIntersectionRow()
             {
+                MatchedSchemas = new HashSet<string>(MatchedSchemas),
                 DocumentPointers = DocumentPointers.Clone(),
                 SchemaElements = SchemaElements.Clone(),
             };

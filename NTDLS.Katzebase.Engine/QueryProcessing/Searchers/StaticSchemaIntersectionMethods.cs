@@ -11,6 +11,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using System.Linq;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -31,7 +32,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
+            transaction.EnsureActive();
+
             var materializedRowCollection = MaterializeRowValues(core, transaction, query, intersectedRowCollection);
+
+            transaction.EnsureActive();
 
             #region Sorting (perform the final sort).
 
@@ -50,6 +55,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             #endregion
+
+            transaction.EnsureActive();
 
             #region Enforce row limits.
 
@@ -90,6 +97,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
+            transaction.EnsureActive();
+
             return new DocumentLookupRowCollection(materializedRowCollection.Rows, materializedRowCollection.DocumentIdentifiers);
         }
 
@@ -102,19 +111,30 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentsIdsForSchemaPrefixes);
 
-            var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
 
+            bool rowLimitExceeded = false;
+
+            //Skip the primary schema because those rows were collected by GatherPrimarySchemaRows().
+            //Loop through all schemas
             foreach (var schemaMap in schemaMappings.Skip(1))
             {
                 var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
+                //Loop though all rows and gather the document elements from the current schema for all JOIN condition matches.
                 foreach (var templateRow in resultingRowCollection)
                 {
-                    childThreadPool.Enqueue(() =>
+                    transaction.EnsureActive();
+
+                    childPool.Enqueue(() =>
                     {
+                        transaction.EnsureActive();
+
                         var templateRowClone = templateRow.Clone();
 
                         IEnumerable<DocumentPointer>? documentPointers = null;
+
+                        #region Index optimization.
 
                         if (schemaMap.Value.Optimization?.IndexingConditionGroup.Count > 0)
                         {
@@ -139,7 +159,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             documentPointers = indexMatchedDocuments.Select(o => o.Value);
                         }
 
-                        //If we do not have any documents, then get the whole schema.
+                        #endregion
+
+                        //If we do not have any documents then indexing was not performed, then get the whole schema.
                         documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
 
                         foreach (var documentPointer in documentPointers)
@@ -150,15 +172,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                             if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, templateRowClone))
                             {
-                                //Found a document that matched the where clause, add row to the results collection.
+                                var newRow = templateRowClone.Clone();
+                                newRow.MatchedSchemas.Add(schemaMap.Key);
+
                                 if (gatherDocumentsIdsForSchemaPrefixes?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
                                 {
-                                    templateRowClone.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
+                                    //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentsIdsForSchemaPrefixes.
+                                    newRow.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
                                 }
 
+                                //Found a document that matched the where clause, add row to the results collection.
                                 lock (schemaIntersectionRowCollection)
                                 {
-                                    schemaIntersectionRowCollection.Add(templateRowClone.Clone());
+                                    schemaIntersectionRowCollection.Add(newRow);
+
+                                    //Test to see if we've hit a row limit.
+                                    //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
+                                    if (query.RowOffset == 0 && query.RowLimit > 0 && schemaIntersectionRowCollection.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                                    {
+                                        rowLimitExceeded = true;
+                                        break;
+                                    }
                                 }
                             }
                             else
@@ -166,11 +200,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 //TODO: Implement left-outer join.
                             }
                         }
+
+                        if (rowLimitExceeded)
+                        {
+                            return; //Break out of thread.
+                        }
                     });
                 }
 
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-                childThreadPool.WaitForCompletion();
+                childPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
                 resultingRowCollection = schemaIntersectionRowCollection.Clone();
@@ -230,6 +269,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
+            //Get the aliases for all schemas that a row is required to be comprised of.
+            var requiredSchemas = schemaMappings.Where(o =>
+                o.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.Primary
+                || o.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.InnerJoin).Select(o => o.Key).ToList();
+
+            //Remove any rows where the required schemas were not matched.
+            int rowsRemoved = resultingRowCollection.RemoveAll(o => o.MatchedSchemas.All(m => requiredSchemas.Contains(m) == false));
+            if (rowsRemoved > 0)
+            {
+            }
+
             return resultingRowCollection;
         }
 
@@ -251,39 +301,62 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 documentPointers = indexMatchedDocuments.Select(o => o.Value);
             }
 
-            //If we do not have any documents, then get the whole schema.
+            //If we do not have any documents then indexing was not performed, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
 
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
-            var childThreadPool = core.ThreadPool.Lookup.CreateChildQueue(core.Settings.LookupChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Lookup.CreateChildQueue(core.Settings.LookupChildThreadPoolQueueDepth);
+
+            bool rowLimitExceeded = false;
 
             foreach (var documentPointer in documentPointers)
             {
-                childThreadPool.Enqueue(() =>
+                transaction.EnsureActive();
+
+                childPool.Enqueue(() =>
                 {
+                    transaction.EnsureActive();
+
                     var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
 
                     if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
                     {
-                        //Found a document that matched the where clause, add row to the results collection.
                         var schemaIntersectionRow = new SchemaIntersectionRow();
+                        schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
+
                         schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.Prefix.ToLowerInvariant(), physicalDocument.Elements);
+
                         if (gatherDocumentsIdsForSchemaPrefixes?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
                         {
+                            //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentsIdsForSchemaPrefixes.
                             schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), documentPointer);
                         }
 
+                        //Found a document that matched the where clause, add row to the results collection.
                         lock (schemaIntersectionRowCollection)
                         {
                             schemaIntersectionRowCollection.Add(schemaIntersectionRow);
+
+                            //Test to see if we've hit a row limit.
+                            //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
+                            if (query.RowOffset == 0 && query.RowLimit > 0 && schemaIntersectionRowCollection.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                            {
+                                rowLimitExceeded = true;
+                                return; //Break out of thread.
+                            }
                         }
                     }
                 });
+
+                if (rowLimitExceeded)
+                {
+                    break;
+                }
             }
 
             var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childThreadPool.WaitForCompletion();
+            childPool.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
             #region Internal IsWhereClauseMatch().
@@ -354,8 +427,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 foreach (var row in intersectedRowCollection)
                 {
+                    transaction.EnsureActive();
+
                     childPool.Enqueue(() =>
                     {
+                        transaction.EnsureActive();
+
                         var materializedRow = new MaterializedRow();
                         var flattenedSchemaElements = row.SchemaElements.Flatten();
 
@@ -429,7 +506,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                             //Test to see if we've hit a row limit.
                             //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
-                            if (materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                            if (query.RowOffset == 0 && query.RowLimit > 0 && materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
                             {
                                 rowLimitExceeded = true;
                                 return; //Break out of thread.
@@ -461,6 +538,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 foreach (var row in intersectedRowCollection)
                 {
+                    transaction.EnsureActive();
+
                     var flattenedSchemaElements = row.SchemaElements.Flatten();
 
                     var groupKey = new StringBuilder();
@@ -600,6 +679,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
                 foreach (var groupRow in groupRows)
                 {
+                    transaction.EnsureActive();
+
                     var materializedRow = new MaterializedRow(groupRow.Value.Values, groupRow.Value.OrderByValues);
 
                     //Execute aggregate functions for SELECT fields:
