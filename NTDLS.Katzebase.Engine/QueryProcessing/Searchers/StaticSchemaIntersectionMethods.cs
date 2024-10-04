@@ -10,7 +10,6 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Document;
-using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -20,44 +19,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal static class StaticSchemaIntersectionMethods
     {
-        class SchemaIntersectionRowCollection : List<SchemaIntersectionRow>
-        {
-            public SchemaIntersectionRowCollection Clone()
-            {
-                var clone = new SchemaIntersectionRowCollection();
-
-                foreach (var item in this)
-                {
-                    clone.Add(item.Clone());
-                }
-
-                return clone;
-            }
-        }
-
-        class SchemaIntersectionRow
-        {
-            public KbInsensitiveDictionary<DocumentPointer> DocumentPointers { get; private set; } = new();
-
-            /// <summary>
-            /// A dictionary that contains the elements from each row that comprises this row.
-            /// </summary>
-            public KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> SchemaElements { get; private set; } = new();
-
-            public SchemaIntersectionRow()
-            {
-            }
-
-            public SchemaIntersectionRow Clone()
-            {
-                return new SchemaIntersectionRow()
-                {
-                    DocumentPointers = DocumentPointers.Clone(),
-                    SchemaElements = SchemaElements.Clone(),
-                };
-            }
-        }
-
         /// <summary>
         /// Build a generic key/value dataset which is the combined field-set from each inner joined document.
         /// </summary>
@@ -71,8 +32,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var materializedRows = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
 
-
-
             //This is just for debugging.
             var lookupResults = new DocumentLookupResults(materializedRows.Values, materializedRows.DocumentIdentifiers);
 
@@ -84,11 +43,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
+            var materializedRowValues = new MaterializedRowValues();
+
             if (query.GroupFields.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 #region No Grouping.
-
-                var scalerResults = new MaterializedRowValues();
 
                 foreach (var row in intersectedRowCollection)
                 {
@@ -122,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         lock (childPool)
                         {
-                            scalerResults.Values.Add(rowFieldValues);
+                            materializedRowValues.Values.Add(rowFieldValues);
                         }
                     });
                 }
@@ -130,8 +89,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
                 childPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
-
-                return scalerResults;
 
                 #endregion
             }
@@ -147,8 +104,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 foreach (var row in intersectedRowCollection)
                 {
-                    //childPool.Enqueue(() =>
-                    //{
                     var flattenedSchemaElements = row.SchemaElements.Flatten();
 
                     var groupKey = new StringBuilder();
@@ -160,8 +115,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
                     }
-
-                    Console.WriteLine(groupKey);
 
                     if (groupRows.TryGetValue(groupKey.ToString(), out var groupRow) == false)
                     {
@@ -233,7 +186,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
                         }
                     }
-                    //});
                 }
 
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
@@ -241,13 +193,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 ptThreadCompletion?.StopAndAccumulate();
 
                 var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
-                var groupedResults = new MaterializedRowValues();
 
                 //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
                 //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
                 foreach (var groupRow in groupRows)
                 {
-                    groupedResults.Values.Add(groupRow.Value.Values);
+                    materializedRowValues.Values.Add(groupRow.Value.Values);
 
                     foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
                     {
@@ -256,14 +207,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         groupRow.Value.Values.InsertWithPadding(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
-
-                    groupedResults.Values.Add(groupRow.Value.Values);
                 }
-
-                return groupedResults;
 
                 #endregion
             }
+
+            return materializedRowValues;
         }
 
         /// <summary>
