@@ -1,5 +1,33 @@
 --Translation test query.
 SELECT
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	Count(0) as Number
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+--INNER JOIN Temporary:Blah as fs
+--	ON fs.Id = tw.LanguageId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
+GROUP BY
+	tw.Id,
+	tw.Text
+ORDER BY
+	sl.Name ASC,
+	tw.Text
+
+/*
+--Translation test query.
+SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
 	length(sl.Name) as Len,
@@ -25,7 +53,8 @@ WHERE
 ORDER BY
 	sl.Name ASC,
 	tw.Text
-	
+*/
+
 --exec ShowThreadPools()
 
 --exec ShowTransactions()

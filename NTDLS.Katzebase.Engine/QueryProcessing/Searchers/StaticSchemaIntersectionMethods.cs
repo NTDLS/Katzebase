@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
+using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -67,6 +68,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var materializedRows = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
 
+
+
+            //This is just for debugging.
             var lookupResults = new DocumentLookupResults(materializedRows.Values, materializedRows.DocumentIdentifiers);
 
             return lookupResults;
@@ -84,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 childPool.Enqueue(() =>
                 {
                     var rowFieldValues = new List<string?>();
-                    var auxiliaryValues = row.SchemaElements.Flatten();
+                    var flattenedSchemaElements = row.SchemaElements.Flatten();
 
                     foreach (var field in query.SelectFields)
                     {
@@ -98,13 +102,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
                             {
                                 var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
-                                    fieldExpression, transaction, query, query.SelectFields, auxiliaryValues);
+                                    fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
                                 rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                             }
                             else
                             {
-                                //This is an aggregate function.
+                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, "implement me!");
                             }
                         }
 
