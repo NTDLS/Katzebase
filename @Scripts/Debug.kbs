@@ -2,6 +2,7 @@
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
+	length(sl.Name) as Len,
 	sl.Name as SourceLanguage,
 	tw.Id as TargetWordId,	
 	tw.Text as TargetWord,

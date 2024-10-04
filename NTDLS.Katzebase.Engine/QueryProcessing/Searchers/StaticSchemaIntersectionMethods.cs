@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
@@ -15,6 +16,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
+using static NTDLS.Katzebase.Parsers.Query.Fields.Expressions.ExpressionConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
@@ -303,40 +305,46 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             if (schemaMap.Count > 1)
             {
                 var lookupResults = new DocumentLookupResults();
-
                 var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
                 var selectFields = query.SelectFields.DocumentIdentifierFields;
-
 
                 foreach (var row in intersectedRowCollection)
                 {
                     var rowFieldValues = new List<string?>();
 
-                    foreach (var field in selectFields)
-                    {
-                        var fieldValue = row.SchemaElements[field.SchemaAlias][field.Name];
+                    var auxiliaryValues = row.SchemaElements.Flatten();
 
-                        rowFieldValues.InsertWithPadding(field.Name, field.Ordinal, fieldValue);
+                    foreach (var field in query.SelectFields)
+                    {
+                        if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+                        {
+                            var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                            rowFieldValues.InsertWithPadding(fieldDocumentIdentifier.FieldName, field.Ordinal, fieldValue);
+                        }
+                        else if (field.Expression is IQueryFieldExpression fieldExpression)
+                        {
+                            if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                            {
+                                //StaticScalerExpressionProcessor.CollapseScalerExpression(
+
+                                var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                    fieldExpression, transaction, query, query.SelectFields, auxiliaryValues);
+
+
+                                //var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                //rowFieldValues.InsertWithPadding(fieldDocumentIdentifier.FieldName, field.Ordinal, fieldValue);
+                            }
+                            else
+                            {
+                                //This is an aggregate function.
+                            }
+                        }
                     }
 
                     lookupResults.RowValues.Add(rowFieldValues);
-
-                    /*
-                    //Grab all of the selected fields from the document for this schema.
-                    foreach (var field in query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey || o.SchemaAlias == string.Empty))
-                    {
-                        if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
-                        {
-                            instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                                $"'{field.Name}' will be treated as null.");
-                        }
-                        schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
-                    }
-                    */
                 }
 
-                //TODO: Fill in all row values.
                 return lookupResults;
             }
 
