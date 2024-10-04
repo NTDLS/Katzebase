@@ -334,7 +334,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     #region Threading.
 
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                     foreach (var indexPartition in indexPartitions)
                     {
@@ -1023,7 +1023,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
@@ -1195,7 +1195,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);

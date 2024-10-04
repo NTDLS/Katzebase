@@ -77,42 +77,53 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var lookupResults = new MaterializedRowValues();
 
+            var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
+
             foreach (var row in intersectedRowCollection)
             {
-                var rowFieldValues = new List<string?>();
-
-                var auxiliaryValues = row.SchemaElements.Flatten();
-
-                foreach (var field in query.SelectFields)
+                childPool.Enqueue(() =>
                 {
-                    if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+                    var rowFieldValues = new List<string?>();
+                    var auxiliaryValues = row.SchemaElements.Flatten();
+
+                    foreach (var field in query.SelectFields)
                     {
-                        var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                        rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
-                    }
-                    else if (field.Expression is IQueryFieldExpression fieldExpression)
-                    {
-                        if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                        if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                         {
-                            var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
-                                fieldExpression, transaction, query, query.SelectFields, auxiliaryValues);
-
-                            rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                            var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                            rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                         }
-                        else
+                        else if (field.Expression is IQueryFieldExpression fieldExpression)
                         {
-                            //This is an aggregate function.
+                            if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                            {
+                                var collapsedValue = StaticScalerExpressionProcessor.CollapseScalerQueryField(
+                                    fieldExpression, transaction, query, query.SelectFields, auxiliaryValues);
+
+                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                            }
+                            else
+                            {
+                                //This is an aggregate function.
+                            }
                         }
+
+                        foreach (var orderByField in query.SortFields)
+                        {
+                        }
+
                     }
 
-                    foreach (var orderByField in query.SortFields)
+                    lock (childPool)
                     {
+                        lookupResults.Values.Add(rowFieldValues);
                     }
-
-                }
-
-                lookupResults.Values.Add(rowFieldValues);
+                });
             }
+
+            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+            childPool.WaitForCompletion();
+            ptThreadCompletion?.StopAndAccumulate();
 
             return lookupResults;
         }
@@ -140,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
-            var childThreadPool = core.ThreadPool.Lookup.CreateChildQueue();
+            var childThreadPool = core.ThreadPool.Lookup.CreateChildQueue(core.Settings.LookupChildThreadPoolQueueDepth);
 
             foreach (var documentPointer in documentPointers)
             {
@@ -184,7 +195,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 foreach (var templateRow in resultingRowCollection)
                 {
-                    var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue();
+                    var childThreadPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
 
                     childThreadPool.Enqueue(() =>
                     {
