@@ -112,6 +112,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
                         }
 
+                        #region Collapse all values needed for sorting.
+
                         foreach (var field in query.OrderBy)
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
@@ -122,6 +124,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     //Pad numeric values for proper sorting.
                                     fieldValue = fieldValue.PadLeft(25 + fieldValue.Length, '0');
                                 }
+
                                 materializedRow.OrderByValues.Add(field.Alias, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
@@ -130,6 +133,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 {
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.OrderBy, flattenedSchemaElements);
+
                                     if (double.TryParse(collapsedValue, out _))
                                     {
                                         //Pad numeric values for proper sorting.
@@ -143,6 +147,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 }
                             }
                         }
+
+                        #endregion
 
                         lock (childPool)
                         {
@@ -211,6 +217,44 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 }
                             }
                         }
+
+                        #region Collapse all values needed for sorting.
+
+                        foreach (var field in query.OrderBy)
+                        {
+                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+                            {
+                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                if (double.TryParse(fieldValue, out _))
+                                {
+                                    //Pad numeric values for proper sorting.
+                                    fieldValue = fieldValue.PadLeft(25 + fieldValue.Length, '0');
+                                }
+
+                                groupRow.OrderByValues.Add(field.Alias, fieldValue);
+                            }
+                            else if (field.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                                {
+                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
+                                        fieldExpression, transaction, query, query.OrderBy, flattenedSchemaElements);
+
+                                    if (double.TryParse(collapsedValue, out _))
+                                    {
+                                        //Pad numeric values for proper sorting.
+                                        collapsedValue = collapsedValue.PadLeft(25 + collapsedValue.Length, '0');
+                                    }
+                                    groupRow.OrderByValues.Add(field.Alias, collapsedValue);
+                                }
+                                else
+                                {
+                                    //Skip this, it will be filled in during aggregation function execution.
+                                }
+                            }
+                        }
+
+                        #endregion
                     }
 
                     foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
@@ -253,20 +297,32 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
                 }
 
-                var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+                var selectFieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+                var orderByFieldsWithAggregateFunctionCalls = query.OrderBy.FieldsWithAggregateFunctionCalls;
 
                 //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
                 //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
                 foreach (var groupRow in groupRows)
                 {
-                    var materializedRow = new MaterializedRow(groupRow.Value.Values);
-
-                    foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
+                    var materializedRow = new MaterializedRow(groupRow.Value.Values)
                     {
-                        var aggregateExpressionResult = aggregateFunctionField.CollapseAggregateQueryField(
+                        OrderByValues = groupRow.Value.OrderByValues
+                    };
+
+                    foreach (var selectAggregateFunctionField in selectFieldsWithAggregateFunctionCalls)
+                    {
+                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
-                        materializedRow.Values.InsertWithPadding(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
+                        materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
+                    }
+
+                    foreach (var orderByAggregateFunctionField in orderByFieldsWithAggregateFunctionCalls)
+                    {
+                        var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(
+                            transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
+
+                        materializedRow.OrderByValues.Add(orderByAggregateFunctionField.Alias, aggregateExpressionResult);
                     }
 
                     materializedRowCollection.Rows.Add(materializedRow);

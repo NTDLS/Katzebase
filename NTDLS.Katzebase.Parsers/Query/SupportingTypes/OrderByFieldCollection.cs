@@ -1,6 +1,4 @@
-﻿using static NTDLS.Katzebase.Client.KbConstants;
-
-namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
+﻿namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
     public class OrderByFieldCollection : QueryFieldCollection
     {
