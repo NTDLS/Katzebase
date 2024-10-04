@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var materializedRowCollection = MaterializeRowValues(core, transaction, schemaMap, query, intersectedRowCollection);
 
-            #region Sorting.
+            #region Sorting (perform the final sort).
 
             if (query.OrderBy.Any() && materializedRowCollection.Rows.Count != 0)
             {
@@ -61,8 +61,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 finalResults.Values.Add(row.Values);
             }
-
-            //TODO: Sorting
 
             //TODO: Limiting
 
@@ -94,6 +92,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
                                 var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+
+                                //Insert the document field value into the proper position in the values list.
                                 materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
@@ -103,6 +103,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
+                                    //Insert the collapsed scalar expression value into the proper position in the values list.
                                     materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                                 }
                                 else
@@ -189,6 +190,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     if (groupRows.TryGetValue(groupKey.ToString(), out var groupRow) == false)
                     {
+                        #region Creation of group row.
+
                         groupRow = new(); //Group does not yet exist, create it.
                         groupRows.Add(groupKey.ToString(), groupRow);
 
@@ -200,6 +203,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
                                 var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                //Insert the document field value into the proper position in the values list.
                                 groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
@@ -209,14 +213,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
                                         fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
 
+                                    //Insert the collapsed scalar expression value into the proper position in the values list.
                                     groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
                                 }
                                 else
                                 {
-                                    groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, null); //To be filled in with aggregate result later.
+                                    //This value will be filled in during aggregation function execution.
                                 }
                             }
                         }
+
+                        #endregion
 
                         #region Collapse all values needed for sorting.
 
@@ -257,23 +264,26 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         #endregion
                     }
 
+                    #region Collect and collapse expressions that are to be used for aggregation function execution.
+
                     foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
                     {
+                        //The first parameter for an aggregation function is the "values array", get it so we can add values to it.
                         var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
                         //All aggregation parameters are collapsed here at query processing time.
                         var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalarExpressionFunctionParameter(transaction,
                             query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
 
+                        //If the aggregation function parameters do not yey exist for this function then create them.
                         if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
                             aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                         {
-                            //Create a new group detail.
                             groupAggregateFunctionParameter = new();
 
                             //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
                             //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
-                            //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
+                            //We only do this when we CREATE the group parameters because like the GroupRow, there is only one of these per group, per 
                             foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                             {
                                 var collapsedSupplementalParamValue = supplementalParam.CollapseScalarExpressionFunctionParameter(
@@ -282,12 +292,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
                             }
 
+                            //Add this parameter collection to the lookup so we can add additional values to it with subsequent rows.
                             groupRow.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
                         }
 
                         //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
                         if (collapsedAggregationParameterValue != null)
                         {
+                            //Add the collapsed expression to the aggregation values array.
                             groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
                         }
                         else
@@ -295,33 +307,33 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
                         }
                     }
-                }
 
-                var selectFieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
-                var orderByFieldsWithAggregateFunctionCalls = query.OrderBy.FieldsWithAggregateFunctionCalls;
+                    #endregion
+                }
 
                 //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
                 //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
                 foreach (var groupRow in groupRows)
                 {
-                    var materializedRow = new MaterializedRow(groupRow.Value.Values)
-                    {
-                        OrderByValues = groupRow.Value.OrderByValues
-                    };
+                    var materializedRow = new MaterializedRow(groupRow.Value.Values, groupRow.Value.OrderByValues);
 
-                    foreach (var selectAggregateFunctionField in selectFieldsWithAggregateFunctionCalls)
+                    //Execute aggregate functions for SELECT fields:
+                    foreach (var selectAggregateFunctionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
                     {
                         var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
+                        //Insert the aggregation result into the proper position in the values list.
                         materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
 
-                    foreach (var orderByAggregateFunctionField in orderByFieldsWithAggregateFunctionCalls)
+                    //Execute aggregate functions for ORDER BY fields:
+                    foreach (var orderByAggregateFunctionField in query.OrderBy.FieldsWithAggregateFunctionCalls)
                     {
                         var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
+                        //Save the aggregation result in the ORDER BY collection. 
                         materializedRow.OrderByValues.Add(orderByAggregateFunctionField.Alias, aggregateExpressionResult);
                     }
 
