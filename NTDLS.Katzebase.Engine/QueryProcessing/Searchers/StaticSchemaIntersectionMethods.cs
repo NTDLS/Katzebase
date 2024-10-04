@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var materializedRowValues = new MaterializedRowValues();
 
-            if (query.GroupFields.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
+            if (query.GroupBy.Any() == false && query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 #region No Grouping.
 
@@ -85,32 +85,29 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
                         }
 
-                        if (query.SortFields != null)
+                        foreach (var field in query.OrderBy)
                         {
-                            foreach (var field in query.SortFields)
+                            /*
+                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                /*
-                                if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                                {
-                                    var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
-                                }
-                                else if (field.Expression is IQueryFieldExpression fieldExpression)
-                                {
-                                    if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                                    {
-                                        var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                            fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
-
-                                        rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
-                                    }
-                                    else
-                                    {
-                                        throw new KbEngineException("Aggregate function found during scalar materialization sort.");
-                                    }
-                                }
-                                */
+                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
                             }
+                            else if (field.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                                {
+                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
+                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+
+                                    rowFieldValues.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
+                                }
+                                else
+                                {
+                                    throw new KbEngineException("Aggregate function found during scalar materialization sort.");
+                                }
+                            }
+                            */
                         }
 
                         lock (childPool)
@@ -142,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     var groupKey = new StringBuilder();
 
-                    foreach (var groupField in query.GroupFields)
+                    foreach (var groupField in query.GroupBy)
                     {
                         var collapsedGroupField = groupField.Expression.CollapseScalarQueryField(
                             transaction, query, query.SelectFields, flattenedSchemaElements);

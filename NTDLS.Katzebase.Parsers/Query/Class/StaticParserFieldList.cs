@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         string fieldAlias = string.Empty;
                         string suffixRemovedFieldText = string.Empty;
 
-                        if (queryFields is SortFieldCollection sortFieldCollection)
+                        if (queryFields is OrderByFieldCollection sortFieldCollection)
                         {
                             if (field.EndsWith(" asc", StringComparison.InvariantCultureIgnoreCase))
                             {

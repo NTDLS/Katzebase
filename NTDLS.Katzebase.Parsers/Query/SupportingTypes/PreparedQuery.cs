@@ -95,9 +95,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         #region Select Statement.
 
-        public QueryFieldCollection SelectFields { get; set; }
-        public QueryFieldCollection GroupFields { get; set; }
-        public SortFieldCollection SortFields { get; set; }
+        public SelectFieldCollection SelectFields { get; set; }
+        public GroupByFieldCollection GroupBy { get; set; }
+        public OrderByFieldCollection OrderBy { get; set; }
 
         #endregion
 
@@ -136,7 +136,8 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             Batch = queryBatch;
             Conditions = new(queryBatch);
             SelectFields = new(queryBatch);
-            GroupFields = new(queryBatch);
+            GroupBy = new(queryBatch);
+            OrderBy = new(queryBatch);
         }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)

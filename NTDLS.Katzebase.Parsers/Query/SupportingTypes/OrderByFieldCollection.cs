@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class SortFieldCollection : QueryFieldCollection
+    public class OrderByFieldCollection : QueryFieldCollection
     {
         public KbSortDirection SortDirection { get; internal set; }
 
-        public SortFieldCollection(QueryBatch queryBatch)
+        public OrderByFieldCollection(QueryBatch queryBatch)
             :base(queryBatch)
         {
         }

@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             }
             else
             {
-                query.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false, (p) => new QueryFieldCollection(p));
+                query.SelectFields = StaticParserSelectFields.Parse(queryBatch, tokenizer);
             }
 
             //Parse "into".
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
-                query.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
+                query.GroupBy = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "order by".
@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
-                query.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
+                query.OrderBy = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "limit" clause.
