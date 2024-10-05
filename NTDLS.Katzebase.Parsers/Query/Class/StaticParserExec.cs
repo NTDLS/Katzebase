@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Exec)
+            var query = new PreparedQuery(queryBatch, QueryType.Exec, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Procedure
             };

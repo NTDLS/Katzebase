@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -11,11 +10,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token;
-
-            var exceptions = new List<Exception>();
-
-            var query = new PreparedQuery(queryBatch, QueryType.Select);
+            var query = new PreparedQuery(queryBatch, QueryType.Select, tokenizer.GetCurrentLineNumber());
 
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
@@ -29,15 +24,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 //Select all fields from all schemas.
                 query.DynamicSchemaFieldFilter ??= new();
             }
-            else if (tokenizer.TryEatNextEndsWith(".*")) //schemaName.*
+            else if (tokenizer.TryEatNextEndsWith(".*", out var starSchema)) //schemaName.*
             {
                 //Select all fields from given schema.
-                //TODO: Looks like do we not support "select *" from than one schema.
-
-                token = tokenizer.EatGetNext();
-
+                //TODO: Looks like do we not support "select *" from than one schema, probably never will.
                 query.DynamicSchemaFieldFilter ??= new();
-                var starSchemaAlias = token.Substring(0, token.Length - 2); //Trim off the trailing .*
+                var starSchemaAlias = starSchema[..^2]; //Trim off the trailing .*
                 query.DynamicSchemaFieldFilter.Add(starSchemaAlias.ToLowerInvariant());
             }
             else
@@ -119,73 +111,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("offset"))
             {
                 query.RowOffset = tokenizer.EatGetNextEvaluated<int>();
-            }
-
-            //----------------------------------------------------------------------------------------------------------------------------------
-            // Validation
-            //----------------------------------------------------------------------------------------------------------------------------------
-
-            //Validation (field list):
-            foreach (var documentIdentifier in query.SelectFields.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            //Validation (conditions):
-            foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            //Validation (join conditions):
-            foreach (var schema in query.Schemas.Skip(1))
-            {
-                if (schema.Conditions != null)
-                {
-                    foreach (var documentIdentifier in schema.Conditions.FieldCollection.DocumentIdentifiers)
-                    {
-                        if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                        {
-                            if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                            {
-                                exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                                    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                            }
-                        }
-                    }
-                }
-            }
-
-            //Validation (root conditions):
-            foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            if (exceptions.Count > 0)
-            {
-                throw new AggregateException(exceptions);
             }
 
             return query;

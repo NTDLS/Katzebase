@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 	         *       LastName = 'Doe'
              *   where
 	         *       Id = 10
-	         *
+	         * ---------------------------------------
 	         *  update
 	         *       t
              *   set
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 	         *  
              */
 
-            var query = new PreparedQuery(queryBatch, QueryType.Update);
+            var query = new PreparedQuery(queryBatch, QueryType.Update, tokenizer.GetCurrentLineNumber());
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var updateSchemaNameOrAlias) == false)
             {
@@ -45,6 +45,15 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             tokenizer.EatIfNext("set");
 
             query.UpdateFieldValues = new QueryFieldCollection(queryBatch);
+
+            /*
+            var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" where ", " inner ", " from "]);
+            string conditionText = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
+            if (string.IsNullOrWhiteSpace(conditionText))
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{conditionText}].");
+            }
+            */
 
             while (!tokenizer.IsExhausted())
             {
@@ -94,7 +103,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
 
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(updateSchemaNameOrAlias)).FirstOrDefault()
-                    ?? throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Update schema now found in query: [{updateSchemaNameOrAlias}].");
+                    ?? throw new KbParserException(query.ScriptLine, $"Update schema now found in query: [{updateSchemaNameOrAlias}].");
 
                 query.Attributes.Add(PreparedQuery.QueryAttribute.TargetSchema, targetSchema.Alias);
             }

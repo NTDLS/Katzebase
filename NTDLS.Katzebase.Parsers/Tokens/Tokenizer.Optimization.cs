@@ -251,6 +251,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             text = text.Replace("<=", "$$LesserOrEqual$$");
             text = text.Replace("||", "$$Or$$");
             text = text.Replace("&&", "$$And$$");
+            text = text.Replace(".*", "$$StarSchema$$"); //Schema prefixed "select *".
 
             foreach (var ch in expandCharacters.Distinct())
             {
@@ -262,6 +263,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             text = text.Replace("$$LesserOrEqual$$", " <= ");
             text = text.Replace("$$Or$$", " || ");
             text = text.Replace("$$And$$", " && ");
+            text = text.Replace("$$StarSchema$$", ".*");
 
             //Pad spaces around '-' where the right hand side is not a digit.
             for (int i = 0; i < text.Length; i++)

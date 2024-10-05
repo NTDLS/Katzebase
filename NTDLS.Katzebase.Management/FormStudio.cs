@@ -343,7 +343,7 @@ namespace NTDLS.Katzebase.Management
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
-                        var serverNode = ServerExplorerManager.GetServerNode(node);
+                        var serverNode = ServerExplorerManager.GetServerNodeFor(node);
                         if (serverNode != null && serverNode.ExplorerConnection != null)
                         {
                             var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
@@ -649,11 +649,8 @@ namespace NTDLS.Katzebase.Management
         /// <returns></returns>
         private CodeEditorTabPage CreateNewTabBasedOn(ServerExplorerNode basedOnNode)
         {
-            if (basedOnNode.NodeType != Constants.ServerNodeType.Server)
-            {
-                throw new Exception("The supplied node is not of the correct type.");
-            }
-            return CreateNewTab(basedOnNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
+            var serverNode = ServerExplorerManager.GetServerNodeFor(basedOnNode);
+            return CreateNewTab(serverNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
         }
 
         /// <summary>

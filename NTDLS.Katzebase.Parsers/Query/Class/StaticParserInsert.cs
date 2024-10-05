@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Insert);
+            var query = new PreparedQuery(queryBatch, QueryType.Insert, tokenizer.GetCurrentLineNumber());
 
             tokenizer.EatIfNext("into");
 

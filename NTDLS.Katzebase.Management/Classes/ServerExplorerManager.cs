@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Management.Classes
         /// <summary>
         /// Walks up the tree nodes to obtain the server node for a given node.
         /// </summary>
-        public static ServerExplorerNode? GetServerNode(ServerExplorerNode node)
+        public static ServerExplorerNode? GetServerNodeFor(ServerExplorerNode node)
         {
             while (node?.Parent != null)
             {

@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
+using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -33,6 +34,36 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query);
 
             transaction.EnsureActive();
+
+            #region Hydrate dynamic field list (select *).
+
+            if (query.DynamicSchemaFieldFilter != null)
+            {
+                var distinctFields = new HashSet<string>();
+
+                //Get the distinct values "field names" all schemas.
+                foreach (var intersectedRow in intersectedRowCollection)
+                {
+                    transaction.EnsureActive();
+
+                    foreach (var schema in intersectedRow.SchemaElements.Where(o =>
+                        query.DynamicSchemaFieldFilter.Count() == 0 //Get fields from all schemas
+                        || query.DynamicSchemaFieldFilter.Contains(o.Key, StringComparer.InvariantCultureIgnoreCase))) //Get fields from specific schemas.
+                    {
+                        foreach (var field in schema.Value)
+                        {
+                            distinctFields.Add($"{schema.Key}.{field.Key}".TrimStart('.'));
+                        }
+                    }
+                }
+
+                foreach (var field in distinctFields)
+                {
+                    query.SelectFields.Add(new QueryField(field, query.SelectFields.Count, new QueryFieldDocumentIdentifier(query.ScriptLine, field)));
+                }
+            }
+
+            #endregion
 
             var materializedRowCollection = MaterializeRowValues(core, transaction, query, intersectedRowCollection);
 

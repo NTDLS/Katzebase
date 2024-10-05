@@ -1,6 +1,96 @@
+/*
+SELECT
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	length(sl.Name) as Len,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+ 	tl.Name as TargetLanguage
+INTO
+	test1
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
+	
+SELECT
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	length(sl.Name) as Len,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+ 	tl.Name as TargetLanguage
+INTO
+	test2
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
+	OR sw.Text = 'Door'
+*/
 
-select * from Test
+--Correct count:
+/*
+SELECT
+	T1.*
+FROM
+	Test1 as T1
+INNER JOIN Test2 as T2
+	ON T2.TargetLanguage = T1.TargetLanguage
+*/
 
+/*
+--Correct
+UPDATE
+	T1
+SET
+	SourceWord = 'Updated ' + T1.SourceWord,
+	SourceLanguage = 'Updated ' + T2.SourceLanguage
+FROM
+	Test1 as T1
+INNER JOIN Test2 as T2
+	ON T2.TargetLanguage = T1.TargetLanguage
+	AND T2.TargetWord = T1.TargetWord
+*/
+
+
+SELECT
+	T1.SourceWord,
+	T1.SourceLanguage
+FROM
+	Test1 as T1
+INNER JOIN Test2 as T2
+	ON T2.TargetLanguage = T1.TargetLanguage
+	AND T2.TargetWord = T1.TargetWord
+
+
+
+/*
+select
+	t.*
+from
+	Test as t
+*/
 /*
 select
 	SourceWordId,
