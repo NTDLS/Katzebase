@@ -5,7 +5,7 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 
 ## Documentation and Links
 - **Full documentation** at [https://katzebase.com/](https://katzebase.com/).
-- To dowload the **Server**, **Management UI**, and utilities, check out the [releases](https://github.com/NTDLS/NTDLS.Katzebase/releases).
+- To download the **Server**, **Management UI**, and utilities, check out the [releases](https://github.com/NTDLS/Katzebase/releases).
 
 ## Default Login
  - **Username**: admin
@@ -23,7 +23,7 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 - tSQL Query language with support for field list, joins, top(count), where clause, grouping, aggregations, etc.
 
 ## Client Connectivity?
-Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Client/) for your project over at nuget.org.
+Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Api/) for your project over at nuget.org.
 
 ## Sample Data
 To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationsips between the words and languages.
