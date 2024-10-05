@@ -142,7 +142,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentPointersForSchemaAliases);
 
-            var childPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Intersection.CreateChildPool(core.Settings.IntersectionChildThreadPoolQueueDepth);
 
             bool rowLimitExceeded = false;
 
@@ -401,7 +401,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
-            var childPool = core.ThreadPool.Lookup.CreateChildQueue(core.Settings.LookupChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Lookup.CreateChildPool(core.Settings.LookupChildThreadPoolQueueDepth);
 
             bool rowLimitExceeded = false;
 
@@ -472,7 +472,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 #region No Grouping.
 
-                var childPool = core.ThreadPool.Materialization.CreateChildQueue(core.Settings.MaterializationChildThreadPoolQueueDepth);
+                var childPool = core.ThreadPool.Materialization.CreateChildPool(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
                 bool rowLimitExceeded = false;
 

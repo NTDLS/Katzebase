@@ -334,14 +334,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     #region Threading.
 
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                     foreach (var indexPartition in indexPartitions)
                     {
                         var parameter = new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartition);
 
                         var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        queue.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
+                        childPool.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
                         {
                             LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
                         }*/);
@@ -349,7 +349,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.IndexSelection.PhysicalIndex.Name}");
-                    queue.WaitForCompletion();
+                    childPool.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
 
                     var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
@@ -1023,12 +1023,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                     {
-                        if (queue.ExceptionOccurred())
+                        if (childPool.ExceptionOccurred())
                         {
                             break;
                         }
@@ -1036,12 +1036,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var instance = new RemoveDocumentsFromIndexThreadOperation.Instance(operation, indexPartition);
 
                         var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        queue.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
+                        childPool.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
                         ptThreadQueue?.StopAndAccumulate();
                     }
 
                     var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
-                    queue.WaitForCompletion();
+                    childPool.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
                 }
             }
@@ -1195,14 +1195,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                var childPool = _core.ThreadPool.Indexing.CreateChildPool<RebuildIndexOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
 
                 foreach (var physicalDocumentPageCatalogItem in physicalDocumentPageCatalog.Catalog)
                 {
-                    if (queue.ExceptionOccurred())
+                    if (childPool.ExceptionOccurred())
                     {
                         break;
                     }
@@ -1210,12 +1210,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parameter = new RebuildIndexOperation.Instance(operation, physicalDocumentPageCatalogItem.PageNumber);
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    queue.Enqueue(parameter, RebuildIndexThreadWorker);
+                    childPool.Enqueue(parameter, RebuildIndexThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
-                queue.WaitForCompletion();
+                childPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
