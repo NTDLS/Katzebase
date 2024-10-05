@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.PersistentTypes.Index;
-using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
-using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -121,21 +120,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public bool TryGetProcessByConnection(Guid connectionId, [NotNullWhen(true)] out SessionState? value)
+        public bool TryGetProcessByConnection(Guid connectionId, out ulong outProcessId)
         {
-            value = _collection.Read((obj) =>
+            var processId = _collection.Read((obj) =>
             {
-                if (obj.TryGetValue(connectionId, out var value))
+                if (obj.TryGetValue(connectionId, out var session))
                 {
-                    return value;
+                    return (ulong?)session.ProcessId;
                 }
                 return null;
             });
 
-            if (value != null)
+            if (processId != null)
             {
+                outProcessId = (ulong)processId;
                 return true;
             }
+
+            outProcessId = 0;
+
             return false;
         }
 

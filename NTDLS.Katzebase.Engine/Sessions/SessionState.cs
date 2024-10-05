@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
     /// <summary>
     /// This is the an instance of a single client connection.
     /// </summary>
-    public class SessionState
+    internal class SessionState
     {
         public enum KbConnectionSetting
         {

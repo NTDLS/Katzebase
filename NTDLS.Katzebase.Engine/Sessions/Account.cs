@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Sessions
 {
-    public class Account
+    internal class Account
     {
         public string? Username { get; set; }
         public string? PasswordHash { get; set; }

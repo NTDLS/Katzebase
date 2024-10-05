@@ -137,10 +137,10 @@ namespace NTDLS.Katzebase.Server
         {
             LogManager.Debug($"Disconnected: {context.ConnectionId}");
 
-            if (_core.Sessions.TryGetProcessByConnection(context.ConnectionId, out var session))
+            if (_core.Sessions.TryGetProcessByConnection(context.ConnectionId, out var processId))
             {
-                LogManager.Debug($"Terminated PID: {session.ProcessId}");
-                _core.Sessions.CloseByProcessId(session.ProcessId);
+                LogManager.Debug($"Terminated PID: {processId}");
+                _core.Sessions.CloseByProcessId(processId);
             }
         }
 

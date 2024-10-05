@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    public class ObjectLockIntention
+    internal class ObjectLockIntention
     {
         public DateTime CreationTime { get; set; }
         public LockGranularity Granularity { get; private set; }

@@ -15,6 +15,13 @@
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
 
+        public enum IndexMatchType
+        {
+            None,
+            Full,
+            Partial
+        }
+
         public enum IOFormat
         {
             Raw,

@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single operation.
     /// </summary>
-    class MatchSchemaDocumentsByConditionsOperation
+    internal class MatchSchemaDocumentsByConditionsOperation
     {
         public Dictionary<uint, DocumentPointer> ThreadResults = new();
         public PreparedQuery Query { get; set; }
