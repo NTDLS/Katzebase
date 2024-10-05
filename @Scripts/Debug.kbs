@@ -1,4 +1,4 @@
-select
+select top 4
 	*
 --DELETE
 	--T1

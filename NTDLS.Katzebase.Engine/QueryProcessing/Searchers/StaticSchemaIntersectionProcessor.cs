@@ -251,12 +251,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 o.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.Primary
                 || o.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.InnerJoin).Select(o => o.Key).ToList();
 
-            //Remove any rows where the required schemas were not matched.
-            int rowsRemoved = resultingRowCollection.RemoveAll(o => o.MatchedSchemas.All(m => requiredSchemas.Contains(m) == false));
-            if (rowsRemoved > 0)
-            {
-            }
+            //Remove any rows where the required schemas were not matched. I have not proven that this is necessary,
+            //  but it is included to ensure that all resulting rows have been matched to all schemas in the case that
+            //  we abandon the matching process partially though joining due to early exit while respecting "TOP n" row limiter.
+            resultingRowCollection.RemoveAll(o => o.MatchedSchemas.All(m => requiredSchemas.Contains(m) == false));
 
+            //Now that we have finished joining all schemas, we can now apply the WHERE clause.
             var primarySchema = schemaMappings.First();
 
             foreach (var resultingRow in resultingRowCollection)
