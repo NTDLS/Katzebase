@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
+                var referencedProcessId = preparedQuery.GetAttribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();

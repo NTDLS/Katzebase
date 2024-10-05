@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
 
             foreach (var attribute in Attributes)
             {
-                result.Attributes.Add(attribute.Clone());
+                result.AddAttribute(attribute.Clone());
             }
 
             return result;
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         }
 
         public void AddAttribute(PhysicalIndexAttribute attribute)
-            => Attributes.Add(attribute);
+            => AddAttribute(attribute);
 
         static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
         {

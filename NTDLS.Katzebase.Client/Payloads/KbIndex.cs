@@ -14,6 +14,7 @@
         {
             Name = name;
         }
+
         public KbIndex()
         {
         }
@@ -38,7 +39,7 @@
 
         public void AddAttribute(string name)
         {
-            AddAttribute(new KbIndexAttribute()
+            Attributes.Add(new KbIndexAttribute()
             {
                 Field = name
             });

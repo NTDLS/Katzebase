@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var includePhysicalPages = preparedQuery.Attribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
+                    var includePhysicalPages = preparedQuery.TryGetAttribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
                     result = _core.Schemas.AnalyzePages(transactionReference.Transaction, schemaName, includePhysicalPages);
                 }
                 else
@@ -89,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.TryGetAttribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
                 }
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.TryGetAttribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
                 }

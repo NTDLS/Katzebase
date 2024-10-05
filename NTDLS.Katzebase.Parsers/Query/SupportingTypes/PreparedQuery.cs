@@ -46,6 +46,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             //----------Configuration (END)----------
         }
 
+        private readonly Dictionary<QueryAttribute, object> _attributes = new();
+        public IReadOnlyDictionary<QueryAttribute, object> Attributes => _attributes;
+
         /// <summary>
         /// The line that the query started on.
         /// </summary>
@@ -56,7 +59,6 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         /// </summary>
         public string? Hash { get; set; }
         public QueryBatch Batch { get; private set; }
-        public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
@@ -130,25 +132,25 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             OrderBy = new(queryBatch);
         }
 
-        public T Attribute<T>(QueryAttribute attribute, T defaultValue)
+        public T TryGetAttribute<T>(QueryAttribute attribute, T defaultValue)
         {
-            if (Attributes.TryGetValue(attribute, out object? value))
+            if (_attributes.TryGetValue(attribute, out object? value))
             {
                 return (T)value;
             }
             return defaultValue;
         }
 
-        public T Attribute<T>(QueryAttribute attribute)
+        public T GetAttribute<T>(QueryAttribute attribute)
         {
-            return (T)Attributes[attribute];
+            return (T)_attributes[attribute];
         }
 
         public void AddAttribute(QueryAttribute key, object value)
         {
-            if (!Attributes.TryAdd(key, value))
+            if (!_attributes.TryAdd(key, value))
             {
-                Attributes[key] = value;
+                _attributes[key] = value;
             }
         }
 
@@ -156,9 +158,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         {
             foreach (var attribute in attributes)
             {
-                if (!Attributes.TryAdd(attribute.Key, attribute.Value))
+                if (!_attributes.TryAdd(attribute.Key, attribute.Value))
                 {
-                    Attributes[attribute.Key] = attribute.Value;
+                    _attributes[attribute.Key] = attribute.Value;
                 }
             }
         }

@@ -1,10 +1,17 @@
-DELETE
-	T1
+select
+	*
+--DELETE
+	--T1
 FROM
 	Test1 as T1
-INNER JOIN Test2 as T2
-	ON T2.TargetLanguage = T1.TargetLanguage
-	AND T2.TargetWord = T1.TargetWord
+INNER JOIN WordList:Language as L
+	ON L.Name = T1.TargetLanguage
+where
+	L.Id = 4
+	
+
+--DELETE FROM Test1 WHERE TargetLanguage = 'English'
+--select * FROM Test1 WHERE TargetLanguage = 'English'
 
 
 /*
@@ -82,7 +89,7 @@ INNER JOIN Test2 as T2
 	AND T2.TargetWord = T1.TargetWord
 */
 
-
+/*
 SELECT
 	T1.SourceWord,
 	T1.SourceLanguage
@@ -91,8 +98,7 @@ FROM
 INNER JOIN Test2 as T2
 	ON T2.TargetLanguage = T1.TargetLanguage
 	AND T2.TargetWord = T1.TargetWord
-
-
+*/
 
 /*
 select

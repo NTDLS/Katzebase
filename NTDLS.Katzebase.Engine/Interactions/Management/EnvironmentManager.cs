@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Alter(Transaction transaction, Dictionary<QueryAttribute, object> attributes)
+        internal void Alter(Transaction transaction, IReadOnlyDictionary<QueryAttribute, object> attributes)
         {
             try
             {

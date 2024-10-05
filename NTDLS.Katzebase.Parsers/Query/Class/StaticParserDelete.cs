@@ -12,23 +12,44 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         {
             var query = new PreparedQuery(queryBatch, QueryType.Delete, tokenizer.GetCurrentLineNumber());
 
-            tokenizer.EatIfNext("from");
-
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            if (tokenizer.TryEatIfNext("from"))
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
-            }
+                //Query: DELETE FROM [schema] WHERE [conditions]
 
-            if (tokenizer.TryEatIfNext("as"))
-            {
-                var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
-                query.Attributes.Add(PreparedQuery.QueryAttribute.TargetSchema, schemaAlias.ToLowerInvariant());
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
+                }
+
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaName.ToLowerInvariant()));
+                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, schemaName.ToLowerInvariant());
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaName.ToLowerInvariant()));
-                query.Attributes.Add(PreparedQuery.QueryAttribute.TargetSchema, schemaName.ToLowerInvariant());
+                //Query: DELETE [alias] FROM [schema] as [alias] INNER JOIN [schema] as [alias]
+
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var targetAlias) == false)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{targetAlias}].");
+                }
+                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, targetAlias.ToLowerInvariant());
+
+                tokenizer.EatIfNext("from");
+
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
+                }
+
+                if (tokenizer.TryEatIfNext("as"))
+                {
+                    var schemaAlias = tokenizer.EatGetNext();
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
+                }
+                else
+                {
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaName.ToLowerInvariant()));
+                }
             }
 
             //Parse joins.
