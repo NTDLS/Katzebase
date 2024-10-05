@@ -17,7 +17,7 @@
  AppPublisher                     = NetworkDLS
  AppPublisherURL                  = http://www.NetworkDLS.com/
  AppUpdatesURL                    = http://www.NetworkDLS.com/
- AppVersion                       = 0.15.0
+ AppVersion                       = 0.23.0
 
 [Components]
  Name: "Server";       Description: "Server";                     Types: Full Compact Custom;
