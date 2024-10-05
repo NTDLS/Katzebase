@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         }
 
         public string Name { get; set; }
-        public string Prefix { get; set; } = string.Empty;
+        public string Alias { get; set; } = string.Empty;
         public ConditionCollection? Conditions { get; set; }
         public QuerySchemaUsageType SchemaUsageType { get; private set; }
         public int? ScriptLine { get; set; }
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             ScriptLine = scriptLine;
             Name = name;
             SchemaUsageType = schemaUsageType;
-            Prefix = prefix;
+            Alias = prefix;
             Conditions = conditions;
         }
 
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             ScriptLine = scriptLine;
             Name = name;
             SchemaUsageType = schemaUsageType;
-            Prefix = prefix;
+            Alias = prefix;
         }
 
         public QuerySchema(int? scriptLine, string name, QuerySchemaUsageType schemaUsageType)

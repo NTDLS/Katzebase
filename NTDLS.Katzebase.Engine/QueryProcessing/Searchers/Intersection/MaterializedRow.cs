@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     internal class MaterializedRow
     {

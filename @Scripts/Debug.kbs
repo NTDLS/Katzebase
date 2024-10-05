@@ -1,3 +1,29 @@
+--select * from Test
+/*
+select
+	SourceWordId,
+	SourceWord,
+	Len,
+	SourceLanguage,
+	TargetWordId,	
+	TargetWord,
+ 	TargetLanguage
+from 
+	Test
+*/
+
+update
+	t
+set
+	TargetWordId = t1.Len
+from
+	test as t
+inner join test1 as t1
+	on t1.TargetWordId = t.TargetWordId
+where
+	TargetLanguage = 'Latin'
+
+/*
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -6,6 +32,7 @@ SELECT
 	tw.Id as TargetWordId,	
 	tw.Text as TargetWord,
  	tl.Name as TargetLanguage
+ into test1
 FROM
 	WordList:Word as sw
 INNER JOIN WordList:Language as sl
@@ -21,7 +48,7 @@ INNER JOIN WordList:Language as tl
 WHERE
 	sw.Text = 'Car'
 	OR sw.Text = 'Gym'
-
+*/
 /*
 SELECT top 10
 	sw.Id as SourceWordId,

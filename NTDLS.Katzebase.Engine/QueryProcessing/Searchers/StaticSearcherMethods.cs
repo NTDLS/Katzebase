@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
@@ -112,7 +113,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
+                schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
             var lookupResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
@@ -132,17 +133,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             return result;
         }
 
+        public class SchemaIntersectionRowDocumentIdentifierCollection
+            : Dictionary<DocumentPointer, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>>
+        {
+
+        }
+
         /// <summary>
         /// Executes a prepared query (select, update, delete, etc) and returns
         ///     just the distinct document pointers for the specified schema.
         /// </summary>
-        /// <param name="core"></param>
-        /// <param name="transaction"></param>
-        /// <param name="query"></param>
-        /// <param name="schemaPrefix"></param>
-        /// <returns></returns>
-        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery(
-            EngineCore core, Transaction transaction, PreparedQuery query, string[] getDocumentsIdsForSchemaPrefixes)
+        internal static SchemaIntersectionRowDocumentIdentifierCollection FindDocumentPointersByPreparedQuery(
+            EngineCore core, Transaction transaction, PreparedQuery query, List<string> gatherDocumentPointersForSchemaAliases)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
@@ -151,10 +153,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Prefix, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
+                schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            return StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, getDocumentsIdsForSchemaPrefixes).DocumentIdentifiers;
+            var schemaIntersectionRowCollection = StaticSchemaIntersectionMethods.GatherIntersectedRows(
+                core, transaction, schemaMap, query, gatherDocumentPointersForSchemaAliases);
+
+            var schemaIntersectionRowDocumentIdentifierCollection = new SchemaIntersectionRowDocumentIdentifierCollection();
+
+            foreach (var schemaIntersectionRow in schemaIntersectionRowCollection)
+            {
+                //Get the document pointers for the given schemas. I do not believe that this additional filtering is required,
+                //  but this function is used for UPDATE and DELETE statements so maybe the extra cycles are warranted?
+                foreach (var documentPointer in schemaIntersectionRow.DocumentPointers
+                    .Where(o => gatherDocumentPointersForSchemaAliases.Contains(o.Key, StringComparer.InvariantCultureIgnoreCase)))
+                {
+                    //In the case of a cartesian expression, there can be multiple instances of the same document pointer we "upsert" the collection.
+                    schemaIntersectionRowDocumentIdentifierCollection[documentPointer.Value] = schemaIntersectionRow.SchemaElements;
+                }
+            }
+
+            return schemaIntersectionRowDocumentIdentifierCollection;
         }
     }
 }

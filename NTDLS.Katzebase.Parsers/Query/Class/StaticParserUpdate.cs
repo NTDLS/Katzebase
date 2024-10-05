@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -23,19 +24,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             var query = new PreparedQuery(queryBatch, QueryType.Update);
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var updateSchemaNameOrAlias) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name or alias, found: [{tokenizer.ResolveLiteral(updateSchemaNameOrAlias)}].");
             }
-            if (tokenizer.TryEatIfNext("as"))
-            {
-                var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
-            }
-            else
-            {
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaName.ToLowerInvariant()));
-            }
+
             tokenizer.EatIfNext("set");
 
             query.UpdateFieldValues = new QueryFieldCollection(queryBatch);
@@ -50,7 +43,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 tokenizer.EatIfNext('=');
 
-                bool isTextRemaining = tokenizer.EatGetSingleFieldExpression(["where", "inner"], out var fieldExpression);
+                bool isTextRemaining = tokenizer.EatGetSingleFieldExpression(["where", "inner", "from"], out var fieldExpression);
 
                 var queryField = StaticParserField.Parse(tokenizer, fieldExpression, query.UpdateFieldValues);
 
@@ -60,6 +53,43 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     break; //exit loop to parse, found: where or join clause.
                 }
+            }
+
+            //Parse primary schema, otherwise use updateSchemaNameOrAlias
+            if (tokenizer.TryEatIfNext("from"))
+            {
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
+                }
+
+                if (tokenizer.TryEatIfNext("as"))
+                {
+                    var schemaAlias = tokenizer.EatGetNext();
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
+                }
+                else
+                {
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary));
+                }
+
+                //Parse joins.
+                while (tokenizer.TryIsNext("inner"))
+                {
+                    var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
+                    query.Schemas.AddRange(joinedSchemas);
+                }
+
+                var targetSchema = query.Schemas.Where(o => o.Alias.Is(updateSchemaNameOrAlias)).FirstOrDefault()
+                    ?? throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Update schema now found in query: [{updateSchemaNameOrAlias}].");
+
+                query.Attributes.Add(PreparedQuery.QueryAttribute.TargetSchema, targetSchema.Alias);
+            }
+            else
+            {
+                //The query did not have a from, so the schema specified on the UPDATE line is the schema name.
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), updateSchemaNameOrAlias.ToLowerInvariant(), QuerySchemaUsageType.Primary));
+                query.Attributes.Add(PreparedQuery.QueryAttribute.TargetSchema, updateSchemaNameOrAlias.ToLowerInvariant());
             }
 
             if (tokenizer.TryEatIfNext("where"))

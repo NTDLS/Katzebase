@@ -193,28 +193,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <returns></returns>
         internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
         {
+            //TODO: Reimplement.
+
+
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var firstSchema = preparedQuery.Schemas.Single();
+
+                var targetSchemaAlias = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString().EnsureNotNull();
+                var firstSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
+
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
-                var getDocumentsIdsForSchemaPrefixes = new string[] { firstSchema.Prefix };
+                var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
-                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
-                    _core, transactionReference.Transaction, preparedQuery, getDocumentsIdsForSchemaPrefixes);
+                var schemaIntersectionRowCollection = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
 
-                var updatedDocumentPointers = new List<DocumentPointer>();
-
-                foreach (var rowDocumentIdentifier in rowDocumentIdentifiers)
+                //var updatedDocumentPointers = new List<DocumentPointer>();
+                /*
+                foreach (var schemaIntersectionRow in schemaIntersectionRowCollection)
                 {
                     var physicalDocument = _core.Documents.AcquireDocument
-                        (transactionReference.Transaction, physicalSchema, rowDocumentIdentifier.DocumentPointer, LockOperation.Write);
+                        (transactionReference.Transaction, physicalSchema, schemaIntersectionRow.DocumentPointers, LockOperation.Write);
 
                     foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
                     {
                         var collapsedValue = updateValue.Expression.CollapseScalarQueryField(
-                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, rowDocumentIdentifier.SchemaElements);
+                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, schemaIntersectionRow.SchemaElements);
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {
@@ -226,16 +232,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         }
                     }
 
-                    updatedDocumentPointers.Add(rowDocumentIdentifier.DocumentPointer);
+                    //updatedDocumentPointers.Add(rowDocumentIdentifier.DocumentPointer);
                 }
-
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(rowDocumentIdentifiers.Count());
+                */
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowCollection.Count());
             }
             catch (Exception ex)
             {
                 Management.LogManager.Error($"Failed to execute document update for process id {session.ProcessId}.", ex);
                 throw;
             }
+
+            return new();
         }
 
         internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
@@ -289,9 +297,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
-                            transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Prefix);
+                            transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Alias);
 
-                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Prefix);
+                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Alias);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
@@ -334,6 +342,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
         internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery preparedQuery)
         {
+            /*
             try
             {
                 var firstSchema = preparedQuery.Schemas.First();
@@ -341,7 +350,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
-                    _core, transactionReference.Transaction, preparedQuery, [firstSchema.Prefix]);
+                    _core, transactionReference.Transaction, preparedQuery, [firstSchema.Alias]);
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
 
@@ -354,6 +363,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 Management.LogManager.Error($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
+            */
+
+            //TODO: Reimplement.
+
+            return new();
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
+﻿namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     internal class DocumentLookupRowCollection
     {

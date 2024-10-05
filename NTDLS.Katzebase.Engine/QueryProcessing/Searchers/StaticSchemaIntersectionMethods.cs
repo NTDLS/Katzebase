@@ -21,15 +21,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
     internal static class StaticSchemaIntersectionMethods
     {
         /// <summary>
-        /// Generates a set of rows and field names (or just document pointers) fusing a prepared query.
+        /// Generates a set of rows and field names using a prepared query.
         /// </summary>
-        /// <param name="gatherDocumentsIdsForSchemaPrefixes">When not null, the process will focus on
+        /// <param name="gatherDocumentPointersForSchemaAliases">When not null, the process will focus on
         /// obtaining a list of DocumentPointers instead of fields/rows. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
         internal static DocumentLookupRowCollection GetDocumentsByConditions(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+            QuerySchemaMap schemaMap, PreparedQuery query)
         {
-            var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
+            var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query);
 
             transaction.EnsureActive();
 
@@ -105,10 +105,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// First obtains results from the primary schema using indexing and the WHERE clause, then combines all subsequent
         /// joined schemas (also using indexing). Expands rowset for one-to-many, many-to-many and many-to-one joins.
         /// </summary>
-        private static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+        public static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
+            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases = null)
         {
-            var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentsIdsForSchemaPrefixes);
+            var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentPointersForSchemaAliases);
 
             var childPool = core.ThreadPool.Intersection.CreateChildQueue(core.Settings.IntersectionChildThreadPoolQueueDepth);
 
@@ -174,9 +174,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 var newRow = templateRowClone.Clone();
                                 newRow.MatchedSchemas.Add(schemaMap.Key);
 
-                                if (gatherDocumentsIdsForSchemaPrefixes?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                                if (gatherDocumentPointersForSchemaAliases?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
                                 {
-                                    //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentsIdsForSchemaPrefixes.
+                                    //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
                                     newRow.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
                                 }
 
@@ -286,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
         /// </summary>
         private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -326,9 +326,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.Prefix.ToLowerInvariant(), physicalDocument.Elements);
 
-                        if (gatherDocumentsIdsForSchemaPrefixes?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                        if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
                         {
-                            //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentsIdsForSchemaPrefixes.
+                            //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
                             schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), documentPointer);
                         }
 

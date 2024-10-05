@@ -6,12 +6,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
     public class SchemaIntersectionRowDocumentIdentifier
     {
         public DocumentPointer DocumentPointer { get; set; }
-        public KbInsensitiveDictionary<string?> SchemaElements { get; set; }
+        public KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> SchemaElements { get; set; }
 
-        public SchemaIntersectionRowDocumentIdentifier(DocumentPointer documentPointer, KbInsensitiveDictionary<string?> auxiliaryFields)
+        public SchemaIntersectionRowDocumentIdentifier(DocumentPointer documentPointer, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> schemaElements)
         {
             DocumentPointer = documentPointer;
-            SchemaElements = auxiliaryFields;
+            SchemaElements = schemaElements;
         }
     }
 }
