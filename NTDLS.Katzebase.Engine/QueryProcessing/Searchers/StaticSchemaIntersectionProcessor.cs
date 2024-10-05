@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
@@ -18,7 +19,7 @@ using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
-    internal static class StaticSchemaIntersectionMethods
+    internal static class StaticSchemaIntersectionProcessor
     {
         /// <summary>
         /// Generates a set of rows and field names using a prepared query.

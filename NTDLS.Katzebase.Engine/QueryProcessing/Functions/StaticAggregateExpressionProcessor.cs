@@ -8,7 +8,7 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
 {
     internal static class StaticAggregateExpressionProcessor
     {

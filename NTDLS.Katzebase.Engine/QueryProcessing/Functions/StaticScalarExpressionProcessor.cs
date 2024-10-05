@@ -13,7 +13,7 @@ using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
 {
     internal static class StaticScalarExpressionProcessor
     {

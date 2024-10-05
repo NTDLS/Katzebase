@@ -8,7 +8,7 @@ using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
-    internal class StaticSearcherMethods
+    internal class StaticSearcherProcessor
     {
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var lookupResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
+            var lookupResults = StaticSchemaIntersectionProcessor.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
             var result = new KbQueryDocumentListResult();
 
@@ -155,7 +155,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var schemaIntersectionRowCollection = StaticSchemaIntersectionMethods.GatherIntersectedRows(
+            var schemaIntersectionRowCollection = StaticSchemaIntersectionProcessor.GatherIntersectedRows(
                 core, transaction, schemaMap, query, gatherDocumentPointersForSchemaAliases);
 
             var schemaIntersectionRowDocumentIdentifierCollection = new SchemaIntersectionRowDocumentIdentifierCollection();

@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
-using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherProcessor.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write, LockOperation.Read);
                 }
 
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherProcessor.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
 
                 var duplicateFields = result.Fields
                     .GroupBy(o => o.Name)
@@ -201,7 +201,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
-                var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByPreparedQuery(
                     _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
 
                 var updatedDocumentPointers = new HashSet<DocumentPointer>();
@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.SampleSchemaDocuments(
+                var result = StaticSearcherProcessor.SampleSchemaDocuments(
                     _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
@@ -266,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.ListSchemaDocuments(
+                var result = StaticSearcherProcessor.ListSchemaDocuments(
                     _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
@@ -347,7 +347,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
             var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
-            var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+            var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByPreparedQuery(
                 _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
 
             var documentsToDelete = new HashSet<DocumentPointer>();

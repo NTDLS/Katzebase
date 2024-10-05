@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;

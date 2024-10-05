@@ -1,4 +1,6 @@
---select * from Test
+
+select * from Test
+
 /*
 select
 	SourceWordId,
@@ -12,6 +14,7 @@ from
 	Test
 */
 
+/*
 update
 	t
 set
@@ -32,6 +35,7 @@ select
 	TargetWord,
  	TargetLanguage
 from test
+*/
 
 /*
 SELECT
