@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.Shared;
 

@@ -1,4 +1,4 @@
-using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Persistence;
 

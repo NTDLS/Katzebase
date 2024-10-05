@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using System.Runtime.CompilerServices;
 
 namespace NTDLS.Katzebase.Parsers.Tokens

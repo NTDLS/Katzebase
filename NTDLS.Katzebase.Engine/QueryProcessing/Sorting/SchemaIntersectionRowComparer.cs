@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
 {

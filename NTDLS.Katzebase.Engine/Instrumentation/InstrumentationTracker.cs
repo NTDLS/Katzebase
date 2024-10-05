@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Semaphore;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Instrumentation
 {

@@ -1,8 +1,8 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Api;
+using NTDLS.Katzebase.Api.Exceptions;
 using System.Text;
 using System.Text.RegularExpressions;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {

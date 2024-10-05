@@ -108,14 +108,14 @@ namespace NTDLS.Katzebase.Management
                     EditorWordWrap = checkBoxWordWrap.Checked
                 };
 
-                LocalUserApplicationData.SaveToDisk($"{Client.KbConstants.FriendlyName}\\Management", settings);
+                LocalUserApplicationData.SaveToDisk($"{Api.KbConstants.FriendlyName}\\Management", settings);
                 Program.Settings = settings;
 
                 this.InvokeClose(DialogResult.OK);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, Client.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, Api.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

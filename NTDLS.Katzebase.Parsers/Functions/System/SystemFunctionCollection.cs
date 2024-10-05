@@ -1,5 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Api.Exceptions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Parsers.Functions.System

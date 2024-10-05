@@ -1,5 +1,5 @@
 using NTDLS.Helpers;
-using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
@@ -1062,7 +1062,7 @@ namespace NTDLS.Katzebase.Management
             {
                 using (var sfd = new SaveFileDialog())
                 {
-                    sfd.Filter = $"{Client.KbConstants.FriendlyName} Script (*.kbs)|*.kbs|All files (*.*)|*.*";
+                    sfd.Filter = $"{Api.KbConstants.FriendlyName} Script (*.kbs)|*.kbs|All files (*.*)|*.*";
                     sfd.FileName = tab.FilePath;
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {

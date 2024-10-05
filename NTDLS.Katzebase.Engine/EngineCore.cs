@@ -1,12 +1,12 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine
 {

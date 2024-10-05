@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Types;
-using static NTDLS.Katzebase.Client.KbConstants;
+﻿using NTDLS.Katzebase.Api.Types;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {

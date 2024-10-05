@@ -1,8 +1,8 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using Serilog;
 using System.Diagnostics;
 using System.Text;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

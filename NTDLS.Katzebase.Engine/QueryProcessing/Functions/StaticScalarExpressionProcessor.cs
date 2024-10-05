@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
@@ -11,7 +11,7 @@ using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
 {

@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         public void AddAttribute(PhysicalIndexAttribute attribute)
             => Attributes.Add(attribute);
 
-        static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
+        static public PhysicalIndex FromClientPayload(Api.Payloads.KbIndex index)
         {
             var persistIndex = new PhysicalIndex()
             {
@@ -91,9 +91,9 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
             return persistIndex;
         }
 
-        static public Client.Payloads.KbIndex ToClientPayload(PhysicalIndex index)
+        static public Api.Payloads.KbIndex ToClientPayload(PhysicalIndex index)
         {
-            var persistIndex = new Client.Payloads.KbIndex()
+            var persistIndex = new Api.Payloads.KbIndex()
             {
                 Id = index.Id,
                 Name = index.Name,

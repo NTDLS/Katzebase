@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Types;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {

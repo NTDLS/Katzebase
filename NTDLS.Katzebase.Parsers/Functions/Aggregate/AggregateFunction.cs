@@ -1,5 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Functions.Aggregate

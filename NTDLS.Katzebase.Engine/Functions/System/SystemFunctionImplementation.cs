@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.System.Implementations;
 using NTDLS.Katzebase.Parsers.Functions.System;

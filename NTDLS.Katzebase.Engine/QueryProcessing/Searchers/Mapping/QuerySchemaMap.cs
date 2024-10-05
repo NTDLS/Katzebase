@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;

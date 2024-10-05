@@ -1,5 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Management.Classes.Constants;
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Management.Classes
 
             Client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI");
             Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
-            Client.OnDisconnected += (KbClient sender, Client.Payloads.KbSessionInfo sessionInfo) =>
+            Client.OnDisconnected += (KbClient sender, Api.Payloads.KbSessionInfo sessionInfo) =>
             {
                 LazySchemaCache?.Stop();
             };

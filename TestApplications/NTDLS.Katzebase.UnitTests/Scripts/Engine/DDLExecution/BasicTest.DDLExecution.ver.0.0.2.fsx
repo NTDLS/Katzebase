@@ -9,7 +9,7 @@
 #if GENERIC_TDATA
 
 #else
-open NTDLS.Katzebase.Client.Payloads
+open NTDLS.Katzebase.Api.Payloads
 #endif
 
 open Shared
@@ -22,8 +22,8 @@ open System.Collections.Generic
 module DDLExecutionBasicTests =
     open NTDLS.Katzebase.Engine.Parsers
     
-    //open NTDLS.Katzebase.Client.Payloads
-    open NTDLS.Katzebase.Client.Types
+    //open NTDLS.Katzebase.Api.Payloads
+    open NTDLS.Katzebase.Api.Types
 
     type SingleCount () =
         let mutable c = 0

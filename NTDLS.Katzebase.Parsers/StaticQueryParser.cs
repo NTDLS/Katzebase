@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.Class;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -8,7 +8,7 @@ using NTDLS.Katzebase.Parsers.Query.Validation;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Security.Cryptography;
 using System.Text;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers

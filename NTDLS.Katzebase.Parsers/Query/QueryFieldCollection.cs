@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;

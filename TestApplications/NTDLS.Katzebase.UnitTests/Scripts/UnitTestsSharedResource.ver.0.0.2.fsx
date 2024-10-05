@@ -3,9 +3,9 @@ module Shared
 #r @"nuget: Newtonsoft.Json, 13.0.3"
 #r @"nuget: NTDLS.DelegateThreadPooling, 1.4.8"
 #r @"nuget: NTDLS.FastMemoryCache, 1.7.5"
-#r @"nuget: NTDLS.Katzebase.Client, 1.7.8"
-//#r @"nuget: NTDLS.Katzebase.Client.dev, 1.7.8.1"
-//#r @"G:\coldfar_py\NTDLS.Katzebase.Client\bin\Debug\net8.0\NTDLS.Katzebase.Client.dll"
+#r @"nuget: NTDLS.Katzebase.Api, 1.7.8"
+//#r @"nuget: NTDLS.Katzebase.Api.dev, 1.7.8.1"
+//#r @"G:\coldfar_py\NTDLS.Katzebase.Api\bin\Debug\net8.0\NTDLS.Katzebase.Api.dll"
 
 #r @"nuget: Serilog, 4.0.1"
 #r @"nuget: NTDLS.Helpers, 1.2.9.0"
@@ -100,7 +100,7 @@ type String
 #if GENERIC_TDATA
 
 
-open NTDLS.Katzebase.Client.Payloads
+open NTDLS.Katzebase.Api.Payloads
 type KbQueryDocumentListResult = KbQueryDocumentListResult<fstring>
 
 

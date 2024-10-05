@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Api.Types;
 using ProtoBuf;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index

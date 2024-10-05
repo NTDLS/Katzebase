@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.Class.WithOptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;

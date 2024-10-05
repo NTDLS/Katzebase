@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.Functions;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Fields.Expressions
 {

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
@@ -9,7 +9,7 @@ using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Semaphore;
-using static NTDLS.Katzebase.Client.KbConstants;
+using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Atomicity

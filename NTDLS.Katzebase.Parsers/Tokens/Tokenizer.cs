@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query;
 
 namespace NTDLS.Katzebase.Parsers.Tokens

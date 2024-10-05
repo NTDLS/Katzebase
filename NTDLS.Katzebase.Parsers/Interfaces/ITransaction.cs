@@ -1,4 +1,4 @@
-﻿using static NTDLS.Katzebase.Client.KbConstants;
+﻿using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Interfaces
 {

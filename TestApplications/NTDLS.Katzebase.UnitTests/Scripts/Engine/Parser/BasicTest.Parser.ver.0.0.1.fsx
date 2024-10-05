@@ -15,9 +15,9 @@ open System.Collections.Generic
 module ParserBasicTests =
     open NTDLS.Katzebase.Parsers
     open NTDLS.Katzebase.Parsers.Query.Fields
-    open NTDLS.Katzebase.Client
-    open NTDLS.Katzebase.Client.Types
-    open NTDLS.Katzebase.Client.Exceptions
+    open NTDLS.Katzebase.Api
+    open NTDLS.Katzebase.Api.Types
+    open NTDLS.Katzebase.Api.Exceptions
     open NTDLS.Katzebase.Shared
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =

@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             get
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Client.KbConstants.FriendlyName);
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Api.KbConstants.FriendlyName);
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Api;
+using NTDLS.Katzebase.Api.Payloads;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;

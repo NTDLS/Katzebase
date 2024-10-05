@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
+    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Api\NTDLS.Katzebase.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

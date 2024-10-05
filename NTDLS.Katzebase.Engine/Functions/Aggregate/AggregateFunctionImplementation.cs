@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;

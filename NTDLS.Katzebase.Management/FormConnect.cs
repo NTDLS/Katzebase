@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Katzebase.Api;
 
 namespace NTDLS.Katzebase.Management
 {

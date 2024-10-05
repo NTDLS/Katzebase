@@ -17,7 +17,7 @@ module DMLExecutionBasicTests =
     open NTDLS.Katzebase.Engine.Parsers
     open NTDLS.Katzebase.Engine.Parsers.Query    
     open NTDLS.Katzebase.Engine.Parsers.Query.Fields    
-    open NTDLS.Katzebase.Client.Types
+    open NTDLS.Katzebase.Api.Types
     open NTDLS.Katzebase.Engine.QueryProcessing
 
     type ExprProc = StaticScalerExpressionProcessor
