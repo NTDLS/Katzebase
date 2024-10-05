@@ -62,14 +62,14 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
 
         public void AddAttribute(string name)
         {
-            AddAttribute(new PhysicalIndexAttribute()
+            Attributes.Add(new PhysicalIndexAttribute()
             {
                 Field = name
             });
         }
 
         public void AddAttribute(PhysicalIndexAttribute attribute)
-            => AddAttribute(attribute);
+            => Attributes.Add(attribute);
 
         static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
         {
