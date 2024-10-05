@@ -233,12 +233,12 @@ namespace NTDLS.Katzebase.Client.Management
 
         #endregion
 
-        #region FetchScaler<T>.
+        #region FetchScalar<T>.
 
         /// <summary>
         /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T? FetchScaler<T>(string statement, object userParameters, TimeSpan? queryTimeout = null)
+        public T? FetchScalar<T>(string statement, object userParameters, TimeSpan? queryTimeout = null)
         {
             var result = Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
             var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Client.Management
         /// <summary>
         /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T? FetchScaler<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
+        public T? FetchScalar<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
         {
             var result = Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
             var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Client.Management
         /// <summary>
         /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T? FetchScaler<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public T? FetchScalar<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             var result = Fetch(statement, userParameters, queryTimeout);
             var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();

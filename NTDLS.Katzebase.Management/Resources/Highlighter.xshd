@@ -84,7 +84,7 @@
 			<Word>ShowLocks</Word>
 			<Word>ShowMemoryUtilization</Word>
 			<Word>ShowProcesses</Word>
-			<Word>ShowScalerFunctions</Word>
+			<Word>ShowScalarFunctions</Word>
 			<Word>ShowSystemAggregateFunctions</Word>
 			<Word>ShowSystemFunctions</Word>
 			<Word>ShowTransactions</Word>

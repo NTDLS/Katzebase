@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
@@ -217,7 +217,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Used for indexing operations for a groups of conditions.
         /// </summary>
-        /// <param name="keyValues">For JOIN operations, contains the values of the joining document.</param>
+        /// <param name="keyValues">For JOIN operations, contains the values of the joining document.
+        /// For WHERE clause, values are stored in the conditions so this is not needed.</param>
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
@@ -309,7 +310,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
                             else
                             {
-                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
+                                keyValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
                             }
                         }
                         else
@@ -333,7 +334,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     #region Threading.
 
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                     foreach (var indexPartition in indexPartitions)
                     {
@@ -491,7 +492,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
+                    keyValue = condition.Right.CollapseScalarQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
                 }
             }
 
@@ -1022,7 +1023,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
@@ -1194,7 +1195,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Instance>(_core.Settings.IndexingOperationThreadPoolQueueDepth);
+                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);

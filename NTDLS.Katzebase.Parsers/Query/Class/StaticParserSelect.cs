@@ -1,8 +1,8 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -10,11 +10,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token;
-
-            var exceptions = new List<Exception>();
-
-            var query = new PreparedQuery(queryBatch, QueryType.Select);
+            var query = new PreparedQuery(queryBatch, QueryType.Select, tokenizer.GetCurrentLineNumber());
 
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
@@ -28,20 +24,17 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 //Select all fields from all schemas.
                 query.DynamicSchemaFieldFilter ??= new();
             }
-            else if (tokenizer.TryEatNextEndsWith(".*")) //schemaName.*
+            else if (tokenizer.TryEatNextEndsWith(".*", out var starSchema)) //schemaName.*
             {
                 //Select all fields from given schema.
-                //TODO: Looks like do we not support "select *" from than one schema.
-
-                token = tokenizer.EatGetNext();
-
+                //TODO: Looks like do we not support "select *" from than one schema, probably never will.
                 query.DynamicSchemaFieldFilter ??= new();
-                var starSchemaAlias = token.Substring(0, token.Length - 2); //Trim off the trailing .*
+                var starSchemaAlias = starSchema[..^2]; //Trim off the trailing .*
                 query.DynamicSchemaFieldFilter.Add(starSchemaAlias.ToLowerInvariant());
             }
             else
             {
-                query.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
+                query.SelectFields = StaticParserSelectFields.Parse(queryBatch, tokenizer);
             }
 
             //Parse "into".
@@ -71,11 +64,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary));
             }
 
             //Parse joins.
@@ -101,7 +94,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
-                query.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
+                query.GroupBy = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "order by".
@@ -111,80 +104,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
-                query.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
+                query.OrderBy = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "limit" clause.
             if (tokenizer.TryEatIfNext("offset"))
             {
                 query.RowOffset = tokenizer.EatGetNextEvaluated<int>();
-            }
-
-            //----------------------------------------------------------------------------------------------------------------------------------
-            // Validation
-            //----------------------------------------------------------------------------------------------------------------------------------
-
-            //Validation (field list):
-            foreach (var documentIdentifier in query.SelectFields.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            //Validation (conditions):
-            foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            //Validation (join conditions):
-            foreach (var schema in query.Schemas.Skip(1))
-            {
-                if (schema.Conditions != null)
-                {
-                    foreach (var documentIdentifier in schema.Conditions.FieldCollection.DocumentIdentifiers)
-                    {
-                        if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                        {
-                            if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                            {
-                                exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                                    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                            }
-                        }
-                    }
-                }
-            }
-
-            //Validation (root conditions):
-            foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
-                }
-            }
-
-            if (exceptions.Count > 0)
-            {
-                throw new AggregateException(exceptions);
             }
 
             return query;

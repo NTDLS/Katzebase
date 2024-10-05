@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             APIHandlers = new QueryAPIHandlers(core);
 
             SystemFunctionCollection.Initialize();
-            ScalerFunctionCollection.Initialize();
+            ScalarFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
         }
 

@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Parsers.Functions.System;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {

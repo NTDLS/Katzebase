@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 {
@@ -31,10 +32,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         /// <param name="physicalSchema">The associated schema meta-data.</param>
         /// <param name="documentCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditions used to join this schema mapping to the one before it.</param>
-        public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection? conditions)
+        public void Add(string prefix, PhysicalSchema physicalSchema, QuerySchemaUsageType schemaUsageType, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection? conditions)
         {
             prefix = prefix.ToLowerInvariant();
-            Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
+            Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, schemaUsageType, documentCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()

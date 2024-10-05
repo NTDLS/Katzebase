@@ -6,7 +6,7 @@
         {
             System,
             Aggregate,
-            Scaler
+            Scalar
         }
 
         public string Name { get; set; }

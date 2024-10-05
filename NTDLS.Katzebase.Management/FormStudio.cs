@@ -343,7 +343,7 @@ namespace NTDLS.Katzebase.Management
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
-                        var serverNode = ServerExplorerManager.GetServerNode(node);
+                        var serverNode = ServerExplorerManager.GetServerNodeFor(node);
                         if (serverNode != null && serverNode.ExplorerConnection != null)
                         {
                             var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
@@ -649,11 +649,8 @@ namespace NTDLS.Katzebase.Management
         /// <returns></returns>
         private CodeEditorTabPage CreateNewTabBasedOn(ServerExplorerNode basedOnNode)
         {
-            if (basedOnNode.NodeType != Constants.ServerNodeType.Server)
-            {
-                throw new Exception("The supplied node is not of the correct type.");
-            }
-            return CreateNewTab(basedOnNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
+            var serverNode = ServerExplorerManager.GetServerNodeFor(basedOnNode);
+            return CreateNewTab(serverNode?.ExplorerConnection, FormUtility.GetNextNewFileName());
         }
 
         /// <summary>
@@ -747,32 +744,32 @@ namespace NTDLS.Katzebase.Management
 
             #endregion
 
-            #region Scaler Functions.
+            #region Scalar Functions.
 
-            var scalerFunctionsNode = treeViewMacros.Nodes.Add("Scaler Functions");
-            var scalerFunctions = client.Query.Fetch<KbFunctionDescription>("EXEC ShowScalerFunctions").OrderBy(o => o.Name);
-            foreach (var scalerFunction in scalerFunctions)
+            var scalarFunctionsNode = treeViewMacros.Nodes.Add("Scalar Functions");
+            var scalarFunctions = client.Query.Fetch<KbFunctionDescription>("EXEC ShowScalarFunctions").OrderBy(o => o.Name);
+            foreach (var scalarFunction in scalarFunctions)
             {
-                var node = new TreeNode(scalerFunction.Name)
+                var node = new TreeNode(scalarFunction.Name)
                 {
-                    ToolTipText = Helpers.Text.InsertLineBreaks(scalerFunction.Description ?? string.Empty, 65)
+                    ToolTipText = Helpers.Text.InsertLineBreaks(scalarFunction.Description ?? string.Empty, 65)
                 };
 
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
-                if (scalerFunction.Parameters != null)
+                if (scalarFunction.Parameters != null)
                 {
-                    var parameters = scalerFunction.Parameters.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(o => ParseParameterParts(o.Trim()));
+                    var parameters = scalarFunction.Parameters.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(o => ParseParameterParts(o.Trim()));
                     foreach (var parameter in parameters)
                     {
                         autoCompleteFunctionParameters.Add(new AutoCompleteFunctionParameter(parameter.DataType, parameter.Name));
                         node.Nodes.Add($"{parameter.Value}");
                     }
                 }
-                scalerFunctionsNode.Nodes.Add(node);
+                scalarFunctionsNode.Nodes.Add(node);
 
-                var autoCompleteFunction = new AutoCompleteFunction(FunctionType.Scaler, scalerFunction.Name ?? string.Empty,
-                    scalerFunction.ReturnType ?? string.Empty, scalerFunction.Description ?? string.Empty, autoCompleteFunctionParameters);
+                var autoCompleteFunction = new AutoCompleteFunction(FunctionType.Scalar, scalarFunction.Name ?? string.Empty,
+                    scalarFunction.ReturnType ?? string.Empty, scalarFunction.Description ?? string.Empty, autoCompleteFunctionParameters);
                 GlobalState.AutoCompleteFunctions.Add(autoCompleteFunction);
             }
 

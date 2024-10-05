@@ -46,23 +46,10 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             //----------Configuration (END)----------
         }
 
-        public List<string>? _dynamicSchemaFieldFilter;
-        public SemaphoreSlim? DynamicSchemaFieldSemaphore { get; private set; }
-
         /// <summary>
-        /// When this is non-null, it will cause the searcher methods to pull fields from all schemas,
-        ///     unless it also contains a list of schema aliases, in which case they will be used to filter
-        ///     which schemas we pull fields from.
+        /// The line that the query started on.
         /// </summary>
-        public List<string>? DynamicSchemaFieldFilter
-        {
-            get => _dynamicSchemaFieldFilter;
-            set
-            {
-                DynamicSchemaFieldSemaphore ??= new(1);
-                _dynamicSchemaFieldFilter = value;
-            }
-        }
+        public int? ScriptLine { get; set; }
 
         /// <summary>
         /// Contains the hash of the whole query text with all constants and variables removed.
@@ -87,6 +74,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         #endregion
 
         #region Shared statement components.
+        public List<string>? DynamicSchemaFieldFilter { get; set; } = null;
         public int RowLimit { get; set; }
         public int RowOffset { get; set; }
         public ConditionCollection Conditions { get; set; }
@@ -95,9 +83,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         #region Select Statement.
 
-        public QueryFieldCollection SelectFields { get; set; }
-        public QueryFieldCollection GroupFields { get; set; }
-        public SortFields SortFields { get; set; } = new();
+        public SelectFieldCollection SelectFields { get; set; }
+        public GroupByFieldCollection GroupBy { get; set; }
+        public OrderByFieldCollection OrderBy { get; set; }
 
         #endregion
 
@@ -130,13 +118,16 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
-        public PreparedQuery(QueryBatch queryBatch, QueryType queryType)
+        public PreparedQuery(QueryBatch queryBatch, QueryType queryType, int? fileLine)
         {
             QueryType = queryType;
             Batch = queryBatch;
+            ScriptLine = fileLine;
+
             Conditions = new(queryBatch);
             SelectFields = new(queryBatch);
-            GroupFields = new(queryBatch);
+            GroupBy = new(queryBatch);
+            OrderBy = new(queryBatch);
         }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)

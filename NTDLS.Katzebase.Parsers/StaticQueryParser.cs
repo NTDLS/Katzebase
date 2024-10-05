@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Parsers.Query.Class;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.Validation;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Security.Cryptography;
 using System.Text;
@@ -92,7 +93,7 @@ namespace NTDLS.Katzebase.Parsers
 
             tokenizer.EatNext();
 
-            return queryType switch
+            var preparedQuery = queryType switch
             {
                 QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
                 QueryType.Delete => StaticParserDelete.Parse(queryBatch, tokenizer),
@@ -115,6 +116,10 @@ namespace NTDLS.Katzebase.Parsers
 
                 _ => throw new KbNotImplementedException($"Query type is not implemented: [{token}]."),
             };
+
+            ValidateFieldSchemaReferences.Validate(tokenizer, preparedQuery);
+
+            return preparedQuery;
         }
 
         /// <summary>

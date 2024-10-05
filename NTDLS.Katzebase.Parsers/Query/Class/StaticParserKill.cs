@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Kill);
+            var query = new PreparedQuery(queryBatch, QueryType.Kill, tokenizer.GetCurrentLineNumber());
 
             var referencedProcessId = tokenizer.EatGetNextEvaluated<ulong>();
             try

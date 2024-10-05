@@ -3,13 +3,13 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
 {
-    internal static class SchemaIntersectionRowComparer
+    internal static class MaterializedRowComparer
     {
-        public static int Compare(List<(string fieldName, KbSortDirection sortDirection)> sortingColumns, SchemaIntersectionRow? x, SchemaIntersectionRow? y)
+        public static int Compare(List<(string fieldAlias, KbSortDirection sortDirection)> sortingColumns, MaterializedRow? x, MaterializedRow? y)
         {
-            foreach (var (fieldName, sortDirection) in sortingColumns)
+            foreach (var (fieldAlias, sortDirection) in sortingColumns)
             {
-                int result = string.Compare(x?.AuxiliaryFields[fieldName], y?.AuxiliaryFields?[fieldName], StringComparison.OrdinalIgnoreCase);
+                int result = string.Compare(x?.OrderByValues[fieldAlias], y?.OrderByValues?[fieldAlias], StringComparison.OrdinalIgnoreCase);
 
                 if (result != 0)
                 {

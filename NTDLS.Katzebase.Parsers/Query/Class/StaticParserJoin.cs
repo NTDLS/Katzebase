@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -10,7 +11,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         public static List<QuerySchema> Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             var result = new List<QuerySchema>();
-            string token;
 
             while (tokenizer.TryEatIfNext("inner"))
             {
@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 var schemaScriptLine = tokenizer.GetCurrentLineNumber();
 
                 string subSchemaSchema = tokenizer.EatGetNext();
-                string subSchemaAlias = string.Empty;
+                string subSchemaAlias;
                 if (!TokenizerHelpers.IsValidIdentifier(subSchemaSchema, ':'))
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(subSchemaSchema)}].");
@@ -37,12 +37,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [as] (schema alias), found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
 
-                if (tokenizer.TryEatIfNext("on", out token) == false)
+                if (tokenizer.TryEatIfNext("on", out var onToken) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(token)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(onToken)}].");
                 }
 
-                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " group "]);
+                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " offset ", " group "]);
                 string joinConditionsText = tokenizer.SubStringAbsolute(endOfJoinCaret).Trim();
                 if (string.IsNullOrEmpty(joinConditionsText))
                 {
@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     tokenizer.PushSyntheticLimit(endOfJoinCaret);
                     var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
-                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema.ToLowerInvariant(), QuerySchemaUsageType.InnerJoin, subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
                 catch
                 {

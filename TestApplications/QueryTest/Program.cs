@@ -1,8 +1,4 @@
-﻿using NTDLS.DelegateThreadPooling;
-using NTDLS.Katzebase.Client;
-using System.Diagnostics;
-
-namespace QueryTest
+﻿namespace QueryTest
 {
     internal static class Program
     {

@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.Fields;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query
 {
@@ -13,6 +14,11 @@ namespace NTDLS.Katzebase.Parsers.Query
         public string Alias { get; set; }
 
         public int Ordinal { get; set; }
+
+        /// <summary>
+        /// Only used for Order By fields.
+        /// </summary>
+        public KbSortDirection SortDirection { get; internal set; }
 
         /// <summary>
         /// Contains an instance that defines the value of the query field (could be a string, number, string or numeric expression, or a function call).

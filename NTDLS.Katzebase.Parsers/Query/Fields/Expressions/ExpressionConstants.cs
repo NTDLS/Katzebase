@@ -5,7 +5,7 @@
         public enum CollapseType
         {
             Aggregate,
-            Scaler
+            Scalar
         }
     }
 }

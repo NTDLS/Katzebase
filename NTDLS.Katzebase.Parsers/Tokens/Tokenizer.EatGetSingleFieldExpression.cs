@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 {
                     EatMatchingScope();
                 }
-                else if (stopAt.Contains(token))
+                else if (stopAt.Contains(token, StringComparer.InvariantCultureIgnoreCase))
                 {
                     endCaret = Caret;
                     isTextRemainingToParse = false;

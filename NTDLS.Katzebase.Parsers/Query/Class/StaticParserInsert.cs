@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
 {
@@ -27,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Insert);
+            var query = new PreparedQuery(queryBatch, QueryType.Insert, tokenizer.GetCurrentLineNumber());
 
             tokenizer.EatIfNext("into");
 
@@ -35,7 +36,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
-            query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName));
+            query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
 
             var fieldParserType = FieldParserType.None;
 

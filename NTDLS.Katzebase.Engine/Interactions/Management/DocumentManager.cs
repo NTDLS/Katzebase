@@ -255,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="listOfModifiedFields">A list of the fields that were modified so that we
         /// can filter the indexes we need to update.</param>
         internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            List<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
+            HashSet<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
         {
             try
             {

@@ -1,7 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
-using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
@@ -26,10 +26,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (token.IsQueryFieldIdentifier())
                 {
-                    if (ScalerFunctionCollection.TryGetFunction(token, out var _))
+                    if (ScalarFunctionCollection.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scaler function must be called with parentheses: [{token}]");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scalar function must be called with parentheses: [{token}]");
                     }
                     if (AggregateFunctionCollection.TryGetFunction(token, out var _))
                     {
@@ -108,18 +108,18 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     tokenizer.EatNext();
                     buffer.Append(token);
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalarFunctionCollection.TryGetFunction(token, out var scalarFunction))
                 {
                     tokenizer.EatNext();
 
                     if (!tokenizer.TryIsNextNonIdentifier(['(']))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scaler function must be called with parentheses: [{token}]");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scalar function must be called with parentheses: [{token}]");
                     }
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
-                    var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
-                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
+                    var basicDataType = scalarFunction.ReturnType == KbScalarFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
+                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScalar(scalarFunction.Name, expressionKey, basicDataType);
 
                     ParseFunctionCallRecursive(parentTokenizer, ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
@@ -291,9 +291,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //This is a number placeholder, so we still have a valid numeric operation.
                     continue;
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalarFunctionCollection.TryGetFunction(token, out var scalarFunction))
                 {
-                    if (scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric)
+                    if (scalarFunction.ReturnType == KbScalarFunctionParameterType.Numeric)
                     {
                         //This function returns a number, so we still have a valid numeric operation.
 
@@ -374,7 +374,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //This is a numeric constant, we're all good.
                     continue;
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalarFunctionCollection.TryGetFunction(token, out var scalarFunction))
                 {
                     //Functions are not constant.
                     return false;

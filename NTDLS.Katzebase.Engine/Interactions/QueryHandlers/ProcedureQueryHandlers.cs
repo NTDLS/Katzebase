@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Functions.System;
-using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 {
                     foreach (var parameter in preparedQuery.ProcedureParameters)
                     {
-                        var collapsedParameter = StaticScalerExpressionProcessor.CollapseScalerQueryField(parameter.Expression,
+                        var collapsedParameter = StaticScalarExpressionProcessor.CollapseScalarQueryField(parameter.Expression,
                             transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new());
 
                         collapsedParameters.Add(collapsedParameter);

@@ -1,60 +1,35 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.PersistentTypes.Document;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    internal class SchemaIntersectionRow : List<string?>
+    internal class SchemaIntersectionRow
     {
-        public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
+        public KbInsensitiveDictionary<DocumentPointer> DocumentPointers { get; private set; } = new();
 
         /// <summary>
-        /// The schemas that were used to make up this row.
+        /// A dictionary that contains the elements from each row that comprises this row.
         /// </summary>
-        public HashSet<string> SchemaKeys { get; set; } = new();
+        public KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> SchemaElements { get; private set; } = new();
 
         /// <summary>
-        /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc.
-        ///     where the fields value may not necessarily be returned directly in the results.
+        /// Keeps track of the schemas that this row is comprised of, contains the schema prefixes.
+        /// Another way to put it: this is the schemas that have been matched for this row.
         /// </summary>
-        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; private set; } = new();
+        public HashSet<string> MatchedSchemas { get; set; } = new();
 
-        public void InsertValue(string fieldNameForException, int ordinal, string? value)
+        public SchemaIntersectionRow()
         {
-            if (Count <= ordinal)
-            {
-                int difference = ordinal + 1 - Count;
-                if (difference > 0)
-                {
-                    AddRange(new string[difference]);
-                }
-            }
-            if (this[ordinal] != null)
-            {
-                throw new KbProcessingException($"Ambiguous field [{fieldNameForException}].");
-            }
-
-            this[ordinal] = value;
-        }
-
-        public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer documentPointer)
-        {
-            SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
         }
 
         public SchemaIntersectionRow Clone()
         {
-            var newRow = new SchemaIntersectionRow
+            return new SchemaIntersectionRow()
             {
-                SchemaKeys = new HashSet<string>(SchemaKeys)
+                MatchedSchemas = new HashSet<string>(MatchedSchemas),
+                DocumentPointers = DocumentPointers.Clone(),
+                SchemaElements = SchemaElements.Clone(),
             };
-
-            newRow.AddRange(this);
-
-            newRow.AuxiliaryFields = AuxiliaryFields.Clone();
-            newRow.SchemaDocumentPointers = SchemaDocumentPointers.Clone();
-
-            return newRow;
         }
     }
 }

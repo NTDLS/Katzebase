@@ -33,6 +33,11 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void ListView_MouseUp(object? sender, MouseEventArgs e)
         {
+            if (e.Button != MouseButtons.Right)
+            {
+                return;
+            }
+
             try
             {
                 _selectedItem = null;

@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Rollback)
+            var query = new PreparedQuery(queryBatch, QueryType.Rollback, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.Transaction])
             };

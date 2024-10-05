@@ -62,7 +62,7 @@
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int IndexingOperationThreadPoolQueueDepth { get; set; } = 100;
+        public int IndexingChildThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
         /// The number of threads to allocate to the thread pool.
@@ -78,7 +78,7 @@
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int LookupOperationThreadPoolQueueDepth { get; set; } = 100;
+        public int LookupChildThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
         /// The number of threads to allocate to the thread pool.
@@ -94,7 +94,24 @@
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int IntersectionOperationThreadPoolQueueDepth { get; set; } = 100;
+        public int IntersectionChildThreadPoolQueueDepth { get; set; } = 100;
+
+
+        /// <summary>
+        /// The number of threads to allocate to the thread pool.
+        /// </summary>
+        public int MaterializationThreadPoolSize { get; set; } = 0;
+
+        /// <summary>
+        /// The maximum number of items to queue in the thread pool.
+        /// </summary>
+        public int MaterializationThreadPoolQueueDepth { get; set; } = 10000;
+
+        /// <summary>
+        /// The maximum number of items to queue in each child thread pool per operation.
+        /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
+        /// </summary>
+        public int MaterializationChildThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
         /// Whether the engine will keep health metrics.
