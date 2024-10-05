@@ -12,6 +12,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             /*Example query:
+             * 
              * update
 	         *       Test
              *   set
@@ -20,6 +21,18 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 	         *       LastName = 'Doe'
              *   where
 	         *       Id = 10
+	         *
+	         *  update
+	         *       t
+             *   set
+	         *       TargetWordId = t1.Len
+             *   from
+	         *       test as t
+             *   inner join test1 as t1
+	         *       on t1.TargetWordId = t.TargetWordId
+             *   where
+	         *       TargetLanguage = 'Latin'
+	         *  
              */
 
             var query = new PreparedQuery(queryBatch, QueryType.Update);
