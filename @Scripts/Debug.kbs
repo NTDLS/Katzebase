@@ -22,6 +22,16 @@ inner join test1 as t1
 	on t1.TargetWordId = t.TargetWordId
 where
 	TargetLanguage = 'Latin'
+	
+select
+	SourceWordId,
+	SourceWord,
+	Len,
+	SourceLanguage,
+	TargetWordId,	
+	TargetWord,
+ 	TargetLanguage
+from test
 
 /*
 SELECT
