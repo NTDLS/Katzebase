@@ -11,37 +11,31 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
  - **Username**: admin
  - **Password**: \<blank\>
 
-![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
-
-
-![image](https://github.com/user-attachments/assets/1c2b8245-cb23-49cb-b9c9-1decdbfed779)
-
-
 ## Features:
 - Abortable transactions.
 - Caching and write deferment.
 - Locking, isolation and atomicity.
-- Document indexing.
-- Partitioning.
+- Indexing with partitioning.
+- Multi and nested schemas with partitioning.
+- Static analyzer and schema aware UI.
 - Logging and health monitoring.
-- SQL Query language with support for field list, joins, top(count), where clause, grouping, aggregations, etc.
-
+- Simple to use API client and DAPPER like querying.
+- tSQL Query language with support for field list, joins, top(count), where clause, grouping, aggregations, etc.
 
 ## Client Connectivity?
 Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Client/) for your project over at nuget.org.
-
 
 ## Sample Data
 To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationsips between the words and languages.
 If you are feeling more ambitious, you can grab the larger [Katzebase with StackOverflow](https://katzebase.com/WWWRoot/Download/Katzebase%20with%20StackOverflow.7z) database.
 
+# Management UI
+![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
 
 ## SQL Server Migration Tool
 We even included a tool to import your schema and data from SQL Server into Katzebase.
 
-
 ![image](https://github.com/NTDLS/NTDLS.Katzebase/assets/11428567/41959624-0254-4566-a495-05c72f4a3642)
-
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
