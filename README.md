@@ -33,9 +33,9 @@ If you are feeling more ambitious, you can grab the larger [Katzebase with Stack
 ![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
 
 ## SQL Server Migration Tool
-We even included a tool to import your schema and data from SQL Server into Katzebase.
+We even included a tool to import your schema, data and indexes from SQL Server into Katzebase.
 
-![image](https://github.com/NTDLS/NTDLS.Katzebase/assets/11428567/41959624-0254-4566-a495-05c72f4a3642)
+![image](https://github.com/user-attachments/assets/8bbbc47a-78b1-47f0-8fbb-c44962482d22)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
