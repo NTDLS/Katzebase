@@ -259,19 +259,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var primarySchema = schemaMappings.First();
 
-            var unmatchedByWhereClause = new List<SchemaIntersectionRow>();
-
             foreach (var resultingRow in resultingRowCollection)
             {
                 childPool.Enqueue(() =>
                 {
-                    if (!IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, resultingRow.SchemaElements.Flatten()))
-                    {
-                        lock (unmatchedByWhereClause)
-                        {
-                            unmatchedByWhereClause.Add(resultingRow);
-                        }
-                    }
+                    var schemaElements = resultingRow.SchemaElements.Flatten();
+                    resultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
                 });
             }
 
@@ -279,7 +272,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             childPool.WaitForCompletion();
             ptThreadCompletion_Removal?.StopAndAccumulate();
 
-            resultingRowCollection.RemoveAll(o => unmatchedByWhereClause.Contains(o));
+            //Remove all rows that were not matched by the where clause.
+            resultingRowCollection.RemoveAll(o => !o.MatchedByWhereClause);
 
             #region Internal IsJoinExpressionMatch()
 
@@ -422,6 +416,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
 
                     //Had to remove this match because the where clause can contain conditions comprised of values from joins.
+                    //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
                     //if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
                     //{
                     var schemaIntersectionRow = new SchemaIntersectionRow();

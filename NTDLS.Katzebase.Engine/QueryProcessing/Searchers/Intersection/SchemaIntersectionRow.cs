@@ -5,6 +5,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     internal class SchemaIntersectionRow
     {
+        public bool MatchedByWhereClause { get; set; } = false;
+
         public KbInsensitiveDictionary<DocumentPointer> DocumentPointers { get; private set; } = new();
 
         /// <summary>
