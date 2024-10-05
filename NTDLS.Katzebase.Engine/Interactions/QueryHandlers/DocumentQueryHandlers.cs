@@ -8,7 +8,6 @@ using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.PersistentTypes.Document;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
