@@ -20,7 +20,7 @@ open System
 open System.Collections.Generic
 
 module DDLExecutionBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
+    open NTDLS.Katzebase.Parsers
     
     //open NTDLS.Katzebase.Api.Payloads
     open NTDLS.Katzebase.Api.Types
@@ -45,7 +45,7 @@ module DDLExecutionBasicTests =
 
         let countTest sql expectedCount = 
             try
-                let preparedQueries = StaticQueryParser.ParseBatch(_core, sql, userParameters)
+                let preparedQueries = StaticQueryParser.ParseBatch(sql, userParameters)
                 let preparedQuery = preparedQueries.Item 0
         
                 let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)

@@ -17,7 +17,7 @@ module Shared
 open Newtonsoft.Json
 open NTDLS.Katzebase.Shared
 open NTDLS.Katzebase.Engine
-open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+open NTDLS.Katzebase.Parsers.Query.Fields
 open System
 open System.IO
 open System.Reflection
@@ -108,7 +108,7 @@ type QueryFieldConstantNumeric      = QueryFieldConstantNumeric<fstring>
 type QueryFieldConstantString       = QueryFieldConstantString<fstring>
 type QueryFieldDocumentIdentifier   = QueryFieldDocumentIdentifier<fstring>
 
-open NTDLS.Katzebase.Engine.Parsers
+open NTDLS.Katzebase.Parsers
 type StaticQueryParser = StaticQueryParser<fstring>
 
 type QueryFieldConstantNumeric<'T 
@@ -150,7 +150,7 @@ printfn "%A" (accounts |> Seq.toArray)
 #else
 let _core = new EngineCore(settings)
 let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+open NTDLS.Katzebase.Parsers.Query.Fields
 
 type fstring = string
 type QueryFieldConstantNumeric with

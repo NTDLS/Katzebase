@@ -14,13 +14,13 @@ open System
 open System.Collections.Generic
 
 module DMLExecutionBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
-    open NTDLS.Katzebase.Engine.Parsers.Query    
-    open NTDLS.Katzebase.Engine.Parsers.Query.Fields    
+    open NTDLS.Katzebase.Parsers
+    open NTDLS.Katzebase.Parsers.Query    
+    open NTDLS.Katzebase.Parsers.Query.Fields    
     open NTDLS.Katzebase.Api.Types
     open NTDLS.Katzebase.Engine.QueryProcessing
 
-    type ExprProc = StaticScalerExpressionProcessor
+    type ExprProc = StaticScalarExpressionProcessor
 
     type TwoColumnString () =
         member val COL1 = "" with get, set
@@ -39,7 +39,7 @@ module DMLExecutionBasicTests =
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
-        let preparedQueries = StaticQueryParser.ParseBatch(_core, plainInsert, userParameters)
+        let preparedQueries = StaticQueryParser.ParseBatch(plainInsert, userParameters)
         let preparedQuery = preparedQueries.Item 0
         
         equals [|"COL1"; "COL2"|] (preparedQuery.InsertFieldNames |> Seq.toArray)
@@ -72,11 +72,11 @@ module DMLExecutionBasicTests =
         | :? QueryFieldConstantString as str -> 
             equals "$s_1$" (str.V<fstring, string>())
            
-        let transactionReference = _core.Transactions.Acquire(preLogin)
+        let transactionReference = _core.Transactions.APIAcquire(preLogin)
         let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
         let auxiliaryFields = KbInsensitiveDictionary<fstring> ()
         let collapsed01 = 
-            ExprProc.CollapseScalerQueryField(
+            ExprProc.CollapseScalarQueryField(
                 i0v1.Expression
                 , transactionReference.Transaction
                 , preparedQuery, fieldQueryCollection
