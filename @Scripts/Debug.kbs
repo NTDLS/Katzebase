@@ -1,3 +1,12 @@
+DELETE
+	T1
+FROM
+	Test1 as T1
+INNER JOIN Test2 as T2
+	ON T2.TargetLanguage = T1.TargetLanguage
+	AND T2.TargetWord = T1.TargetWord
+
+
 /*
 SELECT
 	sw.Id as SourceWordId,
