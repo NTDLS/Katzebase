@@ -14,7 +14,7 @@ namespace Benchmark
         const int _iterationsPerTest = 10;
         const string _ScriptsPath = @"..\..\..\Scripts";
         const string _DataPath = @"..\..\..\Data";
-        const string _ServicePath = @"..\..\..\..\Katzebase.Service\bin\Release\net7.0\Katzebase.Service.exe";
+        const string _ServicePath = @"..\..\..\..\..\NTDLS.Katzebase.Server\bin\Release\net8.0\NTDLS.Katzebase.Server.exe";
         const string _serverHost = "127.0.0.1";
         const int _serverPort = 6858;
 
@@ -50,7 +50,7 @@ namespace Benchmark
             Console.WriteLine($"ExecuteBenchmark_Inserts: {schemaName}");
 
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
+            using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
@@ -112,7 +112,7 @@ namespace Benchmark
             foreach (var scriptFile in scriptFiles)
             {
                 var process = StartService();
-                using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
+                using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
                     var queryText = File.ReadAllText(scriptFile);
 
@@ -135,11 +135,10 @@ namespace Benchmark
             }
         }
 
-
         private static void CreatePayloadData()
         {
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
+            using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
             {
                 client.Schema.DropIfExists("Benchmarking");
                 client.Schema.Create("Benchmarking:Payload_1000");
@@ -150,7 +149,7 @@ namespace Benchmark
                 var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
                 int rowCount = 0;
-                int rowsPerTransaction = 1000;
+                int rowsPerTransaction = 1234;
 
                 client.Transaction.Begin();
                 foreach (var row in payloadRows)
@@ -158,6 +157,7 @@ namespace Benchmark
                     if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                     {
                         client.Transaction.Commit();
+                        Console.Write($"Committing {rowsPerTransaction:n0} rows, total: {rowCount:n0} ({((rowCount / (double)payloadRows.Count) * 100.0):n2}%)...\r");
                         client.Transaction.Begin();
                     }
 
@@ -188,8 +188,11 @@ namespace Benchmark
                         break;
                     }
                 }
+                Console.Write($"Committing {rowsPerTransaction:n0} rows, total: {rowCount:n0} ({((rowCount / (double)payloadRows.Count) * 100.0):n2}%)...\r");
                 client.Transaction.Commit();
             }
+            Console.WriteLine();
+            Console.WriteLine("Payloads creation complete." );
 
             Thread.Sleep(1000);
             process.Kill();
@@ -198,7 +201,7 @@ namespace Benchmark
         private static void InsertPayloadData(string fileName, string schemaName, int maxCount)
         {
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
+            using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
@@ -252,6 +255,8 @@ namespace Benchmark
         {
             var process = new Process();
             process.StartInfo.FileName = _ServicePath;
+            process.StartInfo.UseShellExecute = true;  // Use shell to start the process
+            process.StartInfo.CreateNoWindow = false;  // Ensures a new window is created
             process.Start();
             return process;
         }
