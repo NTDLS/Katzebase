@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var indexName = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.IndexName);
-                var indexPartitions = preparedQuery.TryGetAttribute(PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                var indexPartitions = preparedQuery.GetAttribute(PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = preparedQuery.TryGetAttribute(
+                    var indexPartitions = preparedQuery.GetAttribute(
                         PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
