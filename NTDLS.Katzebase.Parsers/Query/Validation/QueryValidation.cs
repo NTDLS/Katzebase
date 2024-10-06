@@ -11,6 +11,28 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
         {
             var exceptions = new List<Exception>();
 
+            if (query.TryGetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaAlias, out var schemaAliasAttribute))
+            {
+                if (query.Schemas.Any(o => o.Alias.Is(schemaAliasAttribute)) == false)
+                {
+                    exceptions.Add(new KbParserException(query.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        $"Schema [{schemaAliasAttribute}] referenced in field list for [*] does not exist in the query."));
+                }
+            }
+
+            //Validation (Dynamic Schema Filter):
+            if (query.DynamicSchemaFieldFilter != null)
+            {
+                foreach (var schemaAlias in query.DynamicSchemaFieldFilter)
+                {
+                    if (query.Schemas.Any(o => o.Alias.Is(schemaAlias)) == false)
+                    {
+                        exceptions.Add(new KbParserException(query.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                            $"Schema [{schemaAlias}] referenced in field list for [*] does not exist in the query."));
+                    }
+                }
+            }
+
             //Validation (Dynamic Schema Filter):
             if (query.DynamicSchemaFieldFilter != null)
             {
@@ -27,39 +49,30 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
             //Validation (field list):
             foreach (var documentIdentifier in query.SelectFields.DocumentIdentifiers)
             {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
                 {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
+                    exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                 }
             }
 
             //Validation (field list):
-            foreach (var documentIdentifier in query.SelectFields.DocumentIdentifiers)
+            foreach (var documentIdentifier in query.UpdateFieldValues.DocumentIdentifiers)
             {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
                 {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
+                    exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                 }
             }
 
             //Validation (conditions):
             foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
             {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
                 {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
+                    exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                 }
             }
 
@@ -70,13 +83,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
                 {
                     foreach (var documentIdentifier in schema.Conditions.FieldCollection.DocumentIdentifiers)
                     {
-                        if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                        if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
                         {
-                            if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                            {
-                                exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                                    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                            }
+                            exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                                $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                         }
                     }
                 }
@@ -85,13 +95,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
             //Validation (root conditions):
             foreach (var documentIdentifier in query.Conditions.FieldCollection.DocumentIdentifiers)
             {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
                 {
-                    if (query.Schemas.Any(o => o.Alias.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
-                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
-                    }
+                    exceptions.Add(new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                        $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query."));
                 }
             }
 
@@ -99,8 +106,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
             {
                 throw new AggregateException(exceptions);
             }
-
         }
-
     }
 }
