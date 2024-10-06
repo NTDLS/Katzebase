@@ -323,6 +323,7 @@ namespace NTDLS.Katzebase.Management
             {
                 var menuStrip = (sender as ContextMenuStrip).EnsureNotNull();
                 var node = (menuStrip.Tag as ServerExplorerNode).EnsureNotNull();
+                var schema = ServerExplorerManager.GetSchemaNodeFor(node)?.Schema;
 
                 menuStrip.Hide();
 
@@ -355,9 +356,9 @@ namespace NTDLS.Katzebase.Management
                         }
                     }
                     /*
-                    else if (node.NodeType == Constants.ServerNodeType.Schema && node.Schema?.Path != null)
+                    else if (node.NodeType == Constants.ServerNodeType.Schema && schema?.Path != null)
                     {
-                        if (node.Schema?.Id == EngineConstants.RootSchemaGUID)
+                        if (schema?.Id == EngineConstants.RootSchemaGUID)
                         {
                             node.Nodes.Clear();
                         }
@@ -366,16 +367,16 @@ namespace NTDLS.Katzebase.Management
                             node.Remove();
                         }
 
-                        LazySchemaCache.Refresh(node.Schema?.Path);
+                        LazySchemaCache.Refresh(schema?.Path);
                     }
                     else if (node.NodeType == Constants.ServerNodeType.SchemaFieldFolder || node.NodeType == Constants.ServerNodeType.SchemaIndexFolder)
                     {
                         //Fake field/index refresh, just refresh the parent node.
 
                         var parentNode = (ServerExplorerNode)node.Parent;
-                        if (parentNode.NodeType == Constants.ServerNodeType.Schema && parentNode.Schema?.Path != null)
+                        if (parentNode.NodeType == Constants.ServerNodeType.Schema && parentschema?.Path != null)
                         {
-                            if (parentNode.Schema?.Id == EngineConstants.RootSchemaGUID)
+                            if (parentschema?.Id == EngineConstants.RootSchemaGUID)
                             {
                                 parentNode.Nodes.Clear();
                             }
@@ -384,65 +385,65 @@ namespace NTDLS.Katzebase.Management
                                 parentNode.Remove();
                             }
 
-                            LazySchemaCache.Refresh(parentNode.Schema?.Path);
+                            LazySchemaCache.Refresh(parentschema?.Path);
                         }
                     }
                     */
                 }
-                else if (e.ClickedItem?.Text == "Select top n..." && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Select top n..." && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{node.Schema.Path}\r\n";
+                    tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Drop Schema" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Drop Schema" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"DROP SCHEMA {node.Schema.Path}\r\n";
+                    tabFilePage.Editor.Text = $"DROP SCHEMA {schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                 }
-                else if (e.ClickedItem?.Text == "Analyze Schema" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Analyze Schema" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"ANALYZE SCHEMA {node.Schema.Path} --WITH (IncludePhysicalPages = true)\r\n";
+                    tabFilePage.Editor.Text = $"ANALYZE SCHEMA {schema.Path} --WITH (IncludePhysicalPages = true)\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Sample Schema" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Sample Schema" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"SAMPLE {node.Schema.Path} SIZE 100\r\n";
+                    tabFilePage.Editor.Text = $"SAMPLE {schema.Path} SIZE 100\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Drop Index" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Drop Index" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {node.Schema.Path}\r\n";
+                    tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                 }
-                else if (e.ClickedItem?.Text == "Analyze Index" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Analyze Index" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
-                    tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {node.Schema.Path}\r\n";
+                    tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Rebuild Index" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Rebuild Index" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     if (tabFilePage.Client != null)
                     {
-                        var result = tabFilePage.Client.Schema.Indexes.Get(node.Schema.Path, node.Text);
+                        var result = tabFilePage.Client.Schema.Indexes.Get(schema.Path, node.Text);
                         if (result != null && result.Index != null)
                         {
                             var text = new StringBuilder("REBUILD ");
                             text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
-                            text.Append($" {result.Index.Name} ON {node.Schema.Path}");
+                            text.Append($" {result.Index.Name} ON {schema.Path}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();
@@ -451,13 +452,13 @@ namespace NTDLS.Katzebase.Management
                         }
                     }
                 }
-                else if (e.ClickedItem?.Text == "Script Index" && node.Schema != null)
+                else if (e.ClickedItem?.Text == "Script Index" && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
 
                     if (tabFilePage.Client != null)
                     {
-                        var result = tabFilePage.Client.Schema.Indexes.Get(node.Schema.Path, node.Text);
+                        var result = tabFilePage.Client.Schema.Indexes.Get(schema.Path, node.Text);
                         if (result != null && result.Index != null)
                         {
                             var text = new StringBuilder("CREATE ");
@@ -469,7 +470,7 @@ namespace NTDLS.Katzebase.Management
                                 text.AppendLine($"    {attribute.Field},");
                             }
                             text.Length -= 3;//Remove trialing ",\r\n"
-                            text.Append($"\r\n) ON {node.Schema.Path}");
+                            text.Append($"\r\n) ON {schema.Path}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();

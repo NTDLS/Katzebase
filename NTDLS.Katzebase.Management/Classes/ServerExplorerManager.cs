@@ -76,6 +76,25 @@ namespace NTDLS.Katzebase.Management.Classes
         }
 
         /// <summary>
+        /// Returns the first schema encountered when walking up the tree from the given node.
+        /// </summary>
+        public static ServerExplorerNode? GetSchemaNodeFor(ServerExplorerNode? node)
+        {
+            do
+            {
+                if (node?.NodeType == ServerNodeType.Schema)
+                {
+                    return node;
+                }
+
+                node = (ServerExplorerNode?)node?.Parent;
+            }
+            while (node?.Parent != null);
+
+            return null;
+        }
+
+        /// <summary>
         /// Walks up the tree nodes to obtain the server node for the last selected node.
         /// </summary>
         /// <returns></returns>
