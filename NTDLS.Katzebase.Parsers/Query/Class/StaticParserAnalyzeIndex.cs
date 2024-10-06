@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
-            //result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+            query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
             return query;
         }
     }
