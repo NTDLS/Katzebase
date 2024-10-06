@@ -318,7 +318,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 }
                 else UpdateDataGridViewText(param.Item.RowItem, "Complete");
             }
-            catch (Exception ex)
+            catch
             {
                 UpdateDataGridViewText(param.Item.RowItem, "Exception");
             }
@@ -442,7 +442,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         }
                         connection.Close();
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         client.Transaction.Rollback();
                         throw;
@@ -523,7 +523,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 // Allow user to resize the columns manually after the initial auto-resizing
                 dataGridViewSqlServer.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
             }
-            catch (Exception ex)
+            catch
             {
             }
             finally

@@ -108,6 +108,5 @@ namespace NTDLS.Katzebase.SQLServerMigration
         private ProgressBar pbProgress;
         private Label lblHeader;
         private Label lblBody;
-        private SpinningProgress spinningProgress1;
     }
 }

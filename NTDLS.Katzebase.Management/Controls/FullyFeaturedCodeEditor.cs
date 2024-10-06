@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Management.Controls
         const int AfterKeyStrokeAnalysisDelay = 250;
 
         /// <summary>
-        /// How often we perform static analyis even if the user has not changed any text,
+        /// How often we perform static analysis even if the user has not changed any text,
         /// this is to support new information coming from the lazy schema loader.
         /// </summary>
         const int IntermittentAnalysisDelay = 2500;
@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Management.Controls
             {
                 RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
             }
-            catch (Exception ex)
+            catch
             {
             }
 

@@ -1,6 +1,10 @@
 ﻿using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using NTDLS.Katzebase.Management.Classes;
+using NTDLS.Katzebase.Management.Controls;
 using System.Diagnostics;
+using System.Xml;
 
 namespace NTDLS.Katzebase.Management
 {
@@ -14,7 +18,7 @@ namespace NTDLS.Katzebase.Management
 
         public string SelectedSnippetText { get; set; } = string.Empty;
 
-        private TextEditor? _editor;
+        private readonly TextEditor _editor = new TextEditor();
 
         public FormSnippets()
         {
@@ -23,8 +27,13 @@ namespace NTDLS.Katzebase.Management
 
         private void FormSnippets_Load(object sender, EventArgs e)
         {
-            /*
-            _editor = CodeTabPageFactory.CreateGeneric();
+            using var stringReader = new StringReader(Properties.Resources.Highlighter);
+            using var reader = XmlReader.Create(stringReader);
+            _editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+            reader.Close();
+            stringReader.Close();
+
+            FullyFeaturedCodeEditor.ApplyEditorSettings(_editor);
 
             var host = new System.Windows.Forms.Integration.ElementHost
             {
@@ -42,7 +51,6 @@ namespace NTDLS.Katzebase.Management
             treeViewSnippets.NodeMouseClick += TreeViewSnippets_NodeMouseClick;
             treeViewSnippets.KeyUp += TreeViewSnippets_KeyUp;
             treeViewSnippets.NodeMouseClick += TreeViewSnippets_NodeMouseClick1;
-            */
         }
 
         private void TreeViewSnippets_NodeMouseClick1(object? sender, TreeNodeMouseClickEventArgs e)

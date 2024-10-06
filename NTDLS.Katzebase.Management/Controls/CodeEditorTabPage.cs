@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Management.Classes;
-using NTDLS.Katzebase.Management.StaticAnalysis;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
@@ -179,18 +178,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void TextEditor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.F4)
-            {
-                try
-                {
-                    var script = KbTextUtility.RemoveNonCode(Editor.Text);
-                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-            else if (e.Key == System.Windows.Input.Key.F5)
+            if (e.Key == System.Windows.Input.Key.F5)
             {
                 ExecuteCurrentScriptAsync(ExecuteType.Execute);
             }

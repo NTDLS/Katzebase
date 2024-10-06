@@ -50,7 +50,7 @@ namespace InsertLockTest
             {
                 client.Schema.Create("Test:TestA");
             }
-            catch (Exception ex)
+            catch
             {
             }
         }
@@ -61,7 +61,7 @@ namespace InsertLockTest
             {
                 client.Schema.Create("Test:TestB");
             }
-            catch (Exception ex)
+            catch
             {
             }
 

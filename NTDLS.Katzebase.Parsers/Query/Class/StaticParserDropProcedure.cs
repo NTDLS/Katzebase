@@ -117,9 +117,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
 
                 query.AddAttribute(PreparedQuery.QueryAttribute.Batches, batches);
-            */
 
-            return query;
+                return query;
+            */
         }
     }
 }

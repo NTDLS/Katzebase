@@ -180,7 +180,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     serverSchemas = ServerExplorerConnection.Client.Schema.List(queued.Path).Collection;
                 }
                 //TODO: Do not remove item when the issue is a timeout.
-                catch (Exception ex)
+                catch
                 {
                     //We ran into an issue with the query, as a dumb safety measure,
                     //  just remove the schema from the queue and abandon the enumeration.
