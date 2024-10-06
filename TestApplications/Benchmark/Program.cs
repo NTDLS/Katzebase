@@ -276,8 +276,8 @@ namespace Benchmark
 
         static void WriteMetrics(string name, int iteration, double durationMs, double peakMemory, double cpuTime)
         {
-            File.AppendAllText(OutputFileName, $"{StartDateTime}\t{name}\t{iteration}\t{durationMs}\t{(peakMemory / 1024.0 / 1024.0)}\t{cpuTime}\r\n");
-            Console.WriteLine($"{name}\t{iteration}\t{durationMs}\t{(peakMemory / 1024.0 / 1024.0)}\t{cpuTime}");
+            File.AppendAllText(OutputFileName, $"{StartDateTime}\t{name}\t{iteration}\t{durationMs:n2}\t{(peakMemory / 1024.0 / 1024.0):n2}\t{cpuTime:n2}\r\n");
+            Console.WriteLine($"{name}\t{iteration}\t{durationMs:n2}\t{(peakMemory / 1024.0 / 1024.0):n2}\t{cpuTime:n2}");
         }
     }
 }

@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var targetSchema = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchema);
+                var targetSchema = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaName);
 
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
@@ -194,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchema);
+                var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaAlias);
                 var firstSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
@@ -340,7 +340,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             using var transactionReference = _core.Transactions.APIAcquire(session);
 
-            var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchema);
+            var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaAlias);
             var firstSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
