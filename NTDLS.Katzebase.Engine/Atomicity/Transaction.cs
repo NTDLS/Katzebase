@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 else
                 {
                     var obj = warnings[warning];
-                    //No need to duplicate or blank any messages.
+                    //No need to duplicate or add any blank messages.
                     if (string.IsNullOrEmpty(message) == false && obj.Any(o => o == message) == false)
                     {
                         warnings[warning].Add(message);

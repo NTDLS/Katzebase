@@ -175,12 +175,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var rightHandDocumentIdentifiers = schemaMap.Value.Optimization.Conditions.FlattenToRightDocumentIdentifiers();
                             foreach (var documentIdentifier in rightHandDocumentIdentifiers)
                             {
-                                var documentContent = templateRowClone.SchemaElements[documentIdentifier.SchemaAlias ?? ""];
-                                if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
+                                if (!templateRowClone.SchemaElements.TryGetValue(documentIdentifier.SchemaAlias, out var schemaElements))
                                 {
-                                    throw new KbProcessingException($"Join clause field not found in document: [{schemaMap.Key}].");
+                                    throw new KbEngineException($"Schema not found in query: [{documentIdentifier.SchemaAlias}].");
                                 }
-                                keyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
+
+                                if (!schemaElements.TryGetValue(documentIdentifier.FieldName, out var schemaElement))
+                                {
+                                    transaction.AddWarning(KbTransactionWarning.JoinFieldNotFound, documentIdentifier.Value);
+                                }
+
+                                keyValues[documentIdentifier.FieldName] = schemaElement;
                             }
 
                             //We are going to create a limited document catalog using the indexes.
@@ -491,10 +496,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
+                                {
+                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
+                                }
+
+                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
+                                {
+                                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldDocumentIdentifier.Value);
+                                }
 
                                 //Insert the document field value into the proper position in the values list.
-                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, schemaElement);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -519,14 +532,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                if (double.TryParse(fieldValue, out _))
+                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
                                 {
-                                    //Pad numeric values for proper sorting.
-                                    fieldValue = fieldValue.PadLeft(25 + fieldValue.Length, '0');
+                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
                                 }
 
-                                materializedRow.OrderByValues.Add(field.Alias, fieldValue);
+                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
+                                {
+                                    transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, fieldDocumentIdentifier.Value);
+                                }
+
+                                if (double.TryParse(schemaElement, out _))
+                                {
+                                    //Pad numeric values for proper sorting.
+                                    schemaElement = schemaElement.PadLeft(25 + schemaElement.Length, '0');
+                                }
+
+                                materializedRow.OrderByValues.Add(field.Alias, schemaElement);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -617,9 +639,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
+                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
+                                {
+                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
+                                }
+
+                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
+                                {
+                                    transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, fieldDocumentIdentifier.Value);
+                                }
+
                                 //Insert the document field value into the proper position in the values list.
-                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, fieldValue);
+                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, schemaElement);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {
@@ -646,14 +677,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                var fieldValue = row.SchemaElements[fieldDocumentIdentifier.SchemaAlias][fieldDocumentIdentifier.FieldName];
-                                if (double.TryParse(fieldValue, out _))
+                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
                                 {
-                                    //Pad numeric values for proper sorting.
-                                    fieldValue = fieldValue.PadLeft(25 + fieldValue.Length, '0');
+                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
                                 }
 
-                                groupRow.OrderByValues.Add(field.Alias, fieldValue);
+                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
+                                {
+                                    transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, fieldDocumentIdentifier.Value);
+                                }
+
+                                if (double.TryParse(schemaElement, out _))
+                                {
+                                    //Pad numeric values for proper sorting.
+                                    schemaElement = schemaElement.PadLeft(25 + schemaElement.Length, '0');
+                                }
+
+                                groupRow.OrderByValues.Add(field.Alias, schemaElement);
                             }
                             else if (field.Expression is IQueryFieldExpression fieldExpression)
                             {

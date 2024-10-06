@@ -33,15 +33,22 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
+                //documentIdentifier.Value contains the schema qualified field name.
                 if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var exactAuxiliaryValue))
                 {
-                    return exactAuxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                    return exactAuxiliaryValue; //TODO: Should auxiliaryFields really allow NULL values?
                 }
+
+                //documentIdentifier.FieldName contains the field name.
                 if (auxiliaryFields.TryGetValue(documentIdentifier.FieldName, out var auxiliaryValue))
                 {
-                    return auxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                    return auxiliaryValue; //TODO: Should auxiliaryFields really allow NULL values?
                 }
-                throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
+
+                transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value);
+
+                return null;
+                //throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
@@ -120,7 +127,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                         }
                         else
                         {
-                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                            string mathVariable = $"v{variableNumber++}";
+                            expressionString = expressionString.Replace(token, mathVariable);
+                            expressionVariables.Add(mathVariable, null);
+                            transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, fieldIdentifier.Value);
+                            //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
                         }
                     }
                     else
@@ -234,7 +245,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                         }
                         else
                         {
-                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                            transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, fieldIdentifier.Value);
+                            //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
                         }
                     }
                     else

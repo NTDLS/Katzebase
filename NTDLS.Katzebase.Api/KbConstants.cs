@@ -49,6 +49,8 @@
         {
             ResultDisqualifiedByNullValue,
             AggregateDisqualifiedByNullValue,
+            FieldNotFound,
+            JoinFieldNotFound,
             SelectFieldNotFound,
             SortFieldNotFound,
             MethodFieldNotFound,
