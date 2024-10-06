@@ -19,6 +19,7 @@ module DMLExecutionBasicTests =
     open NTDLS.Katzebase.Parsers.Query.Fields    
     open NTDLS.Katzebase.Api.Types
     open NTDLS.Katzebase.Engine.QueryProcessing
+    open NTDLS.Katzebase.Engine.QueryProcessing.Functions
 
     type ExprProc = StaticScalarExpressionProcessor
 
@@ -59,18 +60,26 @@ module DMLExecutionBasicTests =
         match i0v0.Expression with
         | :? QueryFieldConstantNumeric as num -> 
             equals "$n_2$" (num.V<fstring, string>())
+        | _ -> 
+            () // Do nothing for unhandled cases
 
         match i0v1.Expression with
         | :? QueryFieldConstantNumeric as num -> 
             equals "$n_3$" (num.V<fstring, string>())
+        | _ -> 
+            () // Do nothing for unhandled cases
 
         match i1v0.Expression with
         | :? QueryFieldConstantString as str -> 
             equals "$s_0$" (str.V<fstring, string>())
+        | _ -> 
+            () // Do nothing for unhandled cases
 
         match i1v1.Expression with
         | :? QueryFieldConstantString as str -> 
             equals "$s_1$" (str.V<fstring, string>())
+        | _ -> 
+            () // Do nothing for unhandled cases
            
         let transactionReference = _core.Transactions.APIAcquire(preLogin)
         let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
@@ -82,7 +91,7 @@ module DMLExecutionBasicTests =
                 , preparedQuery, fieldQueryCollection
                 , auxiliaryFields)
         let collapsed11 = 
-            ExprProc.CollapseScalerQueryField(
+            ExprProc.CollapseScalarQueryField(
                 i1v1.Expression
                 , transactionReference.Transaction
                 , preparedQuery, fieldQueryCollection

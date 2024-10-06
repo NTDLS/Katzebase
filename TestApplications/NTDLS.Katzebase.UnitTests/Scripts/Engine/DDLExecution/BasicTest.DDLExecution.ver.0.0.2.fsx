@@ -51,7 +51,7 @@ module DDLExecutionBasicTests =
                 let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
                 equals 1 queryResultCollection.Collection.Count
 
-                let queryDocList = ((queryResultCollection.Collection.Item 0) :?> KbQueryDocumentListResult).Rows
+                let queryDocList = (queryResultCollection.Collection.Item 0).Rows
                 equals 1 queryDocList.Count
                 equals $"{expectedCount}" queryDocList[0].Values[0].me
 
