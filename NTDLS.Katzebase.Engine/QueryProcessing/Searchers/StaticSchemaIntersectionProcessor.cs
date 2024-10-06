@@ -20,6 +20,9 @@ using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
+    /// <summary>
+    /// Used to obtain rows by a prepared query, joining schemas and applying where clause.
+    /// </summary>
     internal static class StaticSchemaIntersectionProcessor
     {
         /// <summary>

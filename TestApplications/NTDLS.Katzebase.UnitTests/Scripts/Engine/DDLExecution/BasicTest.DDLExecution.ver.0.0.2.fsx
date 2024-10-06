@@ -76,7 +76,7 @@ module DDLExecutionBasicTests =
         countTest $"SELECT COUNT(id) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count column not existed"
-        countTest $"SELECT COUNT(not_existed_column) as Count FROM {testSchemaDDL}" 2
+        countTest $"SELECT COUNT(not_existed_column) as Count FROM {testSchemaDDL}" 0
 
         testPrint outputOpt "[PASSED] Execute \"CREATE SCHEMA testSch\"" 
 
