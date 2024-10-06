@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
@@ -96,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         public List<string> UpdateFieldNames { get; set; } = new();
 
-        public QueryFieldCollection? UpdateFieldValues { get; set; }
+        public QueryFieldCollection UpdateFieldValues { get; set; }
 
         #endregion
 
@@ -129,11 +130,34 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
             Conditions = new(queryBatch);
             SelectFields = new(queryBatch);
+            UpdateFieldValues = new(queryBatch);
             GroupBy = new(queryBatch);
             OrderBy = new(queryBatch);
         }
 
-        public T TryGetAttribute<T>(QueryAttribute attribute, T defaultValue)
+        public bool TryGetAttribute<T>(QueryAttribute attribute, out T outValue, T defaultValue)
+        {
+            if (_attributes.TryGetValue(attribute, out object? value))
+            {
+                outValue = (T)value;
+                return true;
+            }
+            outValue = defaultValue;
+            return false;
+        }
+
+        public bool TryGetAttribute<T>(QueryAttribute attribute, [NotNullWhen(true)] out T? outValue)
+        {
+            if (_attributes.TryGetValue(attribute, out object? value))
+            {
+                outValue = (T)value;
+                return true;
+            }
+            outValue = default;
+            return false;
+        }
+
+        public T GetAttribute<T>(QueryAttribute attribute, T defaultValue)
         {
             if (_attributes.TryGetValue(attribute, out object? value))
             {
