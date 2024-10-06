@@ -106,6 +106,17 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //Found the end of the conditions, we're all good. We now have the right expression.
                     break;
                 }
+                else if (token.Is("not"))
+                {
+                    leftExpressionString = tokenizer.Substring(startLeftRightCaret, tokenizer.Caret - startLeftRightCaret).Trim();
+
+                    tokenizer.EatNext();
+                    tokenizer.EatIfNext("like");
+
+                    //This is a logical qualifier, we're all good. We now have the left expression and the qualifier.
+                    logicalQualifier = LogicalQualifier.NotLike;
+                    startLeftRightCaret = tokenizer.Caret;
+                }
                 else if (StaticConditionHelpers.IsLogicalQualifier(token))
                 {
                     //This is a logical qualifier, we're all good. We now have the left expression and the qualifier.
