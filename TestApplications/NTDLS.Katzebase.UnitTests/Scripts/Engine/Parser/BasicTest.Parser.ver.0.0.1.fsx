@@ -41,7 +41,7 @@ module ParserBasicTests =
             ()
         with
         | :? KbParserException as pe ->
-            equals "Variable [@Username] is not defined." pe.Message
+            equals "Variable not defined: [@Username]." pe.Message
 
         //[TODO-Test] will add another test case to verify ToUserParametersInsensitiveDictionary
         let userParameters = new KbInsensitiveDictionary<KbConstant>()

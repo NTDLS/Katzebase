@@ -137,7 +137,7 @@ module DMLExecutionBasicTests =
 #if GENERIC_TDATA
             equals "The input string 'A' was not in a correct format." exn.Message
 #else
-            equals "Failed to convert field [col1] value [A] to type [Double]." exn.Message
+            equals "Failed to convert field [COL1] value [A] to type [Double]." exn.Message
 #endif
         testPrint outputOpt $"[PASSED] {plainInsert}"
 
