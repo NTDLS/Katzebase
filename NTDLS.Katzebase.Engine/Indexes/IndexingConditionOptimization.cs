@@ -13,7 +13,7 @@ using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Indexes.Matching
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     internal class IndexingConditionOptimization
     {

@@ -3,12 +3,11 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
@@ -296,7 +295,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var condition in conditionEntries)
                 {
-                    List<uint> indexPartitions = new();
+                    var indexPartitions = new List<uint>();
 
                     if (condition.Qualifier == LogicalQualifier.Equals)
                     {
@@ -329,21 +328,65 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                     }
 
-                    var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, query, indexLookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
+                    var allThreadResultsForSingleCondition = new Dictionary<uint, DocumentPointer>();
 
-                    #region Threading.
-
-                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<MatchSchemaDocumentsByConditionsOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                     foreach (var indexPartition in indexPartitions)
                     {
-                        var parameter = new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartition);
-
                         var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        childPool.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
+                        childPool.Enqueue(() =>
                         {
-                            LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
-                        }*/);
+                            #region Thread.
+
+                            try
+                            {
+                                Dictionary<uint, DocumentPointer> singleThreadResults = new();
+                                string pageDiskPath = indexLookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+
+                                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
+                                if (workingPhysicalIndexLeaves.Count > 0)
+                                {
+                                    //First process the condition at the AttributeDepth that was passed in.
+                                    workingPhysicalIndexLeaves = MatchIndexLeaves(transaction, query,
+                                    condition, workingPhysicalIndexLeaves, query.Conditions.FieldCollection, keyValues);
+
+                                    if (indexLookup.IndexSelection.PhysicalIndex.Attributes.Count == 1)
+                                    {
+                                        //The index only has one attribute, so we are at the base where the document pointers are.
+                                        //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
+                                        var ptIndexDistillation = transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
+                                        singleThreadResults = DistillIndexLeaves(workingPhysicalIndexLeaves);
+                                        ptIndexDistillation?.StopAndAccumulate();
+
+                                    }
+                                    else if (workingPhysicalIndexLeaves.Count > 0)
+                                    {
+                                        //Further, recursively, process additional compound index attribute condition matches.
+                                        singleThreadResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(
+                                            transaction, query, indexLookup, keyValues, 1, workingPhysicalIndexLeaves);
+                                    }
+                                }
+
+                                if (singleThreadResults.Count > 0)
+                                {
+                                    var ptDocumentPointerUnion = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
+                                    lock (allThreadResultsForSingleCondition)
+                                    {
+                                        allThreadResultsForSingleCondition.UnionWith(singleThreadResults);
+                                    }
+                                    ptDocumentPointerUnion?.StopAndAccumulate();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                LogManager.Error($"Failed to match index by thread.", ex);
+                                throw;
+                            }
+
+                            #endregion
+                        });
                         ptThreadQueue?.StopAndAccumulate();
                     }
 
@@ -352,7 +395,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     ptThreadCompletion?.StopAndAccumulate();
 
                     var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                    accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
+                    accumulatedResults = accumulatedResults.IntersectWith(allThreadResultsForSingleCondition);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
                     //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
@@ -360,8 +403,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         break; //Condition eliminated all possible results on this level.
                     }
-
-                    #endregion
                 }
 
                 return accumulatedResults ?? new();
@@ -373,79 +414,32 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void MatchSchemaDocumentsByIndexingConditionLookupThread(MatchSchemaDocumentsByConditionsOperation.Instance instance)
-        {
-            Thread.CurrentThread.Name = $"@Thread_{instance.Operation.PhysicalSchema.Name}:{instance.IndexPartition}";
-
-            try
-            {
-                Dictionary<uint, DocumentPointer> threadResults = new();
-
-                string pageDiskPath = instance.Operation.Lookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
-
-                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
-                if (workingPhysicalIndexLeaves.Count > 0)
-                {
-                    //First process the condition at the AttributeDepth that was passed in.
-                    workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
-                        instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
-
-                    if (instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes.Count == 1)
-                    {
-                        //The index only has one attribute, so we are at the base where the document pointers are.
-                        //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
-                        var ptIndexDistillation = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
-                        threadResults = DistillIndexLeaves(workingPhysicalIndexLeaves);
-                        ptIndexDistillation?.StopAndAccumulate();
-
-                    }
-                    else if (workingPhysicalIndexLeaves.Count > 0)
-                    {
-                        //Further, recursively, process additional compound index attribute condition matches.
-                        threadResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(instance, 1, workingPhysicalIndexLeaves);
-                    }
-                }
-
-                if (threadResults.Count > 0)
-                {
-                    var ptDocumentPointerUnion = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
-                    lock (instance.Operation.ThreadResults)
-                    {
-                        instance.Operation.ThreadResults.UnionWith(threadResults);
-                    }
-                    ptDocumentPointerUnion?.StopAndAccumulate();
-                }
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to match index by thread.", ex);
-                throw;
-            }
-        }
-
         private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookupRecursive(
-            MatchSchemaDocumentsByConditionsOperation.Instance instance, int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
+            Transaction transaction,
+            PreparedQuery query,
+            IndexingConditionLookup Lookup,
+            KbInsensitiveDictionary<string?>? keyValues,
+             int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             Dictionary<uint, DocumentPointer>? results = null;
 
-            var conditionSet = instance.Operation.Lookup.AttributeConditionSets[
-                instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes[attributeDepth].Field.EnsureNotNull()];
+            var conditionSet = Lookup.AttributeConditionSets[
+                Lookup.IndexSelection.PhysicalIndex.Attributes[attributeDepth].Field.EnsureNotNull()];
 
             foreach (var condition in conditionSet)
             {
-                var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
-                    condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
+                var partitionResults = MatchIndexLeaves(transaction, query,
+                    condition, workingPhysicalIndexLeaves, query.Conditions.FieldCollection, keyValues);
 
-                if (attributeDepth == instance.Operation.Lookup.AttributeConditionSets.Count - 1)
+                if (attributeDepth == Lookup.AttributeConditionSets.Count - 1)
                 {
                     //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
 
-                    var ptIndexDistillation = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
+                    var ptIndexDistillation = transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
                     var partialResults = DistillIndexLeaves(partitionResults);
                     ptIndexDistillation?.StopAndAccumulate();
 
-                    var ptDocumentPointerIntersect = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                    var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     results = results.IntersectWith(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -455,12 +449,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break; //Condition eliminated all possible results on this level.
                     }
                 }
-                else if (attributeDepth < instance.Operation.Lookup.AttributeConditionSets.Count - 1)
+                else if (attributeDepth < Lookup.AttributeConditionSets.Count - 1)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
-                    var partialResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(instance, attributeDepth + 1, partitionResults);
+                    var partialResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(
+                        transaction, query, Lookup, keyValues, attributeDepth + 1, partitionResults);
 
-                    var ptDocumentPointerIntersect = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                    var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     results = results.IntersectWith(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -1004,45 +999,41 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                bool useMultiThreadedIndexDeletion = true;
+                var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
-                //TODO: We need to determine how large this job is going to be and use threads when we have huge indexes.
-                if (useMultiThreadedIndexDeletion == false)
+                for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
-                    for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
+                    if (childPool.ExceptionOccurred())
                     {
-                        string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                        break;
+                    }
+
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
+                    childPool.Enqueue(() =>
+                    {
+                        #region Thread.
+
+                        transaction.EnsureActive();
+
+                        string pageDiskPath = physicalIndex.GetPartitionPagesFileName(
+                            physicalSchema, indexPartition);
+
                         var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
                         if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers) > 0)
                         {
                             _core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
                         }
-                    }
+
+                        #endregion
+                    });
+                    ptThreadQueue?.StopAndAccumulate();
                 }
-                else
-                {
-                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<RemoveDocumentsFromIndexThreadOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
-                    var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
-                    for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
-                    {
-                        if (childPool.ExceptionOccurred())
-                        {
-                            break;
-                        }
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
+                childPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
 
-                        var instance = new RemoveDocumentsFromIndexThreadOperation.Instance(operation, indexPartition);
-
-                        var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        childPool.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
-                        ptThreadQueue?.StopAndAccumulate();
-                    }
-
-                    var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
-                    childPool.WaitForCompletion();
-                    ptThreadCompletion?.StopAndAccumulate();
-                }
             }
             catch (Exception ex)
             {
@@ -1051,28 +1042,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RemoveDocumentsFromIndexThreadWorker(RemoveDocumentsFromIndexThreadOperation.Instance instance)
-        {
-            try
-            {
-                instance.Operation.Transaction.EnsureActive();
-
-                string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
-                    instance.Operation.PhysicalSchema, (uint)instance.IndexPartition);
-
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
-
-                if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, instance.Operation.DocumentPointers) > 0)
-                {
-                    _core.IO.PutPBuf(instance.Operation.Transaction, pageDiskPath, physicalIndexPages);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to delete from index by thread.", ex);
-                throw;
-            }
-        }
 
         #endregion
 
@@ -1109,62 +1078,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RebuildIndexThreadWorker(RebuildIndexOperation.Instance instance)
-        {
-            try
-            {
-                instance.Operation.Transaction.EnsureActive();
-
-                var physicalDocumentPageMap = _core.Documents.AcquireDocumentPageMap(instance.Operation.Transaction,
-                    instance.Operation.PhysicalSchema, instance.PageNumber, LockOperation.Read);
-
-                var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(instance.PageNumber, o));
-
-                foreach (var documentPointer in documentPointers)
-                {
-                    instance.Operation.Transaction.EnsureActive();
-
-                    if (instance.Operation.PhysicalSchema.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null: [{nameof(instance.Operation.PhysicalSchema.DiskPath)}].");
-                    }
-
-                    var physicalDocument = _core.Documents.AcquireDocument(
-                        instance.Operation.Transaction, instance.Operation.PhysicalSchema, documentPointer, LockOperation.Read);
-
-                    try
-                    {
-                        var documentField = instance.Operation.PhysicalIndex.Attributes[0].Field;
-                        physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
-
-                        uint indexPartition = instance.Operation.PhysicalIndex.ComputePartition(value);
-
-                        string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
-                            instance.Operation.PhysicalSchema, indexPartition);
-
-                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
-                            instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
-
-                        lock (instance.Operation.SyncObjects[indexPartition])
-                        {
-                            InsertDocumentIntoIndexPages(instance.Operation.Transaction,
-                                instance.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, documentPointer);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogManager.Error($"Failed to insert document into index for process id {instance.Operation.Transaction.ProcessId}.", ex);
-                        throw;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to rebuild index by thread.", ex);
-                throw;
-            }
-        }
-
         /// <summary>
         /// Inserts all documents in a schema into a single index in the schema. Locks the index page catalog for write.
         /// </summary>
@@ -1194,10 +1107,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var childPool = _core.ThreadPool.Indexing.CreateChildPool<RebuildIndexOperation.Instance>(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
-                var operation = new RebuildIndexOperation(
-                    transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
+                var syncObjects = new object[physicalIndex.Partitions];
+                for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
+                {
+                    syncObjects[indexPartition] = new object();
+                }
 
                 foreach (var physicalDocumentPageCatalogItem in physicalDocumentPageCatalog.Catalog)
                 {
@@ -1206,10 +1122,62 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    var parameter = new RebuildIndexOperation.Instance(operation, physicalDocumentPageCatalogItem.PageNumber);
-
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(parameter, RebuildIndexThreadWorker);
+                    childPool.Enqueue(() =>
+                    {
+                        #region Thread.
+
+                        try
+                        {
+                            transaction.EnsureActive();
+
+                            var physicalDocumentPageMap = _core.Documents.AcquireDocumentPageMap(transaction,
+                                physicalSchema, physicalDocumentPageCatalogItem.PageNumber, LockOperation.Read);
+
+                            var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(physicalDocumentPageCatalogItem.PageNumber, o));
+
+                            foreach (var documentPointer in documentPointers)
+                            {
+                                transaction.EnsureActive();
+
+                                if (physicalSchema.DiskPath == null)
+                                {
+                                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
+                                }
+
+                                var physicalDocument = _core.Documents.AcquireDocument(
+                                    transaction, physicalSchema, documentPointer, LockOperation.Read);
+
+                                try
+                                {
+                                    var documentField = physicalIndex.Attributes[0].Field;
+
+                                    physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
+
+                                    uint indexPartition = physicalIndex.ComputePartition(value);
+                                    string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+
+                                    lock (syncObjects[indexPartition])
+                                    {
+                                        InsertDocumentIntoIndexPages(transaction, physicalIndex, physicalIndexPages, physicalDocument, documentPointer);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}, page number: {physicalDocumentPageCatalogItem.PageNumber}.", ex);
+                                    throw;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogManager.Error($"Failed to rebuild index by thread.", ex);
+                            throw;
+                        }
+
+                        #endregion
+                    });
                     ptThreadQueue?.StopAndAccumulate();
                 }
 

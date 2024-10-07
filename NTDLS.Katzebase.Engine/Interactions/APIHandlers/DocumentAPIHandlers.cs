@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         }
 
         /// <summary>
-        /// Deletes a document by its ID.
+        /// Deletes a document by its internal document id.
         /// </summary>
         public KbQueryDocumentDeleteByIdReply DeleteDocumentById(RmContext context, KbQueryDocumentDeleteById param)
         {
@@ -161,8 +161,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
+
                 var documentPointers = _core.Documents.AcquireDocumentPointers(
                     transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
+
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == param.Id);
 
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);

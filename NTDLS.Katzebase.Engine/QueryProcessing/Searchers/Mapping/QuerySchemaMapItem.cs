@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;

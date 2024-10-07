@@ -3,7 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;

@@ -1,7 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Threading.Management;
+using NTDLS.Katzebase.Engine.Threading;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;

@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Engine.Indexes.Matching
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     /// <summary>
     /// Contains a list of nested operations that will be used for indexing operations.

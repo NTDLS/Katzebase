@@ -160,8 +160,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     transaction.EnsureActive();
 
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                     childPool.Enqueue(() =>
                     {
+                        #region Thread.
+
                         transaction.EnsureActive();
 
                         var templateRowClone = templateRow.Clone();
@@ -244,7 +247,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             return; //Break out of thread.
                         }
+
+                        #endregion
                     });
+                    ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
@@ -269,11 +275,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             foreach (var resultingRow in resultingRowCollection)
             {
+                var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                 childPool.Enqueue(() =>
                 {
+                    #region Thread.
+
                     var schemaElements = resultingRow.SchemaElements.Flatten();
                     resultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
+
+                    #endregion
                 });
+                ptThreadQueue?.StopAndAccumulate();
             }
 
             var ptThreadCompletion_Removal = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
@@ -417,8 +429,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 transaction.EnsureActive();
 
+                var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                 childPool.Enqueue(() =>
                 {
+                    #region Thread.
+
                     transaction.EnsureActive();
 
                     var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
@@ -452,7 +467,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
                     //}
+
+                    #endregion
                 });
+                ptThreadQueue?.StopAndAccumulate();
 
                 if (rowLimitExceeded)
                 {
@@ -488,8 +506,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     transaction.EnsureActive();
 
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                     childPool.Enqueue(() =>
                     {
+                        #region Thread.
+
                         transaction.EnsureActive();
 
                         var materializedRow = new MaterializedRow();
@@ -588,7 +609,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 return; //Break out of thread.
                             }
                         }
+
+                        #endregion
                     });
+                    ptThreadQueue?.StopAndAccumulate();
 
                     if (rowLimitExceeded)
                     {
