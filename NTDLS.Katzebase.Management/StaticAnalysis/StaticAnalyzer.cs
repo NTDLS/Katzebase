@@ -111,10 +111,16 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     return;
                 }
 
-                var line = textDocument.GetLineByNumber(lineNumber.EnsureNotNull());
-                int startOffset = line.Offset;
-                int length = line.Length;
-                textMarkerService.Create(startOffset, length, message, Colors.Red);
+                try
+                {
+                    var line = textDocument.GetLineByNumber(lineNumber.EnsureNotNull());
+                    int startOffset = line.Offset;
+                    int length = line.Length;
+                    textMarkerService.Create(startOffset, length, message, Colors.Red);
+                }
+                catch (Exception ex)
+                {
+                }
             };
         }
     }

@@ -999,7 +999,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                var childPool = _core.ThreadPool.Indexing.CreateChildPool<uint>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
@@ -1009,7 +1009,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(() =>
+                    childPool.Enqueue(indexPartition, (uint indexPartition) =>
                     {
                         #region Thread.
 
