@@ -2,7 +2,7 @@
   "profiles": {
     "Katzebase.UI": {
       "commandName": "Project",
-      "commandLineArgs": ".\\Debug.kbs"
+      "commandLineArgs": "..\\..\\..\\..\\@Scripts\\Debug.kbs"
     }
   }
 }

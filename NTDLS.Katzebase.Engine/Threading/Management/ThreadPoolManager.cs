@@ -28,6 +28,8 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
         {
             Indexing.Stop();
             Lookup.Stop();
+            Intersection.Stop();
+            Materialization.Stop();
         }
     }
 }
