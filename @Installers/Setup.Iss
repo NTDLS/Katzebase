@@ -42,6 +42,7 @@
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeRegulat.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Regulat"; Flags: onlyifdoesntexist uninsneveruninstall
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Bold"; Flags: onlyifdoesntexist uninsneveruninstall
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\@Art\Script.ico"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
  
 ;Migration component.
  Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
@@ -58,9 +59,6 @@
  Name: "{group}\Katzebase SQL Server Migration";  Filename: "{app}\Migration\NTDLS.Katzebase.SQLServerMigration.exe"; Components: Migration;
  
 [Registry]
-;-- Create generic registery entires for server component.
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server"; Flags: uninsdeletekey noerror;   Components: Server;
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist; Components: Server; 
 ;-- Create kbs "Katzebase SQL Script" Association for management component.
  Root: HKCR; Subkey: ".kbs"; Flags: uninsdeletekey; Components: Management;
  Root: HKCR; Subkey: ".kbs"; ValueType: string; ValueData: "KatzebaseScript"; Components: Management;
@@ -68,12 +66,9 @@
  Root: HKCR; Subkey: "KatzebaseScript"; ValueType: string; ValueData:"Katzebase Script"; Components: Management;
  Root: HKCR; Subkey: "KatzebaseScript\Shell"; ValueType: string; ValueData:"Open"; Components: Management;
  Root: HKCR; Subkey: "KatzebaseScript\Shell\Open\Command"; Flags: uninsdeletekey; Components: Management;
- Root: HKCR; Subkey: "KatzebaseScript\Shell\Open\Command"; ValueType: string; ValueData:"""{app}\NTDLS.Katzebase.Management.exe"" ""%1"""; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; ValueType: string; ValueData:"{app}\NTDLS.Katzebase.Management.exe,1"; Components: Management; 
  Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; Flags: uninsdeletekey; Components: Management;
- Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; ValueType: string; ValueData:"{app}\NTDLS.Katzebase.Management.exe,1"; Components: Management;
-;-- Create generic registery entires for management component.
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Management"; Flags: uninsdeletekey noerror; Components: Management;
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Management\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; ValueType: string; ValueData:"{app}\Management\Script.ico"; Components: Management;
 
 [Run]
 ;Management component.
