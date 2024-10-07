@@ -2,6 +2,9 @@
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Shared;
+using System.Drawing.Printing;
+using System.Security.Policy;
+using System.Xml.Linq;
 
 namespace NTDLS.Katzebase.Management.StaticAnalysis
 {
@@ -50,7 +53,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// </summary>
         private readonly List<CachedSchema> _schemaCache = new();
 
-        public List<CachedSchema> GetCache()
+        public List<CachedSchema> GetCache(out int cacheHash)
         {
             lock (_schemaCache)
             {
@@ -58,6 +61,16 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 results.AddRange(_schemaCache);
                 //Mock in a root schema.
                 results.Add(new CachedSchema(new(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty, 0)));
+
+                cacheHash = 0;
+
+                lock (_schemaCache)
+                {
+                    foreach (var schema in _schemaCache)
+                    {
+                        cacheHash = HashCode.Combine(cacheHash, schema.GetHashCode());
+                    }
+                }
             }
             return _schemaCache;
         }
@@ -82,12 +95,16 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             OnCacheItemAdded = null;
             OnCacheItemRemoved = null;
 
+            int lastCacheHash = 0;
+
             if (_keepRunning == false)
             {
                 _keepRunning = true;
 
                 _thread = Threading.StartThread(() =>
                 {
+                    Thread.CurrentThread.Name = $"LazyBackgroundSchemaCache:{Thread.CurrentThread.ManagedThreadId}";
+
                     while (_keepRunning)
                     {
                         try
@@ -120,8 +137,12 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
                                 if (ProcessSchemaQueue())
                                 {
-                                    var schemaCache = GetCache();
-                                    OnCacheUpdated?.Invoke(schemaCache);
+                                    var schemaCache = GetCache(out var cacheHash);
+                                    if (cacheHash != lastCacheHash)
+                                    {
+                                        lastCacheHash = cacheHash;
+                                        OnCacheUpdated?.Invoke(schemaCache);
+                                    }
                                 }
                                 Thread.Sleep(1000);
                             }

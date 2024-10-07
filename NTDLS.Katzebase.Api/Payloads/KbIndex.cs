@@ -19,6 +19,25 @@
         {
         }
 
+        public override int GetHashCode()
+        {
+            int hash = HashCode.Combine(
+                Name,
+                Id,
+                Created,
+                Modified,
+                IsUnique,
+                Partitions
+            );
+
+            foreach (var attribute in Attributes)
+            {
+                hash = HashCode.Combine(hash, attribute.GetHashCode());
+            }
+
+            return hash;
+        }
+
         public KbIndex(string name, string[] attributes)
         {
             Name = name;

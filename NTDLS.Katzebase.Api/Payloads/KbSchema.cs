@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Api.Payloads
+﻿using System.Collections.Concurrent;
+
+namespace NTDLS.Katzebase.Api.Payloads
 {
     public class KbSchema
     {
@@ -19,7 +21,21 @@
             PageSize = pageSize;
         }
 
+        public override int GetHashCode()
+        {
+            int hash = HashCode.Combine(
+                Id,
+                Name,
+                Path,
+                ParentPath,
+                ParentId,
+                PageSize
+            );
+
+            return hash;
+        }
+
         public KbSchema Clone()
-            => new KbSchema(Id, Name, Path, ParentPath, ParentId, PageSize);
+            => new(Id, Name, Path, ParentPath, ParentId, PageSize);
     }
 }

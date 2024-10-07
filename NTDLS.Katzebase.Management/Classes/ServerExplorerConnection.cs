@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Management.Classes
             LazySchemaCache = new LazyBackgroundSchemaCache(this);
             LazySchemaCache.OnCacheUpdated += (List<CachedSchema> schemaCache) =>
             {
-                StudioForm?.CurrentTabFilePage()?.Editor.InvokePerformStaticAnalysis();
+                StudioForm?.CurrentTabFilePage()?.Editor.PerformStaticAnalysis();
             };
 
             LazySchemaCache.OnCacheItemAdded += SchemaCache_OnCacheItemAdded;

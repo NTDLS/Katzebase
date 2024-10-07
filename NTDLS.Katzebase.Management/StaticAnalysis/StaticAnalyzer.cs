@@ -8,12 +8,14 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 {
     internal class StaticAnalyzer
     {
-        public static void ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
+        public static List<Action> ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
             List<CachedSchema>? schemaCache, QueryBatch batch, PreparedQuery query)
         {
+            var actions = new List<Action>();
+
             if (schemaCache?.Any() != true)
             {
-                return;
+                return actions;
             }
 
             foreach (var querySchema in query.Schemas)
@@ -24,7 +26,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 {
                     if (serverMatchedSchema != null)
                     {
-                        AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]");
+                        actions.Add(AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]"));
                     }
                 }
                 //else if (serverMatchedSchema != null
@@ -35,7 +37,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 //}
                 else if (serverMatchedSchema == null)
                 {
-                    AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema does not exist: [{querySchema.Name}]");
+                    actions.Add(AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema does not exist: [{querySchema.Name}]"));
                 }
             }
 
@@ -96,19 +98,24 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     }
                 }
             }
+
+            return actions;
         }
 
-        static void AddSyntaxError(TextDocument textDocument, TextMarkerService textMarkerService, int? lineNumber, string message)
+        static Action AddSyntaxError(TextDocument textDocument, TextMarkerService textMarkerService, int? lineNumber, string message)
         {
-            if (lineNumber == null)
+            return () =>
             {
-                return;
-            }
+                if (lineNumber == null)
+                {
+                    return;
+                }
 
-            var line = textDocument.GetLineByNumber(lineNumber.EnsureNotNull());
-            int startOffset = line.Offset;
-            int length = line.Length;
-            textMarkerService.Create(startOffset, length, message, Colors.Red);
+                var line = textDocument.GetLineByNumber(lineNumber.EnsureNotNull());
+                int startOffset = line.Offset;
+                int length = line.Length;
+                textMarkerService.Create(startOffset, length, message, Colors.Red);
+            };
         }
     }
 }

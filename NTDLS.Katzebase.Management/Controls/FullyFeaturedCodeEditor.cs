@@ -12,6 +12,9 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
 using NTDLS.Katzebase.Management.StaticAnalysis;
+using System;
+using System.Diagnostics;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -24,13 +27,7 @@ namespace NTDLS.Katzebase.Management.Controls
         /// <summary>
         /// How long we delay performing static analysis after the user finishes typing.
         /// </summary>
-        const int AfterKeyStrokeAnalysisDelay = 250;
-
-        /// <summary>
-        /// How often we perform static analysis even if the user has not changed any text,
-        /// this is to support new information coming from the lazy schema loader.
-        /// </summary>
-        const int IntermittentAnalysisDelay = 2500;
+        const int AfterKeyStrokeAnalysisDelay = 500;
 
         public CodeEditorTabPage CodeTabPage { get; private set; }
         private System.Windows.Forms.Integration.ElementHost? _controlHost;
@@ -86,25 +83,16 @@ namespace NTDLS.Katzebase.Management.Controls
             _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
             _staticAnalysisTimer.Tick += (sender, e) =>
             {
+                _staticAnalysisTimer.Stop();
                 try
                 {
-                    _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(IntermittentAnalysisDelay);
                     PerformStaticAnalysis();
                 }
                 catch { }
             };
 
-            TextChanged += (sender, e) => // Hook into the TextChanged event to restart the timer
-            {
-                _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
-
-                //Stop, then restart the timer so that the timer is reset for each keystroke.
-                _foldingUpdateTimer.Stop();
-                _staticAnalysisTimer.Stop();
-
-                _foldingUpdateTimer.Start();
-                _staticAnalysisTimer.Start();
-            };
+            KeyUp += (object sender, System.Windows.Input.KeyEventArgs e) => ResetStaticAnalysisTimer();
+            TextChanged += (sender, e) => ResetStaticAnalysisTimer();
 
             TextArea.TextEntering += TextArea_TextEntering;
             TextArea.TextEntered += TextArea_TextEntered;
@@ -118,58 +106,96 @@ namespace NTDLS.Katzebase.Management.Controls
             MouseUp += FullyFeaturedCodeEditor_MouseUp;
         }
 
-        #region Static Analysis.
-
-        public void InvokePerformStaticAnalysis()
+        private void ResetStaticAnalysisTimer()
         {
-            CodeTabPage.StudioForm.Invoke(PerformStaticAnalysis);
+            _staticAnalysisTimer.Interval = TimeSpan.FromMilliseconds(AfterKeyStrokeAnalysisDelay);
+
+            //Stop, then restart the timer so that the timer is reset for each keystroke.
+            _foldingUpdateTimer.Stop();
+            _staticAnalysisTimer.Stop();
+
+            _foldingUpdateTimer.Start();
+            _staticAnalysisTimer.Start();
         }
 
-        private void PerformStaticAnalysis()
+        #region Static Analysis.
+
+        private bool _workingOnLastRequest = false;
+
+        public void PerformStaticAnalysis()
         {
             if (!CodeTabPage.IsSelected)
             {
                 return;
             }
 
-            try
+            lock (this)
             {
-                var schemaCache = CodeTabPage?.ExplorerConnection?.LazySchemaCache.GetCache();
-
-                var script = KbTextUtility.RemoveNonCode(Text);
-
-                _textMarkerService.ClearMarkers();
-
-                var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
-                foreach (var query in queryBatch)
+                if (_workingOnLastRequest)
                 {
-                    StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query);
+                    return;
                 }
-            }
-            catch (KbParserException parserException)
-            {
-                if (parserException.LineNumber != null)
-                {
-                    AddSyntaxError(parserException.LineNumber.EnsureNotNull(), parserException.Message);
-                }
-            }
-            catch (AggregateException aggregateException)
-            {
-                RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
-            }
-            catch
-            {
+                _workingOnLastRequest = true;
             }
 
-            //Immediately update the TextArea.
-            TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
+            var codeText = Text;
+
+            Threading.StartThread((Threading.StartThreadDelegate)(() =>
+            {
+                var actions = new List<Action>();
+
+                try
+                {
+                    if (CodeTabPage?.StudioForm != null)
+                    {
+                        var schemaCache = CodeTabPage.ExplorerConnection?.LazySchemaCache.GetCache(out var cacheHash);
+
+                        codeText = KbTextUtility.RemoveNonCode(codeText);
+
+                        var queryBatch = Parsers.StaticQueryParser.ParseBatch(codeText, MockEngineCore.Instance.GlobalTokenizerConstants);
+
+                        CodeTabPage?.StudioForm.Invoke(() =>
+                        {
+
+                            foreach (var query in queryBatch)
+                            {
+                                actions.AddRange(StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query));
+                            }
+                        });
+                    }
+                }
+                catch (KbParserException parserException)
+                {
+                    if (parserException.LineNumber != null)
+                    {
+                        actions.Add(AddSyntaxError(parserException.LineNumber.EnsureNotNull(), parserException.Message));
+                    }
+                }
+                catch (AggregateException aggregateException)
+                {
+                    RecursivelyReportExceptions(ref actions, (List<Exception>)aggregateException.InnerExceptions.ToList());
+                }
+
+                CodeTabPage?.StudioForm.Invoke(() =>
+                {
+                    _textMarkerService.ClearMarkers();
+
+                    foreach (var action in actions)
+                    {
+                        action();
+                    }
+
+                    TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
+                    _workingOnLastRequest = false;
+                });
+            }));
         }
 
         /// <summary>
         /// Add parsing errors that were reported by the parser.
         /// </summary>
         /// <param name="exceptions"></param>
-        private void RecursivelyReportExceptions(List<Exception> exceptions)
+        private void RecursivelyReportExceptions(ref List<Action> markerActions, List<Exception> exceptions)
         {
             foreach (var exception in exceptions)
             {
@@ -177,27 +203,39 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     if (parserException.LineNumber != null)
                     {
-                        AddSyntaxError(parserException.LineNumber.EnsureNotNull(), exception.Message);
+                        markerActions.Add(AddSyntaxError(parserException.LineNumber.EnsureNotNull(), exception.Message));
                     }
                 }
                 else if (exception is AggregateException aggregateException)
                 {
-                    RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
+                    RecursivelyReportExceptions(ref markerActions, aggregateException.InnerExceptions.ToList());
                 }
             }
         }
 
-        private void AddSyntaxError(int lineNumber, string message)
+        private Action AddSyntaxError(int lineNumber, string message)
         {
-            var line = Document.GetLineByNumber(lineNumber);
-            int startOffset = line.Offset;
-            int length = line.Length;
-            _textMarkerService.Create(startOffset, length, message, Colors.Red);
+            return () =>
+            {
+                try
+                {
+                    var line = Document.GetLineByNumber(lineNumber);
+                    int startOffset = line.Offset;
+                    int length = line.Length;
+                    _textMarkerService.Create(startOffset, length, message, Colors.Red);
+                }
+                catch
+                {
+                }
+            };
         }
 
-        private void AddSyntaxError(int startOffset, int length, string message)
+        private Action AddSyntaxError(int startOffset, int length, string message)
         {
-            _textMarkerService.Create(startOffset, length, message, Colors.Red);
+            return () =>
+            {
+                _textMarkerService.Create(startOffset, length, message, Colors.Red);
+            };
         }
 
         #endregion
