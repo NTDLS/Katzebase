@@ -145,7 +145,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentPointersForSchemaAliases);
 
-            var childPool = core.ThreadPool.Intersection.CreateChildPool(core.Settings.IntersectionChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Intersection.CreateChildPool<SchemaIntersectionRow>(core.Settings.IntersectionChildThreadPoolQueueDepth);
 
             bool rowLimitExceeded = false;
 
@@ -161,13 +161,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     transaction.EnsureActive();
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(() =>
+                    childPool.Enqueue(templateRow.Clone(), (SchemaIntersectionRow threadTemplateRowClone) =>
                     {
                         #region Thread.
 
                         transaction.EnsureActive();
-
-                        var templateRowClone = templateRow.Clone();
 
                         IEnumerable<DocumentPointer>? documentPointers = null;
 
@@ -181,7 +179,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var rightHandDocumentIdentifiers = schemaMap.Value.Optimization.Conditions.FlattenToRightDocumentIdentifiers();
                             foreach (var documentIdentifier in rightHandDocumentIdentifiers)
                             {
-                                if (!templateRowClone.SchemaElements.TryGetValue(documentIdentifier.SchemaAlias, out var schemaElements))
+                                if (!threadTemplateRowClone.SchemaElements.TryGetValue(documentIdentifier.SchemaAlias, out var schemaElements))
                                 {
                                     throw new KbEngineException($"Schema not found in query: [{documentIdentifier.SchemaAlias}].");
                                 }
@@ -210,11 +208,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
 
-                            templateRowClone.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = physicalDocument.Elements;
+                            threadTemplateRowClone.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = physicalDocument.Elements;
 
-                            if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, templateRowClone))
+                            if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, threadTemplateRowClone))
                             {
-                                var newRow = templateRowClone.Clone();
+                                var newRow = threadTemplateRowClone.Clone();
                                 newRow.MatchedSchemas.Add(schemaMap.Key);
 
                                 if (gatherDocumentPointersForSchemaAliases?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
@@ -273,15 +271,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //Now that we have finished joining all schemas, we can now apply the WHERE clause.
             var primarySchema = schemaMappings.First();
 
+            var matchChildPool = core.ThreadPool.Intersection.CreateChildPool<SchemaIntersectionRow>(core.Settings.IntersectionChildThreadPoolQueueDepth);
+
+
             foreach (var resultingRow in resultingRowCollection)
             {
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                childPool.Enqueue(() =>
+                matchChildPool.Enqueue(resultingRow, (SchemaIntersectionRow threadResultingRow) =>
                 {
                     #region Thread.
 
-                    var schemaElements = resultingRow.SchemaElements.Flatten();
-                    resultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
+                    var schemaElements = threadResultingRow.SchemaElements.Flatten();
+                    threadResultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
 
                     #endregion
                 });
@@ -289,7 +290,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             var ptThreadCompletion_Removal = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childPool.WaitForCompletion();
+            matchChildPool.WaitForCompletion();
             ptThreadCompletion_Removal?.StopAndAccumulate();
 
             //Remove all rows that were not matched by the where clause.
@@ -421,7 +422,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
 
-            var childPool = core.ThreadPool.Lookup.CreateChildPool(core.Settings.LookupChildThreadPoolQueueDepth);
+            var childPool = core.ThreadPool.Lookup.CreateChildPool<DocumentPointer>(core.Settings.LookupChildThreadPoolQueueDepth);
 
             bool rowLimitExceeded = false;
 
@@ -430,13 +431,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 transaction.EnsureActive();
 
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                childPool.Enqueue(() =>
+                childPool.Enqueue(documentPointer, (DocumentPointer threadDocumentPointer) =>
                 {
                     #region Thread.
 
                     transaction.EnsureActive();
 
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
+                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, threadDocumentPointer, LockOperation.Read);
 
                     //Had to remove this match because the where clause can contain conditions comprised of values from joins.
                     //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
@@ -450,7 +451,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
                     {
                         //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
-                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), documentPointer);
+                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), threadDocumentPointer);
                     }
 
                     //Found a document that matched the where clause, add row to the results collection.
@@ -498,7 +499,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 #region No Grouping.
 
-                var childPool = core.ThreadPool.Materialization.CreateChildPool(core.Settings.MaterializationChildThreadPoolQueueDepth);
+                var childPool = core.ThreadPool.Materialization.CreateChildPool<SchemaIntersectionRow>(core.Settings.MaterializationChildThreadPoolQueueDepth);
 
                 bool rowLimitExceeded = false;
 
@@ -507,20 +508,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     transaction.EnsureActive();
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(() =>
+                    childPool.Enqueue(row, (SchemaIntersectionRow threadRow) =>
                     {
                         #region Thread.
 
                         transaction.EnsureActive();
 
                         var materializedRow = new MaterializedRow();
-                        var flattenedSchemaElements = row.SchemaElements.Flatten();
+                        var flattenedSchemaElements = threadRow.SchemaElements.Flatten();
 
                         foreach (var field in query.SelectFields)
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
+                                if (!threadRow.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
                                 {
                                     throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
                                 }
@@ -556,7 +557,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                             {
-                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
+                                if (!threadRow.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
                                 {
                                     throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
                                 }

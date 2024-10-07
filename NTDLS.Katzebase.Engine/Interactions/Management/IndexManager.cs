@@ -330,19 +330,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var allThreadResultsForSingleCondition = new Dictionary<uint, DocumentPointer>();
 
-                    var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<uint>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                     foreach (var indexPartition in indexPartitions)
                     {
                         var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        childPool.Enqueue(() =>
+                        childPool.Enqueue(indexPartition, (uint threadIndexPartition) =>
                         {
                             #region Thread.
 
                             try
                             {
                                 Dictionary<uint, DocumentPointer> singleThreadResults = new();
-                                string pageDiskPath = indexLookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                                string pageDiskPath = indexLookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, threadIndexPartition);
                                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
 
                                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
@@ -1009,14 +1009,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(indexPartition, (uint indexPartition) =>
+                    childPool.Enqueue(indexPartition, (uint threadIndexPartition) =>
                     {
                         #region Thread.
 
                         transaction.EnsureActive();
 
                         string pageDiskPath = physicalIndex.GetPartitionPagesFileName(
-                            physicalSchema, indexPartition);
+                            physicalSchema, threadIndexPartition);
 
                         var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
@@ -1107,7 +1107,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var childPool = _core.ThreadPool.Indexing.CreateChildPool(_core.Settings.IndexingChildThreadPoolQueueDepth);
+                var childPool = _core.ThreadPool.Indexing.CreateChildPool<PhysicalDocumentPageCatalogItem>(_core.Settings.IndexingChildThreadPoolQueueDepth);
 
                 var syncObjects = new object[physicalIndex.Partitions];
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
@@ -1123,7 +1123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(() =>
+                    childPool.Enqueue(physicalDocumentPageCatalogItem, (PhysicalDocumentPageCatalogItem threadPhysicalDocumentPageCatalogItem) =>
                     {
                         #region Thread.
 
@@ -1132,9 +1132,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             transaction.EnsureActive();
 
                             var physicalDocumentPageMap = _core.Documents.AcquireDocumentPageMap(transaction,
-                                physicalSchema, physicalDocumentPageCatalogItem.PageNumber, LockOperation.Read);
+                                physicalSchema, threadPhysicalDocumentPageCatalogItem.PageNumber, LockOperation.Read);
 
-                            var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(physicalDocumentPageCatalogItem.PageNumber, o));
+                            var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(threadPhysicalDocumentPageCatalogItem.PageNumber, o));
 
                             foreach (var documentPointer in documentPointers)
                             {
@@ -1165,7 +1165,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 }
                                 catch (Exception ex)
                                 {
-                                    LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}, page number: {physicalDocumentPageCatalogItem.PageNumber}.", ex);
+                                    LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}, page number: {threadPhysicalDocumentPageCatalogItem.PageNumber}.", ex);
                                     throw;
                                 }
                             }
