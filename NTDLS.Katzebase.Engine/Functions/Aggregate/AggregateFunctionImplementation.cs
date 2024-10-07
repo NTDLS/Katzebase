@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// </summary>
     internal class AggregateFunctionImplementation
     {
-        public static string ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
+        public static string? ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
         {
             var function = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters.SupplementalParameters);
 

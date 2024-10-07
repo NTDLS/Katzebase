@@ -1,7 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Xml.Linq;
-
-namespace NTDLS.Katzebase.Api.Payloads
+﻿namespace NTDLS.Katzebase.Api.Payloads
 {
     public class KbIndexAttribute
     {

@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateCount
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
             return parameters.AggregationValues.Count.ToString();
         }

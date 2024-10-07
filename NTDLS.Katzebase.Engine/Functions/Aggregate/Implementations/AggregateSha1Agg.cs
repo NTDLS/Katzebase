@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateSha1Agg
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
             using var sha1 = SHA1.Create();
             foreach (var str in parameters.AggregationValues.OrderBy(o => o))
@@ -26,6 +26,5 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 
             return sb.ToString();
         }
-
     }
 }

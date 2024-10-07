@@ -192,7 +192,7 @@ namespace Benchmark
                 client.Transaction.Commit();
             }
             Console.WriteLine();
-            Console.WriteLine("Payloads creation complete." );
+            Console.WriteLine("Payloads creation complete.");
 
             Thread.Sleep(1000);
             process.Kill();

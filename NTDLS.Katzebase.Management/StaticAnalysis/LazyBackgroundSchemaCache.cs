@@ -2,9 +2,6 @@
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Shared;
-using System.Drawing.Printing;
-using System.Security.Policy;
-using System.Xml.Linq;
 
 namespace NTDLS.Katzebase.Management.StaticAnalysis
 {

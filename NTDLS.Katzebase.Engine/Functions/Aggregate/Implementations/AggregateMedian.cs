@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateMedian
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
             var sortedNumbers = parameters.AggregationValues.Select(o => double.Parse(o)).OrderBy(n => n).ToList();
             int count = sortedNumbers.Count;

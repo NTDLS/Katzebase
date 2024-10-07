@@ -133,6 +133,8 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
             {
                 if (Parameters[protoParamIndex].Type == KbScalarFunctionParameterType.StringInfinite)
                 {
+                    satisfiedParameterCount++;
+
                     //This is an infinite parameter, and since these are intended to be defined as the last
                     //parameter in the prototype, it eats the remainder of the passed parameters.
                     for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)

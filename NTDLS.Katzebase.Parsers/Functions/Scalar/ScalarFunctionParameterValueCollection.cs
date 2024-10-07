@@ -58,10 +58,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
 
                 if (parameter.Value == null)
                 {
-                    if (parameter.Parameter.DefaultValue == null)
-                    {
-                        throw new KbGenericException($"Value for [{name}] cannot be null.");
-                    }
                     return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 

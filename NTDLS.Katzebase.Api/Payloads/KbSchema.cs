@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace NTDLS.Katzebase.Api.Payloads
+﻿namespace NTDLS.Katzebase.Api.Payloads
 {
     public class KbSchema
     {

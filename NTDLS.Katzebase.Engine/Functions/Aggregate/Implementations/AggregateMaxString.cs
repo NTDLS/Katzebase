@@ -4,9 +4,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateMaxString
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
-            return parameters.AggregationValues.OrderByDescending(o => o).First().ToString();
+            return parameters.AggregationValues.OrderByDescending(o => o).FirstOrDefault()?.ToString();
         }
     }
 }

@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateMode
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
             var numbers = parameters.AggregationValues.Select(o => double.Parse(o)).ToList();
             var frequencyDict = numbers.GroupBy(n => n).ToDictionary(g => g.Key, g => g.Count());

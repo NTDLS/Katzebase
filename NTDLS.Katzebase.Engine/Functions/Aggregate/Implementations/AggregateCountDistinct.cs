@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateCountDistinct
     {
-        public static string Execute(AggregateFunctionParameterValueCollection function, GroupAggregateFunctionParameter parameters)
+        public static string? Execute(AggregateFunctionParameterValueCollection function, GroupAggregateFunctionParameter parameters)
         {
             if (function.Get<bool>("caseSensitive"))
             {

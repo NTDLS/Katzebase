@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateVariance
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string? Execute(GroupAggregateFunctionParameter parameters)
         {
             var numbers = parameters.AggregationValues.Select(o => double.Parse(o)).ToList();
             double mean = numbers.Average();
