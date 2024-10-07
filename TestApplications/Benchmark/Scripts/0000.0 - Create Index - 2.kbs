@@ -1,8 +1,0 @@
-EXEC ClearCacheAllocations
-
-DROP INDEX IX_Payload_tx100000_02_1000 ON Benchmarking:Payload_100000
-
-CREATE INDEX IX_Payload_tx100000_02_1000(
-    OwnerUserId,
-    ParentId
-) ON Benchmarking:Payload_100000 WITH (PARTITIONS=1000)

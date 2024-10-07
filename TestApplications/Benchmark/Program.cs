@@ -32,82 +32,164 @@ namespace Benchmark
             ExecuteBenchmark_Inserts();
 
             Console.WriteLine("Executing updates:");
-            //TODO: implement.
+            ExecuteBenchmark_Updates();
 
             Console.WriteLine("Executing deletes:");
             //TODO: implement.
         }
 
-        private static void ExecuteBenchmark_Inserts()
+        private static void ExecuteBenchmark_Updates()
         {
-            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Insertion_tx10", 10000, 10);
-            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Payload_Insertion_tx100", 10000, 100);
-            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Insertion_tx1000", 10000, 1000);
+            Updates("Payload.gz", "Benchmarking:Payload_1000", 100, 100, 100);
+            Updates("Payload.gz", "Benchmarking:Payload_10000", 100, 100, 1000);
+            Updates("Payload.gz", "Benchmarking:Payload_100000", 100, 100, 1000);
+
+            static void Updates(string fileName, string schemaName, int maxCount, int rowsPerTransaction, int mod)
+            {
+                Console.WriteLine($"Updates: {schemaName}");
+
+                var statement = $"UPDATE {schemaName} SET\r\nViewCount = @AcceptedAnswerId,\r\nTitle = @AnswerCount,\r\nTags = @Body,\r\nScore = @ClosedDate,\r\nPostTypeId = @CommentCount,\r\nParentId = @CommunityOwnedDate,\r\nOwnerUserId = @CreationDate,\r\nLastEditorUserId = @FavoriteCount,\r\nLastEditorDisplayName = @LastActivityDate,\r\nLastEditDate = @LastEditDate,\r\nLastActivityDate = @LastEditorDisplayName,\r\nFavoriteCount = @LastEditorUserId,\r\nCreationDate = @OwnerUserId,\r\nCommunityOwnedDate = @ParentId,\r\nCommentCount = @PostTypeId,\r\nClosedDate = @Score,\r\nBody = @Tags,\r\nAnswerCount = @Title,\r\nAcceptedAnswerId = @ViewCount\r\nWHERE\r\nId = @Id";
+
+                var process = StartService();
+                using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
+                {
+                    Console.WriteLine("Extracting payload.");
+                    var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
+                    Console.WriteLine("Deserializing payload.");
+                    var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<PayloadModel>>(bytes).EnsureNotNull();
+
+                    Console.WriteLine($"Creating required indexes on {schemaName}.");
+                    client.Query.ExecuteNonQuery($"DROP INDEX IX_{schemaName}_Id ON {schemaName}\r\nCREATE INDEX IX_{schemaName}_Id(\r\n\tId\r\n) ON {schemaName} WITH (PARTITIONS=1000)\r\n");
+
+                    Console.WriteLine($"Starting updates...");
+
+                    double previousTotalProcessorTime = 0;
+                    for (int i = 0; i < _iterationsPerTest; i++)
+                    {
+                        var startTime = DateTime.UtcNow;
+
+                        int rowCount = 0;
+                        int modCount = 0;
+
+                        client.Transaction.Begin();
+
+                        foreach (var row in payloadRows)
+                        {
+                            if ((modCount % mod) == 0)
+                            {
+                                if (rowCount > maxCount)
+                                {
+                                    break;
+                                }
+
+                                if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
+                                {
+                                    Console.WriteLine("Committing...");
+                                    client.Transaction.Commit();
+                                    client.Transaction.Begin();
+                                }
+
+                                try
+                                {
+                                    client.Query.ExecuteNonQuery(statement, row);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.Message);
+                                }
+                                rowCount++;
+                            }
+
+                            modCount++;
+                        }
+
+                        Console.WriteLine("Committing...");
+                        client.Transaction.Commit();
+
+                        double thisTotalProcessorTime = process.TotalProcessorTime.TotalSeconds;
+                        double deltaTotalProcessorTime = thisTotalProcessorTime - previousTotalProcessorTime;
+                        previousTotalProcessorTime = thisTotalProcessorTime;
+
+                        WriteMetrics(schemaName, i, (DateTime.UtcNow - startTime).TotalMilliseconds, process.PeakWorkingSet64, deltaTotalProcessorTime);
+                    }
+                }
+                Thread.Sleep(1000);
+                process.Kill();
+            }
         }
 
-        private static void ExecuteBenchmark_Inserts(string fileName, string schemaName, int maxCount, int rowsPerTransaction)
+        private static void ExecuteBenchmark_Inserts()
         {
-            Console.WriteLine($"ExecuteBenchmark_Inserts: {schemaName}");
+            Inserts("Payload.gz", "Benchmarking:Insertion_tx10", 1000, 10);
+            Inserts("Payload.gz", "Benchmarking:Insertion_tx100", 1000, 100);
+            Inserts("Payload.gz", "Benchmarking:Insertion_tx1000", 1000, 100);
 
-            var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
+            static void Inserts(string fileName, string schemaName, int maxCount, int rowsPerTransaction)
             {
-                client.Schema.DropIfExists(schemaName);
-                client.Schema.Create(schemaName);
+                Console.WriteLine($"Inserts: {schemaName}");
 
-                var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
-                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
-
-                double previousTotalProcessorTime = 0;
-                for (int i = 0; i < _iterationsPerTest; i++)
+                var process = StartService();
+                using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
-                    var startTime = DateTime.Now;
+                    client.Schema.DropIfExists(schemaName);
+                    client.Schema.Create(schemaName);
 
-                    int rowCount = 0;
+                    Console.WriteLine("Extracting payload.");
+                    var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
+                    Console.WriteLine("Deserializing payload.");
+                    var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
-                    client.Transaction.Begin();
-
-                    foreach (var row in payloadRows)
+                    double previousTotalProcessorTime = 0;
+                    for (int i = 0; i < _iterationsPerTest; i++)
                     {
-                        if (rowCount > maxCount)
+                        var startTime = DateTime.UtcNow;
+
+                        int rowCount = 0;
+
+                        client.Transaction.Begin();
+
+                        foreach (var row in payloadRows)
                         {
-                            break;
+                            if (rowCount > maxCount)
+                            {
+                                break;
+                            }
+
+                            if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
+                            {
+                                client.Transaction.Commit();
+                                client.Transaction.Begin();
+                            }
+
+                            try
+                            {
+                                client.Document.Store(schemaName, new KbDocument(row));
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+
+                            rowCount++;
                         }
 
-                        if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
-                        {
-                            client.Transaction.Commit();
-                            client.Transaction.Begin();
-                        }
+                        client.Transaction.Commit();
 
-                        try
-                        {
-                            client.Document.Store(schemaName, new KbDocument(row));
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                        }
+                        double thisTotalProcessorTime = process.TotalProcessorTime.TotalSeconds;
+                        double deltaTotalProcessorTime = thisTotalProcessorTime - previousTotalProcessorTime;
+                        previousTotalProcessorTime = thisTotalProcessorTime;
 
-                        rowCount++;
+                        WriteMetrics(schemaName, i, (DateTime.UtcNow - startTime).TotalMilliseconds, process.PeakWorkingSet64, deltaTotalProcessorTime);
                     }
-
-                    client.Transaction.Commit();
-
-                    double thisTotalProcessorTime = process.TotalProcessorTime.TotalSeconds;
-                    double deltaTotalProcessorTime = thisTotalProcessorTime - previousTotalProcessorTime;
-                    previousTotalProcessorTime = thisTotalProcessorTime;
-
-                    WriteMetrics(schemaName, i, (DateTime.Now - startTime).TotalMilliseconds, process.PeakWorkingSet64, deltaTotalProcessorTime);
                 }
+                Thread.Sleep(1000);
+                process.Kill();
             }
-            Thread.Sleep(1000);
-            process.Kill();
         }
 
         private static void ExecuteBenchmark_Scripts()
         {
-            var scriptFiles = GetBenchmarkScripts();
+            var scriptFiles = Directory.EnumerateFiles(_ScriptsPath, "*.kbs").ToList();
 
             foreach (var scriptFile in scriptFiles)
             {
@@ -140,12 +222,17 @@ namespace Benchmark
             var process = StartService();
             using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
             {
+                Console.WriteLine("Dropping benchmarking schema.");
                 client.Schema.DropIfExists("Benchmarking");
+
+                Console.WriteLine("Dropping benchmarking schemas.");
                 client.Schema.Create("Benchmarking:Payload_1000");
                 client.Schema.Create("Benchmarking:Payload_10000");
                 client.Schema.Create("Benchmarking:Payload_100000");
 
+                Console.WriteLine("Extracting payload.");
                 var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, "Payload.gz")));
+                Console.WriteLine("Deserializing payload.");
                 var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
                 int rowCount = 0;
@@ -156,8 +243,8 @@ namespace Benchmark
                 {
                     if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                     {
-                        client.Transaction.Commit();
                         Console.Write($"Committing {rowsPerTransaction:n0} rows, total: {rowCount:n0} ({((rowCount / (double)payloadRows.Count) * 100.0):n2}%)...\r");
+                        client.Transaction.Commit();
                         client.Transaction.Begin();
                     }
 
@@ -196,59 +283,59 @@ namespace Benchmark
 
             Thread.Sleep(1000);
             process.Kill();
-        }
 
-        private static void InsertPayloadData(string fileName, string schemaName, int maxCount)
-        {
-            var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
+
+            static void InsertPayloadData(string fileName, string schemaName, int maxCount)
             {
-                client.Schema.DropIfExists(schemaName);
-                client.Schema.Create(schemaName);
-
-                var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
-                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
-
-                for (int i = 0; i < _iterationsPerTest; i++)
+                var process = StartService();
+                using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
-                    int rowCount = 0;
-                    int rowsPerTransaction = 1000;
+                    client.Schema.DropIfExists(schemaName);
+                    client.Schema.Create(schemaName);
 
-                    client.Transaction.Begin();
-                    foreach (var row in payloadRows)
+                    Console.WriteLine("Extracting payload.");
+                    var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
+                    Console.WriteLine("Deserializing payload.");
+                    var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
+
+                    for (int i = 0; i < _iterationsPerTest; i++)
                     {
-                        if (rowCount > maxCount)
-                        {
-                            break;
-                        }
+                        int rowCount = 0;
+                        int rowsPerTransaction = 1000;
 
-                        if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
+                        client.Transaction.Begin();
+                        foreach (var row in payloadRows)
                         {
-                            client.Transaction.Commit();
-                            client.Transaction.Begin();
-                        }
+                            if (rowCount > maxCount)
+                            {
+                                break;
+                            }
 
-                        try
-                        {
-                            client.Document.Store(schemaName, new KbDocument(row));
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine(ex.Message);
-                        }
+                            if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
+                            {
+                                Console.WriteLine("Committing...");
+                                client.Transaction.Commit();
+                                client.Transaction.Begin();
+                            }
 
-                        rowCount++;
+                            try
+                            {
+                                client.Document.Store(schemaName, new KbDocument(row));
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                            }
+
+                            rowCount++;
+                        }
+                        Console.WriteLine("Committing...");
+                        client.Transaction.Commit();
                     }
-                    client.Transaction.Commit();
                 }
+                Thread.Sleep(1000);
+                process.Kill();
             }
-            Thread.Sleep(1000);
-            process.Kill();
-        }
-
-        private static List<string> GetBenchmarkScripts()
-        {
-            return Directory.EnumerateFiles(_ScriptsPath, "*.kbs").ToList();
         }
 
         private static Process StartService()
@@ -261,7 +348,7 @@ namespace Benchmark
             return process;
         }
 
-        public static byte[] Decompress(byte[] bytes)
+        public static string DecompressToString(byte[] bytes)
         {
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();
@@ -269,10 +356,8 @@ namespace Benchmark
             {
                 gs.CopyTo(mso);
             }
-            return mso.ToArray();
+            return Encoding.UTF8.GetString(mso.ToArray());
         }
-
-        public static string DecompressToString(byte[] bytes) => Encoding.UTF8.GetString(Decompress(bytes));
 
         static void WriteMetrics(string name, int iteration, double durationMs, double peakMemory, double cpuTime)
         {

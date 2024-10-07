@@ -1,7 +1,0 @@
-EXEC ClearCacheAllocations
-
-DROP INDEX IX_Payload_tx100000_03_1000 ON Benchmarking:Payload_100000
-
-CREATE UNIQUEKEY IX_Payload_tx100000_03_1000(
-    Id
-) ON Benchmarking:Payload_100000 WITH (PARTITIONS=1000)
