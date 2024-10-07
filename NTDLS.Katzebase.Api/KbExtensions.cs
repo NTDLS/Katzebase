@@ -115,11 +115,7 @@ namespace NTDLS.Katzebase.Api
                 foreach (var prop in type.GetProperties())
                 {
                     var rawValue = prop.GetValue(parameters);
-                    if (rawValue is string)
-                    {
-                        result.Add('@' + prop.Name, new KbConstant(rawValue?.ToString(), KbConstants.KbBasicDataType.String));
-                    }
-                    else
+                    if (IsNumericType(rawValue?.GetType()))
                     {
                         if (rawValue == null || double.TryParse(rawValue?.ToString(), out _))
                         {
@@ -130,10 +126,29 @@ namespace NTDLS.Katzebase.Api
                             throw new Exception($"Non-string value of [{prop.Name}] cannot be converted to numeric.");
                         }
                     }
+                    else
+                    {
+                        result.Add('@' + prop.Name, new KbConstant(rawValue?.ToString(), KbConstants.KbBasicDataType.String));
+                    }
                 }
             }
 
             return result;
+        }
+
+        private static bool IsNumericType(Type? type)
+        {
+            return type == typeof(byte) ||
+               type == typeof(sbyte) ||
+               type == typeof(short) ||
+               type == typeof(ushort) ||
+               type == typeof(int) ||
+               type == typeof(uint) ||
+               type == typeof(long) ||
+               type == typeof(ulong) ||
+               type == typeof(float) ||
+               type == typeof(double) ||
+               type == typeof(decimal);
         }
 
         /// <summary>
