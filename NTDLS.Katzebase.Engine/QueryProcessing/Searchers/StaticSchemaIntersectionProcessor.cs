@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     transaction.EnsureActive();
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(templateRow.Clone(), (SchemaIntersectionRow threadTemplateRowClone) =>
+                    childPool.Enqueue(templateRow.Clone(), (threadTemplateRowClone) =>
                     {
                         #region Thread.
 
@@ -277,7 +277,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             foreach (var resultingRow in resultingRowCollection)
             {
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                matchChildPool.Enqueue(resultingRow, (SchemaIntersectionRow threadResultingRow) =>
+                matchChildPool.Enqueue(resultingRow, (threadResultingRow) =>
                 {
                     #region Thread.
 
@@ -431,7 +431,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 transaction.EnsureActive();
 
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                childPool.Enqueue(documentPointer, (DocumentPointer threadDocumentPointer) =>
+                childPool.Enqueue(documentPointer, (threadDocumentPointer) =>
                 {
                     #region Thread.
 
@@ -508,7 +508,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     transaction.EnsureActive();
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(row, (SchemaIntersectionRow threadRow) =>
+                    childPool.Enqueue(row, (threadRow) =>
                     {
                         #region Thread.
 

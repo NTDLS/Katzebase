@@ -335,7 +335,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     foreach (var indexPartition in indexPartitions)
                     {
                         var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                        childPool.Enqueue(indexPartition, (uint threadIndexPartition) =>
+                        childPool.Enqueue(indexPartition, (threadIndexPartition) =>
                         {
                             #region Thread.
 
@@ -1009,7 +1009,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(indexPartition, (uint threadIndexPartition) =>
+                    childPool.Enqueue(indexPartition, ( threadIndexPartition) =>
                     {
                         #region Thread.
 
@@ -1123,7 +1123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(physicalDocumentPageCatalogItem, (PhysicalDocumentPageCatalogItem threadPhysicalDocumentPageCatalogItem) =>
+                    childPool.Enqueue(physicalDocumentPageCatalogItem, (threadPhysicalDocumentPageCatalogItem) =>
                     {
                         #region Thread.
 
