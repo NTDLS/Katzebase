@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Api.Payloads.RoundTrip;
 
 namespace NTDLS.Katzebase.Api.Management

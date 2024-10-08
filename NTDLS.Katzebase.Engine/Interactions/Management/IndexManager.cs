@@ -1010,7 +1010,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    childPool.Enqueue(indexPartition, ( threadIndexPartition) =>
+                    childPool.Enqueue(indexPartition, (threadIndexPartition) =>
                     {
                         #region Thread.
 
