@@ -1,8 +1,8 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping

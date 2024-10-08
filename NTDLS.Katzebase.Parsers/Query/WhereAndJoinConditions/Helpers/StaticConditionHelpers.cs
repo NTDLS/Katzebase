@@ -24,42 +24,12 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
             };
         }
 
+        private static readonly string[] _logicalQualifiers = ["=", "!=", ">", "<", ">=", "<=", "like", "not like", "between", "not between"];
         public static bool IsLogicalQualifier(string text)
-           => (new string[] { "=", "!=", ">", "<", ">=", "<=", "like", "not like", "between", "not between" }).Contains(text.ToLowerInvariant());
+           => (_logicalQualifiers).Contains(text.ToLowerInvariant());
 
-        public static string LogicalQualifierToString(Tokenizer tokenizer, LogicalQualifier logicalQualifier)
-        {
-            return logicalQualifier switch
-            {
-                LogicalQualifier.Equals => "=",
-                LogicalQualifier.NotEquals => "!=",
-                LogicalQualifier.GreaterThanOrEqual => ">=",
-                LogicalQualifier.LessThanOrEqual => "<=",
-                LogicalQualifier.LessThan => "<",
-                LogicalQualifier.GreaterThan => ">",
-                LogicalQualifier.Like => "~",
-                LogicalQualifier.NotLike => "!~",
-                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected logical qualifier, found: [{logicalQualifier}].")
-            };
-        }
-
+        private static readonly string[] _logicalConnectors = ["and", "or"];
         public static bool IsLogicalConnector(string text)
-           => (new string[] { "and", "or" }).Contains(text.ToLowerInvariant());
-
-        public static string LogicalConnectorToString(LogicalConnector logicalConnector)
-            => logicalConnector == LogicalConnector.None ? string.Empty : logicalConnector.ToString().ToUpper();
-
-        public static string LogicalConnectorToOperator(LogicalConnector logicalConnector)
-        {
-            switch (logicalConnector)
-            {
-                case LogicalConnector.Or:
-                    return "||";
-                case LogicalConnector.And:
-                    return "&&";
-            }
-
-            return string.Empty;
-        }
+           => (_logicalConnectors).Contains(text.ToLowerInvariant());
     }
 }

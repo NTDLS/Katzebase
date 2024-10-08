@@ -328,7 +328,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             {
                 if (mathBuffer.Length > 0)
                 {
-                    char lastMathCharacter = mathBuffer[mathBuffer.Length - 1];
+                    char lastMathCharacter = mathBuffer[^1];
                     if (lastMathCharacter.IsMathematicalOperator())
                     {
                         if (lastMathCharacter == '+')
@@ -345,7 +345,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                             //  trailing '+' operator. So if the last character is a closing parentheses, just process the math,
                             //  otherwise throw an exception because we only allow ')' and '+' as the trailing expression character.
 
-                            throw new KbProcessingException($"Cannot perform [{mathBuffer[mathBuffer.Length - 1]}] math on string.");
+                            throw new KbProcessingException($"Cannot perform [{mathBuffer[^1]}] math on string.");
                         }
                     }
 

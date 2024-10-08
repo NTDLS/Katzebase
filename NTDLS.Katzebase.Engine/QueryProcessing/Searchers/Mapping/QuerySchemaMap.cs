@@ -1,9 +1,9 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
@@ -12,18 +12,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// This class maps the schema and documents to a query supplied schema alias.
     /// The key to the dictionary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
-    internal class QuerySchemaMap : KbInsensitiveDictionary<QuerySchemaMapItem>
+    internal class QuerySchemaMap(EngineCore core, Transaction transaction, PreparedQuery query) : KbInsensitiveDictionary<QuerySchemaMapItem>
     {
-        private readonly EngineCore _core;
-        public Transaction Transaction { get; private set; }
-        public PreparedQuery Query { get; private set; }
-
-        public QuerySchemaMap(EngineCore core, Transaction transaction, PreparedQuery query)
-        {
-            _core = core;
-            Query = query;
-            Transaction = transaction;
-        }
+        private readonly EngineCore _core = core;
+        public Transaction Transaction { get; private set; } = transaction;
+        public PreparedQuery Query { get; private set; } = query;
 
         /// <summary>
         /// Adds a mapping to the schema mapping collection.

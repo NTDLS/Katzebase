@@ -1,10 +1,7 @@
 ﻿namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class GroupByFieldCollection : QueryFieldCollection
+    public class GroupByFieldCollection(QueryBatch queryBatch)
+        : QueryFieldCollection(queryBatch)
     {
-        public GroupByFieldCollection(QueryBatch queryBatch)
-            : base(queryBatch)
-        {
-        }
     }
 }

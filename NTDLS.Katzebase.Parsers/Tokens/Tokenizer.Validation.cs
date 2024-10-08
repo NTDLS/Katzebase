@@ -4,9 +4,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
-        private void PreValidate()
-        {
-        }
 
         private void PostValidate()
         {
@@ -29,15 +26,12 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             int parenOpen = 0;
             int parenClose = 0;
-
-            int lastOpen = 0;
             int lastClose = 0;
 
             for (int i = 0; i < _length; i++)
             {
                 if (_text[i] == '(')
                 {
-                    lastOpen = i;
                     parenOpen++;
                 }
                 else if (_text[i] == ')')

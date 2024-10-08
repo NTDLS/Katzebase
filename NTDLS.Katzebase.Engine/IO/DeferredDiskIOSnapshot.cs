@@ -11,16 +11,10 @@ namespace NTDLS.Katzebase.Engine.IO
         /// <summary>
         /// Snapshot class for DeferredDiskIOObject, used to snapshot the state of the associated class.
         /// </summary>
-        public class DeferredDiskIOObjectSnapshot
+        public class DeferredDiskIOObjectSnapshot(string diskPath, IOFormat format)
         {
-            public string DiskPath { get; private set; }
-            public IOFormat Format { get; private set; }
-
-            public DeferredDiskIOObjectSnapshot(string diskPath, IOFormat format)
-            {
-                DiskPath = diskPath.ToLowerInvariant();
-                Format = format;
-            }
+            public string DiskPath { get; private set; } = diskPath.ToLowerInvariant();
+            public IOFormat Format { get; private set; } = format;
         }
 
         public KbInsensitiveDictionary<DeferredDiskIOObjectSnapshot> Collection { get; } = new();

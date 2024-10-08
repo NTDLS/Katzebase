@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Converters;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Atomicity
+namespace NTDLS.Katzebase.PersistentTypes.Atomicity
 {
     /// <summary>
     /// The atom is a unit of reversable work.

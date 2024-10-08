@@ -447,7 +447,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private string GetDeadlockExplanation(Transaction transaction,
+        private static string GetDeadlockExplanation(Transaction transaction,
             Dictionary<Guid, ObjectPendingLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {

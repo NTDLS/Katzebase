@@ -8,9 +8,5 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
     {
         [ProtoMember(1)]
         public PhysicalIndexLeaf Root = new();
-
-        public PhysicalIndexPages()
-        {
-        }
     }
 }

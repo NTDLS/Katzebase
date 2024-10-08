@@ -15,24 +15,16 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         /// <summary>
         /// Used when parsing a condition, contains the left and right value along with the comparison operator.
         /// </summary>
-        public class ConditionValuesPair
+        public class ConditionValuesPair(string expressionVariable, IQueryField left, Constants.LogicalQualifier qualifier, IQueryField right)
         {
-            public IQueryField Right { get; set; }
-            public LogicalQualifier Qualifier { get; set; }
-            public IQueryField Left { get; set; }
+            public IQueryField Right { get; set; } = right;
+            public LogicalQualifier Qualifier { get; set; } = qualifier;
+            public IQueryField Left { get; set; } = left;
 
             /// <summary>
             /// The name of the variable in ConditionCollection.MathematicalExpression that is represented by this condition.
             /// </summary>
-            public string ExpressionVariable { get; set; }
-
-            public ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
-            {
-                ExpressionVariable = expressionVariable;
-                Left = left;
-                Qualifier = qualifier;
-                Right = right;
-            }
+            public string ExpressionVariable { get; set; } = expressionVariable;
         }
 
         #endregion
@@ -98,12 +90,13 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreaterOrEqual(ITransaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && double.TryParse(left, out var iLeft))
+            if (left != null && right != null)
             {
-                if (double.TryParse(right, out var iRight))
+                if (double.TryParse(left, out var iLeft) && double.TryParse(right, out var iRight))
                 {
                     return iLeft >= iRight;
                 }
+                throw new KbProcessingException($"IsMatchGreaterOrEqual expected numeric value, found: [{left}>={right}].");
             }
 
             transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
@@ -113,13 +106,13 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesserOrEqual(ITransaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && double.TryParse(left, out var iLeft))
+            if (left != null && right != null)
             {
-                if (double.TryParse(right, out var iRight))
+                if (double.TryParse(left, out var iLeft) && double.TryParse(right, out var iRight))
                 {
                     return iLeft <= iRight;
                 }
-
+                throw new KbProcessingException($"IsMatchLesserOrEqual expected numeric value, found: [{left}<={right}].");
             }
             transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
@@ -150,13 +143,13 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreater(ITransaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && double.TryParse(left, out var iLeft))
+            if (left != null && right != null)
             {
-                if (double.TryParse(right, out var iRight))
+                if (double.TryParse(left, out var iLeft) && double.TryParse(right, out var iRight))
                 {
                     return iLeft > iRight;
                 }
-
+                throw new KbProcessingException($"IsMatchGreater expected numeric value, found: [{left}>{right}].");
             }
             transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
@@ -165,12 +158,13 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesser(ITransaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && double.TryParse(left, out var iLeft))
+            if (left != null && right != null)
             {
-                if (double.TryParse(right, out var iRight))
+                if (double.TryParse(left, out var iLeft) && double.TryParse(right, out var iRight))
                 {
                     return iLeft < iRight;
                 }
+                throw new KbProcessingException($"IsMatchLesser expected numeric value, found: [{left}<{right}].");
             }
             transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
@@ -209,22 +203,9 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
 
             var range = pattern.Split(':');
 
-            double value = 0;
-
-            if (input != string.Empty)
+            if (!double.TryParse(input, out var value) || !double.TryParse(range[0], out var rangeLeft) || !double.TryParse(range[1], out var rangeRight))
             {
-                if (!double.TryParse(input, out value))
-                {
-                    throw new KbProcessingException("Value could not be converted to double.");
-                }
-            }
-            if (!double.TryParse(range[0], out var rangeLeft))
-            {
-                throw new KbProcessingException("Left of range could not be converted to double.");
-            }
-            if (!double.TryParse(range[1], out var rangeRight))
-            {
-                throw new KbProcessingException("Right of range could not be converted to double.");
+                throw new KbProcessingException($"IsMatchBetween expected numeric value, found: [{input} between {range[0]}<{range[1]}].");
             }
 
             return value >= rangeLeft && value <= rangeRight;
@@ -233,6 +214,11 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchEqual(ITransaction transaction, string? left, string? right)
         {
+            if (left == null || right == null)
+            {
+                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            }
+
             return left == right;
         }
 

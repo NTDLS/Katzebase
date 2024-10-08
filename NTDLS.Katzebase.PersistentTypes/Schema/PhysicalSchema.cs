@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.Shared;
 
-namespace NTDLS.Katzebase.Engine.Schemas
+namespace NTDLS.Katzebase.PersistentTypes.Schema
 {
     public class PhysicalSchema
     {
@@ -83,11 +83,10 @@ namespace NTDLS.Katzebase.Engine.Schemas
         }
 
         public KbSchema ToClientPayload(Guid parentSchemaId, string parentPath)
-            => new KbSchema(Id, Name, $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'), parentPath.Trim(':'), parentSchemaId, PageSize);
+            => new(Id, Name, $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'), parentPath.Trim(':'), parentSchemaId, PageSize);
 
         public VirtualSchema ToVirtual(PhysicalSchema parentPhysicalSchema)
-        {
-            return new VirtualSchema(parentPhysicalSchema)
+            => new(parentPhysicalSchema)
             {
                 DiskPath = DiskPath,
                 Id = Id,
@@ -96,6 +95,6 @@ namespace NTDLS.Katzebase.Engine.Schemas
                 PageSize = PageSize,
                 IsTemporary = IsTemporary,
             };
-        }
+
     }
 }

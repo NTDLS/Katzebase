@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Server
             }
         }
 
-        private KatzebaseSettings LoadSettings(string fileName)
+        private static KatzebaseSettings LoadSettings(string fileName)
         {
             var defaultSettings = new KatzebaseSettings();
 

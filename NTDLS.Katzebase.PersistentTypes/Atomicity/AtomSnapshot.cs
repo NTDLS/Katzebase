@@ -1,6 +1,6 @@
 ﻿using static NTDLS.Katzebase.Shared.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Atomicity
+namespace NTDLS.Katzebase.PersistentTypes.Atomicity
 {
     /// <summary>
     /// Snapshot class for Atom, used to snapshot the state of the associated class.

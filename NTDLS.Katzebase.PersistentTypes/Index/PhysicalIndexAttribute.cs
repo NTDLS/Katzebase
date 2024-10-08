@@ -7,27 +7,21 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         public string? Field { get; set; }
 
         public static PhysicalIndexAttribute FromClientPayload(KbIndexAttribute indexAttribute)
-        {
-            return new PhysicalIndexAttribute()
+            => new()
             {
                 Field = indexAttribute.Field
             };
-        }
 
         public static KbIndexAttribute ToClientPayload(PhysicalIndexAttribute indexAttribute)
-        {
-            return new KbIndexAttribute()
+            => new()
             {
                 Field = indexAttribute.Field
             };
-        }
 
         public PhysicalIndexAttribute Clone()
-        {
-            return new PhysicalIndexAttribute()
+            => new()
             {
                 Field = Field
             };
-        }
     }
 }

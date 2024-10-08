@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
         public DateTime Modified { get; set; }
 
         [ProtoIgnore]
-        private int? _contentLength { get; set; } = null;
+        private int? _contentLength = null;
 
         [ProtoIgnore]
         public int ContentLength

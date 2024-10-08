@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     /// <summary>
     /// Contains a parsed query via StaticQueryParser.PrepareQuery();
     /// </summary>
-    public class PreparedQuery
+    public class PreparedQuery(QueryBatch queryBatch, Constants.QueryType queryType, int? fileLine)
     {
         public enum QueryAttribute
         {
@@ -54,15 +54,15 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         /// <summary>
         /// The line that the query started on.
         /// </summary>
-        public int? ScriptLine { get; set; }
+        public int? ScriptLine { get; set; } = fileLine;
 
         /// <summary>
         /// Contains the hash of the whole query text with all constants and variables removed.
         /// </summary>
         public string? Hash { get; set; }
-        public QueryBatch Batch { get; private set; }
+        public QueryBatch Batch { get; private set; } = queryBatch;
         public List<QuerySchema> Schemas { get; private set; } = new();
-        public QueryType QueryType { get; set; }
+        public QueryType QueryType { get; set; } = queryType;
         public SubQueryType SubQueryType { get; set; }
 
         /// <summary>
@@ -81,15 +81,15 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         public List<string>? DynamicSchemaFieldFilter { get; set; } = null;
         public int RowLimit { get; set; }
         public int RowOffset { get; set; }
-        public ConditionCollection Conditions { get; set; }
+        public ConditionCollection Conditions { get; set; } = new(queryBatch);
 
         #endregion
 
         #region Select Statement.
 
-        public SelectFieldCollection SelectFields { get; set; }
-        public GroupByFieldCollection GroupBy { get; set; }
-        public OrderByFieldCollection OrderBy { get; set; }
+        public SelectFieldCollection SelectFields { get; set; } = new(queryBatch);
+        public GroupByFieldCollection GroupBy { get; set; } = new(queryBatch);
+        public OrderByFieldCollection OrderBy { get; set; } = new(queryBatch);
 
         #endregion
 
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         public List<string> UpdateFieldNames { get; set; } = new();
 
-        public QueryFieldCollection UpdateFieldValues { get; set; }
+        public QueryFieldCollection UpdateFieldValues { get; set; } = new(queryBatch);
 
         #endregion
 
@@ -121,19 +121,6 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         #endregion
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
-
-        public PreparedQuery(QueryBatch queryBatch, QueryType queryType, int? fileLine)
-        {
-            QueryType = queryType;
-            Batch = queryBatch;
-            ScriptLine = fileLine;
-
-            Conditions = new(queryBatch);
-            SelectFields = new(queryBatch);
-            UpdateFieldValues = new(queryBatch);
-            GroupBy = new(queryBatch);
-            OrderBy = new(queryBatch);
-        }
 
         public bool TryGetAttribute<T>(QueryAttribute attribute, out T outValue, T defaultValue)
         {

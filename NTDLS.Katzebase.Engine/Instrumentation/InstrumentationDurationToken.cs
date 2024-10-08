@@ -10,8 +10,9 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
         public PerformanceCounter Type { get; private set; } = type;
 
         private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
+        public double ExtraTimeMilliseconds { get; set; }
 
-        public double Duration => _stopwatch.ElapsedMilliseconds;
+        public double Duration => _stopwatch.ElapsedMilliseconds + ExtraTimeMilliseconds;
 
         public void StopAndAccumulate()
         {
@@ -22,6 +23,7 @@ namespace NTDLS.Katzebase.Engine.Instrumentation
         public void StopAndAccumulate(double extraTimeMilliseconds)
         {
             _stopwatch.Stop();
+            ExtraTimeMilliseconds = extraTimeMilliseconds;
             Owner.AccumulateDuration(this);
         }
     }

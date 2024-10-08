@@ -7,7 +7,6 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
@@ -15,6 +14,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                     physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                    diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
+                    diskSize += IOManager.GetDecompressedSizeTracked(pageDiskPath);
                     decompressedSiskSize += new FileInfo(pageDiskPath).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
                     rootNodes += physicalIndexPageMap[indexPartition].Root.Children.Count;
@@ -231,8 +231,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //  For this reason, we do not perform index lookups on individual condition entries.
             foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>().Where(group => group.IndexLookup != null))
             {
-                var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
-                    physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
+                var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(physicalSchema, optimization, group, query, keyValues);
 
                 if (group.Connector == LogicalConnector.Or)
                 {
@@ -257,15 +256,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
             PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
-            PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+            PreparedQuery query, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
-                query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, workingSchemaPrefix, keyValues);
+                query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, keyValues);
 
             foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup>().Where(o => o.IndexLookup != null))
             {
                 var childGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
-                     physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
+                     physicalSchema, optimization, group, query, keyValues);
 
                 if (group.Connector == LogicalConnector.Or)
                 {
@@ -285,7 +284,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction transaction, PreparedQuery query,
-            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
+            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, KbInsensitiveDictionary<string?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -1096,7 +1095,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     _core.IO.DeletePath(transaction, physicalIndex.GetPartitionPagesPath(physicalSchema));
                 }
-                _core.IO.CreateDirectory(transaction, physicalIndex.GetPartitionPagesPath(physicalSchema));
+                IOManager.CreateDirectory(transaction, physicalIndex.GetPartitionPagesPath(physicalSchema));
 
                 var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)

@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
     /// <summary>
     /// This is the an instance of a single client connection.
     /// </summary>
-    internal class SessionState
+    internal class SessionState(ulong processId, Guid connectionId, string username, string clientName, bool isInternalSystemSession)
     {
         public enum KbConnectionSetting
         {
@@ -35,27 +35,27 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// ProcessId is produced by the server.
         /// </summary>
-        public ulong ProcessId { get; private set; }
+        public ulong ProcessId { get; private set; } = processId;
 
         /// <summary>
         /// SessionId is produced by the client.
         /// </summary>
-        public Guid ConnectionId { get; private set; }
+        public Guid ConnectionId { get; private set; } = connectionId;
 
         /// <summary>
         /// A user supplied client name to assist in identifying connection sources.
         /// </summary>
-        public string ClientName { get; private set; }
+        public string ClientName { get; private set; } = clientName;
 
         /// <summary>
         /// The name of the user logged in to the session.
         /// </summary>
-        public string Username { get; private set; }
+        public string Username { get; private set; } = username;
 
         /// <summary>
         /// Whether this session is a pre-login session. These are used by the engine to access data (like user accounts) to facilitate the login process.
         /// </summary>
-        public bool IsInternalSystemSession { get; private set; }
+        public bool IsInternalSystemSession { get; private set; } = isInternalSystemSession;
 
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {
@@ -97,15 +97,6 @@ namespace NTDLS.Katzebase.Engine.Sessions
                 return result.Value;
             }
             return null;
-        }
-
-        public SessionState(ulong processId, Guid connectionId, string username, string clientName, bool isInternalSystemSession)
-        {
-            ProcessId = processId;
-            ConnectionId = connectionId;
-            Username = username;
-            ClientName = clientName;
-            IsInternalSystemSession = isInternalSystemSession;
         }
 
         public void SetCurrentQuery(string statement)

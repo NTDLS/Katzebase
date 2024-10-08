@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
-
-namespace NTDLS.Katzebase.Engine.Schemas
+namespace NTDLS.Katzebase.PersistentTypes.Schema
 {
     public class PhysicalSchemaCatalog
     {

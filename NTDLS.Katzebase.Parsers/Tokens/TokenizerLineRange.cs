@@ -1,16 +1,9 @@
 ﻿namespace NTDLS.Katzebase.Parsers.Tokens
 {
-    public class TokenizerLineRange
+    public class TokenizerLineRange(int line, int start, int end)
     {
-        public int Line { get; set; }
-        public int Begin { get; set; }
-        public int End { get; set; }
-
-        public TokenizerLineRange(int line, int start, int end)
-        {
-            Line = line;
-            Begin = start;
-            End = end;
-        }
+        public int Line { get; set; } = line;
+        public int Begin { get; set; } = start;
+        public int End { get; set; } = end;
     }
 }

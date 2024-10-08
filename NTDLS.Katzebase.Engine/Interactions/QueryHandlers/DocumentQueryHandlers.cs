@@ -351,7 +351,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
             _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentsToDelete);
 
-            return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count());
+            return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count);
         }
     }
 }

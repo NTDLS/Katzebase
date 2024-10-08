@@ -1,14 +1,14 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
-using NTDLS.Katzebase.Parsers.Query.Class;
 using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     {
                         locatedIndexAttribute = false;
 
-                        List<ConditionEntry> applicableConditions = new List<ConditionEntry>();
+                        var applicableConditions = new List<ConditionEntry>();
 
                         if (string.IsNullOrEmpty(workingSchemaPrefix))
                         {
@@ -185,12 +185,12 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     var preferenceOrderedIndexSelections = new List<IndexSelection>();
 
                     var fullMatches = flattenedGroup.UsableIndexes
-                        .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Any(c => c.IsIndexOptimized == false))
                         .OrderByDescending(o => o.CoveredConditions.Count).ToList();
                     preferenceOrderedIndexSelections.AddRange(fullMatches);
 
                     var partialMatches = flattenedGroup.UsableIndexes
-                        .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Any(c => c.IsIndexOptimized == false))
                         .OrderBy(o => o.CoveredConditions.Count).ToList();
                     preferenceOrderedIndexSelections.AddRange(partialMatches);
 

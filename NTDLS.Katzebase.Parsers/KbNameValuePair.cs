@@ -1,14 +1,8 @@
 ﻿namespace NTDLS.Katzebase.Parsers
 {
-    public class KbNameValuePair<TKey, TValue>
+    public class KbNameValuePair<TKey, TValue>(TKey name, TValue value)
     {
-        public TKey Name { get; set; }
-        public TValue Value { get; set; }
-
-        public KbNameValuePair(TKey name, TValue value)
-        {
-            Name = name;
-            Value = value;
-        }
+        public TKey Name { get; set; } = name;
+        public TValue Value { get; set; } = value;
     }
 }

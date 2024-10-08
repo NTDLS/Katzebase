@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.ReliableMessaging;
 using System.Text;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 {
                     pathBuilder.Append(name);
                     _core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString(), param.PageSize);
-                    pathBuilder.Append(":");
+                    pathBuilder.Append(':');
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaCreateReply());
@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                         break;
                     }
 
-                    pathBuilder.Append(":");
+                    pathBuilder.Append(':');
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaExistsReply(schemaExists));
@@ -154,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var segments = param.Schema.Split(':');
-                var parentSchemaName = segments[segments.Count() - 1];
+                var parentSchemaName = segments[^1];
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
                 var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Write);

@@ -70,12 +70,9 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
 
             var function = _protypes.FirstOrDefault(o => o.Name.Is(functionName));
 
-            if (function == null)
-            {
-                throw new KbFunctionException($"Undefined function: [{functionName}].");
-            }
-
-            return function.ApplyParameters(parameters);
+            return function == null
+                ? throw new KbFunctionException($"Undefined function: [{functionName}].")
+                : function.ApplyParameters(parameters);
         }
     }
 }

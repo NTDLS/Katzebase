@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;

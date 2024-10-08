@@ -80,7 +80,7 @@
             buttonBrowse.TabIndex = 5;
             buttonBrowse.Text = "Browse";
             buttonBrowse.UseVisualStyleBackColor = true;
-            buttonBrowse.Click += buttonBrowse_Click;
+            buttonBrowse.Click += ButtonBrowse_Click;
             // 
             // textBoxType
             // 

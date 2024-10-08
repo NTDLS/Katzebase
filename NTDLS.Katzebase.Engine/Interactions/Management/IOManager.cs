@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Getters.
 
-        internal T GetJsonNonTracked<T>(string filePath)
+        internal static T GetJsonNonTracked<T>(string filePath)
         {
             LogManager.Debug($"IO:Read:{filePath}");
 
@@ -33,48 +33,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal long GetDecompressedSizeTracked(string filePath)
+        internal static long GetDecompressedSizeTracked(string filePath)
         {
             LogManager.Debug($"IO:Read:{filePath}");
 
             try
             {
-                if (_core.Settings.UseCompression)
-                {
-                    return Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
-                }
-                else
-                {
-                    return new FileInfo(filePath).Length;
-                }
+                return Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
             }
             catch (Exception ex)
             {
                 LogManager.Error($"Failed to get non-tracked file length for {filePath}.", ex);
-                throw;
-            }
-        }
-
-        internal T GetPBufNonTracked<T>(string filePath)
-        {
-            LogManager.Debug($"IO:Read:{filePath}");
-
-            try
-            {
-                if (_core.Settings.UseCompression)
-                {
-                    using var input = new MemoryStream(Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
-                    return ProtoBuf.Serializer.Deserialize<T>(input);
-                }
-                else
-                {
-                    using var file = File.OpenRead(filePath);
-                    return ProtoBuf.Serializer.Deserialize<T>(file);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to get non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -157,35 +126,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else if (format == IOFormat.PBuf)
                 {
-                    if (_core.Settings.UseCompression)
+                    var fileBytes = transaction.Instrumentation.Measure(PerformanceCounter.IORead,
+                        () => File.ReadAllBytes(filePath));
+
+                    var serializedData = transaction.Instrumentation.Measure(PerformanceCounter.Decompress,
+                        () => Shared.Compression.Deflate.Decompress(fileBytes));
+
+                    approximateSizeInBytes = serializedData.Length;
+
+                    deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                     {
-                        var fileBytes = transaction.Instrumentation.Measure(PerformanceCounter.IORead,
-                            () => File.ReadAllBytes(filePath));
-
-                        var serializedData = transaction.Instrumentation.Measure(PerformanceCounter.Decompress,
-                            () => Shared.Compression.Deflate.Decompress(fileBytes));
-
-                        approximateSizeInBytes = serializedData.Length;
-
-                        deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                        {
-                            using var input = new MemoryStream(serializedData);
-                            return ProtoBuf.Serializer.Deserialize<T>(input);
-                        });
-                    }
-                    else
-                    {
-                        var serializedData = transaction.Instrumentation.Measure(PerformanceCounter.IORead,
-                            () => File.ReadAllBytes(filePath));
-
-                        approximateSizeInBytes = serializedData.Length;
-
-                        deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                        {
-                            using var input = new MemoryStream(serializedData);
-                            return ProtoBuf.Serializer.Deserialize<T>(input);
-                        });
-                    }
+                        using var input = new MemoryStream(serializedData);
+                        return ProtoBuf.Serializer.Deserialize<T>(input);
+                    });
                 }
                 else
                 {
@@ -236,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutJsonNonTrackedPretty(string filePath, object deserializedObject)
+        internal static void PutJsonNonTrackedPretty(string filePath, object deserializedObject)
         {
             try
             {
@@ -249,7 +202,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutJsonNonTracked(string filePath, object deserializedObject)
+        internal static void PutJsonNonTracked(string filePath, object deserializedObject)
         {
             try
             {
@@ -268,20 +221,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 int approximateSizeInBytes = 0;
 
-                if (_core.Settings.UseCompression)
-                {
-                    using var output = new MemoryStream();
-                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                    approximateSizeInBytes = (int)output.Length;
-                    var compressedBytes = Shared.Compression.Deflate.Compress(output.ToArray());
-                    File.WriteAllBytes(filePath, compressedBytes);
-                }
-                else
-                {
-                    using var file = File.Create(filePath);
-                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                    approximateSizeInBytes = (int)file.Length;
-                }
+                using var output = new MemoryStream();
+                ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                approximateSizeInBytes = (int)output.Length;
+                var compressedBytes = Shared.Compression.Deflate.Compress(output.ToArray());
+                File.WriteAllBytes(filePath, compressedBytes);
 
                 if (_core.Settings.CacheEnabled)
                 {
@@ -296,21 +240,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutPBufNonTracked(string filePath, object deserializedObject)
+        internal static void PutPBufNonTracked(string filePath, object deserializedObject)
         {
             try
             {
-                if (_core.Settings.UseCompression)
-                {
-                    using var output = new MemoryStream();
-                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                    File.WriteAllBytes(filePath, Shared.Compression.Deflate.Compress(output.ToArray()));
-                }
-                else
-                {
-                    using var file = File.Create(filePath);
-                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                }
+                using var output = new MemoryStream();
+                ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                File.WriteAllBytes(filePath, Shared.Compression.Deflate.Compress(output.ToArray()));
             }
             catch (Exception ex)
             {
@@ -377,29 +313,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else if (format == IOFormat.PBuf)
                 {
-                    if (_core.Settings.UseCompression)
-                    {
-                        var bytes = transaction.Instrumentation.Measure(PerformanceCounter.Serialize, () =>
-                            {
-                                using var output = new MemoryStream();
-                                ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                                return output.ToArray();
-                            });
+                    var bytes = transaction.Instrumentation.Measure(PerformanceCounter.Serialize, () =>
+                        {
+                            using var output = new MemoryStream();
+                            ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                            return output.ToArray();
+                        });
 
-                        approximateSizeInBytes = bytes.Length;
+                    approximateSizeInBytes = bytes.Length;
 
-                        var compressedBytes = transaction.Instrumentation.Measure(PerformanceCounter.Compress, () =>
-                            Shared.Compression.Deflate.Compress(bytes));
+                    var compressedBytes = transaction.Instrumentation.Measure(PerformanceCounter.Compress, () =>
+                        Shared.Compression.Deflate.Compress(bytes));
 
-                        transaction.Instrumentation.Measure(PerformanceCounter.IOWrite, () =>
-                            File.WriteAllBytes(filePath, compressedBytes));
-                    }
-                    else
-                    {
-                        using var file = File.Create(filePath);
-                        approximateSizeInBytes = (int)file.Length;
-                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                    }
+                    transaction.Instrumentation.Measure(PerformanceCounter.IOWrite, () =>
+                        File.WriteAllBytes(filePath, compressedBytes));
                 }
                 else
                 {
@@ -423,12 +350,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-        internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
+        internal static bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
         {
             return DirectoryExists(transaction, diskPath, intendedOperation, out _);
         }
 
-        internal bool DirectoryExists(Transaction transaction, string diskPath,
+        internal static bool DirectoryExists(Transaction transaction, string diskPath,
             LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
         {
             try
@@ -446,12 +373,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateDirectory(Transaction transaction, string? diskPath)
+        internal static void CreateDirectory(Transaction transaction, string? diskPath)
         {
             CreateDirectory(transaction, diskPath, out _);
         }
 
-        internal void CreateDirectory(Transaction transaction, string? diskPath, out ObjectLockKey? acquiredLockKey)
+        internal static void CreateDirectory(Transaction transaction, string? diskPath, out ObjectLockKey? acquiredLockKey)
         {
             try
             {
@@ -476,12 +403,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal static bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return FileExists(transaction, filePath, intendedOperation, out _);
         }
 
-        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal static bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
         {
             try
             {

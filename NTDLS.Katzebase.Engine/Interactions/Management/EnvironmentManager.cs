@@ -58,47 +58,43 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 string json = File.ReadAllText(appSettingsPath);
 
                 // Parse the JSON into a JsonDocument
-                using (JsonDocument document = JsonDocument.Parse(json))
+                using JsonDocument document = JsonDocument.Parse(json);
+                var root = document.RootElement;
+                //var settingsElement = root.GetProperty("Settings");
+                var settings = JsonSerializer.Deserialize<KatzebaseSettings>(root.ToString());
+
+                foreach (var settingElement in root.EnumerateObject())
                 {
-                    var root = document.RootElement;
-                    //var settingsElement = root.GetProperty("Settings");
-                    var settings = JsonSerializer.Deserialize<KatzebaseSettings>(root.ToString());
-
-                    foreach (var settingElement in root.EnumerateObject())
+                    if (Enum.TryParse(settingElement.Name, true, out QueryAttribute optionType))
                     {
-                        if (Enum.TryParse(settingElement.Name, true, out QueryAttribute optionType))
+                        if (attributes.TryGetValue(optionType, out var value))
                         {
-                            if (attributes.TryGetValue(optionType, out var value))
-                            {
-                                UpdateSettingProperty(settings, settingElement.Name, value); //Save the value in the JSON settings file.
-                                UpdateSettingProperty(_core.Settings, settingElement.Name, value); //Save the setting in the live core.
-                            }
+                            UpdateSettingProperty(settings, settingElement.Name, value); //Save the value in the JSON settings file.
+                            UpdateSettingProperty(_core.Settings, settingElement.Name, value); //Save the setting in the live core.
                         }
-                    }
-
-                    string updatedSettingsJson = JsonSerializer.Serialize(settings);
-                    using (var file = File.Create(appSettingsPath))
-                    {
-                        using (var writer = new Utf8JsonWriter(file, new JsonWriterOptions { Indented = true }))
-                        {
-                            writer.WriteStartObject();
-                            foreach (var property in root.EnumerateObject())
-                            {
-                                if (property.Name == "Settings")
-                                {
-                                    writer.WritePropertyName(property.Name);
-                                    writer.WriteRawValue(updatedSettingsJson);
-                                }
-                                else
-                                {
-                                    property.WriteTo(writer);
-                                }
-                            }
-                            writer.WriteEndObject();
-                        }
-                        file.Close();
                     }
                 }
+
+                string updatedSettingsJson = JsonSerializer.Serialize(settings);
+                using var file = File.Create(appSettingsPath);
+                using (var writer = new Utf8JsonWriter(file, new JsonWriterOptions { Indented = true }))
+                {
+                    writer.WriteStartObject();
+                    foreach (var property in root.EnumerateObject())
+                    {
+                        if (property.Name == "Settings")
+                        {
+                            writer.WritePropertyName(property.Name);
+                            writer.WriteRawValue(updatedSettingsJson);
+                        }
+                        else
+                        {
+                            property.WriteTo(writer);
+                        }
+                    }
+                    writer.WriteEndObject();
+                }
+                file.Close();
             }
             catch (Exception ex)
             {

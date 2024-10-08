@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Schemas;
+﻿using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index

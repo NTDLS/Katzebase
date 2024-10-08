@@ -1,27 +1,20 @@
 using Newtonsoft.Json;
 using NTDLS.Helpers;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.ObjectViewer
 {
     public partial class FormMain : Form
     {
-        class TypeMapping
+        class TypeMapping(string identifier, Type type, Shared.EngineConstants.IOFormat format)
         {
-            public string Identifier { get; set; }
-            public IOFormat Format { get; set; }
-            public Type Type { get; set; }
-
-            public TypeMapping(string identifier, Type type, IOFormat format)
-            {
-                Identifier = identifier.ToLowerInvariant();
-                Type = type;
-                Format = format;
-            }
+            public string Identifier { get; set; } = identifier.ToLowerInvariant();
+            public IOFormat Format { get; set; } = format;
+            public Type Type { get; set; } = type;
         }
 
         private readonly List<TypeMapping> _types = new()
@@ -121,7 +114,7 @@ namespace NTDLS.Katzebase.ObjectViewer
             textBoxType.Text = "<unknown>";
         }
 
-        private bool ProcessFilePBuf(string fileName, Type type, out string friendlyText)
+        private static bool ProcessFilePBuf(string fileName, Type type, out string friendlyText)
         {
             try
             {
@@ -152,7 +145,7 @@ namespace NTDLS.Katzebase.ObjectViewer
             }
         }
 
-        private bool ProcessFileJson(string fileName, Type type, out string friendlyText)
+        private static bool ProcessFileJson(string fileName, Type type, out string friendlyText)
         {
             try
             {
@@ -174,19 +167,17 @@ namespace NTDLS.Katzebase.ObjectViewer
             }
         }
 
-        private void buttonBrowse_Click(object sender, EventArgs e)
+        private void ButtonBrowse_Click(object sender, EventArgs e)
         {
-            using (var openFileDialog = new OpenFileDialog())
+            using var openFileDialog = new OpenFileDialog();
+            openFileDialog.Title = "Select a File";
+
+            openFileDialog.Filter = "All Files (*.*)|*.*";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                openFileDialog.Title = "Select a File";
-
-                openFileDialog.Filter = "All Files (*.*)|*.*";
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    textBoxFile.Text = openFileDialog.FileName;
-                    ProcessFile(textBoxFile.Text);
-                }
+                textBoxFile.Text = openFileDialog.FileName;
+                ProcessFile(textBoxFile.Text);
             }
         }
     }

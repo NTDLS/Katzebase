@@ -3,14 +3,10 @@ using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class QueryBatch : List<PreparedQuery>
+    public class QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral> literals)
+        : List<PreparedQuery>
     {
-        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; set; } = new();
-
-        public QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral> literals)
-        {
-            Literals = literals;
-        }
+        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; set; } = literals;
 
         public string? GetLiteralValue(string value)
         {

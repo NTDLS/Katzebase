@@ -1,5 +1,4 @@
-﻿
-using NTDLS.Katzebase.Engine.Interactions.Management;
+﻿using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Sessions;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers

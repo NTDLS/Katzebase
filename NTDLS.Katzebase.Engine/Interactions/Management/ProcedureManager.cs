@@ -3,8 +3,8 @@ using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management

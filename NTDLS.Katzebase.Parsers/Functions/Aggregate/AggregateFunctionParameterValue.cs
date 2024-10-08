@@ -1,15 +1,8 @@
 ﻿namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
 {
-    public class AggregateFunctionParameterValue
+    public class AggregateFunctionParameterValue(AggregateFunctionParameterPrototype parameter, string? value)
     {
-        public AggregateFunctionParameterPrototype Parameter { get; private set; }
-        public string? Value { get; private set; } = null;
-
-        public AggregateFunctionParameterValue(AggregateFunctionParameterPrototype parameter, string? value)
-        {
-            Parameter = parameter;
-            Value = value;
-        }
-
+        public AggregateFunctionParameterPrototype Parameter { get; private set; } = parameter;
+        public string? Value { get; private set; } = value;
     }
 }

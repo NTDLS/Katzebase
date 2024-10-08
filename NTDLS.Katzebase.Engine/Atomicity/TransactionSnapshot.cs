@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Atomicity
 {

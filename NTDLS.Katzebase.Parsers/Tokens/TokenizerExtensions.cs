@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
+using NTDLS.Katzebase.Parsers.Query.Specific.Helpers;
 using System.Text;
 
 namespace NTDLS.Katzebase.Parsers.Tokens

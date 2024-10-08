@@ -2,15 +2,9 @@
 
 namespace NTDLS.Katzebase.Parsers.Query
 {
-    public class ConditionFieldLiteral
+    public class ConditionFieldLiteral(Api.KbConstants.KbBasicDataType dataType, string? value)
     {
-        public string? Value { get; set; }
-        public KbBasicDataType DataType { get; set; }
-
-        public ConditionFieldLiteral(KbBasicDataType dataType, string? value)
-        {
-            DataType = dataType;
-            Value = value;
-        }
+        public string? Value { get; set; } = value;
+        public KbBasicDataType DataType { get; set; } = dataType;
     }
 }

@@ -1,8 +1,8 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Parsers.Query.Class;
-using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
+using NTDLS.Katzebase.Parsers.Query.Specific;
+using NTDLS.Katzebase.Parsers.Query.Specific.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.Validation;
 using NTDLS.Katzebase.Parsers.Tokens;
@@ -164,7 +164,7 @@ namespace NTDLS.Katzebase.Parsers
                 if (variableValue.StartsWith('\'') && variableValue.EndsWith('\''))
                 {
                     variableType = KbBasicDataType.String;
-                    variableValue = variableValue.Substring(1, variableValue.Length - 2);
+                    variableValue = variableValue[1..^1];
                 }
                 else
                 {

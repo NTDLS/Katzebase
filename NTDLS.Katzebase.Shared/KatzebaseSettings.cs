@@ -39,11 +39,6 @@
         public int LargeObjectHeapCompactionInterval { get; set; } = 60;
 
         /// <summary>
-        /// Whether documents, pages and indexes will be stored compressed. Don't worry, you can open them in 7-Zip.
-        /// </summary>
-        public bool UseCompression { get; set; } = true;
-
-        /// <summary>
         /// The number of index partitions to create when the partition count is unspecified at index creation.
         /// </summary>
         public uint DefaultIndexPartitions { get; set; } = 100;

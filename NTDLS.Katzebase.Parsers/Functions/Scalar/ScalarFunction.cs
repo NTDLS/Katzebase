@@ -15,7 +15,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
         public KbScalarFunctionParameterType ReturnType { get; private set; }
         public List<ScalarFunctionParameterPrototype> Parameters { get; private set; } = new();
 
-
         public ScalarFunction(string name, KbScalarFunctionParameterType returnType, List<ScalarFunctionParameterPrototype> parameters, string description)
         {
             Name = name;

@@ -7,10 +7,10 @@ namespace NTDLS.Katzebase.Engine.Threading
     /// </summary>
     public class ThreadPoolManager
     {
-        public DelegateThreadPool Lookup { get; set; }
-        public DelegateThreadPool Indexing { get; set; }
-        public DelegateThreadPool Intersection { get; set; }
-        public DelegateThreadPool Materialization { get; set; }
+        public DelegateThreadPool Lookup { get; private set; }
+        public DelegateThreadPool Indexing { get; private set; }
+        public DelegateThreadPool Intersection { get; private set; }
+        public DelegateThreadPool Materialization { get; private set; }
 
         private readonly EngineCore _core;
 

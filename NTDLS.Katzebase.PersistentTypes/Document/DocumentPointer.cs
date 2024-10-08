@@ -3,17 +3,11 @@
     /// <summary>
     /// This is a simple class that contains a document page number as well as the page ID.
     /// </summary>
-    public class DocumentPointer
+    public class DocumentPointer(int pageNumber, uint documentId)
     {
-        public int PageNumber { get; private set; }
-        public uint DocumentId { get; set; }
+        public int PageNumber { get; private set; } = pageNumber;
+        public uint DocumentId { get; set; } = documentId;
         public string Key => $"{PageNumber}:{DocumentId}";
-
-        public DocumentPointer(int pageNumber, uint documentId)
-        {
-            PageNumber = pageNumber;
-            DocumentId = documentId;
-        }
 
         public static DocumentPointer Parse(string key)
         {
@@ -33,7 +27,7 @@
         public override string ToString()
             => Key;
 
-        public int GetHashCode(DocumentPointer? obj)
-            => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
+        public override int GetHashCode()
+            => HashCode.Combine(PageNumber, DocumentId);
     }
 }

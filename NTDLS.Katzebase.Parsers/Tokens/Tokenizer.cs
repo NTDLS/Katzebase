@@ -78,8 +78,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             PredefinedConstants = predefinedConstants ?? new();
 
-            PreValidate();
-
             if (optimizeForTokenization)
             {
                 OptimizeForTokenization();
@@ -104,8 +102,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             _standardTokenDelimiters = ['\r', '\n', ' '];
 
             PredefinedConstants = predefinedConstants ?? new();
-
-            PreValidate();
 
             if (optimizeForTokenization)
             {

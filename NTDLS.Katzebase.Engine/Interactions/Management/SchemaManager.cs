@@ -6,13 +6,13 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
-using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
+using static NTDLS.Katzebase.PersistentTypes.Schema.PhysicalSchema;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -84,9 +84,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 LogManager.Information("Initializing root schema.");
                 Directory.CreateDirectory(_core.Settings.DataRootPath);
-                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                _core.IO.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                IOManager.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
 
                 //Create Master:Account schema and insert the default account.
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
@@ -135,11 +135,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
-                var singleSchema = parentCatalog.GetByName(physicalSchema.Name);
-                if (singleSchema == null)
-                {
-                    throw new KbObjectNotFoundException($"Schema not found: [{physicalSchema.Name}].");
-                }
+                var singleSchema = parentCatalog.GetByName(physicalSchema.Name)
+                    ?? throw new KbObjectNotFoundException($"Schema not found: [{physicalSchema.Name}].");
+
                 singleSchema.PageSize = pageSize;
 
                 _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
@@ -178,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
-                _core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
+                IOManager.CreateDirectory(transaction, physicalSchema.DiskPath);
                 _core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
                 _core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
@@ -245,7 +243,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var schemas = new List<PhysicalSchema>();
 
-                if (_core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
+                if (IOManager.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
                 {
                     var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
                         transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
@@ -324,13 +322,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else
                 {
                     var segments = schemaName.Split(':');
-                    var thisSchemaName = segments[segments.Length - 1];
+                    var thisSchemaName = segments[^1];
 
                     var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
+                    if (IOManager.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
                     {
                         throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
@@ -394,14 +392,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 var schemaSegments = schemaName.Split(':');
-                var thisSchema = schemaSegments[schemaSegments.Length - 1];
+                var thisSchema = schemaSegments[^1];
                 var parentSchema = string.Join(':', schemaSegments.Take(schemaSegments.Length - 1));
 
                 var parentPhysicalSchema = Acquire(transaction, parentSchema, parentIntendedOperation);
 
                 var parentCatalogDiskPath = parentPhysicalSchema.SchemaCatalogFilePath();
 
-                if (_core.IO.FileExists(transaction, parentCatalogDiskPath, parentIntendedOperation, out var _) == false)
+                if (IOManager.FileExists(transaction, parentCatalogDiskPath, parentIntendedOperation, out var _) == false)
                 {
                     throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                 }

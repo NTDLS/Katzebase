@@ -3,21 +3,16 @@ using NTDLS.Katzebase.PersistentTypes.Index;
 
 namespace NTDLS.Katzebase.Parsers.Indexes.Matching
 {
-    public class IndexSelection
+    public class IndexSelection(PhysicalIndex index)
     {
         public HashSet<ConditionEntry> CoveredConditions { get; private set; } = new();
 
-        public PhysicalIndex PhysicalIndex { get; private set; }
+        public PhysicalIndex PhysicalIndex { get; private set; } = index;
 
         /// <summary>
         /// When true, this means that we have all the fields we need to satisfy all index attributes for a index seek operation.
         /// </summary>
         public bool IsFullIndexMatch { get; set; } = false;
-
-        public IndexSelection(PhysicalIndex index)
-        {
-            PhysicalIndex = index;
-        }
 
         public IndexSelection Clone()
         {

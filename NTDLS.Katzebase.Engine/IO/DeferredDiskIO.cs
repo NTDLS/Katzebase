@@ -8,18 +8,11 @@ namespace NTDLS.Katzebase.Engine.IO
 {
     internal class DeferredDiskIO
     {
-        private class DeferredDiskIOObject
+        private class DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
         {
-            public string DiskPath { get; private set; }
-            public object Reference { get; set; }
-            public IOFormat Format { get; private set; }
-
-            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
-            {
-                DiskPath = diskPath.ToLowerInvariant();
-                Reference = reference;
-                Format = format;
-            }
+            public string DiskPath { get; private set; } = diskPath.ToLowerInvariant();
+            public object Reference { get; set; } = reference;
+            public IOFormat Format { get; private set; } = format;
         }
 
         private EngineCore? _core;

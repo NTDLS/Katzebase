@@ -9,9 +9,9 @@ namespace NTDLS.Katzebase.Parsers.Query
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    public class QueryFieldCollection : List<QueryField>
+    public class QueryFieldCollection(QueryBatch queryBatch) : List<QueryField>
     {
-        public QueryBatch QueryBatch { get; private set; }
+        public QueryBatch QueryBatch { get; private set; } = queryBatch;
 
         /// <summary>
         /// A list of all distinct document identifiers from all fields, even nested expressions.
@@ -38,11 +38,6 @@ namespace NTDLS.Katzebase.Parsers.Query
         public string GetNextDocumentFieldKey()
             => $"$f_{_nextDocumentFieldKey++}$";
         private int _nextDocumentFieldKey = 0;
-
-        public QueryFieldCollection(QueryBatch queryBatch)
-        {
-            QueryBatch = queryBatch;
-        }
 
         #region Collection: FieldsWithAggregateFunctionCalls.
 

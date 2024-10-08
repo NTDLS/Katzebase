@@ -125,7 +125,6 @@ WHERE
 GROUP BY
 	ColumnWhichDoesNotExist
 
-
 --Test GROUP column which does not exist.
 SELECT
 	Count(0) as CountOf
