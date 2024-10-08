@@ -49,13 +49,7 @@
         {
             ResultDisqualifiedByNullValue,
             AggregateDisqualifiedByNullValue,
-            FieldNotFound,
-            JoinFieldNotFound,
-            SelectFieldNotFound,
-            SortFieldNotFound,
-            MethodFieldNotFound,
-            GroupFieldNotFound,
-            ConditionFieldNotFound
+            FieldNotFound
         }
 
         public enum KbMessageType

@@ -25,6 +25,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
     /// </summary>
     internal static class StaticSchemaIntersectionProcessor
     {
+        private enum FieldCollapseType
+        {
+            ScalerSelect,
+            AggregateSelect,
+            ScalerOrderBy,
+            AggregateOrderBy
+        }
+
         /// <summary>
         /// Generates a set of rows and field names using a prepared query.
         /// </summary>
@@ -186,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                                 if (!schemaElements.TryGetValue(documentIdentifier.FieldName, out var schemaElement))
                                 {
-                                    transaction.AddWarning(KbTransactionWarning.JoinFieldNotFound, documentIdentifier.Value);
+                                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value);
                                 }
 
                                 keyValues[documentIdentifier.FieldName] = schemaElement;
@@ -519,109 +527,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         foreach (var field in query.SelectFields)
                         {
-                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                            {
-                                if (!threadRow.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
-                                {
-                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
-                                }
-
-                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
-                                {
-                                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldDocumentIdentifier.Value);
-                                }
-
-                                //Insert the document field value into the proper position in the values list.
-                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, schemaElement);
-                            }
-                            else if (field.Expression is IQueryFieldExpression fieldExpression)
-                            {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                                {
-                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
-
-                                    //Insert the collapsed scalar expression value into the proper position in the values list.
-                                    materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
-                                }
-                                else
-                                {
-                                    throw new KbEngineException("Aggregate function found during scalar materialization.");
-                                }
-                            }
-                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
-                            }
-                            else if (field.Expression is QueryFieldConstantString constantString)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
-                            }
-                            else
-                            {
-                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
-                            }
+                            var value = MaterializeRowField(transaction, query, threadRow, flattenedSchemaElements, field, FieldCollapseType.ScalerSelect);
+                            materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, value);
                         }
 
                         #region Collapse all values needed for sorting.
 
                         foreach (var field in query.OrderBy)
                         {
-                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                            {
-                                if (!threadRow.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
-                                {
-                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
-                                }
-
-                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
-                                {
-                                    transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, fieldDocumentIdentifier.Value);
-                                }
-
-                                if (double.TryParse(schemaElement, out _))
-                                {
-                                    //Pad numeric values for proper sorting.
-                                    schemaElement = schemaElement.PadLeft(25 + schemaElement.Length, '0');
-                                }
-
-                                materializedRow.OrderByValues.Add(field.Alias, schemaElement);
-                            }
-                            else if (field.Expression is IQueryFieldExpression fieldExpression)
-                            {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                                {
-                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                        fieldExpression, transaction, query, query.OrderBy, flattenedSchemaElements);
-
-                                    if (double.TryParse(collapsedValue, out _))
-                                    {
-                                        //Pad numeric values for proper sorting.
-                                        collapsedValue = collapsedValue.PadLeft(25 + collapsedValue.Length, '0');
-                                    }
-                                    materializedRow.OrderByValues.Add(field.Alias, collapsedValue);
-                                }
-                                else
-                                {
-                                    throw new KbEngineException("Aggregate function found during scalar materialization sort.");
-                                }
-                            }
-                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                materializedRow.OrderByValues.Add(field.Alias, rawValue);
-                            }
-                            else if (field.Expression is QueryFieldConstantString constantString)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                materializedRow.OrderByValues.Add(field.Alias, rawValue);
-                            }
-                            else
-                            {
-                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
-                            }
+                            var value = MaterializeRowField(transaction, query, threadRow, flattenedSchemaElements, field, FieldCollapseType.ScalerOrderBy);
+                            materializedRow.OrderByValues.Add(field.Alias, value);
                         }
 
                         #endregion
@@ -693,50 +608,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         //TODO: We should check these fields/expression to make sure that they are either constant or being referenced by the group clause.
                         foreach (var field in query.SelectFields)
                         {
-                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                            {
-                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
-                                {
-                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
-                                }
-
-                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
-                                {
-                                    transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, fieldDocumentIdentifier.Value);
-                                }
-
-                                //Insert the document field value into the proper position in the values list.
-                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, schemaElement);
-                            }
-                            else if (field.Expression is IQueryFieldExpression fieldExpression)
-                            {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                                {
-                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
-
-                                    //Insert the collapsed scalar expression value into the proper position in the values list.
-                                    groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, collapsedValue);
-                                }
-                                else
-                                {
-                                    //This value will be filled in during aggregation function execution.
-                                }
-                            }
-                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
-                            }
-                            else if (field.Expression is QueryFieldConstantString constantString)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
-                            }
-                            else
-                            {
-                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
-                            }
+                            var value = MaterializeRowField(transaction, query, row, flattenedSchemaElements, field, FieldCollapseType.AggregateSelect);
+                            groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, value);
                         }
 
                         #endregion
@@ -745,59 +618,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         foreach (var field in query.OrderBy)
                         {
-                            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
-                            {
-                                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
-                                {
-                                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
-                                }
-
-                                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
-                                {
-                                    transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, fieldDocumentIdentifier.Value);
-                                }
-
-                                if (double.TryParse(schemaElement, out _))
-                                {
-                                    //Pad numeric values for proper sorting.
-                                    schemaElement = schemaElement.PadLeft(25 + schemaElement.Length, '0');
-                                }
-
-                                groupRow.OrderByValues.Add(field.Alias, schemaElement);
-                            }
-                            else if (field.Expression is IQueryFieldExpression fieldExpression)
-                            {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
-                                {
-                                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                                        fieldExpression, transaction, query, query.OrderBy, flattenedSchemaElements);
-
-                                    if (double.TryParse(collapsedValue, out _))
-                                    {
-                                        //Pad numeric values for proper sorting.
-                                        collapsedValue = collapsedValue.PadLeft(25 + collapsedValue.Length, '0');
-                                    }
-                                    groupRow.OrderByValues.Add(field.Alias, collapsedValue);
-                                }
-                                else
-                                {
-                                    //Skip this, it will be filled in during aggregation function execution.
-                                }
-                            }
-                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                groupRow.OrderByValues.Add(field.Alias, rawValue);
-                            }
-                            else if (field.Expression is QueryFieldConstantString constantString)
-                            {
-                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
-                                groupRow.OrderByValues.Add(field.Alias, rawValue);
-                            }
-                            else
-                            {
-                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
-                            }
+                            var value = MaterializeRowField(transaction, query, row, flattenedSchemaElements, field, FieldCollapseType.AggregateOrderBy);
+                            groupRow.OrderByValues.Add(field.Alias, value);
                         }
 
                         #endregion
@@ -893,5 +715,83 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             return materializedRowCollection;
         }
+
+        private static string? MaterializeRowField(Transaction transaction, PreparedQuery query, SchemaIntersectionRow row,
+            KbInsensitiveDictionary<string?> flattenedSchemaElements, QueryField field, FieldCollapseType fieldCollapseType)
+        {
+            if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
+            {
+                if (!row.SchemaElements.TryGetValue(fieldDocumentIdentifier.SchemaAlias, out var schemaElements))
+                {
+                    throw new KbEngineException($"Schema not found in query: [{fieldDocumentIdentifier.SchemaAlias}].");
+                }
+
+                if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
+                {
+                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldDocumentIdentifier.Value);
+                }
+
+                if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
+                {
+                    if (double.TryParse(schemaElement, out _))
+                    {
+                        //Pad numeric value for proper numeric ordering.
+                        schemaElement = schemaElement.PadLeft(25 + schemaElement.Length, '0');
+                    }
+                }
+
+                return schemaElement;
+            }
+            else if (field.Expression is IQueryFieldExpression fieldExpression)
+            {
+                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
+                {
+                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
+                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+
+                    if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
+                    {
+                        if (double.TryParse(collapsedValue, out _))
+                        {
+                            //Pad numeric value for proper numeric ordering.
+                            collapsedValue = collapsedValue.PadLeft(25 + collapsedValue.Length, '0');
+                        }
+                    }
+
+                    return collapsedValue;
+                }
+                else
+                {
+                    if (fieldCollapseType != FieldCollapseType.AggregateOrderBy && fieldCollapseType != FieldCollapseType.AggregateSelect)
+                    {
+                        throw new KbEngineException("Aggregate function found during scalar materialization.");
+                    }
+                    else
+                    {
+                        return null; //These values will be filled in during aggregation execution.
+                    }
+                }
+            }
+            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
+            {
+                var numericValue = query.Batch.GetLiteralValue(constantNumeric.Value);
+
+                if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
+                {
+                    //Pad numeric value for proper numeric ordering.
+                    numericValue = numericValue?.PadLeft(25 + numericValue.Length, '0');
+                }
+
+                return numericValue;
+            }
+            else if (field.Expression is QueryFieldConstantString constantString)
+            {
+                var stringValue = query.Batch.GetLiteralValue(constantString.Value);
+                return stringValue;
+            }
+
+            throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
+        }
+
     }
 }

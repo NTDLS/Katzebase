@@ -9,7 +9,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 {
     /// <summary>
     /// Used to parse complex field lists that contain expressions and are aliases, such as SELECT and GROUP BY fields.
-    /// Yes, group by fields do not need aliases, but I opted to not duplicate code.
     /// </summary>
     public static class StaticParserFieldList
     {

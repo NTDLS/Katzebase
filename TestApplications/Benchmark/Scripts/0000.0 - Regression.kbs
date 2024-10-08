@@ -113,6 +113,50 @@ FROM
 WHERE
 	Name = 'French'
 	OR ColumnWhichDoesNotExist = 'French'
+	
+--Test GROUP column which does not exist.
+SELECT
+	ColumnWhichDoesNotExist,
+	Count(0) as CountOf
+FROM
+	WordList:Language
+WHERE
+	Name = 'French'
+GROUP BY
+	ColumnWhichDoesNotExist
+
+
+--Test GROUP column which does not exist.
+SELECT
+	Count(0) as CountOf
+FROM
+	WordList:Language
+WHERE
+	Name = 'French'
+GROUP BY
+	ColumnWhichDoesNotExist
+	
+--Test GROUP and ORDER column which does not exist.
+SELECT
+	Count(0) as CountOf
+FROM
+	WordList:Language
+WHERE
+	Name = 'French'
+GROUP BY
+	ColumnWhichDoesNotExist	
+ORDER BY
+	ColumnWhichDoesNotExist
+	
+--Test ORDER column which does not exist.
+SELECT
+	*
+FROM
+	WordList:Language
+WHERE
+	Name = 'French'
+ORDER BY
+	ColumnWhichDoesNotExist	
 
 --Test GROUP BY with ORDER BY using aggregate ORDER BY.
 SELECT

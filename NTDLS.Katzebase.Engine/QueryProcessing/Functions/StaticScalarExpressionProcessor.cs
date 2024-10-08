@@ -130,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, null);
-                            transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, fieldIdentifier.Value);
+                            transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
                             //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
                         }
                     }
@@ -245,7 +245,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                         }
                         else
                         {
-                            transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, fieldIdentifier.Value);
+                            transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
                             //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
                         }
                     }
