@@ -1,16 +1,7 @@
-/*
-EXEC ClearCacheAllocations
-begin transaction
-delete from Benchmarking:Payload_100000 where Id = 4
-rollback transaction
-*/
-
---select * from Benchmarking:Payload_1000 where Id < 10
-
-select 1,2,3 from Single
-select 2 from Single
-select 3 from Single
-select top 100 * from WordList:Word
-select 5 from Single
-select 6 from Single
-select 7 from Single
+--Test constants and simple expressions
+SELECT
+	'Hello' + ' ' + 'World' as 'Hello World',
+	'Text' + 10 + 10 as 'Text 20',
+	10 + 10 + 'Text' as '20 Text',
+FROM
+	Single

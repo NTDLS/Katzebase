@@ -1,3 +1,21 @@
+--Test constants and simple expressions
+SELECT
+	10,
+	10 + 10,
+	'Text',
+	'Hello' + ' ' + 'World',
+	'Text' + 10 + 10,
+	10 + 10 + 'Text',
+	
+	10 as 10,
+	10 + 10 as 20,
+	'Text' as Text,
+	'Hello' + ' ' + 'World' as 'Hello World',
+	'Text' + 10 + 10 as 'Text 20',
+	10 + 10 + 'Text' as '20 Text',
+FROM
+	Single
+
 --Test 'SELECT *'
 SELECT
 	*

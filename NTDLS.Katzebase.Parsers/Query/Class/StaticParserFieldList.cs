@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     try
                     {
-                        string fieldAlias = string.Empty;
+                        string? fieldAlias = null;
                         string suffixRemovedFieldText = string.Empty;
 
                         if (queryFields is OrderByFieldCollection sortFieldCollection)
@@ -71,13 +71,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                             {
                                 //Get the next token after the "as".
                                 var fieldAliasTokenizer = new TokenizerSlim(field.Substring(aliasIndex + 4).Trim());
-                                fieldAlias = fieldAliasTokenizer.EatGetNext();
+                                fieldAlias = tokenizer.ResolveLiteral(fieldAliasTokenizer.EatGetNext());
 
                                 //Make sure that the single token was the entire alias, otherwise we have a syntax error.
                                 if (!fieldAliasTokenizer.IsExhausted())
                                 {
-                                    //Breaks here when "comma" is missing. Error line number is INCORRECT.
-
                                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected end of alias, found: [{fieldAliasTokenizer.Remainder()}].");
                                 }
                             }
