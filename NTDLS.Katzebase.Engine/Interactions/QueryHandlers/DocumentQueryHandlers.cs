@@ -204,7 +204,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByPreparedQuery(
                     _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
 
-                var updatedDocumentPointers = new HashSet<DocumentPointer>();
+                var updatedDocuments = new Dictionary<DocumentPointer, KbInsensitiveDictionary<string?>>();
+
+                var listOfModifiedFields = new HashSet<string>();
 
                 foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
                 {
@@ -226,12 +228,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         {
                             physicalDocument.Elements.Add(updateValue.Alias, collapsedValue);
                         }
+
+                        listOfModifiedFields.Add(updateValue.Alias);
                     }
 
-                    updatedDocumentPointers.Add(schemaIntersectionRowDocumentIdentifier.Key);
+                    updatedDocuments.Add(schemaIntersectionRowDocumentIdentifier.Key, physicalDocument.Elements);
                 }
 
-                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers);
+                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count());
             }

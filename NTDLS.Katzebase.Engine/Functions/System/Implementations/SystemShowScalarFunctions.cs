@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using System.Text;
+using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {

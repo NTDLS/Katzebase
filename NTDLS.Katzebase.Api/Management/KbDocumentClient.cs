@@ -44,38 +44,6 @@ namespace NTDLS.Katzebase.Api.Management
         }
 
         /// <summary>
-        /// Deletes a document in the given schema by its Id.
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="id"></param>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="KbAPIResponseException"></exception>
-        public void DeleteById(string schema, uint id, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryDocumentDeleteById(_client.ServerConnectionId, schema, id), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
-        }
-
-        /// <summary>
-        /// Lists the documents within a given schema.
-        /// </summary>
-        public KbQueryDocumentCatalogReply Catalog(string schema, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryDocumentCatalog(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
-        }
-
-        /// <summary>
         /// Lists the documents within a given schema with their values.
         /// </summary>
         /// <param name="schema"></param>

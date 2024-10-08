@@ -1,8 +1,15 @@
-﻿using NTDLS.Katzebase.Api.Payloads;
+﻿using Newtonsoft.Json;
+using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Api.Payloads.RoundTrip;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
+using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.ReliableMessaging;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -112,69 +119,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             catch (Exception ex)
             {
                 LogManager.Error($"Failed to execute document store for process id {session.ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Returns a list of all documents in a schema. Just the IDs, no values.
-        /// </summary>
-        /// <param name="processId"></param>
-        /// <param name="schema"></param>
-        /// <returns></returns>
-        /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbQueryDocumentCatalogReply DocumentCatalog(RmContext context, KbQueryDocumentCatalog param)
-        {
-            var session = _core.Sessions.GetSession(context.ConnectionId);
-#if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            LogManager.Debug(Thread.CurrentThread.Name);
-#endif
-            try
-            {
-                using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = new KbQueryDocumentCatalogReply();
-                var documentPointers = _core.Documents.AcquireDocumentPointers(
-                    transactionReference.Transaction, param.Schema, LockOperation.Read).ToList();
-
-                result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, documentPointers.Count);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to execute document catalog for process id {session.ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Deletes a document by its internal document id.
-        /// </summary>
-        public KbQueryDocumentDeleteByIdReply DeleteDocumentById(RmContext context, KbQueryDocumentDeleteById param)
-        {
-            var session = _core.Sessions.GetSession(context.ConnectionId);
-#if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            LogManager.Debug(Thread.CurrentThread.Name);
-#endif
-            try
-            {
-                using var transactionReference = _core.Transactions.APIAcquire(session);
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
-
-                var documentPointers = _core.Documents.AcquireDocumentPointers(
-                    transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
-
-                var pointersToDelete = documentPointers.Where(o => o.DocumentId == param.Id);
-
-                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
-
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(
-                    new KbQueryDocumentDeleteByIdReply(), documentPointers.Count);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

@@ -892,8 +892,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Updates an index entry for a single document into each index in the schema.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="schema"></param>
-        /// <param name="document"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="documents"></param>
+        /// <param name="listOfModifiedFields">When not null, is used to limit the work needed to be done for index updates.</param>
         internal void UpdateDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema,
             Dictionary<DocumentPointer, PhysicalDocument> documents, IEnumerable<string>? listOfModifiedFields)
         {

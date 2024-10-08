@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -252,31 +253,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documents">List of document pointers and their new content.</param>
-        /// <param name="listOfModifiedFields">A list of the fields that were modified so that we
-        /// can filter the indexes we need to update.</param>
+        /// <param name="listOfModifiedFields">When not null, is used to limit the work needed to be done for index updates.</param>
         internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            HashSet<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
+            Dictionary<DocumentPointer, KbInsensitiveDictionary<string?>> documentContent, IEnumerable<string>? listOfModifiedFields = null)
         {
             try
             {
-                var physicalDocuments = new Dictionary<DocumentPointer, PhysicalDocument>();
+                var updatedDocuments = new Dictionary<DocumentPointer, PhysicalDocument>();
 
-                foreach (var documentPointer in updatedDocumentPointers)
+                foreach (var updatedDocument in documentContent)
                 {
-                    var documentPage = AcquireDocumentPage(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
+                    var physicaDocumentPage = AcquireDocumentPage(transaction, physicalSchema, updatedDocument.Key.PageNumber, LockOperation.Write);
 
-                    var physicalDocument = documentPage.Documents[documentPointer.DocumentId];
+                    var physicalDocument = physicaDocumentPage.Documents[updatedDocument.Key.DocumentId];
                     physicalDocument.Modified = DateTime.UtcNow;
-                    documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
+                    physicalDocument.Elements = updatedDocument.Value;
+
+                    updatedDocuments.Add(updatedDocument.Key, physicalDocument);
 
                     //Save the document page:
-                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
-
-                    physicalDocuments.Add(documentPointer, physicalDocument);
+                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(updatedDocument.Key), physicaDocumentPage);
                 }
 
                 //Update all of the indexes that reference the document.
-                _core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments, listOfModifiedFields);
+                _core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
             }
             catch (Exception ex)
             {
