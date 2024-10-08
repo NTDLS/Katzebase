@@ -549,6 +549,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     throw new KbEngineException("Aggregate function found during scalar materialization.");
                                 }
                             }
+                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
+                            }
+                            else if (field.Expression is QueryFieldConstantString constantString)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                materializedRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
+                            }
+                            else
+                            {
+                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
+                            }
                         }
 
                         #region Collapse all values needed for sorting.
@@ -593,6 +607,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 {
                                     throw new KbEngineException("Aggregate function found during scalar materialization sort.");
                                 }
+                            }
+                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                materializedRow.OrderByValues.Add(field.Alias, rawValue);
+                            }
+                            else if (field.Expression is QueryFieldConstantString constantString)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                materializedRow.OrderByValues.Add(field.Alias, rawValue);
+                            }
+                            else
+                            {
+                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
                             }
                         }
 
@@ -695,6 +723,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     //This value will be filled in during aggregation function execution.
                                 }
                             }
+                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
+                            }
+                            else if (field.Expression is QueryFieldConstantString constantString)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                groupRow.Values.InsertWithPadding(field.Alias, field.Ordinal, rawValue);
+                            }
+                            else
+                            {
+                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
+                            }
                         }
 
                         #endregion
@@ -741,6 +783,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 {
                                     //Skip this, it will be filled in during aggregation function execution.
                                 }
+                            }
+                            else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                groupRow.OrderByValues.Add(field.Alias, rawValue);
+                            }
+                            else if (field.Expression is QueryFieldConstantString constantString)
+                            {
+                                var rawValue = query.Batch.GetLiteralValue(field.Expression.Value);
+                                groupRow.OrderByValues.Add(field.Alias, rawValue);
+                            }
+                            else
+                            {
+                                throw new KbNotImplementedException($"Type was not handled: [{field.Expression.GetType()}].");
                             }
                         }
 
