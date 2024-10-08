@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Management.Controls;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes
@@ -9,10 +10,10 @@ namespace NTDLS.Katzebase.Management.Classes
     public class ServerExplorerManager
     {
         public FormStudio StudioForm { get; private set; }
-        public TreeView ServerExplorerTree { get; set; }
+        public DoubleBufferedTreeView ServerExplorerTree { get; set; }
         public ServerExplorerNode? LastSelectedNode { get; set; }
 
-        public ServerExplorerManager(FormStudio studioForm, TreeView serverExplorerTree)
+        public ServerExplorerManager(FormStudio studioForm, DoubleBufferedTreeView serverExplorerTree)
         {
             StudioForm = studioForm;
             ServerExplorerTree = serverExplorerTree;

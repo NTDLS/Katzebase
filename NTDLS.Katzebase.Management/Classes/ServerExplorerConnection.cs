@@ -27,6 +27,8 @@ namespace NTDLS.Katzebase.Management.Classes
 
         public ServerExplorerConnection(FormStudio formStudio, ServerExplorerManager serverExplorerManager, string serverAddress, int serverPort, string username, string passwordHash)
         {
+            StudioForm = formStudio;
+
             ServerExplorerManager = serverExplorerManager;
             ServerAddress = serverAddress;
             ServerPort = serverPort;
@@ -80,34 +82,43 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerManager.ServerExplorerTree.Invoke(() =>
             {
-                var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
-                if (parentSchemaNode != null && parentSchemaNode.Schema != null)
+                try
                 {
-                    var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
-                    if (existingNode != null)
+                    ServerExplorerManager.ServerExplorerTree.SuspendLayout();
+
+                    var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
+                    if (parentSchemaNode != null && parentSchemaNode.Schema != null)
                     {
-                        return;
+                        var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                        if (existingNode != null)
+                        {
+                            return;
+                        }
+
+                        var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
+                        parentSchemaNode.Nodes.Add(newSchemaNode);
+
+                        var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
+                        newSchemaNode.Nodes.Add(schemaIndexFolderNode);
+
+                        foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
+                        {
+                            var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
+                            schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                        }
+
+                        if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
+                        {
+                            //Expand the root schema node when we add the first node.
+                            parentSchemaNode.Parent.Expand();
+                            parentSchemaNode.Expand();
+                        }
+                        ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
                     }
-
-                    var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
-                    parentSchemaNode.Nodes.Add(newSchemaNode);
-
-                    var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
-                    newSchemaNode.Nodes.Add(schemaIndexFolderNode);
-
-                    foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
-                    {
-                        var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
-                        schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
-                    }
-
-                    if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
-                    {
-                        //Expand the root schema node when we add the first node.
-                        parentSchemaNode.Parent.Expand();
-                        parentSchemaNode.Expand();
-                    }
-                    ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
+                }
+                finally
+                {
+                    ServerExplorerManager.ServerExplorerTree.ResumeLayout();
                 }
             });
         }
@@ -116,65 +127,74 @@ namespace NTDLS.Katzebase.Management.Classes
         {
             ServerExplorerManager.ServerExplorerTree.Invoke(() =>
             {
-                var existingSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
-                if (existingSchemaNode != null)
+                try
                 {
-                    //Update basic schema information.
-                    bool schemaNameChanged = existingSchemaNode.Text != schemaItem.Schema.Name;
-                    existingSchemaNode.Schema = schemaItem.Schema;
+                    ServerExplorerManager.ServerExplorerTree.SuspendLayout();
 
-                    if (schemaNameChanged)
+                    var existingSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                    if (existingSchemaNode != null)
                     {
-                        existingSchemaNode.Text = schemaItem.Schema.Name;
-                        ServerExplorerManager.SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
-                    }
+                        //Update basic schema information.
+                        bool schemaNameChanged = existingSchemaNode.Text != schemaItem.Schema.Name;
+                        existingSchemaNode.Schema = schemaItem.Schema;
 
-                    var schemaIndexFolderNode = ServerExplorerManager.GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaIndexFolder);
-                    if (schemaIndexFolderNode != null)
-                    {
-                        var existingSchemaIndexNodes = ServerExplorerManager.GetSingleLevelChildNodesOfType(schemaIndexFolderNode, ServerNodeType.SchemaIndex);
-
-                        bool indexNameChanged = false;
-                        bool indexAdded = false;
-
-                        //Add/update indexes to the tree.
-                        foreach (var serverSchemaIndex in schemaItem.Indexes)
+                        if (schemaNameChanged)
                         {
-                            var existingSchemaIndexNode = existingSchemaIndexNodes.FirstOrDefault(o => o.SchemaIndex?.Id == serverSchemaIndex.Id);
-                            if (existingSchemaIndexNode == null)
-                            {
-                                //Add newly discovered schema index to the tree.
-                                var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(serverSchemaIndex);
-                                schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
-                                indexAdded = true;
-                            }
-                            else
-                            {
-                                //Refresh existing schema index in the tree.
-                                indexNameChanged = indexNameChanged || (existingSchemaIndexNode.Text != serverSchemaIndex.Name);
+                            existingSchemaNode.Text = schemaItem.Schema.Name;
+                            ServerExplorerManager.SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
+                        }
 
-                                if (indexNameChanged)
+                        var schemaIndexFolderNode = ServerExplorerManager.GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaIndexFolder);
+                        if (schemaIndexFolderNode != null)
+                        {
+                            var existingSchemaIndexNodes = ServerExplorerManager.GetSingleLevelChildNodesOfType(schemaIndexFolderNode, ServerNodeType.SchemaIndex);
+
+                            bool indexNameChanged = false;
+                            bool indexAdded = false;
+
+                            //Add/update indexes to the tree.
+                            foreach (var serverSchemaIndex in schemaItem.Indexes)
+                            {
+                                var existingSchemaIndexNode = existingSchemaIndexNodes.FirstOrDefault(o => o.SchemaIndex?.Id == serverSchemaIndex.Id);
+                                if (existingSchemaIndexNode == null)
                                 {
-                                    existingSchemaIndexNode.Text = serverSchemaIndex.Name;
+                                    //Add newly discovered schema index to the tree.
+                                    var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(serverSchemaIndex);
+                                    schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                                    indexAdded = true;
                                 }
-                                existingSchemaIndexNode.SchemaIndex = serverSchemaIndex;
-                            }
-                        }
+                                else
+                                {
+                                    //Refresh existing schema index in the tree.
+                                    indexNameChanged = indexNameChanged || (existingSchemaIndexNode.Text != serverSchemaIndex.Name);
 
-                        //Remove indexes from the tree which are no longer present on the server.
-                        foreach (var existingSchemaIndexNode in existingSchemaIndexNodes)
-                        {
-                            if (schemaItem.Indexes.Any(o => o.Id == existingSchemaIndexNode.SchemaIndex?.Id) == false)
+                                    if (indexNameChanged)
+                                    {
+                                        existingSchemaIndexNode.Text = serverSchemaIndex.Name;
+                                    }
+                                    existingSchemaIndexNode.SchemaIndex = serverSchemaIndex;
+                                }
+                            }
+
+                            //Remove indexes from the tree which are no longer present on the server.
+                            foreach (var existingSchemaIndexNode in existingSchemaIndexNodes)
                             {
-                                schemaIndexFolderNode.Nodes.Remove(existingSchemaIndexNode);
+                                if (schemaItem.Indexes.Any(o => o.Id == existingSchemaIndexNode.SchemaIndex?.Id) == false)
+                                {
+                                    schemaIndexFolderNode.Nodes.Remove(existingSchemaIndexNode);
+                                }
                             }
-                        }
 
-                        if (indexNameChanged || indexAdded)
-                        {
-                            ServerExplorerManager.SortChildNodes(schemaIndexFolderNode);
+                            if (indexNameChanged || indexAdded)
+                            {
+                                ServerExplorerManager.SortChildNodes(schemaIndexFolderNode);
+                            }
                         }
                     }
+                }
+                finally
+                {
+                    ServerExplorerManager.ServerExplorerTree.ResumeLayout();
                 }
             });
         }

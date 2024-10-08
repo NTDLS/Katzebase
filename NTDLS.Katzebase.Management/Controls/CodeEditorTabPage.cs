@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Management.Classes;
 using System.Text;
-using System.Windows.Forms;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Management.Controls
@@ -644,7 +643,7 @@ namespace NTDLS.Katzebase.Management.Controls
                                 var fieldValue = row.Values[fieldIndex];
                                 rowValues.Add(fieldValue ?? string.Empty);
                             }
-                            outputGrid.Rows.Add(row.Values.ToArray()); 
+                            outputGrid.Rows.Add(row.Values.ToArray());
 
                             maxRowsToLoad--;
                             if (maxRowsToLoad <= 0)
@@ -652,6 +651,8 @@ namespace NTDLS.Katzebase.Management.Controls
                                 break;
                             }
                         }
+
+                        outputGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                     }
                     finally
                     {

@@ -10,7 +10,7 @@ rollback transaction
 select 1,2,3 from Single
 select 2 from Single
 select 3 from Single
-select 4 from Single
+select top 100 * from WordList:Word
 select 5 from Single
 select 6 from Single
 select 7 from Single

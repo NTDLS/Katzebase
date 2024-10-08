@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Management
+﻿using NTDLS.Katzebase.Management.Controls;
+
+namespace NTDLS.Katzebase.Management
 {
     partial class FormStudio
     {
@@ -30,7 +32,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStudio));
             splitContainerObjectExplorer = new SplitContainer();
-            treeViewServerExplorer = new TreeView();
+            treeViewServerExplorer = new DoubleBufferedTreeView();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
             treeViewMacros = new TreeView();
@@ -661,7 +663,7 @@
         private SplitContainer splitContainerObjectExplorer;
         private TabControl tabControlBody;
         private ToolStrip toolStripButtons;
-        private TreeView treeViewServerExplorer;
+        private DoubleBufferedTreeView treeViewServerExplorer;
         private ToolStripButton toolStripButtonSave;
         private ToolStripButton toolStripButtonSaveAll;
         private ToolStripButton toolStripButtonCloseCurrentTab;

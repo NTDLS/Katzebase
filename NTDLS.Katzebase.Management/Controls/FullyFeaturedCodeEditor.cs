@@ -121,9 +121,27 @@ namespace NTDLS.Katzebase.Management.Controls
 
         public void PerformStaticAnalysis()
         {
-            if (!CodeTabPage.IsSelected)
+            string codeText = string.Empty;
+
+            if (CodeTabPage.InvokeRequired)
             {
-                return;
+                var result = CodeTabPage.Invoke(new Func<(bool selected, string Text)>(() =>
+                    (CodeTabPage.IsSelected, this.Text)
+                ));
+
+                if (!result.selected)
+                {
+                    return;
+                }
+                codeText = result.Text;
+            }
+            else
+            {
+                if (CodeTabPage.IsSelected == false)
+                {
+                    return;
+                }
+                codeText = Text;
             }
 
             lock (this)
@@ -135,9 +153,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 _workingOnLastRequest = true;
             }
 
-            var codeText = Text;
-
-            Threading.StartThread((Threading.StartThreadDelegate)(() =>
+            Threading.StartThread(() =>
             {
                 var actions = new List<Action>();
 
@@ -185,7 +201,7 @@ namespace NTDLS.Katzebase.Management.Controls
                     TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
                     _workingOnLastRequest = false;
                 });
-            }));
+            });
         }
 
         /// <summary>
