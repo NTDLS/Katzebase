@@ -195,9 +195,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaAlias);
-                var firstSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
+                var targetSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema.Name, LockOperation.Read);
 
                 var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
@@ -206,38 +206,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var updatedDocuments = new Dictionary<DocumentPointer, KbInsensitiveDictionary<string?>>();
 
-                var listOfModifiedFields = new HashSet<string>();
-
                 foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
                 {
-                    var physicalDocument = _core.Documents.AcquireDocument(
-                        transactionReference.Transaction, physicalSchema, schemaIntersectionRowDocumentIdentifier.Key, LockOperation.Write);
+                    var schemaElements = schemaIntersectionRowDocumentIdentifier.Value.Flatten();
+
+                    var modifiedElements = new KbInsensitiveDictionary<string?>();
 
                     foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
                     {
-                        var schemaElements = schemaIntersectionRowDocumentIdentifier.Value.Flatten();
-
                         var collapsedValue = updateValue.Expression.CollapseScalarQueryField(
                             transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, schemaElements);
 
-                        if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
-                        {
-                            physicalDocument.Elements[updateValue.Alias] = collapsedValue;
-                        }
-                        else
-                        {
-                            physicalDocument.Elements.Add(updateValue.Alias, collapsedValue);
-                        }
-
-                        listOfModifiedFields.Add(updateValue.Alias);
+                        modifiedElements.Add(updateValue.Alias, collapsedValue);
                     }
 
-                    updatedDocuments.Add(schemaIntersectionRowDocumentIdentifier.Key, physicalDocument.Elements);
+                    updatedDocuments.Add(schemaIntersectionRowDocumentIdentifier.Key, modifiedElements);
                 }
 
-                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
+                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocuments);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count);
             }
             catch (Exception ex)
             {
