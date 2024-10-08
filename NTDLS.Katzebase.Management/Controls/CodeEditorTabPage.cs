@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Management.Classes;
 using System.Text;
+using System.Windows.Forms;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Management.Controls
@@ -318,7 +319,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 PreExecuteEvent(this);
 
-                foreach (var dgv in ResultsPanel.Controls.OfType<DoubleBufferedListView>().ToList())
+                foreach (var dgv in ResultsPanel.Controls.OfType<DoubleBufferedDataGridView>().ToList())
                 {
                     dgv.Dispose();
                 }
@@ -381,7 +382,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 if (TabControlParent.SelectedTab == tabFilePage)
                 {
-                    if (ResultsPanel.Controls.OfType<DoubleBufferedListView>().Any())
+                    if (ResultsPanel.Controls.OfType<DoubleBufferedDataGridView>().Any())
                     {
                         BottomTabControl.SelectedTab = ResultsTab;
                     }
@@ -569,29 +570,29 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        private List<DoubleBufferedListView> AddEvenlyDistributedListViews(int listViewCount)
+        private List<DoubleBufferedDataGridView> AddDataGridViews(int countOfGrids)
         {
-            var results = new List<DoubleBufferedListView>();
+            var results = new List<DoubleBufferedDataGridView>();
 
-            foreach (var dgv in ResultsPanel.Controls.OfType<DoubleBufferedListView>().ToList())
+            foreach (var dgv in ResultsPanel.Controls.OfType<DoubleBufferedDataGridView>().ToList())
             {
                 dgv.Dispose();
             }
             ResultsPanel.Controls.Clear();
 
-            int listViewHeight = 150;
+            int gridHeight = 150;
 
-            for (int i = 0; i < listViewCount; i++)
+            for (int i = 0; i < countOfGrids; i++)
             {
-                var listView = new DoubleBufferedListView
+                var dataGridView = new DoubleBufferedDataGridView
                 {
-                    Dock = listViewCount == 1 ? DockStyle.Fill : DockStyle.Top,
-                    Height = listViewHeight
+                    Dock = countOfGrids == 1 ? DockStyle.Fill : DockStyle.Top,
+                    Height = gridHeight
                 };
 
-                results.Add(listView);
+                results.Add(dataGridView);
 
-                ResultsPanel.Controls.Add(listView);
+                ResultsPanel.Controls.Add(dataGridView);
             }
 
             ResultsPanel.Dock = DockStyle.Fill;
@@ -610,7 +611,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
             var results = resultCollection.Collection.Where(o => o.Rows.Count != 0).ToList();
 
-            var outputGrids = AddEvenlyDistributedListViews(results.Count);
+            var outputGrids = AddDataGridViews(results.Count);
 
             for (int i = 0; i < results.Count; i++)
             {
@@ -624,76 +625,43 @@ namespace NTDLS.Katzebase.Management.Controls
                         continue;
                     }
 
-                    outputGrid.SuspendLayout();
-                    outputGrid.BeginUpdate();
-
-                    foreach (var field in result.Fields)
+                    try
                     {
-                        outputGrid.Columns.Add(field.Name, field.Name);
-                    }
+                        outputGrid.SuspendLayout();
 
-                    int maxRowsToLoad = Program.Settings.QueryMaximumRows;
-                    foreach (var row in result.Rows)
-                    {
-                        var rowValues = new List<string>();
-
-                        for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
+                        foreach (var field in result.Fields)
                         {
-                            var fieldValue = row.Values[fieldIndex];
-                            rowValues.Add(fieldValue ?? string.Empty);
+                            outputGrid.Columns.Add(field.Name, field.Name);
                         }
 
-                        var item = new ListViewItem(rowValues.ToArray());
-
-                        outputGrid.Items.Add(item);
-
-                        maxRowsToLoad--;
-                        if (maxRowsToLoad <= 0)
+                        int maxRowsToLoad = Program.Settings.QueryMaximumRows;
+                        foreach (var row in result.Rows)
                         {
-                            break;
+                            var rowValues = new List<string>();
+
+                            for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
+                            {
+                                var fieldValue = row.Values[fieldIndex];
+                                rowValues.Add(fieldValue ?? string.Empty);
+                            }
+                            outputGrid.Rows.Add(row.Values.ToArray()); 
+
+                            maxRowsToLoad--;
+                            if (maxRowsToLoad <= 0)
+                            {
+                                break;
+                            }
                         }
                     }
-
-                    ResizeListViewColumns(outputGrid);
-
-                    outputGrid.ResumeLayout();
-                    outputGrid.EndUpdate();
+                    finally
+                    {
+                        outputGrid.ResumeLayout();
+                    }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error: {ex.Message}", FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            }
-        }
-
-        private void ResizeListViewColumns(ListView listView)
-        {
-            const int maxWidth = 500;
-
-            foreach (ColumnHeader column in listView.Columns)
-            {
-                column.Width = -2; // Resize to fit content initially
-
-                // Get the width of the column header
-                int headerWidth = TextRenderer.MeasureText(column.Text, listView.Font).Width + 10; // Adding some padding
-
-                // Get the maximum width of the column content
-                int contentWidth = 0;
-                foreach (ListViewItem item in listView.Items)
-                {
-                    int cellWidth = TextRenderer.MeasureText(item.SubItems[column.Index].Text, listView.Font).Width + 10; // Adding some padding
-                    if (cellWidth > contentWidth)
-                    {
-                        contentWidth = cellWidth;
-                    }
-                }
-
-                // Determine the final column width
-                int finalWidth = Math.Max(headerWidth, contentWidth);
-                finalWidth = Math.Min(finalWidth, maxWidth);
-
-                // Set the column width
-                column.Width = finalWidth;
             }
         }
 

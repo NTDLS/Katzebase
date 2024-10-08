@@ -3,20 +3,23 @@ using System.Text;
 
 namespace NTDLS.Katzebase.Management.Controls
 {
-    internal class DoubleBufferedListView : ListView
+    internal class DoubleBufferedDataGridView : DataGridView
     {
-        private ListViewItem? _selectedItem;
-        private ListViewItem.ListViewSubItem? _selectedSubItem;
+        private DataGridViewRow? _selectedRow;
+        private DataGridViewTextBoxCell? _selectedCell;
         private readonly ContextMenuStrip _contextMenu;
 
-        public DoubleBufferedListView()
+        public DoubleBufferedDataGridView()
         {
             DoubleBuffered = true;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+
+            AllowUserToAddRows = false;
+            AllowUserToDeleteRows = false;
+            AllowUserToResizeRows = false;
+            ReadOnly = true;
+
             UpdateStyles();
-            GridLines = true;
-            FullRowSelect = false;
-            View = View.Details;
 
             _contextMenu = new ContextMenuStrip();
             var copyCellValue = new ToolStripMenuItem("Copy Cell to Clipboard", null, CopyCell_Click);
@@ -28,10 +31,10 @@ namespace NTDLS.Katzebase.Management.Controls
             _contextMenu.Items.AddRange([copyCellValue, copyRowValues, new ToolStripSeparator(),
                 copyGridValues, copyGridValuesWithHeader, new ToolStripSeparator(), exportToCSV]);
 
-            MouseUp += ListView_MouseUp;
+            MouseUp += DataGridView_MouseUp;
         }
 
-        private void ListView_MouseUp(object? sender, MouseEventArgs e)
+        private void DataGridView_MouseUp(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
             {
@@ -40,16 +43,16 @@ namespace NTDLS.Katzebase.Management.Controls
 
             try
             {
-                _selectedItem = null;
-                _selectedSubItem = null;
+                _selectedRow = null;
+                _selectedCell = null;
 
-                var hitTest = HitTest(e.Location);
-                if (hitTest.Item != null && hitTest.SubItem != null)
+                var hitTest = HitTest(e.X, e.Y);
+
+                if (hitTest.RowIndex >= 0 && hitTest.ColumnIndex >= 0)
                 {
-                    _selectedItem = hitTest.Item;
-                    _selectedSubItem = hitTest.SubItem;
-
-                    if (hitTest.Item != null)
+                    _selectedRow = Rows[hitTest.RowIndex];
+                    _selectedCell = _selectedRow.Cells[hitTest.ColumnIndex] as DataGridViewTextBoxCell;
+                    if (_selectedCell != null)
                     {
                         _contextMenu.Show(this, e.Location);
                     }
@@ -67,9 +70,9 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             try
             {
-                if (_selectedSubItem != null)
+                if (_selectedCell != null)
                 {
-                    Clipboard.SetText(_selectedSubItem.Text);
+                    Clipboard.SetText(_selectedCell.Value?.ToString() ?? string.Empty);
                 }
             }
             catch (Exception ex)
@@ -86,12 +89,12 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             try
             {
-                if (_selectedItem != null)
+                if (_selectedRow != null)
                 {
                     var sb = new StringBuilder();
-                    foreach (ListViewItem.ListViewSubItem subItem in _selectedItem.SubItems)
+                    foreach (DataGridViewTextBoxCell cell in _selectedRow.Cells)
                     {
-                        sb.Append(subItem.Text).Append('\t');
+                        sb.Append(cell.Value?.ToString() ?? string.Empty).Append('\t');
                     }
                     Clipboard.SetText(sb.ToString().TrimEnd('\t'));
                 }
@@ -111,11 +114,11 @@ namespace NTDLS.Katzebase.Management.Controls
             try
             {
                 var sb = new StringBuilder();
-                foreach (ListViewItem item in Items)
+                foreach (DataGridViewRow row in Rows)
                 {
-                    foreach (ListViewItem.ListViewSubItem subItem in item.SubItems)
+                    foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        sb.Append(subItem.Text).Append("\t");
+                        sb.Append(cell.Value?.ToString()).Append('\t');
                     }
                     sb.AppendLine();
                 }
@@ -138,17 +141,17 @@ namespace NTDLS.Katzebase.Management.Controls
             {
                 var sb = new StringBuilder();
 
-                foreach (ColumnHeader column in Columns)
+                foreach (DataGridViewColumn column in Columns)
                 {
-                    sb.Append(column.Text).Append("\t");
+                    sb.Append(column.Name).Append("\t");
                 }
                 sb.AppendLine();
 
-                foreach (ListViewItem item in Items)
+                foreach (DataGridViewRow row in Rows)
                 {
-                    foreach (ListViewItem.ListViewSubItem subItem in item.SubItems)
+                    foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        sb.Append(subItem.Text).Append("\t");
+                        sb.Append(cell.Value?.ToString()).Append("\t");
                     }
                     sb.AppendLine();
                 }
@@ -187,19 +190,19 @@ namespace NTDLS.Katzebase.Management.Controls
                 var sb = new StringBuilder();
 
                 // Write column headers
-                foreach (ColumnHeader column in Columns)
+                foreach (DataGridViewColumn column in Columns)
                 {
-                    sb.Append(EscapeCsvValue(column.Text)).Append(",");
+                    sb.Append(EscapeCsvValue(column.Name)).Append(",");
                 }
                 sb.Length--;  // Remove the last extra comma
                 sb.AppendLine();
 
                 // Write row data
-                foreach (ListViewItem item in Items)
+                foreach (DataGridViewRow row in Rows)
                 {
-                    foreach (ListViewItem.ListViewSubItem subItem in item.SubItems)
+                    foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        sb.Append(EscapeCsvValue(subItem.Text)).Append(",");
+                        sb.Append(EscapeCsvValue(cell.Value?.ToString())).Append(",");
                     }
                     sb.Length--;  // Remove the last extra comma
                     sb.AppendLine();
@@ -219,8 +222,13 @@ namespace NTDLS.Katzebase.Management.Controls
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        private string EscapeCsvValue(string value)
+        private string EscapeCsvValue(string? value)
         {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
             if (value.Contains('\"') || value.Contains(',') || value.Contains('\n') || value.Contains('\r'))
             {
                 // Escape double quotes by doubling them, and wrap the value in double quotes

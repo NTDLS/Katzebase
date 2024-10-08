@@ -7,7 +7,7 @@ rollback transaction
 
 --select * from Benchmarking:Payload_1000 where Id < 10
 
-select 1 from Single
+select 1,2,3 from Single
 select 2 from Single
 select 3 from Single
 select 4 from Single
