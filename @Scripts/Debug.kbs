@@ -7,8 +7,10 @@ rollback transaction
 
 --select * from Benchmarking:Payload_1000 where Id < 10
 
-update Benchmarking:Payload_1000
-set
-Body = 'Touche'
-where
-Id = 9
+select 1 from Single
+select 2 from Single
+select 3 from Single
+select 4 from Single
+select 5 from Single
+select 6 from Single
+select 7 from Single

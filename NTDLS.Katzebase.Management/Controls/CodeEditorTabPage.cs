@@ -142,11 +142,6 @@ namespace NTDLS.Katzebase.Management.Controls
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
 
-            BottomTabControl.Resize += (object? sender, EventArgs e) =>
-            {
-                EvenlyDistributedListViews();
-            };
-
             Controls.Add(TabSplitContainer);
 
             var editorContainer = new System.Windows.Forms.Integration.ElementHost
@@ -574,43 +569,7 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
-        internal void EvenlyDistributedListViews()
-        {
-            var grids = ResultsPanel.Controls.OfType<DoubleBufferedListView>().ToList();
-
-            int spacing = 10;
-            int totalSpacing = (grids.Count - 1) * spacing;
-            int availableHeight = (BottomTabControl.Height - totalSpacing) - 20;
-            int gridTop = 0;
-
-            int gridHeight = availableHeight / 2;
-
-            if (gridHeight < 100)
-            {
-                gridHeight = 100;
-            }
-
-            foreach (var grid in grids)
-            {
-                //grid.Width = BottomTabControl.Width;
-
-                if (grids.Count > 1)
-                {
-                    grid.Dock = DockStyle.Top;
-                }
-                else
-                {
-                    grid.Dock = DockStyle.Fill;
-                }
-
-                grid.Top = gridTop;
-                grid.Height = availableHeight / grids.Count;
-
-                gridTop += grid.Height + spacing;
-            }
-        }
-
-        private List<DoubleBufferedListView> AddEvenlyDistributedListViews(int numListViews)
+        private List<DoubleBufferedListView> AddEvenlyDistributedListViews(int listViewCount)
         {
             var results = new List<DoubleBufferedListView>();
 
@@ -620,15 +579,22 @@ namespace NTDLS.Katzebase.Management.Controls
             }
             ResultsPanel.Controls.Clear();
 
-            for (int i = 0; i < numListViews; i++)
+            int listViewHeight = 150;
+
+            for (int i = 0; i < listViewCount; i++)
             {
-                var ListView = new DoubleBufferedListView();
-                results.Add(ListView);
-                ResultsPanel.Controls.Add(ListView);
+                var listView = new DoubleBufferedListView
+                {
+                    Dock = listViewCount == 1 ? DockStyle.Fill : DockStyle.Top,
+                    Height = listViewHeight
+                };
+
+                results.Add(listView);
+
+                ResultsPanel.Controls.Add(listView);
             }
 
-            EvenlyDistributedListViews();
-
+            ResultsPanel.Dock = DockStyle.Fill;
             results.Reverse();
 
             return results;
