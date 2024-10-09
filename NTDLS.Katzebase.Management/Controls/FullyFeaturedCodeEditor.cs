@@ -169,7 +169,6 @@ namespace NTDLS.Katzebase.Management.Controls
 
                         CodeTabPage?.StudioForm.Invoke(() =>
                         {
-
                             foreach (var query in queryBatch)
                             {
                                 actions.AddRange(StaticAnalyzer.ClientSideAnalysis(Document, _textMarkerService, schemaCache, queryBatch, query));
@@ -187,6 +186,9 @@ namespace NTDLS.Katzebase.Management.Controls
                 catch (AggregateException aggregateException)
                 {
                     RecursivelyReportExceptions(ref actions, (List<Exception>)aggregateException.InnerExceptions.ToList());
+                }
+                catch
+                {
                 }
 
                 CodeTabPage?.StudioForm.Invoke(() =>

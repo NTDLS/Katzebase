@@ -69,7 +69,10 @@
 
         private void FormFindText_Deactivate(object? sender, EventArgs e)
         {
-            Opacity = 0.75;
+            if (!Disposing)
+            {
+                Opacity = 0.75;
+            }
         }
 
         private void FormFind_FormClosing(object? sender, FormClosingEventArgs e)
