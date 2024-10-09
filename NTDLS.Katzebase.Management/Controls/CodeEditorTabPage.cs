@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Management.Controls
         public RichTextBox OutputTextbox { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Cascadia Mono", 10, FontStyle.Regular),
+            Font = new Font("Cascadia Code SemiLight", 10, FontStyle.Regular),
             WordWrap = false,
         };
 

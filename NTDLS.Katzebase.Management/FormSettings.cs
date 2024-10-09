@@ -105,7 +105,8 @@ namespace NTDLS.Katzebase.Management
                     QueryMaximumRows = textBoxMaximumRows.GetAndValidateNumeric(-1, int.MaxValue, "Maximum rows must be between [min] (no maximum) and [max]."),
                     EditorFontSize = (double)numericUpDownFontSize.Value,
                     EditorShowLineNumbers = checkBoxLineNumbers.Checked,
-                    EditorWordWrap = checkBoxWordWrap.Checked
+                    EditorWordWrap = checkBoxWordWrap.Checked,
+                    EditorFontFamily = comboBoxFont.Text
                 };
 
                 LocalUserApplicationData.SaveToDisk($"{Api.KbConstants.FriendlyName}\\Management", settings);

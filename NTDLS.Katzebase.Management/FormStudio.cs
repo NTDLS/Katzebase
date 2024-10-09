@@ -979,7 +979,7 @@ namespace NTDLS.Katzebase.Management
             {
                 foreach (var tabFilePage in tabControlBody.TabPages.OfType<CodeEditorTabPage>())
                 {
-                    //CodeTabPage.ApplyEditorSettings(tabFilePage.Editor);
+                    FullyFeaturedCodeEditor.ApplyEditorSettings(tabFilePage.Editor);
                 }
             }
         }

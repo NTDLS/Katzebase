@@ -9,6 +9,6 @@
         public bool EditorShowLineNumbers { get; set; } = true;
         public bool EditorWordWrap { get; set; } = false;
         public double EditorFontSize { get; set; } = 12.5;
-        public string EditorFontFamily { get; set; } = "Cascadia Mono";
+        public string EditorFontFamily { get; set; } = "Cascadia Code SemiLight";
     }
 }
