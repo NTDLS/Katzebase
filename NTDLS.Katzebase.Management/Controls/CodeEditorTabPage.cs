@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
             startIndex = Editor.Document.IndexOf(searchText, startIndex,
                 (Editor.Document.TextLength - startIndex) - 1,
-                caseSensitive ? StringComparison.InvariantCulture  : StringComparison.CurrentCultureIgnoreCase);
+                caseSensitive ? StringComparison.InvariantCulture : StringComparison.CurrentCultureIgnoreCase);
 
             if (startIndex >= 0)
             {
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Management.Controls
         public RichTextBox OutputTextbox { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
-            Font = new Font("Cascadia Code SemiLight", 10, FontStyle.Regular),
+            Font = new Font("Cascadia Mono SemiLight", 10, FontStyle.Regular),
             WordWrap = false,
         };
 
