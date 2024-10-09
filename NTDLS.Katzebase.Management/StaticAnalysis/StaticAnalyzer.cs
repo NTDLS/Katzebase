@@ -1,6 +1,6 @@
 ﻿using ICSharpCode.AvalonEdit.Document;
 using NTDLS.Helpers;
-using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
+using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Windows.Media;
 

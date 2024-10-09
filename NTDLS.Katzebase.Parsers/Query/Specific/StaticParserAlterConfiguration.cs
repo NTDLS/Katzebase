@@ -1,6 +1,8 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.Specific.WithOptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using NTDLS.Katzebase.Shared;
+using System.Reflection;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Specific
@@ -16,29 +18,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             tokenizer.EatIfNext("with");
 
-            var options = new ExpectedWithOptions
+            var options = new ExpectedWithOptions();
+
+            var properties = typeof(KatzebaseSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var property in properties)
             {
-                { "BaseAddress", typeof(string) },
-                { "DataRootPath", typeof(string) },
-                { "TransactionDataPath", typeof(string) },
-                { "LogDirectory", typeof(string) },
-                { "FlushLog", typeof(bool) },
-                { "DefaultDocumentPageSize", typeof(int) },
-                { "UseCompression", typeof(bool) },
-                { "HealthMonitoringEnabled", typeof(bool) },
-                { "HealthMonitoringCheckpointSeconds", typeof(int) },
-                { "HealthMonitoringInstanceLevelEnabled", typeof(bool) },
-                { "HealthMonitoringInstanceLevelTimeToLiveSeconds", typeof(int) },
-                { "MaxIdleConnectionSeconds", typeof(int) },
-                { "DefaultIndexPartitions", typeof(int) },
-                { "DeferredIOEnabled", typeof(bool) },
-                { "WriteTraceData", typeof(bool) },
-                { "CacheEnabled", typeof(bool) },
-                { "CacheMaxMemory", typeof(int) },
-                { "CacheScavengeInterval", typeof(int) },
-                { "CachePartitions", typeof(int) },
-                { "CacheSeconds", typeof(int) }
-            };
+                options.Add(property.Name, property.PropertyType);
+            }
 
             query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
 
