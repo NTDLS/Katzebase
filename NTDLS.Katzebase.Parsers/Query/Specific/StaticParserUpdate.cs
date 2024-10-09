@@ -105,13 +105,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(updateSchemaNameOrAlias)).FirstOrDefault()
                     ?? throw new KbParserException(query.ScriptLine, $"Update schema now found in query: [{updateSchemaNameOrAlias}].");
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchemaAlias, targetSchema.Alias);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, targetSchema.Alias);
             }
             else
             {
                 //The query did not have a from, so the schema specified on the UPDATE line is the schema name.
                 query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), updateSchemaNameOrAlias.ToLowerInvariant(), QuerySchemaUsageType.Primary));
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchemaAlias, string.Empty);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, string.Empty);
             }
 
             if (tokenizer.TryEatIfNext("where"))

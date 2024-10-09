@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 }
 
                 query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary));
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchemaAlias, string.Empty);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, string.Empty);
             }
             else
             {
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{targetAlias}].");
                 }
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchemaAlias, targetAlias.ToLowerInvariant());
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, targetAlias.ToLowerInvariant());
 
                 tokenizer.EatIfNext("from");
 

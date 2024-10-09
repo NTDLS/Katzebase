@@ -1,6 +1,6 @@
-﻿namespace NTDLS.Katzebase.Parsers.Query.Specific.WithOptions
+﻿namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class WithOption(string name, object value, Type valueType)
+    public class QueryAttribute(string name, object value, Type valueType)
     {
         public string Name { get; private set; } = name;
         public object Value { get; private set; } = value;

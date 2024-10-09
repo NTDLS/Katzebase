@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+﻿using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Parsers.Constants;
 
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     /// </summary>
     public class PreparedQuery(QueryBatch queryBatch, Constants.QueryType queryType, int? fileLine)
     {
-        public enum QueryAttribute
+        public enum Attribute
         {
             IndexName,
             IsUnique,
@@ -23,38 +24,14 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             Batches,
             Partitions,
             PageSize,
-
-            //----------Configuration (BEGIN) ----------
-            BaseAddress,
-            DataRootPath,
-            TransactionDataPath,
-            LogDirectory,
-            FlushLog,
-            DefaultDocumentPageSize,
-            UseCompression,
-            HealthMonitoringEnabled,
-            HealthMonitoringCheckpointSeconds,
-            HealthMonitoringInstanceLevelEnabled,
-            HealthMonitoringInstanceLevelTimeToLiveSeconds,
-            MaxIdleConnectionSeconds,
-            DefaultIndexPartitions,
-            DeferredIOEnabled,
-            WriteTraceData,
-            CacheEnabled,
-            CacheMaxMemory,
-            CacheScavengeInterval,
-            CachePartitions,
-            CacheSeconds
-            //----------Configuration (END)----------
         }
-
-        private readonly Dictionary<QueryAttribute, object> _attributes = new();
-        public IReadOnlyDictionary<QueryAttribute, object> Attributes => _attributes;
 
         /// <summary>
         /// The line that the query started on.
         /// </summary>
         public int? ScriptLine { get; set; } = fileLine;
+
+        public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
         /// <summary>
         /// Contains the hash of the whole query text with all constants and variables removed.
@@ -120,61 +97,65 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         #endregion
 
-        public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
+        #region Add/Get Attributes.
 
-        public bool TryGetAttribute<T>(QueryAttribute attribute, out T outValue, T defaultValue)
+        private readonly KbInsensitiveDictionary<QueryAttribute> _attributes = new();
+        public IReadOnlyDictionary<string, QueryAttribute> Attributes => _attributes;
+
+        public bool TryGetAttribute<T>(string attribute, out T outValue, T defaultValue)
         {
-            if (_attributes.TryGetValue(attribute, out object? value))
+            if (_attributes.TryGetValue(attribute, out var option))
             {
-                outValue = (T)value;
+                outValue = (T)option.Value;
                 return true;
             }
             outValue = defaultValue;
             return false;
         }
 
-        public bool TryGetAttribute<T>(QueryAttribute attribute, [NotNullWhen(true)] out T? outValue)
+        public bool TryGetAttribute<T>(string attribute, [NotNullWhen(true)] out T? outValue)
         {
-            if (_attributes.TryGetValue(attribute, out object? value))
+            if (_attributes.TryGetValue(attribute, out var option))
             {
-                outValue = (T)value;
+                outValue = (T)option.Value;
                 return true;
             }
             outValue = default;
             return false;
         }
 
-        public T GetAttribute<T>(QueryAttribute attribute, T defaultValue)
-        {
-            if (_attributes.TryGetValue(attribute, out object? value))
-            {
-                return (T)value;
-            }
-            return defaultValue;
-        }
+        public T GetAttribute<T>(string attribute, T defaultValue)
+            => _attributes.TryGetValue(attribute, out var option) ? (T)option.Value : defaultValue;
 
-        public T GetAttribute<T>(QueryAttribute attribute)
-        {
-            return (T)_attributes[attribute];
-        }
+        public T GetAttribute<T>(string attribute)
+            => (T)_attributes[attribute].Value;
 
-        public void AddAttribute(QueryAttribute key, object value)
-        {
-            if (!_attributes.TryAdd(key, value))
-            {
-                _attributes[key] = value;
-            }
-        }
+        public void AddAttribute<T>(string key, T value) where T : notnull
+            => _attributes[key] = new QueryAttribute(key, value, value.GetType());
 
-        public void AddAttributes(Dictionary<QueryAttribute, object> attributes)
+        public bool TryGetAttribute<T>(Attribute attribute, out T outValue, T defaultValue)
+            => TryGetAttribute(attribute.ToString(), out outValue, defaultValue);
+
+        public bool TryGetAttribute<T>(Attribute attribute, [NotNullWhen(true)] out T? outValue)
+            => TryGetAttribute(attribute.ToString(), out outValue);
+
+        public T GetAttribute<T>(Attribute attribute, T defaultValue)
+            => GetAttribute(attribute.ToString(), defaultValue);
+
+        public T GetAttribute<T>(Attribute attribute)
+            => GetAttribute<T>(attribute.ToString());
+
+        public void AddAttribute<T>(Attribute key, T value) where T : notnull
+            => AddAttribute(key.ToString(), value);
+
+        public void AddAttributes(KbInsensitiveDictionary<QueryAttribute> attributes)
         {
             foreach (var attribute in attributes)
             {
-                if (!_attributes.TryAdd(attribute.Key, attribute.Value))
-                {
-                    _attributes[attribute.Key] = attribute.Value;
-                }
+                _attributes.Add(attribute.Key, attribute.Value);
             }
         }
+
+        #endregion
     }
 }

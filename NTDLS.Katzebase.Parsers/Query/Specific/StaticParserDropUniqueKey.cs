@@ -20,8 +20,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected index name, found: [{indexName}].");
             }
 
-            query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
-            query.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, true);
+            query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery.Attribute.IsUnique, true);
 
             tokenizer.IsNext('(');
 
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
-            query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
+            query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
 
             return query;
         }

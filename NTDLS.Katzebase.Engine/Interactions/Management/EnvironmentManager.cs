@@ -1,10 +1,9 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Shared;
-using System.Text.Json;
-using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.PreparedQuery;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -34,67 +33,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        static void UpdateSettingProperty<T>(T obj, string propertyName, object newValue)
-        {
-            Type type = typeof(T);
-            var property = type.GetProperty(propertyName);
-            if (property != null && property.CanWrite)
-            {
-                property.SetValue(obj, Convert.ChangeType(newValue, property.PropertyType));
-            }
-        }
-
-        internal void Alter(Transaction transaction, IReadOnlyDictionary<QueryAttribute, object> attributes)
+        internal void Alter(Transaction transaction, IReadOnlyDictionary<string, QueryAttribute> configuration)
         {
             try
             {
                 var appSettingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-
                 if (!File.Exists(appSettingsPath))
                 {
                     throw new KbEngineException($"Could not locate configuration file: [{appSettingsPath}[.");
                 }
 
-                string json = File.ReadAllText(appSettingsPath);
+                var settingsType = _core.Settings.GetType();
 
-                // Parse the JSON into a JsonDocument
-                using JsonDocument document = JsonDocument.Parse(json);
-                var root = document.RootElement;
-                //var settingsElement = root.GetProperty("Settings");
-                var settings = JsonSerializer.Deserialize<KatzebaseSettings>(root.ToString());
-
-                foreach (var settingElement in root.EnumerateObject())
+                foreach (var item in configuration)
                 {
-                    if (Enum.TryParse(settingElement.Name, true, out QueryAttribute optionType))
+                    //Update the running engine setting.
+                    var property = settingsType.GetProperty(item.Key);
+                    if (property != null && property.CanWrite)
                     {
-                        if (attributes.TryGetValue(optionType, out var value))
-                        {
-                            UpdateSettingProperty(settings, settingElement.Name, value); //Save the value in the JSON settings file.
-                            UpdateSettingProperty(_core.Settings, settingElement.Name, value); //Save the setting in the live core.
-                        }
+                        property.SetValue(_core.Settings, Convert.ChangeType(item.Value.Value, property.PropertyType));
                     }
                 }
 
-                string updatedSettingsJson = JsonSerializer.Serialize(settings);
-                using var file = File.Create(appSettingsPath);
-                using (var writer = new Utf8JsonWriter(file, new JsonWriterOptions { Indented = true }))
-                {
-                    writer.WriteStartObject();
-                    foreach (var property in root.EnumerateObject())
-                    {
-                        if (property.Name == "Settings")
-                        {
-                            writer.WritePropertyName(property.Name);
-                            writer.WriteRawValue(updatedSettingsJson);
-                        }
-                        else
-                        {
-                            property.WriteTo(writer);
-                        }
-                    }
-                    writer.WriteEndObject();
-                }
-                file.Close();
+                //Save the new settings to file.
+                File.WriteAllText(appSettingsPath, JsonConvert.SerializeObject(_core.Settings, Formatting.Indented));
             }
             catch (Exception ex)
             {
@@ -102,6 +64,5 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw;
             }
         }
-
     }
 }

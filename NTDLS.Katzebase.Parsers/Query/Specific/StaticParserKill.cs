@@ -14,7 +14,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             var referencedProcessId = tokenizer.EatGetNextEvaluated<ulong>();
             try
             {
-                query.AddAttribute(PreparedQuery.QueryAttribute.ProcessId, referencedProcessId);
+                query.AddAttribute(PreparedQuery.Attribute.ProcessId, referencedProcessId);
             }
             catch
             {

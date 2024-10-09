@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Parsers.Query.Specific.WithOptions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using NTDLS.Katzebase.Shared;
 using System.Reflection;
@@ -18,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             tokenizer.EatIfNext("with");
 
-            var options = new ExpectedWithOptions();
+            var options = new ExpectedQueryAttributes();
 
             var properties = typeof(KatzebaseSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -27,7 +26,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 options.Add(property.Name, property.PropertyType);
             }
 
-            query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
+            query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
 
             return query;
         }

@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Specific.WithOptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -21,7 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected index name, found: [{indexName}].");
             }
 
-            query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
 
             tokenizer.EatIfNext("on");
 
@@ -33,11 +32,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             if (tokenizer.TryEatIfNext("with"))
             {
-                var options = new ExpectedWithOptions
+                var options = new ExpectedQueryAttributes
                 {
                     {"partitions", typeof(uint) }
                 };
-                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
+                query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
             }
 
             return query;

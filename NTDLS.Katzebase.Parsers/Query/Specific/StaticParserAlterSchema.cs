@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Specific.WithOptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -24,11 +23,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             tokenizer.EatIfNext("with");
             {
-                var options = new ExpectedWithOptions
+                var options = new ExpectedQueryAttributes
                 {
                     {"pagesize", typeof(uint) }
                 };
-                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
+                query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
             }
 
             return query;

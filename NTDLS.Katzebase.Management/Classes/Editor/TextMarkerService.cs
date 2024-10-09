@@ -65,6 +65,11 @@ namespace NTDLS.Katzebase.Management.Classes.Editor
                         _tooltipTimer.Stop();
                     }
                 }
+                else
+                {
+                    _toolTip.IsOpen = false; // Hide tooltip if no marker
+                    _tooltipTimer.Stop();
+                }
             }
             catch { }
         }

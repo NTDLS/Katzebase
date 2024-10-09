@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Validation
         {
             var exceptions = new List<Exception>();
 
-            if (query.TryGetAttribute<string>(PreparedQuery.QueryAttribute.TargetSchemaAlias, out var schemaAliasAttribute))
+            if (query.TryGetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias, out var schemaAliasAttribute))
             {
                 if (query.Schemas.Any(o => o.Alias.Is(schemaAliasAttribute)) == false)
                 {

@@ -22,14 +22,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             var parts = procedureName.Split(':');
             if (parts.Length == 1)
             {
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, ":");
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, procedureName);
+                query.AddAttribute(PreparedQuery.Attribute.Schema, ":");
+                query.AddAttribute(PreparedQuery.Attribute.ObjectName, procedureName);
             }
             else
             {
                 var schemaName = string.Join(':', parts.Take(parts.Length - 1));
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, parts.Last());
+                query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
+                query.AddAttribute(PreparedQuery.Attribute.ObjectName, parts.Last());
             }
 
             if (tokenizer.TryCompareNext(o => o.StartsWith('$')))

@@ -39,10 +39,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                 {
-                    var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.ObjectName);
-                    var objectSchema = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.Schema);
-                    var parameters = preparedQuery.GetAttribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
-                    var Batches = preparedQuery.GetAttribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
+                    var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
+                    var objectSchema = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Schema);
+                    var parameters = preparedQuery.GetAttribute<List<PhysicalProcedureParameter>>(PreparedQuery.Attribute.Parameters);
+                    var Batches = preparedQuery.GetAttribute<List<string>>(PreparedQuery.Attribute.Batches);
 
                     _core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
@@ -64,8 +64,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                var schemaName = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.Schema);
-                var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.QueryAttribute.ObjectName);
+                var schemaName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Schema);
+                var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
 
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 

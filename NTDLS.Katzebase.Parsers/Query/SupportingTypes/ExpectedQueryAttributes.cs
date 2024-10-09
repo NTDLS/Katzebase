@@ -3,11 +3,14 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Tokens;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific.WithOptions
+namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class ExpectedWithOptions : KbInsensitiveDictionary<Type>
+    /// <summary>
+    /// Contains the name and type of expected query attributes. Used for validating while parsing
+    /// </summary>
+    public class ExpectedQueryAttributes : KbInsensitiveDictionary<Type>
     {
-        public ExpectedWithOptions()
+        public ExpectedQueryAttributes()
         {
         }
 
@@ -33,7 +36,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.WithOptions
                             return boolValue != 0;
                         }
 
-                        return value?.Is("true") == true;
+                        if (value?.Is("true") == true)
+                        {
+                            return true;
+                        }
+                        else if (value?.Is("false") == true)
+                        {
+                            return false;
+                        }
                     }
 
                     var resultingValue = Convert.ChangeType(value, resultType);
@@ -43,7 +53,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.WithOptions
                 }
                 catch
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Failed to convert [{resultType.Name}] option, found: [{name}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Failed to convert [{resultType.Name}] option for [{name}], found: [{value}].");
                 }
             }
             throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Unexpected with option, found: [{name}].");

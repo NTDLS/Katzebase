@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(selectIntoSchema)}].");
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchemaName, selectIntoSchema);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaName, selectIntoSchema);
 
                 query.QueryType = QueryType.SelectInto;
             }
