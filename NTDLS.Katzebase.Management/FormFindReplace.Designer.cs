@@ -35,7 +35,9 @@
             buttonFind_Close = new Button();
             tabControlBody = new TabControl();
             tabPageFind = new TabPage();
+            checkBoxFindCaseSensitive = new CheckBox();
             tabPageReplace = new TabPage();
+            checkBoxFindReplaceCaseSensitive = new CheckBox();
             buttonReplace_Close = new Button();
             buttonReplace_FindNext = new Button();
             buttonReplace_ReplaceAll = new Button();
@@ -44,8 +46,6 @@
             textBoxFindReplaceText = new TextBox();
             textBoxFindReplaceWithText = new TextBox();
             labelFindReplaceText = new Label();
-            checkBoxFindReplaceCaseSensitive = new CheckBox();
-            checkBoxFindCaseSensitive = new CheckBox();
             tabControlBody.SuspendLayout();
             tabPageFind.SuspendLayout();
             tabPageReplace.SuspendLayout();
@@ -112,6 +112,16 @@
             tabPageFind.Text = "Find";
             tabPageFind.UseVisualStyleBackColor = true;
             // 
+            // checkBoxFindCaseSensitive
+            // 
+            checkBoxFindCaseSensitive.AutoSize = true;
+            checkBoxFindCaseSensitive.Location = new Point(96, 59);
+            checkBoxFindCaseSensitive.Name = "checkBoxFindCaseSensitive";
+            checkBoxFindCaseSensitive.Size = new Size(104, 19);
+            checkBoxFindCaseSensitive.TabIndex = 13;
+            checkBoxFindCaseSensitive.Text = "Case sensitive?";
+            checkBoxFindCaseSensitive.UseVisualStyleBackColor = true;
+            // 
             // tabPageReplace
             // 
             tabPageReplace.Controls.Add(checkBoxFindReplaceCaseSensitive);
@@ -130,6 +140,16 @@
             tabPageReplace.TabIndex = 1;
             tabPageReplace.Text = "Replace";
             tabPageReplace.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxFindReplaceCaseSensitive
+            // 
+            checkBoxFindReplaceCaseSensitive.AutoSize = true;
+            checkBoxFindReplaceCaseSensitive.Location = new Point(96, 91);
+            checkBoxFindReplaceCaseSensitive.Name = "checkBoxFindReplaceCaseSensitive";
+            checkBoxFindReplaceCaseSensitive.Size = new Size(104, 19);
+            checkBoxFindReplaceCaseSensitive.TabIndex = 12;
+            checkBoxFindReplaceCaseSensitive.Text = "Case sensitive?";
+            checkBoxFindReplaceCaseSensitive.UseVisualStyleBackColor = true;
             // 
             // buttonReplace_Close
             // 
@@ -203,37 +223,19 @@
             labelFindReplaceText.TabIndex = 10;
             labelFindReplaceText.Text = "Find Text";
             // 
-            // checkBoxFindReplaceCaseSensitive
-            // 
-            checkBoxFindReplaceCaseSensitive.AutoSize = true;
-            checkBoxFindReplaceCaseSensitive.Location = new Point(96, 91);
-            checkBoxFindReplaceCaseSensitive.Name = "checkBoxFindReplaceCaseSensitive";
-            checkBoxFindReplaceCaseSensitive.Size = new Size(104, 19);
-            checkBoxFindReplaceCaseSensitive.TabIndex = 12;
-            checkBoxFindReplaceCaseSensitive.Text = "Case sensitive?";
-            checkBoxFindReplaceCaseSensitive.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxFindCaseSensitive
-            // 
-            checkBoxFindCaseSensitive.AutoSize = true;
-            checkBoxFindCaseSensitive.Location = new Point(96, 59);
-            checkBoxFindCaseSensitive.Name = "checkBoxFindCaseSensitive";
-            checkBoxFindCaseSensitive.Size = new Size(104, 19);
-            checkBoxFindCaseSensitive.TabIndex = 13;
-            checkBoxFindCaseSensitive.Text = "Case sensitive?";
-            checkBoxFindCaseSensitive.UseVisualStyleBackColor = true;
-            // 
-            // FormFindText
+            // FormFindReplace
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(558, 212);
             Controls.Add(tabControlBody);
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
-            Name = "FormFindText";
+            MinimizeBox = false;
+            Name = "FormFindReplace";
             ShowInTaskbar = false;
+            SizeGripStyle = SizeGripStyle.Hide;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Find";
             Load += FormFind_Load;

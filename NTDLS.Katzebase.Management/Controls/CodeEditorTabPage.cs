@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
             startIndex = Editor.Document.IndexOf(searchText, startIndex,
                 (Editor.Document.TextLength - startIndex) - 1,
-                caseSensitive ? StringComparison.CurrentCultureIgnoreCase : StringComparison.InvariantCulture);
+                caseSensitive ? StringComparison.InvariantCulture  : StringComparison.CurrentCultureIgnoreCase);
 
             if (startIndex >= 0)
             {
@@ -109,7 +109,7 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             Editor.Document.Text = Editor.Document.Text.Replace(
                 searchText, replaceWith,
-                caseSensitive ? StringComparison.CurrentCultureIgnoreCase : StringComparison.InvariantCulture);
+                caseSensitive ? StringComparison.InvariantCulture : StringComparison.CurrentCultureIgnoreCase);
         }
 
         #endregion

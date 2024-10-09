@@ -46,6 +46,7 @@
                 CancelButton = buttonFind_Close;
                 tabControlBody.SelectedTab = tabPageFind;
                 textBoxFindText.Focus();
+                Text = "Find";
             }
             if (findType == FindType.Replace)
             {
@@ -53,6 +54,7 @@
                 CancelButton = buttonReplace_Close;
                 tabControlBody.SelectedTab = tabPageReplace;
                 textBoxFindReplaceText.Focus();
+                Text = "Replace";
             }
         }
 
@@ -83,12 +85,14 @@
                 AcceptButton = buttonFind_FindNext;
                 CancelButton = buttonFind_Close;
                 textBoxFindText.Focus();
+                Text = "Find";
             }
             else if (tabControlBody.SelectedTab == tabPageReplace)
             {
                 AcceptButton = buttonReplace_FindNext;
                 CancelButton = buttonReplace_Close;
                 textBoxFindReplaceText.Focus();
+                Text = "Replace";
             }
         }
 
