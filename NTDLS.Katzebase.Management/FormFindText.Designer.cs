@@ -135,6 +135,7 @@
             buttonReplace_Close.TabIndex = 5;
             buttonReplace_Close.Text = "Close";
             buttonReplace_Close.UseVisualStyleBackColor = true;
+            buttonReplace_Close.Click += buttonReplace_Close_Click;
             // 
             // buttonReplace_FindNext
             // 
@@ -144,6 +145,7 @@
             buttonReplace_FindNext.TabIndex = 2;
             buttonReplace_FindNext.Text = "Find Next";
             buttonReplace_FindNext.UseVisualStyleBackColor = true;
+            buttonReplace_FindNext.Click += buttonReplace_FindNext_Click;
             // 
             // buttonReplace_ReplaceAll
             // 
@@ -153,6 +155,7 @@
             buttonReplace_ReplaceAll.TabIndex = 4;
             buttonReplace_ReplaceAll.Text = "Replace All";
             buttonReplace_ReplaceAll.UseVisualStyleBackColor = true;
+            buttonReplace_ReplaceAll.Click += buttonReplace_ReplaceAll_Click;
             // 
             // buttonReplace_Replace
             // 
@@ -162,6 +165,7 @@
             buttonReplace_Replace.TabIndex = 3;
             buttonReplace_Replace.Text = "Replace";
             buttonReplace_Replace.UseVisualStyleBackColor = true;
+            buttonReplace_Replace.Click += buttonReplace_Replace_Click;
             // 
             // labelFindReplaceWithText
             // 

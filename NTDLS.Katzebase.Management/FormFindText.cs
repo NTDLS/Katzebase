@@ -1,6 +1,4 @@
-﻿using static NTDLS.Katzebase.Management.FormFindText;
-
-namespace NTDLS.Katzebase.Management
+﻿namespace NTDLS.Katzebase.Management
 {
     public partial class FormFindText : Form
     {
@@ -34,45 +32,56 @@ namespace NTDLS.Katzebase.Management
                 }
             };
 
-            tabControlBody.TabIndexChanged += TabControlBody_TabIndexChanged;
+            tabControlBody.SelectedIndexChanged += TabControlBody_SelectedIndexChanged;
 
-            if (findType == FindType.Find)
+            Shown += (object? sender, EventArgs e) =>
             {
-                AcceptButton = buttonFind_FindNext;
-                tabControlBody.SelectedTab = tabPageFind;
-            }
-            if (findType == FindType.Replace)
-            {
-                AcceptButton = buttonReplace_FindNext;
-                tabControlBody.SelectedTab = tabPageReplace;
-            }
+                if (findType == FindType.Find)
+                {
+                    AcceptButton = buttonFind_FindNext;
+                    tabControlBody.SelectedTab = tabPageFind;
+                    textBoxFindText.Focus();
+                }
+                if (findType == FindType.Replace)
+                {
+                    AcceptButton = buttonReplace_FindNext;
+                    tabControlBody.SelectedTab = tabPageReplace;
+                    textBoxFindReplaceText.Focus();
+                }
+            };
 
             CancelButton = buttonFind_Close;
         }
-
         private void FormFind_Load(object sender, EventArgs e)
         {
-            StartPosition = FormStartPosition.CenterParent;
-
-            /*
             if (Owner != null)
             {
-                int x = Owner.Location.X + (Owner.Width - this.Width) / 2;
-                int y = Owner.Location.Y + (Owner.Height - this.Height) / 2;
-                Location = new Point(x, y);
+                var currentTab = _studioForm?.CurrentTabFilePage();
+                if (currentTab != null)
+                {
+                    var absolutePoint = currentTab.TabControlParent.Parent?.PointToScreen(currentTab.TabControlParent.Location);
+                    if (absolutePoint != null && absolutePoint.HasValue)
+                    {
+                        //Place the find form in a reasonable location.
+                        Location = new Point(
+                            (absolutePoint.Value.X + currentTab.Width) - (Width + 50),
+                            absolutePoint.Value.Y + 50);
+                    }
+                }
             }
-            */
         }
 
-        private void TabControlBody_TabIndexChanged(object? sender, EventArgs e)
+        private void TabControlBody_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (tabControlBody.SelectedTab == tabPageFind)
             {
                 AcceptButton = buttonFind_FindNext;
+                textBoxFindText.Focus();
             }
             else if (tabControlBody.SelectedTab == tabPageReplace)
             {
                 AcceptButton = buttonReplace_FindNext;
+                textBoxFindReplaceText.Focus();
             }
         }
 
@@ -90,6 +99,26 @@ namespace NTDLS.Katzebase.Management
         private void ButtonClose_Click(object sender, EventArgs e)
         {
             Hide();
+        }
+
+        private void buttonReplace_Close_Click(object sender, EventArgs e)
+        {
+            Hide();
+        }
+
+        private void buttonReplace_FindNext_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void buttonReplace_Replace_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void buttonReplace_ReplaceAll_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
