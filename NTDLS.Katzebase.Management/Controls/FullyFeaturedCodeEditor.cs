@@ -399,17 +399,17 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if ((System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
+            if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
             {
                 CodeTabPage.StudioForm.ShowFind();
             }
-            else if ((System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
+            else if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
             {
                 CodeTabPage.StudioForm.ShowReplace();
             }
             else if (e.Key == Key.F3)
             {
-                bool forceShowFind = (System.Windows.Forms.Control.ModifierKeys & Keys.Control) == Keys.Control;
+                bool forceShowFind = (Control.ModifierKeys & Keys.Control) == Keys.Control;
 
                 CodeTabPage.StudioForm.FindNext(forceShowFind);
             }

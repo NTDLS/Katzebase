@@ -66,6 +66,48 @@ namespace NTDLS.Katzebase.Management.Controls
             }
         }
 
+        #region Find.
+
+        private string _lastSearchText = string.Empty;
+
+        public void FindFirst(string searchText)
+        {
+            _lastSearchText = searchText;
+
+            int foundIndex = Editor.Document.IndexOf(searchText, 0,
+                Editor.Document.TextLength - 1, StringComparison.CurrentCultureIgnoreCase);
+
+            if (foundIndex >= 0)
+            {
+                Editor.Select(foundIndex, searchText.Length);
+                Editor.TextArea.Caret.BringCaretToView();
+            }
+        }
+
+        public void FindNext(string searchText)
+        {
+            var startIndex = Editor.SelectionLength > 0
+                    ? Editor.SelectionStart + Editor.SelectionLength
+                    : Editor.CaretOffset;
+
+            if (searchText != _lastSearchText)
+            {
+                startIndex = 0;
+            }
+            _lastSearchText = searchText;
+
+            startIndex = Editor.Document.IndexOf(searchText, startIndex,
+                (Editor.Document.TextLength - startIndex) - 1, StringComparison.CurrentCultureIgnoreCase);
+
+            if (startIndex >= 0)
+            {
+                Editor.Select(startIndex, searchText.Length);
+                Editor.TextArea.Caret.BringCaretToView();
+            }
+        }
+
+        #endregion
+
         private string _filePath = string.Empty;
         public string FilePath
         {
@@ -98,7 +140,6 @@ namespace NTDLS.Katzebase.Management.Controls
 
         public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
         public FullyFeaturedCodeEditor Editor { get; private set; }
-        public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
 
         #endregion
@@ -139,7 +180,6 @@ namespace NTDLS.Katzebase.Management.Controls
             Client = client;
             ExplorerConnection = explorerConnection;
             Editor = new FullyFeaturedCodeEditor(this);
-            FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
 
             Controls.Add(TabSplitContainer);

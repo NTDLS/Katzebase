@@ -17,6 +17,8 @@ namespace NTDLS.Katzebase.Management
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private readonly string _firstLoadFilename = string.Empty;
         private readonly ServerExplorerManager _serverExplorerManager;
+        private FormFindText? _findTextForm;
+        private string _lastSearchText = string.Empty;
 
         private bool _timerTicking = false;
         private bool _firstShown = true;
@@ -1220,7 +1222,24 @@ namespace NTDLS.Katzebase.Management
 
         public void ShowFind()
         {
-            CurrentTabFilePage()?.FindTextForm.ShowDialog();
+            if (_findTextForm == null || !_findTextForm.Visible || _findTextForm.IsDisposed)
+            {
+                _findTextForm = new FormFindText(this, _lastSearchText);
+                _findTextForm.Show();
+            }
+            _findTextForm.BringToFront();
+        }
+
+        public void FindFirst(string searchText)
+        {
+            _lastSearchText = searchText;
+            CurrentTabFilePage()?.FindFirst(searchText);
+        }
+
+        public void FindNext(string searchText)
+        {
+            _lastSearchText = searchText;
+            CurrentTabFilePage()?.FindNext(_lastSearchText);
         }
 
         public void FindNext(bool showDialog)
@@ -1228,19 +1247,13 @@ namespace NTDLS.Katzebase.Management
             var info = CurrentTabFilePage();
             if (info != null)
             {
-                if (showDialog)
+                if (showDialog || string.IsNullOrEmpty(_lastSearchText))
                 {
-                    info.FindTextForm.ShowDialog();
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(info.FindTextForm.SearchText))
-                {
-                    info.FindTextForm.ShowDialog();
+                    ShowFind();
                 }
                 else
                 {
-                    info.FindTextForm.FindNext();
+                    CurrentTabFilePage()?.FindNext(_lastSearchText);
                 }
             }
         }

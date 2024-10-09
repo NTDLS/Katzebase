@@ -1,23 +1,45 @@
-﻿using NTDLS.Katzebase.Management.Controls;
-
-namespace NTDLS.Katzebase.Management
+﻿namespace NTDLS.Katzebase.Management
 {
     public partial class FormFindText : Form
     {
-        private readonly CodeEditorTabPage? _projectTabPage;
-        private int _lastIndex = -1;
-        public string SearchText => textBoxFindText.Text;
+        private readonly FormStudio? _studioForm;
 
         public FormFindText()
         {
             InitializeComponent();
-            textBoxFindText.TextChanged += TextBoxFindText_TextChanged;
         }
 
-        public FormFindText(CodeEditorTabPage projectTabPage)
+        public FormFindText(FormStudio studioForm, string searchText)
         {
             InitializeComponent();
-            _projectTabPage = projectTabPage;
+            _studioForm = studioForm;
+            textBoxFindText.Text = searchText;
+            Owner = studioForm;
+
+            StartPosition = FormStartPosition.CenterParent;
+            Deactivate += FormFindText_Deactivate;
+            Activated += FormFindText_Activated;
+            Shown += FormFindText_Shown;
+        }
+
+        private void FormFindText_Shown(object? sender, EventArgs e)
+        {
+            if (Owner != null)
+            {
+                int x = Owner.Location.X + (Owner.Width - this.Width) / 2;
+                int y = Owner.Location.Y + (Owner.Height - this.Height) / 2;
+                Location = new System.Drawing.Point(x, y);
+            }
+        }
+
+        private void FormFindText_Activated(object? sender, EventArgs e)
+        {
+            Opacity = 1.0;
+        }
+
+        private void FormFindText_Deactivate(object? sender, EventArgs e)
+        {
+            Opacity = 0.75;
         }
 
         private void FormFind_FormClosing(object? sender, FormClosingEventArgs e)
@@ -26,50 +48,20 @@ namespace NTDLS.Katzebase.Management
             Hide();
         }
 
-        private void TextBoxFindText_TextChanged(object? sender, EventArgs e)
-        {
-            _lastIndex = -1;
-        }
-
         private void FormFind_Load(object sender, EventArgs e)
         {
             AcceptButton = buttonFindNext;
             CancelButton = buttonClose;
         }
 
-        private void DoFind(int startIndex)
-        {
-            if (_projectTabPage?.Editor != null)
-            {
-                string findText = textBoxFindText.Text;
-                _lastIndex = _projectTabPage.Editor.Document.IndexOf(findText, (startIndex + 1),
-                    (_projectTabPage.Editor.Document.TextLength - startIndex) - 1, StringComparison.CurrentCultureIgnoreCase);
-                if (_lastIndex >= 0)
-                {
-                    _projectTabPage.Editor.Select(_lastIndex, findText.Length);
-                    _projectTabPage.Editor.TextArea.Caret.BringCaretToView();
-                }
-            }
-        }
-
-        public void FindFirst()
-        {
-            DoFind(0);
-        }
-
-        public void FindNext()
-        {
-            DoFind(_lastIndex);
-        }
-
         private void ButtonFind_Click(object sender, EventArgs e)
         {
-            FindFirst();
+            _studioForm?.FindFirst(textBoxFindText.Text);
         }
 
         private void ButtonFindNext_Click(object sender, EventArgs e)
         {
-            FindNext();
+            _studioForm?.FindNext(textBoxFindText.Text);
         }
 
         private void ButtonClose_Click(object sender, EventArgs e)
