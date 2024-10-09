@@ -722,7 +722,7 @@ namespace NTDLS.Katzebase.Management
             {
                 var node = new TreeNode(systemFunction.Name)
                 {
-                    ToolTipText = Helpers.Text.InsertLineBreaks(systemFunction.Description ?? string.Empty, 65)
+                    ToolTipText = Helpers.Text.SoftWrap(systemFunction.Description ?? string.Empty, 65)
                 };
 
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
@@ -753,7 +753,7 @@ namespace NTDLS.Katzebase.Management
             {
                 var node = new TreeNode(scalarFunction.Name)
                 {
-                    ToolTipText = Helpers.Text.InsertLineBreaks(scalarFunction.Description ?? string.Empty, 65)
+                    ToolTipText = Helpers.Text.SoftWrap(scalarFunction.Description ?? string.Empty, 65)
                 };
 
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
@@ -784,7 +784,7 @@ namespace NTDLS.Katzebase.Management
             {
                 var node = new TreeNode(aggregateFunction.Name)
                 {
-                    ToolTipText = Helpers.Text.InsertLineBreaks(aggregateFunction.Description ?? string.Empty, 65)
+                    ToolTipText = Helpers.Text.SoftWrap(aggregateFunction.Description ?? string.Empty, 65)
                 };
 
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
