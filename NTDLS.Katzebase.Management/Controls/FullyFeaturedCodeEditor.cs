@@ -411,9 +411,14 @@ namespace NTDLS.Katzebase.Management.Controls
             }
             else if (e.Key == Key.F3)
             {
-                bool forceShowFind = (Control.ModifierKeys & Keys.Control) == Keys.Control;
-
-                CodeTabPage.StudioForm.FindNext(forceShowFind);
+                if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
+                {
+                    CodeTabPage.StudioForm.ShowFind();
+                }
+                else
+                {
+                    CodeTabPage.StudioForm.FindNext();
+                }
             }
         }
 

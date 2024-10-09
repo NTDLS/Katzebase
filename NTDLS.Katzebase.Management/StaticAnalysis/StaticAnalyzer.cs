@@ -118,7 +118,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     int length = line.Length;
                     textMarkerService.Create(startOffset, length, message, Colors.Red);
                 }
-                catch (Exception ex)
+                catch
                 {
                 }
             };

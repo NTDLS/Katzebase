@@ -1,8 +1,9 @@
 ﻿namespace NTDLS.Katzebase.Management
 {
-    public partial class FormFindText : Form
+    public partial class FormFindReplace : Form
     {
         private readonly FormStudio? _studioForm;
+        private bool _isFirstLoad = true;
 
         public enum FindType
         {
@@ -10,12 +11,12 @@
             Replace
         }
 
-        public FormFindText()
+        public FormFindReplace()
         {
             InitializeComponent();
         }
 
-        public FormFindText(FormStudio studioForm, FindType findType, string searchText, string replaceText)
+        public FormFindReplace(FormStudio studioForm, string searchText, string replaceText)
         {
             InitializeComponent();
             _studioForm = studioForm;
@@ -33,28 +34,31 @@
             };
 
             tabControlBody.SelectedIndexChanged += TabControlBody_SelectedIndexChanged;
-
-            Shown += (object? sender, EventArgs e) =>
-            {
-                if (findType == FindType.Find)
-                {
-                    AcceptButton = buttonFind_FindNext;
-                    tabControlBody.SelectedTab = tabPageFind;
-                    textBoxFindText.Focus();
-                }
-                if (findType == FindType.Replace)
-                {
-                    AcceptButton = buttonReplace_FindNext;
-                    tabControlBody.SelectedTab = tabPageReplace;
-                    textBoxFindReplaceText.Focus();
-                }
-            };
-
-            CancelButton = buttonFind_Close;
         }
+
+        public void Show(FindType findType)
+        {
+            Show();
+
+            if (findType == FindType.Find)
+            {
+                AcceptButton = buttonFind_FindNext;
+                CancelButton = buttonFind_Close;
+                tabControlBody.SelectedTab = tabPageFind;
+                textBoxFindText.Focus();
+            }
+            if (findType == FindType.Replace)
+            {
+                AcceptButton = buttonReplace_FindNext;
+                CancelButton = buttonReplace_Close;
+                tabControlBody.SelectedTab = tabPageReplace;
+                textBoxFindReplaceText.Focus();
+            }
+        }
+
         private void FormFind_Load(object sender, EventArgs e)
         {
-            if (Owner != null)
+            if (Owner != null && _isFirstLoad)
             {
                 var currentTab = _studioForm?.CurrentTabFilePage();
                 if (currentTab != null)
@@ -69,6 +73,7 @@
                     }
                 }
             }
+            _isFirstLoad = false;
         }
 
         private void TabControlBody_SelectedIndexChanged(object? sender, EventArgs e)
@@ -76,11 +81,13 @@
             if (tabControlBody.SelectedTab == tabPageFind)
             {
                 AcceptButton = buttonFind_FindNext;
+                CancelButton = buttonFind_Close;
                 textBoxFindText.Focus();
             }
             else if (tabControlBody.SelectedTab == tabPageReplace)
             {
                 AcceptButton = buttonReplace_FindNext;
+                CancelButton = buttonReplace_Close;
                 textBoxFindReplaceText.Focus();
             }
         }
@@ -92,33 +99,20 @@
         }
 
         private void ButtonFindNext_Click(object sender, EventArgs e)
-        {
-            _studioForm?.FindNext(textBoxFindText.Text);
-        }
+            => _studioForm?.FindNext(textBoxFindText.Text, checkBoxFindCaseSensitive.Checked);
+
+        private void ButtonReplace_FindNext_Click(object sender, EventArgs e)
+            => _studioForm?.FindNext(textBoxFindReplaceText.Text, checkBoxFindReplaceCaseSensitive.Checked);
+
+        private void ButtonReplace_Replace_Click(object sender, EventArgs e)
+            => _studioForm?.FindReplace(textBoxFindReplaceText.Text, textBoxFindReplaceWithText.Text, checkBoxFindReplaceCaseSensitive.Checked);
+
+        private void ButtonReplace_ReplaceAll_Click(object sender, EventArgs e)
+            => _studioForm?.FindReplaceAll(textBoxFindReplaceText.Text, textBoxFindReplaceWithText.Text, checkBoxFindReplaceCaseSensitive.Checked);
 
         private void ButtonClose_Click(object sender, EventArgs e)
-        {
-            Hide();
-        }
-
-        private void buttonReplace_Close_Click(object sender, EventArgs e)
-        {
-            Hide();
-        }
-
-        private void buttonReplace_FindNext_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void buttonReplace_Replace_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void buttonReplace_ReplaceAll_Click(object sender, EventArgs e)
-        {
-
-        }
+            => Hide();
+        private void ButtonReplace_Close_Click(object sender, EventArgs e)
+            => Hide();
     }
 }

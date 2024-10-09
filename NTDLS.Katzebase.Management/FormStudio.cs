@@ -442,48 +442,69 @@ namespace NTDLS.Katzebase.Management
 
         #region Find/Replace.
 
-        private FormFindText? _findTextForm;
+        private FormFindReplace? _findReplaceForm;
         private string _lastSearchText = string.Empty;
+        private bool _lastSearchCaseSensitive = false;
         private string _lastReplaceText = string.Empty;
-
-        public void ShowReplace()
-        {
-            if (_findTextForm == null || !_findTextForm.Visible || _findTextForm.IsDisposed)
-            {
-                _findTextForm = new FormFindText(this, FormFindText.FindType.Replace, _lastSearchText, _lastReplaceText);
-                _findTextForm.Show();
-            }
-            _findTextForm.BringToFront();
-        }
 
         public void ShowFind()
         {
-            if (_findTextForm == null || !_findTextForm.Visible || _findTextForm.IsDisposed)
+            if (_findReplaceForm == null || _findReplaceForm.IsDisposed)
             {
-                _findTextForm = new FormFindText(this, FormFindText.FindType.Find, _lastSearchText, _lastReplaceText);
-                _findTextForm.Show();
+                _findReplaceForm = new FormFindReplace(this, _lastSearchText, _lastReplaceText);
             }
-            _findTextForm.BringToFront();
+
+            _findReplaceForm.Show(FormFindReplace.FindType.Find);
+            _findReplaceForm.BringToFront();
         }
 
-        public void FindNext(string searchText)
+        public void ShowReplace()
+        {
+            if (_findReplaceForm == null || _findReplaceForm.IsDisposed)
+            {
+                _findReplaceForm = new FormFindReplace(this, _lastSearchText, _lastReplaceText);
+            }
+
+            _findReplaceForm.Show(FormFindReplace.FindType.Replace);
+            _findReplaceForm.BringToFront();
+        }
+
+        public void FindNext(string searchText, bool caseSensitive)
         {
             _lastSearchText = searchText;
-            CurrentTabFilePage()?.FindNext(_lastSearchText);
+            _lastSearchCaseSensitive = caseSensitive;
+            CurrentTabFilePage()?.FindNext(searchText, caseSensitive);
         }
 
-        public void FindNext(bool showDialog)
+        public void FindReplace(string searchText, string replaceWith, bool caseSensitive)
+        {
+            _lastSearchText = searchText;
+            _lastReplaceText = replaceWith;
+            _lastSearchCaseSensitive = caseSensitive;
+            CurrentTabFilePage()?.FindReplace(searchText, replaceWith, caseSensitive);
+        }
+
+        public void FindReplaceAll(string searchText, string replaceWith, bool caseSensitive)
+        {
+            _lastSearchText = searchText;
+            _lastReplaceText = replaceWith;
+            _lastSearchCaseSensitive = caseSensitive;
+
+            CurrentTabFilePage()?.FindReplaceAll(searchText, replaceWith, caseSensitive);
+        }
+
+        public void FindNext()
         {
             var info = CurrentTabFilePage();
             if (info != null)
             {
-                if (showDialog || string.IsNullOrEmpty(_lastSearchText))
+                if (string.IsNullOrEmpty(_lastSearchText))
                 {
                     ShowFind();
                 }
                 else
                 {
-                    CurrentTabFilePage()?.FindNext(_lastSearchText);
+                    CurrentTabFilePage()?.FindNext(_lastSearchText, _lastSearchCaseSensitive);
                 }
             }
         }
@@ -660,9 +681,9 @@ namespace NTDLS.Katzebase.Management
                         //Fake field/index refresh, just refresh the parent node.
 
                         var parentNode = (ServerExplorerNode)node.Parent;
-                        if (parentNode.NodeType == Constants.ServerNodeType.Schema && parentschema?.Path != null)
+                        if (parentNode.NodeType == Constants.ServerNodeType.Schema && parentSchema?.Path != null)
                         {
-                            if (parentschema?.Id == EngineConstants.RootSchemaGUID)
+                            if (parentSchema?.Id == EngineConstants.RootSchemaGUID)
                             {
                                 parentNode.Nodes.Clear();
                             }
@@ -671,7 +692,7 @@ namespace NTDLS.Katzebase.Management
                                 parentNode.Remove();
                             }
 
-                            LazySchemaCache.Refresh(parentschema?.Path);
+                            LazySchemaCache.Refresh(parentSchema?.Path);
                         }
                     }
                     */

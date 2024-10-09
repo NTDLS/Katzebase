@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Management
 {
-    partial class FormFindText
+    partial class FormFindReplace
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormFindText));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormFindReplace));
             buttonFind_FindNext = new Button();
             textBoxFindText = new TextBox();
             labelFindText = new Label();
@@ -44,6 +44,8 @@
             textBoxFindReplaceText = new TextBox();
             textBoxFindReplaceWithText = new TextBox();
             labelFindReplaceText = new Label();
+            checkBoxFindReplaceCaseSensitive = new CheckBox();
+            checkBoxFindCaseSensitive = new CheckBox();
             tabControlBody.SuspendLayout();
             tabPageFind.SuspendLayout();
             tabPageReplace.SuspendLayout();
@@ -97,6 +99,7 @@
             // 
             // tabPageFind
             // 
+            tabPageFind.Controls.Add(checkBoxFindCaseSensitive);
             tabPageFind.Controls.Add(textBoxFindText);
             tabPageFind.Controls.Add(buttonFind_Close);
             tabPageFind.Controls.Add(labelFindText);
@@ -111,6 +114,7 @@
             // 
             // tabPageReplace
             // 
+            tabPageReplace.Controls.Add(checkBoxFindReplaceCaseSensitive);
             tabPageReplace.Controls.Add(buttonReplace_Close);
             tabPageReplace.Controls.Add(buttonReplace_FindNext);
             tabPageReplace.Controls.Add(buttonReplace_ReplaceAll);
@@ -135,7 +139,7 @@
             buttonReplace_Close.TabIndex = 5;
             buttonReplace_Close.Text = "Close";
             buttonReplace_Close.UseVisualStyleBackColor = true;
-            buttonReplace_Close.Click += buttonReplace_Close_Click;
+            buttonReplace_Close.Click += ButtonReplace_Close_Click;
             // 
             // buttonReplace_FindNext
             // 
@@ -145,7 +149,7 @@
             buttonReplace_FindNext.TabIndex = 2;
             buttonReplace_FindNext.Text = "Find Next";
             buttonReplace_FindNext.UseVisualStyleBackColor = true;
-            buttonReplace_FindNext.Click += buttonReplace_FindNext_Click;
+            buttonReplace_FindNext.Click += ButtonReplace_FindNext_Click;
             // 
             // buttonReplace_ReplaceAll
             // 
@@ -155,7 +159,7 @@
             buttonReplace_ReplaceAll.TabIndex = 4;
             buttonReplace_ReplaceAll.Text = "Replace All";
             buttonReplace_ReplaceAll.UseVisualStyleBackColor = true;
-            buttonReplace_ReplaceAll.Click += buttonReplace_ReplaceAll_Click;
+            buttonReplace_ReplaceAll.Click += ButtonReplace_ReplaceAll_Click;
             // 
             // buttonReplace_Replace
             // 
@@ -165,7 +169,7 @@
             buttonReplace_Replace.TabIndex = 3;
             buttonReplace_Replace.Text = "Replace";
             buttonReplace_Replace.UseVisualStyleBackColor = true;
-            buttonReplace_Replace.Click += buttonReplace_Replace_Click;
+            buttonReplace_Replace.Click += ButtonReplace_Replace_Click;
             // 
             // labelFindReplaceWithText
             // 
@@ -198,6 +202,26 @@
             labelFindReplaceText.Size = new Size(54, 15);
             labelFindReplaceText.TabIndex = 10;
             labelFindReplaceText.Text = "Find Text";
+            // 
+            // checkBoxFindReplaceCaseSensitive
+            // 
+            checkBoxFindReplaceCaseSensitive.AutoSize = true;
+            checkBoxFindReplaceCaseSensitive.Location = new Point(96, 91);
+            checkBoxFindReplaceCaseSensitive.Name = "checkBoxFindReplaceCaseSensitive";
+            checkBoxFindReplaceCaseSensitive.Size = new Size(104, 19);
+            checkBoxFindReplaceCaseSensitive.TabIndex = 12;
+            checkBoxFindReplaceCaseSensitive.Text = "Case sensitive?";
+            checkBoxFindReplaceCaseSensitive.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxFindCaseSensitive
+            // 
+            checkBoxFindCaseSensitive.AutoSize = true;
+            checkBoxFindCaseSensitive.Location = new Point(96, 59);
+            checkBoxFindCaseSensitive.Name = "checkBoxFindCaseSensitive";
+            checkBoxFindCaseSensitive.Size = new Size(104, 19);
+            checkBoxFindCaseSensitive.TabIndex = 13;
+            checkBoxFindCaseSensitive.Text = "Case sensitive?";
+            checkBoxFindCaseSensitive.UseVisualStyleBackColor = true;
             // 
             // FormFindText
             // 
@@ -238,5 +262,7 @@
         private TextBox textBoxFindReplaceText;
         private Button buttonReplace_FindNext;
         private Button buttonReplace_Close;
+        private CheckBox checkBoxFindReplaceCaseSensitive;
+        private CheckBox checkBoxFindCaseSensitive;
     }
 }

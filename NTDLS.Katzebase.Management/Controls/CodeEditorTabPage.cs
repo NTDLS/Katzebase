@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private string _lastSearchText = string.Empty;
 
-        public void FindNext(string searchText)
+        public bool FindNext(string searchText, bool caseSensitive)
         {
             var startIndex = Editor.SelectionLength > 0
                     ? Editor.SelectionStart + Editor.SelectionLength
@@ -83,13 +83,33 @@ namespace NTDLS.Katzebase.Management.Controls
             _lastSearchText = searchText;
 
             startIndex = Editor.Document.IndexOf(searchText, startIndex,
-                (Editor.Document.TextLength - startIndex) - 1, StringComparison.CurrentCultureIgnoreCase);
+                (Editor.Document.TextLength - startIndex) - 1,
+                caseSensitive ? StringComparison.CurrentCultureIgnoreCase : StringComparison.InvariantCulture);
 
             if (startIndex >= 0)
             {
                 Editor.Select(startIndex, searchText.Length);
                 Editor.TextArea.Caret.BringCaretToView();
+                return true;
             }
+
+            return false;
+        }
+
+        public void FindReplace(string searchText, string replaceWith, bool caseSensitive)
+        {
+            if (Editor?.SelectionLength > 0)
+            {
+                Editor.SelectedText = replaceWith;
+            }
+            FindNext(searchText, caseSensitive);
+        }
+
+        public void FindReplaceAll(string searchText, string replaceWith, bool caseSensitive)
+        {
+            Editor.Document.Text = Editor.Document.Text.Replace(
+                searchText, replaceWith,
+                caseSensitive ? StringComparison.CurrentCultureIgnoreCase : StringComparison.InvariantCulture);
         }
 
         #endregion
