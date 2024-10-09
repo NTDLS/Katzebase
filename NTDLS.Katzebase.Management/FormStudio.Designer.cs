@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Management
             treeViewServerExplorer.Name = "treeViewServerExplorer";
             treeViewServerExplorer.Size = new Size(256, 292);
             treeViewServerExplorer.TabIndex = 0;
-            treeViewServerExplorer.ItemDrag += TreeViewProject_ItemDrag;
+            treeViewServerExplorer.ItemDrag += TreeViewServerExplorer_ItemDrag;
             treeViewServerExplorer.DragDrop += FormStudio_DragDrop;
             // 
             // splitContainerMacros
