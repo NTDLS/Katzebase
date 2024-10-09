@@ -587,6 +587,7 @@ namespace NTDLS.Katzebase.Management
 
             if (node.NodeType == Constants.ServerNodeType.Server)
             {
+                popupMenu.Items.Add("Connect", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("Disconnect", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
@@ -634,7 +635,11 @@ namespace NTDLS.Katzebase.Management
 
                 menuStrip.Hide();
 
-                if (e.ClickedItem?.Text == "Disconnect")
+                if (e.ClickedItem?.Text?.Is("Connect") == true)
+                {
+                    Connect();
+                }
+                else if (e.ClickedItem?.Text?.Is("Disconnect") == true)
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
@@ -647,7 +652,7 @@ namespace NTDLS.Katzebase.Management
                         }
                     }
                 }
-                else if (e.ClickedItem?.Text == "Refresh")
+                else if (e.ClickedItem?.Text?.Is("Refresh") == true)
                 {
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
@@ -697,27 +702,27 @@ namespace NTDLS.Katzebase.Management
                     }
                     */
                 }
-                else if (e.ClickedItem?.Text == "Select top n..." && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Select top n...") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Drop Schema" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Drop Schema") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"DROP SCHEMA {schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                 }
-                else if (e.ClickedItem?.Text == "Analyze Schema" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Analyze Schema") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"ANALYZE SCHEMA {schema.Path} --WITH (IncludePhysicalPages = true)\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Sample Schema" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Sample Schema") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"SAMPLE {schema.Path} SIZE 100\r\n";
@@ -725,14 +730,14 @@ namespace NTDLS.Katzebase.Management
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Drop Index" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Drop Index") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {schema.Path}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                 }
-                else if (e.ClickedItem?.Text == "Analyze Index" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Analyze Index") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     tabFilePage.Editor.Text = $"ANALYZE INDEX {node.Text} ON {schema.Path}\r\n";
@@ -740,7 +745,7 @@ namespace NTDLS.Katzebase.Management
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
-                else if (e.ClickedItem?.Text == "Rebuild Index" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Rebuild Index") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
                     if (tabFilePage.Client != null)
@@ -759,7 +764,7 @@ namespace NTDLS.Katzebase.Management
                         }
                     }
                 }
-                else if (e.ClickedItem?.Text == "Script Index" && schema != null)
+                else if (e.ClickedItem?.Text?.Is("Script Index") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
 
@@ -796,23 +801,27 @@ namespace NTDLS.Katzebase.Management
 
         #endregion
 
-        #region Macros Treeview Bullshit.
+        #region Macros Treeview.
 
         private void PopulateMacros(KbClient client)
         {
             GlobalState.AutoCompleteFunctions.Clear();
 
+            var functionsNode = treeViewMacros.Nodes.Find("Functions", false).FirstOrDefault();
+            if (functionsNode == null)
+            {
+                functionsNode = treeViewMacros.Nodes.Add("Functions", "Functions");
+            }
+
+            functionsNode.Nodes.Clear();
+
             #region System Functions.
 
-            var systemFunctionsNode = treeViewMacros.Nodes.Add("System Functions");
+            var systemFunctionsNode = functionsNode.Nodes.Add("System");
             var systemFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowSystemFunctions").OrderBy(o => o.Name);
             foreach (var systemFunction in systemFunctions)
             {
-                var node = new TreeNode(systemFunction.Name)
-                {
-                    ToolTipText = Helpers.Text.SoftWrap(systemFunction.Description ?? string.Empty, 65)
-                };
-
+                var node = new FunctionTreeNode(systemFunction);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (systemFunction.Parameters != null)
@@ -835,15 +844,11 @@ namespace NTDLS.Katzebase.Management
 
             #region Scalar Functions.
 
-            var scalarFunctionsNode = treeViewMacros.Nodes.Add("Scalar Functions");
+            var scalarFunctionsNode = functionsNode.Nodes.Add("Scalar");
             var scalarFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowScalarFunctions").OrderBy(o => o.Name);
             foreach (var scalarFunction in scalarFunctions)
             {
-                var node = new TreeNode(scalarFunction.Name)
-                {
-                    ToolTipText = Helpers.Text.SoftWrap(scalarFunction.Description ?? string.Empty, 65)
-                };
-
+                var node = new FunctionTreeNode(scalarFunction);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (scalarFunction.Parameters != null)
@@ -866,15 +871,11 @@ namespace NTDLS.Katzebase.Management
 
             #region Aggregate Functions.
 
-            var aggregateFunctionsNode = treeViewMacros.Nodes.Add("Aggregate Functions");
+            var aggregateFunctionsNode = functionsNode.Nodes.Add("Aggregate");
             var aggregateFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowAggregateFunctions").OrderBy(o => o.Name);
             foreach (var aggregateFunction in aggregateFunctions)
             {
-                var node = new TreeNode(aggregateFunction.Name)
-                {
-                    ToolTipText = Helpers.Text.SoftWrap(aggregateFunction.Description ?? string.Empty, 65)
-                };
-
+                var node = new FunctionTreeNode(aggregateFunction);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (aggregateFunction.Parameters != null)
@@ -895,6 +896,8 @@ namespace NTDLS.Katzebase.Management
 
             #endregion
 
+            functionsNode.Expand();
+
             (string Value, string DataType, string Name, string DefaultValue) ParseParameterParts(string parameter)
             {
                 (string Value, string DataType, string Name, string DefaultValue) result = new()
@@ -913,7 +916,7 @@ namespace NTDLS.Katzebase.Management
                 }
                 if (paramParts.Count > 2)
                 {
-                    string defaultValue = String.Join(' ', paramParts.Skip(2));
+                    string defaultValue = string.Join(' ', paramParts.Skip(2));
                     if (defaultValue.StartsWith('='))
                     {
                         result.DefaultValue = defaultValue.Trim([' ', '=', '\t']);
@@ -1326,9 +1329,9 @@ namespace NTDLS.Katzebase.Management
         /// <param name="e"></param>
         private void TreeViewMacros_ItemDrag(object? sender, ItemDragEventArgs e)
         {
-            if (e.Item != null)
+            if (e.Item is FunctionTreeNode functionNode)
             {
-                DoDragDrop(e.Item, DragDropEffects.All);
+                treeViewMacros.DoDragDrop($"{functionNode.Function.Name}({functionNode.Function.Parameters})", DragDropEffects.All);
             }
         }
 

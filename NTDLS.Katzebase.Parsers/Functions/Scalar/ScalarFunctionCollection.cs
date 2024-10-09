@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
                 "Numeric Checksum (String text)|'Returns a numeric CRC32 for the given value.'",
                 "Numeric LastIndexOf (String textToFind, String textToSearch, Numeric offset = -1)|'Returns the zero based index for the last occurrence of the second given value in the first value.'",
                 "Numeric Length (String text)|'Returns the length of the given value.'",
-                "String Coalesce (StringInfinite text)|'Returns the first  non null of the given values.'",
+                "String Coalesce (StringInfinite text)|'Returns the first non null of the given values.'",
                 "String Concat (StringInfinite text)|'Concatenates all non null of the given values.'",
                 "String DateTime (String format = 'yyyy-MM-dd HH:mm:ss.ms')|'Returns the current local date and time using the given format.'",
                 "String DateTimeUTC (String format = 'yyyy-MM-dd HH:mm:ss.ms')|'Returns the current UCT date and time using the given format.'",
