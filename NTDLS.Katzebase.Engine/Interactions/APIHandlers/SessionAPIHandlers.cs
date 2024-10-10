@@ -42,6 +42,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
 
+#if DEBUG
+                if (param.Username == "debug")
+                {
+                    systemSession.Commit();
+
+                    LogManager.Debug($"Logged in mock user [{param.Username}].");
+
+                    var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+
+                    var result = new KbQueryServerStartSessionReply
+                    {
+                        ProcessId = session.ProcessId,
+                        ConnectionId = context.ConnectionId,
+                        ServerTimeUTC = DateTime.UtcNow
+                    };
+                    return result;
+                }
+#endif
+
                 var account = _core.Query.ExecuteQuery<KbAccount>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
                     new
                     {

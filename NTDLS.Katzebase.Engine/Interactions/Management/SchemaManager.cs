@@ -342,7 +342,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
                     if (IOManager.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
                     {
-                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
+                        throw new KbObjectNotFoundException($"Schema path not found: [{schemaName}].");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
