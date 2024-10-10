@@ -1,4 +1,7 @@
-drop schema Master
+DROP SCHEMA master
+
+
+--drop schema Master
 
 --create schema Master:Membership
 

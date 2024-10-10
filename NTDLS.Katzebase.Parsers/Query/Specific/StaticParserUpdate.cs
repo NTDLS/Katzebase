@@ -88,11 +88,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 if (tokenizer.TryEatIfNext("as"))
                 {
                     var schemaAlias = tokenizer.EatGetNext();
-                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary, schemaAlias.ToLowerInvariant()));
                 }
                 else
                 {
-                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName.ToLowerInvariant(), QuerySchemaUsageType.Primary));
+                    query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
                 }
 
                 //Parse joins.
