@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelect(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelect(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelectInto(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelectInto(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -234,7 +234,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {

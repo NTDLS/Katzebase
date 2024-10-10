@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Management.Classes
 
             Client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI");
             Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
-            Client.OnDisconnected += (KbClient sender, Api.Payloads.KbSessionInfo sessionInfo) =>
+            Client.OnDisconnected += (KbClient sender, Api.Models.KbSessionInfo sessionInfo) =>
             {
                 LazySchemaCache?.Stop();
             };

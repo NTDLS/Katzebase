@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Scripts\AccountLogin.kbs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +34,9 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
         <_Parameter1>FSI-ASSEMBLY</_Parameter1>
 	</AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\AccountLogin.kbs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />

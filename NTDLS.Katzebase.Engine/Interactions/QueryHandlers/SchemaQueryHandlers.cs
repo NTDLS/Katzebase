@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -28,14 +29,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
         }
 
-        internal KbQueryDocumentListResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
-                var result = new KbQueryDocumentListResult();
+                var result = new KbQueryResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -133,12 +134,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = new KbQueryDocumentListResult();
+                var result = new KbQueryResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {

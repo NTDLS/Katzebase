@@ -1,5 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Shared;
 

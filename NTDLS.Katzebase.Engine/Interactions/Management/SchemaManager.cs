@@ -1,12 +1,12 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
@@ -87,14 +87,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
                 IOManager.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+            }
+
+            using var session = _core.Sessions.CreateEphemeralSystemSession();
+            var masterSchema = _core.Schemas.AcquireVirtual(session.Transaction, "Master", LockOperation.Write, LockOperation.Write);
+            if (masterSchema.Exists == false)
+            {
+                LogManager.Information("Initializing master schema.");
 
                 //Create Master:Account schema and insert the default account.
-                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                CreateSingleSchema(systemSession.Transaction, "Master");
-                CreateSingleSchema(systemSession.Transaction, "Master:Account");
-                _core.Documents.InsertDocument(systemSession.Transaction, "Master:Account", new Account("admin", KbClient.HashPassword("")));
-                systemSession.Commit();
+
+                CreateSingleSchema(session.Transaction, "Master");
+                CreateSingleSchema(session.Transaction, "Master:Account");
+                CreateSingleSchema(session.Transaction, "Master:Role");
+                CreateSingleSchema(session.Transaction, "Master:Membership");
+
+                _core.Documents.InsertDocument(session.Transaction, "Master:Account", new KbAccount(1, "admin", KbClient.HashPassword("")));
+                _core.Documents.InsertDocument(session.Transaction, "Master:Role", new KbRole(1, "administrators") { IsAdministrator = true });
+                _core.Documents.InsertDocument(session.Transaction, "Master:Membership", new KbMembership(1, 1));
             }
+            session.Commit();
 
             LogManager.Information("Initializing ephemeral schemas.");
             RecycleEphemeralSchemas();
@@ -478,14 +490,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryDocumentListResult AnalyzePages(Transaction transaction, string schemaName, bool includePhysicalPages)
+        internal KbQueryResult AnalyzePages(Transaction transaction, string schemaName, bool includePhysicalPages)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
             var message = new StringBuilder();
 
-            var result = new KbQueryDocumentListResult();
+            var result = new KbQueryResult();
             result.AddField("CatalogPageNumber");
             result.AddField("CatalogDocumentCount");
             result.AddField("PageFullness");

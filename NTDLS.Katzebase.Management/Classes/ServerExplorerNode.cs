@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Models;
 using static NTDLS.Katzebase.Management.Classes.Constants;
 
 namespace NTDLS.Katzebase.Management.Classes

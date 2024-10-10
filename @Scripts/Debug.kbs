@@ -1,17 +1,21 @@
---Test constants and simple expressions
+--create schema Master:Membership
+
+
+--insert into Master:Account (Id = 1, Username = 'Admin', PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+
+select * from Master:Account 
+
+
 SELECT
-	10,
-	10 + 10,
-	'Text',
-	'Hello' + ' ' + 'World',
-	'Text' + 10 + 10,
-	10 + 10 + 'Text',
-	
-	10 as 10,
-	10 + 10 as 20,
-	'Text' as Text,
-	'Hello' + ' ' + 'World' as 'Hello World',
-	'Text' + 10 + 10 as 'Text 20',
-	10 + 10 + 'Text' as '20 Text',
+	A.Id as AccountId,
+	R.Id as RoldId,
+	R.IsAdministrator
 FROM
-	Single
+	Master:Account as A
+INNER JOIN Master:Membership as M
+	ON M.AccountId = A.Id
+INNER JOIN Master:Role as R
+	ON R.Id = M.RoleId
+
+
+SELECT Username, PasswordHash FROM Master:Account WHERE Username = 'admin' AND PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'

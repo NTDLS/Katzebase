@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
@@ -13,10 +14,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult SampleSchemaDocuments(
+        internal static KbQueryResult SampleSchemaDocuments(
             EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
-            var result = new KbQueryDocumentListResult();
+            var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
@@ -66,9 +67,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount = -1)
+        internal static KbQueryResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount = -1)
         {
-            var result = new KbQueryDocumentListResult();
+            var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
@@ -103,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
+        internal static KbQueryResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
@@ -117,7 +118,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var lookupResults = StaticSchemaIntersectionProcessor.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
-            var result = new KbQueryDocumentListResult();
+            var result = new KbQueryResult();
 
             foreach (var field in query.SelectFields)
             {

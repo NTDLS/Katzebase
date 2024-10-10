@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Payloads.RoundTrip;
+﻿using NTDLS.Katzebase.Api.Payloads;
 
 namespace NTDLS.Katzebase.Api.Management
 {

@@ -2,7 +2,8 @@
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Management.Classes;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;

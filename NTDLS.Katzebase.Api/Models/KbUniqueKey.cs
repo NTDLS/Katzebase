@@ -1,0 +1,18 @@
+﻿namespace NTDLS.Katzebase.Api.Models
+{
+    public class KbUniqueKey : KbIndex
+    {
+        public override bool IsUnique
+        {
+            get => true;
+        }
+
+        public KbUniqueKey(string name) : base(name) { }
+
+        public KbUniqueKey(string name, string[] attributes) : base(name, attributes) { }
+
+        public KbUniqueKey(string name, string attributesCsv) : base(name, attributesCsv) { }
+
+        public KbUniqueKey() : base() { }
+    }
+}

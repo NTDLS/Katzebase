@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Api.KbConstants;
@@ -54,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -67,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
 
                 //TODO: Maybe we should return a table here too? Maybe more than one?
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryDocumentListResult(), 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryResult(), 0);
             }
             catch (Exception ex)
             {

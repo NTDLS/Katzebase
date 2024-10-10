@@ -1,6 +1,7 @@
-﻿using NTDLS.Katzebase.Api.Payloads.RoundTrip;
+﻿using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.ReliableMessaging;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -32,7 +33,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-
             try
             {
                 if (string.IsNullOrEmpty(param.Username))
@@ -42,8 +42,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
 
-                var account = _core.Query.ExecuteQuery<Account>(systemSession.Session,
-                    $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
+                var account = _core.Query.ExecuteQuery<KbAccount>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
                     new
                     {
                         param.Username,

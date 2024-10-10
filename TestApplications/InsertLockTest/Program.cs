@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
 
 namespace InsertLockTest
 {

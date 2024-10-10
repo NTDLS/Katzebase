@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads;
+using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers;
@@ -222,7 +223,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
-                    return KbQueryDocumentListResult.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
+                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
                 }
                 else
                 {

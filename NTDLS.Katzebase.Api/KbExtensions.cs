@@ -7,7 +7,43 @@ namespace NTDLS.Katzebase.Api
         /// <summary>
         /// Maps the results in the result-set to a class object.
         /// </summary>
-        public static IEnumerable<T> MapTo<T>(this Payloads.KbQueryDocumentListResult result) where T : new()
+
+        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
+        Before:
+                public static IEnumerable<T> MapTo<T>(this Payloads.KbQueryDocumentListResult result) where T : new()
+                {
+        After:
+                public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
+                {
+        */
+
+        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
+        Before:
+                public static IEnumerable<T> MapTo<T>(this Models.KbQueryDocumentListResult result) where T : new()
+                {
+        After:
+                public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
+                {
+        */
+
+        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
+        Before:
+                public static IEnumerable<T> MapTo<T>(this Models.Response.KbQueryResult result) where T : new()
+                {
+        After:
+                public static IEnumerable<T> MapTo<T>(this KbQueryResult result) where T : new()
+                {
+        */
+
+        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
+        Before:
+                public static IEnumerable<T> MapTo<T>(this Payloads.Models.KbQueryResult result) where T : new()
+                {
+        After:
+                public static IEnumerable<T> MapTo<T>(this KbQueryResult result) where T : new()
+                {
+        */
+        public static IEnumerable<T> MapTo<T>(this Payloads.Response.KbQueryResult result) where T : new()
         {
             var results = new List<T>();
             var properties = KbReflectionCache.GetProperties(typeof(T));

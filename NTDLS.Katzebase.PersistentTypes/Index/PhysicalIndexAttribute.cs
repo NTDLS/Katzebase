@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Models;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index
 {
