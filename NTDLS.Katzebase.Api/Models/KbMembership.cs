@@ -2,10 +2,10 @@
 {
     public class KbMembership
     {
-        public int AccountId { get; set; }
-        public int RoleId { get; set; }
+        public Guid AccountId { get; set; }
+        public Guid RoleId { get; set; }
 
-        public KbMembership(int accountId, int roleId)
+        public KbMembership(Guid accountId, Guid roleId)
         {
             AccountId = accountId;
             RoleId = roleId;

@@ -6,6 +6,26 @@
 --select * from Master:Account 
 --drop schema Master
 
+--ALTER SCHEMA WordList
+
+
+CREATE ROLE TestRole
+CREATE ACCOUNT MyUser
+
+
+/*--Need to add these:
+
+CREATE ROLE TestRole
+CREATE ACCOUNT MyUser
+ALTER ROLE TestRole ADD MyUser
+
+ALTER SCHEMA WordList ADD ROLE TestRole
+	WITH (ALLOW ALL, DENY DELETE, Recursive)
+
+*/
+
+
+
 /*
 SELECT
 	A.Id as AccountId,
@@ -21,7 +41,7 @@ INNER JOIN Master:Role as R
 
 SELECT Username, PasswordHash FROM Master:Account WHERE Username = 'admin' AND PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 */
-
+/*
 SELECT
 	R.IsAdministrator
 FROM
@@ -30,4 +50,4 @@ INNER JOIN Master:Membership as M
 	ON M.AccountId = A.Id
 INNER JOIN Master:Role as R
 	ON R.Id = M.RoleId
-
+*/

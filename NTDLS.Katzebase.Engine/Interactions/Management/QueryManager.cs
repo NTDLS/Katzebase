@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
         /// </summary>
-        internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        internal IEnumerable<T> InternalExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
             var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
@@ -51,6 +51,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw new KbMultipleRecordSetsException();
             }
             return results.Collection[0].MapTo<T>();
+        }
+
+        /// <summary>
+        /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
+        /// </summary>
+        internal void InternalExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
+        {
+            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            if (preparedQueries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            _core.Query.ExecuteNonQuery(session, preparedQueries[0]);
         }
 
         /// <summary>
@@ -282,6 +295,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
                         return _core.Schemas.QueryHandlers.ExecuteCreate(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Account)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteCreateAccount(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Role)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteCreateRole(session, preparedQuery);
                     }
 
                     throw new NotImplementedException();

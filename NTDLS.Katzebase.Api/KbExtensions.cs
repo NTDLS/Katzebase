@@ -4,45 +4,6 @@ namespace NTDLS.Katzebase.Api
 {
     public static class KbExtensions
     {
-        /// <summary>
-        /// Maps the results in the result-set to a class object.
-        /// </summary>
-
-        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
-        Before:
-                public static IEnumerable<T> MapTo<T>(this Payloads.KbQueryDocumentListResult result) where T : new()
-                {
-        After:
-                public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
-                {
-        */
-
-        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
-        Before:
-                public static IEnumerable<T> MapTo<T>(this Models.KbQueryDocumentListResult result) where T : new()
-                {
-        After:
-                public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
-                {
-        */
-
-        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
-        Before:
-                public static IEnumerable<T> MapTo<T>(this Models.Response.KbQueryResult result) where T : new()
-                {
-        After:
-                public static IEnumerable<T> MapTo<T>(this KbQueryResult result) where T : new()
-                {
-        */
-
-        /* Unmerged change from project 'NTDLS.Katzebase.Api (net6.0)'
-        Before:
-                public static IEnumerable<T> MapTo<T>(this Payloads.Models.KbQueryResult result) where T : new()
-                {
-        After:
-                public static IEnumerable<T> MapTo<T>(this KbQueryResult result) where T : new()
-                {
-        */
         public static IEnumerable<T> MapTo<T>(this Payloads.Response.KbQueryResult result) where T : new()
         {
             var results = new List<T>();
@@ -81,7 +42,14 @@ namespace NTDLS.Katzebase.Api
 
                             try
                             {
-                                property.SetValue(obj, Convert.ChangeType(value, propertyType));
+                                if (propertyType == typeof(Guid))
+                                {
+                                    property.SetValue(obj, Guid.Parse(value));
+                                }
+                                else
+                                {
+                                    property.SetValue(obj, Convert.ChangeType(value, propertyType));
+                                }
                             }
                             catch
                             {

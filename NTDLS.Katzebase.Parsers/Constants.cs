@@ -5,37 +5,39 @@
         public enum QueryType
         {
             None,
-            Select,
-            SelectInto,
-            Sample,
-            Analyze,
-            List,
             Alter,
-            Insert,
-            Update,
+            Analyze,
+            Begin,
+            Commit,
             Create,
             Delete,
-            Begin,
-            Rollback,
-            Commit,
             Drop,
-            Rebuild,
-            Set,
+            Exec,
+            Insert,
             Kill,
-            Exec
+            List,
+            Rebuild,
+            Rollback,
+            Sample,
+            Select,
+            SelectInto,
+            Set,
+            Update
         }
 
         public enum SubQueryType
         {
             None,
+            Account,
+            Configuration,
+            Documents,
+            Index,
+            Procedure,
+            Role,
             Schema,
             Schemas,
-            Documents,
             Transaction,
-            Configuration,
-            Index,
-            UniqueKey,
-            Procedure
+            UniqueKey
         }
 
         public enum LogicalConnector

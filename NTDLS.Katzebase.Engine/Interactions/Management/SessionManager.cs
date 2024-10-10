@@ -74,13 +74,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             //We add a mock administrator role because when a role with [IsAdministrator == true]
                             //  exists then all other role checks are ignored.
-                            roles.Add(new KbRole(0, "Administrator") { IsAdministrator = true });
+                            roles.Add(new KbRole(Guid.Parse(BuiltInSystemUserName), "Administrator") { IsAdministrator = true });
                         }
                         else
                         {
                             //Get the user roles so they can be assigned to the session.
                             using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                            roles = _core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
+                            roles = _core.Query.InternalExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
                             systemSession.Commit();
                         }
 

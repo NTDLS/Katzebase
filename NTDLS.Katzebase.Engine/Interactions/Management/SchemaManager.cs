@@ -103,9 +103,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 CreateSingleSchema(session.Transaction, "Master:Role");
                 CreateSingleSchema(session.Transaction, "Master:Membership");
 
-                _core.Documents.InsertDocument(session.Transaction, "Master:Account", new KbAccount(1, "admin", KbClient.HashPassword("")));
-                _core.Documents.InsertDocument(session.Transaction, "Master:Role", new KbRole(1, "administrators") { IsAdministrator = true });
-                _core.Documents.InsertDocument(session.Transaction, "Master:Membership", new KbMembership(1, 1));
+                var adminAccountId = Guid.NewGuid();
+                var administratorsRoleId = Guid.NewGuid();
+
+                _core.Documents.InsertDocument(session.Transaction, "Master:Account", new KbAccount(adminAccountId, "admin", KbClient.HashPassword("")));
+                _core.Documents.InsertDocument(session.Transaction, "Master:Role", new KbRole(administratorsRoleId, "administrators") { IsAdministrator = true });
+                _core.Documents.InsertDocument(session.Transaction, "Master:Membership", new KbMembership(adminAccountId, administratorsRoleId));
             }
             session.Commit();
 

@@ -24,7 +24,9 @@
 
         public enum SecurityPolicyType
         {
+            All, //Allow/deny ALL of the policy types.
             Select, //Read rows within the schema.
+            Update, //Update rows within the schema.
             Insert, //Insert rows within the schema.
             Delete, //Delete rows within the schema.
             Drop, //Drop objects within the schema (such as sub-schemas, indexes, etc).

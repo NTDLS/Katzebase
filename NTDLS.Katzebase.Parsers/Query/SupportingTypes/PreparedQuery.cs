@@ -12,6 +12,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     {
         public enum Attribute
         {
+            AccountName,
+            PasswordHash,
+            RoleName,
             IndexName,
             IsUnique,
             ProcessId,
