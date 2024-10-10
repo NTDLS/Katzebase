@@ -38,11 +38,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="session"></param>
-        /// <param name="queryText"></param>
-        /// <returns></returns>
-        /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
             var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());

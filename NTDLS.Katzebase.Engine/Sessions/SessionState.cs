@@ -1,16 +1,22 @@
-﻿using NTDLS.Katzebase.Shared;
+﻿using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Sessions
 {
     /// <summary>
     /// This is the an instance of a single client connection.
     /// </summary>
-    internal class SessionState(ulong processId, Guid connectionId, string username, string clientName, bool isInternalSystemSession)
+    internal class SessionState(ulong processId, Guid connectionId, string username, string clientName, List<KbRole> roles, bool isInternalSystemSession)
     {
         public enum KbConnectionSetting
         {
             TraceWaitTimes
         }
+
+        /// <summary>
+        /// List of roles the user was assigned at login.
+        /// </summary>
+        public List<KbRole> Roles { get; set; } = roles;
 
         /// <summary>
         /// The query currently associated with the session.

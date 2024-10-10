@@ -43,6 +43,5 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
 
             return catalog;
         }
-
     }
 }

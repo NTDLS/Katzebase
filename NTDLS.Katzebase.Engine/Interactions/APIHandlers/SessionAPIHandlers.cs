@@ -1,7 +1,7 @@
-﻿using NTDLS.Katzebase.Api.Models;
-using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Scripts;
+using NTDLS.Katzebase.Engine.Scripts.Models;
 using NTDLS.ReliableMessaging;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                     LogManager.Debug($"Logged in mock user [{param.Username}].");
 
-                    var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+                    var session = _core.Sessions.CreateSession(context.ConnectionId, SessionManager.BuiltInSystemUserName, param.ClientName);
 
                     var result = new KbQueryServerStartSessionReply
                     {
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 }
 #endif
 
-                var account = _core.Query.ExecuteQuery<KbAccount>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
+                var account = _core.Query.ExecuteQuery<AccountLogin>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
                     new
                     {
                         param.Username,

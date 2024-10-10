@@ -6,6 +6,7 @@
         public const string DocumentPageExtension = ".kbpage";
         public const string DocumentPageDocumentIdExtension = ".kbmap";
         public const string SchemaCatalogFile = "@schemas.kbcat";
+        public const string PolicyCatalogFile = "@policy.kbcat";
         public const string DocumentPageCatalogFile = "@pages.kbcat";
         public const string IndexCatalogFile = "@indexes.kbcat";
         public const string ProcedureCatalogFile = "@procedures.kbcat";
@@ -14,6 +15,21 @@
         public const string HealthStatsFile = "@health.kblog";
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
+
+        public enum SecurityPolicy
+        {
+            Allow,
+            Deny
+        }
+
+        public enum SecurityPolicyType
+        {
+            Select, //Read rows within the schema.
+            Insert, //Insert rows within the schema.
+            Delete, //Delete rows within the schema.
+            Drop, //Drop objects within the schema (such as sub-schemas, indexes, etc).
+            Create, //Create objects within the schema (such as sub-schemas, indexes, etc).
+        }
 
         public enum IndexMatchType
         {

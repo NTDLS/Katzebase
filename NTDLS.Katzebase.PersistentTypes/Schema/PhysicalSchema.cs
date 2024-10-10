@@ -39,6 +39,9 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
         public string IndexCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.IndexCatalogFile);
 
+        public string PolicyCatalogFileFilePath()
+            => Path.Combine(DiskPath, EngineConstants.PolicyCatalogFile);
+
         public string ProcedureCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.ProcedureCatalogFile);
 

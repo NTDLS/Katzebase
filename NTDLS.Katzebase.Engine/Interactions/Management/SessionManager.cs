@@ -1,6 +1,8 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
 
@@ -11,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class SessionManager
     {
+        public static string BuiltInSystemUserName = Guid.NewGuid().ToString();
         private readonly EngineCore _core;
         private ulong _nextProcessId = 1;
         private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
@@ -40,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal InternalSystemSessionTransaction CreateEphemeralSystemSession()
         {
-            var session = _core.Sessions.CreateSession(Guid.NewGuid(), "system", "system", true);
+            var session = _core.Sessions.CreateSession(Guid.NewGuid(), BuiltInSystemUserName, "system", true);
             var transactionReference = _core.Transactions.APIAcquire(session);
             return new InternalSystemSessionTransaction(_core, session, transactionReference);
         }
@@ -60,7 +63,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         ulong processId = _nextProcessId++;
 
-                        session = new SessionState(processId, connectionId, username, clientName, isInternalSystemSession);
+                        var roles = new List<KbRole>();
+
+                        if (username == BuiltInSystemUserName)
+                        {
+                            //We add a mock administrator role because when a role with [IsAdministrator == true]
+                            //  exists then all other role checks are ignored.
+                            roles.Add(new KbRole(0, "Administrator") { IsAdministrator = true });
+                        }
+                        else
+                        {
+                            //Get the user roles so they can be assigned to the session.
+                            using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                            roles = _core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
+                            systemSession.Commit();
+                        }
+
+                        session = new SessionState(processId, connectionId,
+                            username == BuiltInSystemUserName ? "system" : username,
+                            clientName, roles, isInternalSystemSession);
+
                         obj.Add(connectionId, session);
                         return session;
                     }

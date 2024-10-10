@@ -9,6 +9,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.PersistentTypes.Policy;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -87,6 +88,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
                 IOManager.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, PolicyCatalogFile), new PhysicalPolicyCatalog());
             }
 
             using var session = _core.Sessions.CreateEphemeralSystemSession();
@@ -96,7 +98,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Information("Initializing master schema.");
 
                 //Create Master:Account schema and insert the default account.
-
                 CreateSingleSchema(session.Transaction, "Master");
                 CreateSingleSchema(session.Transaction, "Master:Account");
                 CreateSingleSchema(session.Transaction, "Master:Role");
@@ -192,6 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
                 _core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
+                _core.IO.PutJson(transaction, physicalSchema.PolicyCatalogFileFilePath(), new PhysicalPolicyCatalog());
 
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
