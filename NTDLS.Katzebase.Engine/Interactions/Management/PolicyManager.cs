@@ -38,6 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     UserName = username,
                     PasswordHash = passwordHash
                 });
+
         internal void CreateRole(Transaction transaction, string roleName, bool isAdministrator)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
                 new
@@ -46,7 +47,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     Name = roleName,
                     IsAdministrator = isAdministrator
                 });
-
 
         internal void AddUserToRole(Transaction transaction, string roleName, string username)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
