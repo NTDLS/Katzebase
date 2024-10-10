@@ -768,7 +768,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     indexScanResult.Leaf.EnsureNotNull().Documents ??= new();
 
-                    if (physicalIndex.IsUnique && indexScanResult.Leaf.Documents.EnsureNotNull().Count > 1)
+                    if (physicalIndex.IsUnique && indexScanResult.Leaf.Documents.EnsureNotNull().Count > 0)
                     {
                         throw new KbDuplicateKeyViolationException($"Duplicate key violation occurred for index [{physicalIndex.Name}], values: [{string.Join("],[", searchTokens)}]");
                     }
