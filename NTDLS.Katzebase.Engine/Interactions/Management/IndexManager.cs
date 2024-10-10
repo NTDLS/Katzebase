@@ -16,6 +16,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
+using System.Linq;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -351,9 +352,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     workingPhysicalIndexLeaves = MatchIndexLeaves(transaction, query,
                                     condition, workingPhysicalIndexLeaves, query.Conditions.FieldCollection, keyValues);
 
-                                    if (indexLookup.IndexSelection.PhysicalIndex.Attributes.Count == 1)
-                                    {
+                                    if (
                                         //The index only has one attribute, so we are at the base where the document pointers are.
+                                        indexLookup.IndexSelection.PhysicalIndex.Attributes.Count == 1
+                                        //This may be a compound index, but we only matched on one attribute.
+                                        //If we have more than one attribute match then MatchSchemaDocumentsByIndexingConditionLookupRecursive will
+                                        //  handle dropping out of recursion and distillation, but that recursion expects an index depth of at least two.
+                                        || indexLookup.AttributeConditionSets.Count == 1)
+                                    {
                                         //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
                                         var ptIndexDistillation = transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
                                         singleThreadResults = DistillIndexLeaves(workingPhysicalIndexLeaves);
@@ -783,7 +789,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         indexScanResult.Leaf = indexScanResult.Leaf.EnsureNotNull().AddNewLeaf(searchTokens[i]);
                     }
-
 
                     indexScanResult.Leaf.EnsureNotNull().Documents ??= new();
                 }
