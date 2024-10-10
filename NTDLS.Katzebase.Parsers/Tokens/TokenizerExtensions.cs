@@ -151,5 +151,18 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         public static bool IsTokenConnectorCharacter(this char c)
             => TokenConnectorCharacters.Contains(c);
+
+        /// <summary>
+        /// Throws an exception if a value contains an unresolved string or numeric placeholder.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <exception cref="KbProcessingException"></exception>
+        public static void AssertUnresolvedExpression(this string value)
+        {
+            if (value?.IsLike("%$s__%") == true || value?.IsLike("%$n__%") == true)
+            {
+                throw new KbProcessingException($"The variable is not defined: [{value}]");
+            }
+        }
     }
 }

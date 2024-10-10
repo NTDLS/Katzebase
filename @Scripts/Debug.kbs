@@ -1,14 +1,15 @@
  --const @Username = 10 * 10
 
+--DECLARE @Username = 'Admin'
+
 
 SELECT
-	20 + @Username + 100 as Username
+	20 + @Username + 100 as Username --TODO: AssertUnresolvedExpression
 FROM
 	Master:Account
-WHERE
-	Username = @Username
+--WHERE
+	--Username = @Username
 
-DECLARE @Username = 'Admin'
 
 
 
