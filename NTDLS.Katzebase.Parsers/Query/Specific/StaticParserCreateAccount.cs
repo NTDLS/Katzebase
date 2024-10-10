@@ -15,24 +15,25 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 SubQueryType = SubQueryType.Account
             };
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var accountName) == false)
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var username) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected account name, found: [ {accountName} ].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
             }
-            query.AddAttribute(PreparedQuery.Attribute.AccountName, accountName);
-            query.AddAttribute(PreparedQuery.Attribute.PasswordHash, KbClient.HashPassword("")); //TODO: parse password with "WITH parser".
+            query.AddAttribute(PreparedQuery.Attribute.Username, username);
 
-            /*
-            if (tokenizer.TryEatIfNext("with"))
+            tokenizer.EatIfNext("with");
+
+            var options = new ExpectedQueryAttributes
             {
-                var options = new ExpectedQueryAttributes
-                {
-                    {"pagesize", typeof(uint) }
-                };
+                {PreparedQuery.Attribute.Password.ToString(), typeof(string) }
+            };
 
-                query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
+            var attributes = StaticParserAttributes.Parse(tokenizer, options);
+
+            if (attributes.TryGetValue(PreparedQuery.Attribute.Password.ToString(), out var plainTextPassword))
+            {
+                query.AddAttribute(PreparedQuery.Attribute.PasswordHash, KbClient.HashPassword(plainTextPassword.Value?.ToString() ?? string.Empty));
             }
-            */
 
             return query;
         }

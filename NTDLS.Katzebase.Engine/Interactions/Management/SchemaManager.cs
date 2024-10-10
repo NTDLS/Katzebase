@@ -1,12 +1,11 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Policy;
@@ -91,26 +90,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, PolicyCatalogFile), new PhysicalPolicyCatalog());
             }
 
-            using var session = _core.Sessions.CreateEphemeralSystemSession();
-            var masterSchema = _core.Schemas.AcquireVirtual(session.Transaction, "Master", LockOperation.Write, LockOperation.Write);
+            using var system = _core.Sessions.CreateEphemeralSystemSession();
+            var masterSchema = _core.Schemas.AcquireVirtual(system.Transaction, "Master", LockOperation.Write, LockOperation.Write);
             if (masterSchema.Exists == false)
             {
                 LogManager.Information("Initializing master schema.");
-
-                //Create Master:Account schema and insert the default account.
-                CreateSingleSchema(session.Transaction, "Master");
-                CreateSingleSchema(session.Transaction, "Master:Account");
-                CreateSingleSchema(session.Transaction, "Master:Role");
-                CreateSingleSchema(session.Transaction, "Master:Membership");
-
-                var adminAccountId = Guid.NewGuid();
-                var administratorsRoleId = Guid.NewGuid();
-
-                _core.Documents.InsertDocument(session.Transaction, "Master:Account", new KbAccount(adminAccountId, "admin", KbClient.HashPassword("")));
-                _core.Documents.InsertDocument(session.Transaction, "Master:Role", new KbRole(administratorsRoleId, "administrators") { IsAdministrator = true });
-                _core.Documents.InsertDocument(session.Transaction, "Master:Membership", new KbMembership(adminAccountId, administratorsRoleId));
+                _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateMasterSchema.kbs"));
             }
-            session.Commit();
+            system.Commit();
 
             LogManager.Information("Initializing ephemeral schemas.");
             RecycleEphemeralSchemas();
@@ -202,6 +189,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (parentCatalog.ContainsName(physicalSchema.Name) == false)
                 {
+                    Console.WriteLine(physicalSchema.Name);
+
                     parentCatalog.Add(new PhysicalSchema
                     {
                         Id = Guid.NewGuid(),

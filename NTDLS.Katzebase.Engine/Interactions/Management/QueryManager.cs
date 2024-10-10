@@ -36,9 +36,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Internal helpers.
 
         /// <summary>
-        /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
+        /// Executes a query and returns the mapped object.
         /// </summary>
-        internal IEnumerable<T> InternalExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
             var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
@@ -54,34 +54,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
+        /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
         /// </summary>
-        internal void InternalExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
+        internal void ExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
-            if (preparedQueries.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
-            }
-            _core.Query.ExecuteNonQuery(session, preparedQueries[0]);
-        }
+            session.SetCurrentQuery(queryText);
 
-        /// <summary>
-        /// Executes a query. This function is designed to be used internally and expects that the "batch" only contains one query.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="session"></param>
-        /// <param name="queryText"></param>
-        /// <returns></returns>
-        /// <exception cref="KbMultipleRecordSetsException"></exception>
-        internal void ExecuteNonQuery(SessionState session, string queryText)
-        {
-            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants);
-            if (preparedQueries.Count > 1)
+            foreach (var preparedQuery in StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
             {
-                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+                session.SetCurrentQuery(queryText);
+                _core.Query.ExecuteQuery(session, preparedQuery);
             }
-            _core.Query.ExecuteNonQuery(session, preparedQueries[0]);
+
+            session.ClearCurrentQuery();
         }
 
         #endregion
@@ -303,6 +288,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (preparedQuery.SubQueryType == SubQueryType.Role)
                     {
                         return _core.Policies.QueryHandlers.ExecuteCreateRole(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.AddUserToRole)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteAddUserToRole(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.RemoveUserFromRole)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteRemoveUserFromRole(session, preparedQuery);
                     }
 
                     throw new NotImplementedException();

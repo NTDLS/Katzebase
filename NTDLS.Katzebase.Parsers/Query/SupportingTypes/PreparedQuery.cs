@@ -12,7 +12,9 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     {
         public enum Attribute
         {
-            AccountName,
+            IsAdministrator,
+            Username,
+            Password,
             PasswordHash,
             RoleName,
             IndexName,
@@ -104,6 +106,12 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 
         private readonly KbInsensitiveDictionary<QueryAttribute> _attributes = new();
         public IReadOnlyDictionary<string, QueryAttribute> Attributes => _attributes;
+
+        public bool IsAttributeSet(Attribute attribute)
+            => _attributes.TryGetValue(attribute.ToString(), out var _);
+
+        public bool IsAttributeSet(string attribute)
+            => _attributes.TryGetValue(attribute, out var _);
 
         public bool TryGetAttribute<T>(string attribute, out T outValue, T defaultValue)
         {

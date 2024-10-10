@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 }
 #endif
 
-                var account = _core.Query.InternalExecuteQuery<AccountLogin>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
+                var account = _core.Query.ExecuteQuery<AccountLogin>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
                     new
                     {
                         param.Username,

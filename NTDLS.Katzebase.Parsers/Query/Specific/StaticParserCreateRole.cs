@@ -20,17 +20,15 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             }
             query.AddAttribute(PreparedQuery.Attribute.RoleName, roleName);
 
-            /*
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedQueryAttributes
                 {
-                    {"pagesize", typeof(uint) }
+                    {PreparedQuery.Attribute.IsAdministrator.ToString(), typeof(bool) }
                 };
 
                 query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
             }
-            */
 
             return query;
         }

@@ -54,7 +54,8 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 int nextTriedConstant = 0;
 
                 //Predefined string constants.
-                regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+(?=\s|$)");
+                //regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+(?=\s|$)");
+                regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+");
                 while (true)
                 {
                     var match = regex.Match(query);

@@ -1,0 +1,7 @@
+SELECT
+	A.Username
+FROM
+	Master:Account as A
+WHERE
+	A.Username = @Username
+	AND A.PasswordHash = @PasswordHash

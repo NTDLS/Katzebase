@@ -80,7 +80,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             //Get the user roles so they can be assigned to the session.
                             using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                            roles = _core.Query.InternalExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
+                            roles = _core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
                             systemSession.Commit();
                         }
 

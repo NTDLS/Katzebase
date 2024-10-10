@@ -1,0 +1,12 @@
+SELECT
+	A.Id as AccountId,
+	R.Id as RoleId
+INTO
+	Master:Membership
+FROM
+	Master:Account as A
+INNER JOIN Master:Role as R
+	ON R.Id = R.Id --TODO: We should support 1 = 1
+WHERE
+	A.Username = @Username
+	AND R.Name = @RoleName

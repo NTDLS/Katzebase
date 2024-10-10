@@ -23,6 +23,11 @@
   <ItemGroup>
     <None Remove="Scripts\AccountLogin.kbs" />
     <None Remove="Scripts\AccountRoles.kbs" />
+    <None Remove="Scripts\AddUserToRole.kbs" />
+    <None Remove="Scripts\CreateAccount.kbs" />
+    <None Remove="Scripts\CreateMasterSchema.kbs" />
+    <None Remove="Scripts\CreateRole.kbs" />
+    <None Remove="Scripts\RemoveUserFromRole.kbs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,8 +42,13 @@
 	</AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Scripts\CreateMasterSchema.kbs" />
+    <EmbeddedResource Include="Scripts\AddUserToRole.kbs" />
+    <EmbeddedResource Include="Scripts\RemoveUserFromRole.kbs" />
     <EmbeddedResource Include="Scripts\AccountRoles.kbs" />
     <EmbeddedResource Include="Scripts\AccountLogin.kbs" />
+    <EmbeddedResource Include="Scripts\CreateRole.kbs" />
+    <EmbeddedResource Include="Scripts\CreateAccount.kbs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />

@@ -34,6 +34,8 @@
             Index,
             Procedure,
             Role,
+            AddUserToRole,
+            RemoveUserFromRole,
             Schema,
             Schemas,
             Transaction,

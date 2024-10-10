@@ -9,12 +9,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Schema, SubQueryType.Configuration]);
+            var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Schema, SubQueryType.Role, SubQueryType.Configuration]);
 
             return querySubType switch
             {
                 SubQueryType.Schema => StaticParserAlterSchema.Parse(queryBatch, tokenizer),
                 SubQueryType.Configuration => StaticParserAlterConfiguration.Parse(queryBatch, tokenizer),
+                SubQueryType.Role => StaticParserAlterRole.Parse(queryBatch, tokenizer),
 
                 _ => throw new KbNotImplementedException($"The query type is not implemented: [{querySubType}].")
             };

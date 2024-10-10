@@ -1,22 +1,12 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads.Response;
-using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Scripts;
-using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.PersistentTypes.Index;
-using NTDLS.Katzebase.PersistentTypes.Policy;
-using NTDLS.Katzebase.PersistentTypes.Schema;
-using System;
-using static NTDLS.Katzebase.Parsers.Constants;
-using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
-    /// Public core class methods for locking, reading, writing and managing tasks related to policies.
+    /// Public core class methods for locking, reading, writing and managing tasks related to users, roles, membership and policies.
     /// </summary>
     public class PolicyManager
     {
@@ -40,53 +30,40 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalPolicyCatalog AcquirePolicyCatalog(Transaction transaction,
-            PhysicalSchema physicalSchema, LockOperation intendedOperation)
-        {
-            try
-            {
-                var policyCatalog = _core.IO.GetJson<PhysicalPolicyCatalog>(
-                    transaction, physicalSchema.PolicyCatalogFileFilePath(), intendedOperation);
-                return policyCatalog;
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to acquire policy catalog for process id {transaction.ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        internal void CreateAccount(Transaction transaction, string accountName, string passwordHash)
-        {
-            try
-            {
-                _core.Query.InternalExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
-                    new
-                    {
-                        Id = Guid.NewGuid(),
-                        AccountName = accountName,
-                        PasswordHash = passwordHash
-                    });
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to create account for process id {transaction.ProcessId}.", ex);
-                throw;
-            }
-        }
+        internal void CreateAccount(Transaction transaction, string username, string passwordHash)
+            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
+                new
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = username,
+                    PasswordHash = passwordHash
+                });
+        internal void CreateRole(Transaction transaction, string roleName, bool isAdministrator)
+            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
+                new
+                {
+                    Id = Guid.NewGuid(),
+                    Name = roleName,
+                    IsAdministrator = isAdministrator
+                });
 
 
-        internal void CreateRole(Transaction transaction, string accountName)
-        {
-            try
-            {
+        internal void AddUserToRole(Transaction transaction, string roleName, string username)
+            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
+                new
+                {
+                    Id = Guid.NewGuid(),
+                    RoleName = roleName,
+                    Username = username
+                });
 
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to create role for process id {transaction.ProcessId}.", ex);
-                throw;
-            }
-        }
+        internal void RemoveUserFromRole(Transaction transaction, string roleName, string username)
+            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
+                new
+                {
+                    Id = Guid.NewGuid(),
+                    RoleName = roleName,
+                    Username = username
+                });
     }
 }

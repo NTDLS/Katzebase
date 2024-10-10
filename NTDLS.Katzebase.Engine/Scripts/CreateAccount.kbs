@@ -1,6 +1,6 @@
 INSERT INTO Master:Account
 (
-	Id = @Id
-	Username = @Username
-	Password = @PasswordHash
+	Id = @Id,
+	Username = @Username,
+	PasswordHash = @PasswordHash
 )
