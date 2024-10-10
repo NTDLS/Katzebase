@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
@@ -18,11 +19,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         {
             if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseAggregateFunctionNumericParameter(expressionNumeric.FunctionDependencies, aggregateFunctionParameters, expressionNumeric.Value);
+                return CollapseAggregateFunctionNumericParameter(expressionNumeric.FunctionDependencies, aggregateFunctionParameters, expressionNumeric.Value.EnsureNotNull());
             }
             else if (queryField.Expression is QueryFieldExpressionString expressionString)
             {
-                return CollapseAggregateFunctionStringParameter(expressionString.FunctionDependencies, aggregateFunctionParameters, expressionString.Value);
+                return CollapseAggregateFunctionStringParameter(expressionString.FunctionDependencies, aggregateFunctionParameters, expressionString.Value.EnsureNotNull());
             }
             else
             {

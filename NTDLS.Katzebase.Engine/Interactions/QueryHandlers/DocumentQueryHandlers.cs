@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using static NTDLS.Katzebase.Api.KbConstants;
@@ -100,9 +101,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <summary>
         /// Inserts a document into a schema.
         /// </summary>
-        /// <param name="processId"></param>
-        /// <param name="preparedQuery"></param>
-        /// <returns></returns>
         internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery preparedQuery)
         {
             try

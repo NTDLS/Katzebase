@@ -12,6 +12,8 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     {
         public enum Attribute
         {
+            VariablePlaceholder,
+            Expression,
             IsAdministrator,
             Username,
             Password,

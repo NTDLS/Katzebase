@@ -5,7 +5,7 @@
     /// </summary>
     public class QueryFieldConstantNumeric : IQueryField
     {
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Not applicable to QueryFieldConstantString
@@ -17,7 +17,7 @@
         /// </summary>
         public int? ScriptLine { get; set; }
 
-        public QueryFieldConstantNumeric(int? scriptLine, string value)
+        public QueryFieldConstantNumeric(int? scriptLine, string? value)
         {
             ScriptLine = scriptLine;
             Value = value;

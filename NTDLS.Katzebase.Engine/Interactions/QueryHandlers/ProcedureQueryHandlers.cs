@@ -1,11 +1,14 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Functions.System;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
+using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -30,6 +33,49 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 throw;
             }
         }
+
+        /// <summary>
+        /// Declares a variable, collapses any expression.
+        /// </summary>
+        internal KbActionResponse ExecuteDeclare(SessionState session, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var variablePlaceholder = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.VariablePlaceholder);
+                var expression = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Expression);
+
+                var mockField = new QueryFieldExpressionString(null, expression);
+                var mockFields = new SelectFieldCollection(preparedQuery.Batch);
+
+                var auxiliaryValues = new KbInsensitiveDictionary<string?>();
+                foreach (var literal in preparedQuery.Batch.Literals)
+                {
+                    auxiliaryValues.Add(literal.Key, literal.Value.Value);
+                }
+
+                var collapsedExpression = StaticScalarExpressionProcessor.CollapseScalarQueryField
+                            (mockField, transactionReference.Transaction, preparedQuery, mockFields, auxiliaryValues);
+
+                if (double.TryParse(collapsedExpression, out var _))
+                {
+                    preparedQuery.Batch.Literals[variablePlaceholder] = new Parsers.Query.QueryFieldLiteral(KbBasicDataType.Numeric, collapsedExpression);
+                }
+                else
+                {
+                    preparedQuery.Batch.Literals[variablePlaceholder] = new Parsers.Query.QueryFieldLiteral(KbBasicDataType.String, collapsedExpression);
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+            }
+            catch (Exception ex)
+            {
+                Management.LogManager.Error($"Failed to execute document insert for process id {session.ProcessId}.", ex);
+                throw;
+            }
+        }
+
 
         internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
         {

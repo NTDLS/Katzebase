@@ -3,13 +3,15 @@ using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral> literals)
+    public class QueryBatch(KbInsensitiveDictionary<QueryFieldLiteral> literals)
         : List<PreparedQuery>
     {
-        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; set; } = literals;
+        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; set; } = literals;
 
-        public string? GetLiteralValue(string value)
+        public string? GetLiteralValue(string? value)
         {
+            if (value == null) return null;
+
             if (Literals.TryGetValue(value, out var literal))
             {
                 return literal.Value;
@@ -17,14 +19,16 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             else return value;
         }
 
-        public string? GetLiteralValue(string value, out KbBasicDataType outDataType)
+        public string? GetLiteralValue(string? value, out KbBasicDataType outDataType)
         {
-            if (Literals.TryGetValue(value, out var literal))
+            if (value != null)
             {
-                outDataType = KbBasicDataType.String;
-                return literal.Value;
+                if (Literals.TryGetValue(value, out var literal))
+                {
+                    outDataType = KbBasicDataType.String;
+                    return literal.Value;
+                }
             }
-
             outDataType = KbBasicDataType.Undefined;
             return value;
         }

@@ -13,14 +13,19 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Gets the end of the query segment by using the stopAtTokens and the start of the next query, using whichever one comes first.
         /// </summary>
-        public static int FindEndOfQuerySegment(this Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption = true)
+        public static int FindEndOfQuerySegment(this Tokenizer tokenizer, string[]? stopAtTokens = null, bool allowEntireConsumption = true)
         {
-            //Find where the join conditions end.
-            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out var nextPartOfQueryCaret) == false)
-            {
-                nextPartOfQueryCaret = tokenizer.Length; //No end marker found, consume the entire query.
+            int? nextPartOfQueryCaret = null;
 
+            if (stopAtTokens != null)
+            {
+                //Find where the join conditions end.
+                if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out nextPartOfQueryCaret) == false)
+                {
+                    nextPartOfQueryCaret = tokenizer.Length; //No end marker found, consume the entire query.
+                }
             }
+
             if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret) == false)
             {
                 startOfNextQueryCaret = tokenizer.Length; //No end marker found, consume the entire query.
@@ -32,7 +37,14 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             if (allowEntireConsumption == false && caret == tokenizer.Length)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [{string.Join("],[", stopAtTokens)}].");
+                if (stopAtTokens != null)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [{string.Join("],[", stopAtTokens)}].");
+                }
+                else
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [start of new query or end-of-script].");
+                }
             }
 
             return caret;
@@ -113,8 +125,8 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Returns true if the text is a valid identifier string.
         /// </summary>
-        public static bool IsIdentifier(this string text)
-            => string.IsNullOrWhiteSpace(text) == false && text.All(IsIdentifier) && !IsReservedWords(text);
+        public static bool IsIdentifier(this string? text)
+            => text != null && string.IsNullOrWhiteSpace(text) == false && text.All(IsIdentifier) && !IsReservedWords(text);
 
         /// <summary>
         /// Returns true if the text is a valid identifier character.

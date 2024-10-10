@@ -19,6 +19,11 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (Literals.TryGetValue(token, out var literal))
             {
+                if (literal.DataType == KbBasicDataType.Undefined)
+                {
+                    throw new KbParserException(GetCurrentLineNumber(), $"The variable is not defined: [{token}]");
+                }
+
                 return literal.Value;
             }
             return token;
@@ -29,6 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         private void SwapOutStringLiterals(ref string query)
         {
+
             //Literal strings.
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
             while (true)
@@ -48,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
-            if (PredefinedConstants.Count > 0)
+            if (Variables.Count > 0)
             {
                 var triedConstants = new Dictionary<string, string>();
                 int nextTriedConstant = 0;
@@ -66,7 +72,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                         {
                             //This is a variable, and unlike a constant - we require them to be declared.
 
-                            if (PredefinedConstants.TryGetValue(match.ToString(), out var variable))
+                            if (Variables.TryGetValue(match.ToString(), out var variable))
                             {
                                 if (variable.DataType == KbBasicDataType.String)
                                 {
@@ -84,10 +90,26 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             }
                             else
                             {
-                                throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
+                                //This variable is not defined, we'll try to define it at "runtime" if the variable is declared in the script.
+                                //Unfortunately, we can't determine the data-type here so we'll go with string
+                                if (RuntimeVariableForwardLookup.TryGetValue(match.Value, out var existingKey))
+                                {
+                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, existingKey);
+                                }
+                                else
+                                {
+                                    string key = $"$s_{_literalKey++}$";
+                                    Variables.Add(key, new("", KbBasicDataType.Undefined));
+                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                                    //Keep track of variables so we can create the same "$s_nn}$" placeholder for multiple occurrences of the same variable.
+                                    RuntimeVariableForwardLookup.Add(match.Value, key);
+                                    RuntimeVariableReverseLookup.Add(key, match.Value);
+                                }
+
+                                //throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
                             }
                         }
-                        else if (PredefinedConstants.TryGetValue(match.ToString(), out var constant))
+                        else if (Variables.TryGetValue(match.ToString(), out var constant))
                         {
                             if (constant.DataType == KbBasicDataType.String)
                             {
@@ -148,7 +170,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
-            if (PredefinedConstants.Count > 0)
+            if (Variables.Count > 0)
             {
                 var triedConstants = new Dictionary<string, string>();
                 int nextTriedConstant = 0;
@@ -161,16 +183,16 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                     if (match.Success)
                     {
-                        if (PredefinedConstants.TryGetValue(match.ToString(), out var constant))
+                        if (Variables.TryGetValue(match.ToString(), out var constant))
                         {
                             if (match.Value.StartsWith('@'))
                             {
                                 //This is a variable, and unlike a constant - we require them to be declared.
-                                if (PredefinedConstants.TryGetValue(match.ToString(), out var variable))
+                                if (Variables.TryGetValue(match.ToString(), out var variable))
                                 {
                                     if (variable.DataType == KbBasicDataType.Numeric)
                                     {
-                                        string key = $"$s_{_literalKey++}$";
+                                        string key = $"$n_{_literalKey++}$";
                                         Literals.Add(key, new(KbBasicDataType.Numeric, variable.Value));
                                         query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                     }

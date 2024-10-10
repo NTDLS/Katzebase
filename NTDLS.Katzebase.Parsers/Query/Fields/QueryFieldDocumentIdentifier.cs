@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Fields
         /// <summary>
         /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.
         /// </summary>
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// The alias of the schema for this document field.

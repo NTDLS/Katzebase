@@ -8,7 +8,6 @@ using NTDLS.Katzebase.Parsers.Query.Validation;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Security.Cryptography;
 using System.Text;
-using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers
@@ -32,7 +31,7 @@ namespace NTDLS.Katzebase.Parsers
                 constants.Add(param.Key, param.Value);
             }
 
-            queryText = PreParseQueryVariableDeclarations(queryText, ref constants);
+            //queryText = PreParseQueryVariableDeclarations(queryText, ref constants);
 
             var tokenizer = new Tokenizer(queryText, true, constants);
             var queryBatch = new QueryBatch(tokenizer.Literals);
@@ -103,6 +102,7 @@ namespace NTDLS.Katzebase.Parsers
                 QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
                 QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
                 QueryType.Create => StaticParserCreate.Parse(queryBatch, tokenizer),
+                QueryType.Declare => StaticParserDeclare.Parse(queryBatch, tokenizer),
                 QueryType.Drop => StaticParserDrop.Parse(queryBatch, tokenizer),
 
                 QueryType.Sample => StaticParserSample.Parse(queryBatch, tokenizer),
@@ -122,6 +122,7 @@ namespace NTDLS.Katzebase.Parsers
             return preparedQuery;
         }
 
+        /*
         /// <summary>
         /// Parse the variable declaration in the query and remove them from the query text.
         /// </summary>
@@ -184,6 +185,7 @@ namespace NTDLS.Katzebase.Parsers
 
             return queryText.TrimEnd() + "\n";
         }
+        */
 
         public static string ComputeSHA256(string rawData)
         {

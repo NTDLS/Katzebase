@@ -25,16 +25,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         {
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value.EnsureNotNull());
             }
             else if (queryField is QueryFieldExpressionString expressionString)
             {
-                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
+                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value.EnsureNotNull());
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
                 //documentIdentifier.Value contains the schema qualified field name.
-                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var exactAuxiliaryValue))
+                if (auxiliaryFields.TryGetValue(documentIdentifier.Value.EnsureNotNull(), out var exactAuxiliaryValue))
                 {
                     return exactAuxiliaryValue; //TODO: Should auxiliaryFields really allow NULL values?
                 }
@@ -52,11 +52,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                return query.Batch.GetLiteralValue(constantNumeric.Value);
+                return query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull());
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
-                return query.Batch.GetLiteralValue(constantString.Value);
+                return query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull());
             }
             else if (queryField is QueryFieldCollapsedValue collapsedValue)
             {
@@ -118,7 +118,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                     if (fieldCollection.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
                     {
                         //Resolve the field identifier to a value.
-                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value.EnsureNotNull(), out var textValue))
                         {
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
@@ -228,7 +228,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                     if (fieldCollection.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
                     {
                         //Resolve the field identifier to a value.
-                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value.EnsureNotNull(), out var textValue))
                         {
                             if (double.TryParse(textValue, out _))
                             {

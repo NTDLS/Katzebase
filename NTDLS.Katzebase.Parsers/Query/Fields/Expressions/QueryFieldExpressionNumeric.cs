@@ -5,7 +5,7 @@
     /// </summary>
     public class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         /// <summary>
         /// Not applicable to IQueryFieldExpression
@@ -22,7 +22,7 @@
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(int? scriptLine, string value)
+        public QueryFieldExpressionNumeric(int? scriptLine, string? value)
         {
             ScriptLine = scriptLine;
             Value = value;

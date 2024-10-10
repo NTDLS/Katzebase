@@ -1,4 +1,15 @@
-DROP SCHEMA master
+ --const @Username = 10 * 10
+
+
+SELECT
+	20 + @Username + 100 as Username
+FROM
+	Master:Account
+WHERE
+	Username = @Username
+
+DECLARE @Username = 'Admin'
+
 
 
 --drop schema Master

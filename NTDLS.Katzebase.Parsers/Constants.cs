@@ -9,6 +9,7 @@
             Analyze,
             Begin,
             Commit,
+            Declare,
             Create,
             Delete,
             Drop,

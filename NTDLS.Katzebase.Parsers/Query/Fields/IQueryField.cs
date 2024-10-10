@@ -5,7 +5,7 @@
     /// </summary>
     public interface IQueryField
     {
-        string Value { get; set; }
+        string? Value { get; set; }
         string SchemaAlias { get; }
         int? ScriptLine { get; }
 

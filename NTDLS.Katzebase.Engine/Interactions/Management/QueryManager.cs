@@ -213,7 +213,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Insert
                     || preparedQuery.QueryType == QueryType.Update
                     || preparedQuery.QueryType == QueryType.SelectInto
-                    || preparedQuery.QueryType == QueryType.Rollback)
+                    || preparedQuery.QueryType == QueryType.Rollback
+                    || preparedQuery.QueryType == QueryType.Declare)
                 {
                     //Reroute to non-query as appropriate:
                     return KbQueryResult.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
@@ -234,7 +235,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (preparedQuery.QueryType == QueryType.Insert)
+                if (preparedQuery.QueryType == QueryType.Declare)
+                {
+                    return _core.Procedures.QueryHandlers.ExecuteDeclare(session, preparedQuery);
+                }
+                else if (preparedQuery.QueryType == QueryType.Insert)
                 {
                     return _core.Documents.QueryHandlers.ExecuteInsert(session, preparedQuery);
                 }

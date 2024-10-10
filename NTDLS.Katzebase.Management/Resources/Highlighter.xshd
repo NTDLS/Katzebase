@@ -201,6 +201,7 @@
 			<Word>select</Word>
 			<Word>set</Word>
 			<Word>const</Word>
+      <Word>declare</Word>
 			<Word>exec</Word>
 			<Word>terminate</Word>
 			<Word>top</Word>

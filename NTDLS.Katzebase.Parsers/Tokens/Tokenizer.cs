@@ -48,6 +48,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         #endregion
 
         #region Public properties.
+        public KbInsensitiveDictionary<string> RuntimeVariableForwardLookup { get; private set; } = new();
+        public KbInsensitiveDictionary<string> RuntimeVariableReverseLookup { get; private set; } = new();
+
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
         public char? NextCharacter => Caret < _length ? _text[Caret] : null;
         public bool IsExhausted() => Caret >= _length;
@@ -56,8 +59,8 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public int Length => _length;
         public string Text => _text;
         public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);
-        public KbInsensitiveDictionary<KbConstant> PredefinedConstants { get; set; }
-        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; private set; } = new();
+        public KbInsensitiveDictionary<KbConstant> Variables { get; set; }
+        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; private set; } = new();
 
         #endregion
 
@@ -76,7 +79,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             _length = _text.Length;
             _standardTokenDelimiters = standardTokenDelimiters;
 
-            PredefinedConstants = predefinedConstants ?? new();
+            Variables = predefinedConstants ?? new();
 
             if (optimizeForTokenization)
             {
@@ -101,7 +104,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             _length = _text.Length;
             _standardTokenDelimiters = ['\r', '\n', ' '];
 
-            PredefinedConstants = predefinedConstants ?? new();
+            Variables = predefinedConstants ?? new();
 
             if (optimizeForTokenization)
             {

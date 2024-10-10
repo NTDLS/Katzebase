@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                                         var constantValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
 
                                         //TODO: Think about the nullability of constantValue.
-                                        condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue.EnsureNotNull());
+                                        condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue);
                                     }
 
                                     indexSelection.CoveredConditions.Add(condition);

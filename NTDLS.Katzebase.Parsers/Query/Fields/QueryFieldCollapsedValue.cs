@@ -5,7 +5,7 @@
     /// </summary>
     public class QueryFieldCollapsedValue : IQueryField
     {
-        public string Value { get; set; }
+        public string? Value { get; set; }
         public string SchemaAlias { get; private set; } = string.Empty;
 
         /// <summary>
@@ -13,7 +13,7 @@
         /// </summary>
         public int? ScriptLine { get; set; }
 
-        public QueryFieldCollapsedValue(int? scriptLine, string value)
+        public QueryFieldCollapsedValue(int? scriptLine, string? value)
         {
             ScriptLine = scriptLine;
             Value = value;

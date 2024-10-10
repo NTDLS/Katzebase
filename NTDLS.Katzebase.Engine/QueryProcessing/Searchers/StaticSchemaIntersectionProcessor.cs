@@ -194,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                                 if (!schemaElements.TryGetValue(documentIdentifier.FieldName, out var schemaElement))
                                 {
-                                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value);
+                                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value.EnsureNotNull());
                                 }
 
                                 keyValues[documentIdentifier.FieldName] = schemaElement;
@@ -726,7 +726,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 if (!schemaElements.TryGetValue(fieldDocumentIdentifier.FieldName, out var schemaElement))
                 {
-                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldDocumentIdentifier.Value);
+                    transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldDocumentIdentifier.Value.EnsureNotNull());
                 }
 
                 if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
@@ -772,7 +772,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
             else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
             {
-                var numericValue = query.Batch.GetLiteralValue(constantNumeric.Value);
+                var numericValue = query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull());
 
                 if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
                 {
@@ -784,7 +784,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
             else if (field.Expression is QueryFieldConstantString constantString)
             {
-                var stringValue = query.Batch.GetLiteralValue(constantString.Value);
+                var stringValue = query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull());
                 return stringValue;
             }
 

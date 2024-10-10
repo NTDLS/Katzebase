@@ -299,7 +299,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (condition.Qualifier == LogicalQualifier.Equals)
                     {
                         //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
+                        if (keyValues?.TryGetValue(condition.Right.Value.EnsureNotNull(), out string? keyValue) != true)
                         {
                             if (condition.Right is QueryFieldCollapsedValue collapsedValue)
                             {
@@ -482,7 +482,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?>? auxiliaryFields)
         {
             //For join operations, check the keyValues for the raw value to lookup.
-            if (auxiliaryFields?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
+            if (auxiliaryFields?.TryGetValue(condition.Right.Value.EnsureNotNull(), out string? keyValue) != true)
             {
                 if (condition.Right is QueryFieldCollapsedValue collapsedValue)
                 {
