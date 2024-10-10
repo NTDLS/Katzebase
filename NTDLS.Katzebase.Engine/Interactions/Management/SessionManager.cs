@@ -13,7 +13,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class SessionManager
     {
-        public static string BuiltInSystemUserName = Guid.NewGuid().ToString();
+        /// <summary>
+        /// This is the username we use for creating mock sessions for system queries.
+        /// These logins skip a lot of checks and are assigned administrative roles.
+        /// </summary>
+        internal static string BuiltInSystemUserName { get; private set; } = Guid.NewGuid().ToString();
+
         private readonly EngineCore _core;
         private ulong _nextProcessId = 1;
         private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
