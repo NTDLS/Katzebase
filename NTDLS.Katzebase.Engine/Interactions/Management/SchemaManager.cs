@@ -189,8 +189,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (parentCatalog.ContainsName(physicalSchema.Name) == false)
                 {
-                    Console.WriteLine(physicalSchema.Name);
-
                     parentCatalog.Add(new PhysicalSchema
                     {
                         Id = Guid.NewGuid(),

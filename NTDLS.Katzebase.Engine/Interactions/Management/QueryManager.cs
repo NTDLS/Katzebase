@@ -289,15 +289,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         return _core.Policies.QueryHandlers.ExecuteCreateRole(session, preparedQuery);
                     }
-                    else if (preparedQuery.SubQueryType == SubQueryType.AddUserToRole)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteAddUserToRole(session, preparedQuery);
-                    }
-                    else if (preparedQuery.SubQueryType == SubQueryType.RemoveUserFromRole)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteRemoveUserFromRole(session, preparedQuery);
-                    }
-
                     throw new NotImplementedException();
                 }
                 else if (preparedQuery.QueryType == QueryType.Alter)
@@ -309,6 +300,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (preparedQuery.SubQueryType == SubQueryType.Configuration)
                     {
                         return _core.Environment.QueryHandlers.ExecuteAlter(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.AddUserToRole)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteAddUserToRole(session, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.RemoveUserFromRole)
+                    {
+                        return _core.Policies.QueryHandlers.ExecuteRemoveUserFromRole(session, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }
