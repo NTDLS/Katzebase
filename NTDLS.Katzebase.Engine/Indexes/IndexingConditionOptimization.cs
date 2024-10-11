@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
+        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, Query query,
             PhysicalSchema physicalSchema, ConditionCollection conditions, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization(transaction, conditions);
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query,
+        private static bool BuildTree(IndexingConditionOptimization optimization, Query query,
             Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix,
             List<IndexingConditionGroup> indexingConditionGroups)
         {
@@ -254,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// <summary>
         /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
         /// </summary>
-        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, PreparedQuery query, string workingSchemaPrefix)
+        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, Query query, string workingSchemaPrefix)
         {
             var result = new StringBuilder();
 
@@ -279,7 +279,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         }
 
         private static void ExplainPlanRecursive(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
-            string workingSchemaPrefix, ConditionGroup givenConditionGroup, PreparedQuery query, StringBuilder result)
+            string workingSchemaPrefix, ConditionGroup givenConditionGroup, Query query, StringBuilder result)
         {
             if (givenConditionGroup.IndexLookup != null)
             {

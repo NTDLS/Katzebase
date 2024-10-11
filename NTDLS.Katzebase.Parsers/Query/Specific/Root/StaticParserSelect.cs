@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserSelect
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Select, tokenizer.GetCurrentLineNumber());
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Select, tokenizer.GetCurrentLineNumber());
 
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(selectIntoSchema)}].");
                 }
 
-                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaName, selectIntoSchema);
+                query.AddAttribute(SupportingTypes.Query.Attribute.TargetSchemaName, selectIntoSchema);
 
                 query.QueryType = QueryType.SelectInto;
             }

@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserExec
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Exec, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Exec, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Procedure
             };
@@ -23,14 +23,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             var parts = procedureName.Split(':');
             if (parts.Length == 1)
             {
-                query.AddAttribute(PreparedQuery.Attribute.Schema, ":");
-                query.AddAttribute(PreparedQuery.Attribute.ObjectName, procedureName);
+                query.AddAttribute(SupportingTypes.Query.Attribute.Schema, ":");
+                query.AddAttribute(SupportingTypes.Query.Attribute.ObjectName, procedureName);
             }
             else
             {
                 var schemaName = string.Join(':', parts.Take(parts.Length - 1));
-                query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
-                query.AddAttribute(PreparedQuery.Attribute.ObjectName, parts.Last());
+                query.AddAttribute(SupportingTypes.Query.Attribute.Schema, schemaName);
+                query.AddAttribute(SupportingTypes.Query.Attribute.ObjectName, parts.Last());
             }
 
             if (tokenizer.TryCompareNext(o => o.StartsWith('$')))

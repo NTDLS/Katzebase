@@ -453,7 +453,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), intendedOperation);
         }
 
-        internal List<Tuple<string, string>> GetListByPreparedQuery(Transaction transaction, string schemaName, int rowLimit)
+        internal List<Tuple<string, string>> GetListOfChildren(Transaction transaction, string schemaName, int rowLimit)
         {
             try
             {

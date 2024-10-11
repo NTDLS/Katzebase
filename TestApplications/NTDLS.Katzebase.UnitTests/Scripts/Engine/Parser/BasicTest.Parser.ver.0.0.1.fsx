@@ -22,11 +22,11 @@ module ParserBasicTests =
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =
         let userParameters = null
-        let preparedQueries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
+        let queries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
         
-        equals 1 preparedQueries.Count 
+        equals 1 queries.Count 
 
-        let pq0 = preparedQueries[0]
+        let pq0 = queries[0]
 
         equals "master:account" (pq0.Schemas.Item 0).Name
         equals Constants.QueryType.Select pq0.QueryType
@@ -47,11 +47,11 @@ module ParserBasicTests =
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
         userParameters.Add("@Username", new KbVariable("testUser", KbConstants.KbBasicDataType.String))
         userParameters.Add("@PasswordHash", new KbVariable("testPassword", KbConstants.KbBasicDataType.String))
-        let preparedQueries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
+        let queries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
 
-        equals 1 preparedQueries.Count 
+        equals 1 queries.Count 
 
-        let pq0 = preparedQueries[0]
+        let pq0 = queries[0]
         equals "master:account" (pq0.Schemas.Item 0).Name
         equals Constants.QueryType.Select pq0.QueryType
         equals 1 pq0.Conditions.Collection.Count

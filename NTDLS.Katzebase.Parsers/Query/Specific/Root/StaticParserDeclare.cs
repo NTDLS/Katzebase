@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserDeclare
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Declare, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Declare, tokenizer.GetCurrentLineNumber())
             {
                 //SubQueryType = SubQueryType.
             };
@@ -22,8 +22,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             {
                 var expression = tokenizer.EatSubStringAbsolute(endOfDeclareCaret).Trim();
 
-                query.AddAttribute(PreparedQuery.Attribute.VariablePlaceholder, variablePlaceholder);
-                query.AddAttribute(PreparedQuery.Attribute.Expression, expression);
+                query.AddAttribute(SupportingTypes.Query.Attribute.VariablePlaceholder, variablePlaceholder);
+                query.AddAttribute(SupportingTypes.Query.Attribute.Expression, expression);
             }
 
             return query;

@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserCommit
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Commit, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Commit, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.Transaction])
             };

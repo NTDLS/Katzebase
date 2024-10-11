@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Parsers.Query
         /// <summary>
         /// Parse the single query in the batch.
         /// </summary>
-        static public PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        static public SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.GetNext();
 
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Query
 
             tokenizer.EatNext();
 
-            var preparedQuery = queryType switch
+            var query = queryType switch
             {
                 QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
                 QueryType.Delete => StaticParserDelete.Parse(queryBatch, tokenizer),
@@ -50,9 +50,9 @@ namespace NTDLS.Katzebase.Parsers.Query
                 _ => throw new KbNotImplementedException($"Query type is not implemented: [{token}]."),
             };
 
-            ValidateFieldSchemaReferences.Validate(tokenizer, preparedQuery);
+            ValidateFieldSchemaReferences.Validate(tokenizer, query);
 
-            return preparedQuery;
+            return query;
         }
     }
 }

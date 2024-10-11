@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserRebuildIndex
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Rebuild, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Rebuild, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Index
             };
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected index name, found: [{indexName}].");
             }
 
-            query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
+            query.AddAttribute(SupportingTypes.Query.Attribute.IndexName, indexName);
 
             tokenizer.EatIfNext("on");
 

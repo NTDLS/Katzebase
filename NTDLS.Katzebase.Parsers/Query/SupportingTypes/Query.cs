@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     /// <summary>
     /// Contains a parsed query via StaticParserQuery.Parse();
     /// </summary>
-    public class PreparedQuery(QueryBatch queryBatch, QueryType queryType, int? fileLine)
+    public class Query(QueryBatch queryBatch, QueryType queryType, int? fileLine)
     {
         public enum Attribute
         {
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         /// <summary>
         /// Query that needs to be executed to get the insert values for a "insert into, select from" statement.
         /// </summary>
-        public PreparedQuery? InsertSelectQuery { get; set; }
+        public Query? InsertSelectQuery { get; set; }
 
         /// <summary>
         /// Values that are used when executing a "insert into, values" statement.

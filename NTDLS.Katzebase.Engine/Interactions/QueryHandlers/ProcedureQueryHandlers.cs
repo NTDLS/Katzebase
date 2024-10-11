@@ -38,34 +38,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <summary>
         /// Declares a variable, collapses any expression.
         /// </summary>
-        internal KbActionResponse ExecuteDeclare(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDeclare(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var variablePlaceholder = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.VariablePlaceholder);
-                var expression = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Expression);
+                var variablePlaceholder = query.GetAttribute<string>(Query.Attribute.VariablePlaceholder);
+                var expression = query.GetAttribute<string>(Query.Attribute.Expression);
 
                 var mockField = new QueryFieldExpressionString(null, expression);
-                var mockFields = new SelectFieldCollection(preparedQuery.Batch);
+                var mockFields = new SelectFieldCollection(query.Batch);
 
                 var auxiliaryValues = new KbInsensitiveDictionary<string?>();
-                foreach (var literal in preparedQuery.Batch.Variables.Collection)
+                foreach (var literal in query.Batch.Variables.Collection)
                 {
                     auxiliaryValues.Add(literal.Key, literal.Value.Value);
                 }
 
                 var collapsedExpression = StaticScalarExpressionProcessor.CollapseScalarQueryField
-                            (mockField, transactionReference.Transaction, preparedQuery, mockFields, auxiliaryValues);
+                            (mockField, transactionReference.Transaction, query, mockFields, auxiliaryValues);
 
                 if (double.TryParse(collapsedExpression, out var _))
                 {
-                    preparedQuery.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.Numeric);
+                    query.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.Numeric);
                 }
                 else
                 {
-                    preparedQuery.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.String);
+                    query.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.String);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -78,18 +78,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         }
 
 
-        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreate(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Procedure)
+                if (query.SubQueryType == SubQueryType.Procedure)
                 {
-                    var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
-                    var objectSchema = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Schema);
-                    var parameters = preparedQuery.GetAttribute<List<PhysicalProcedureParameter>>(PreparedQuery.Attribute.Parameters);
-                    var Batches = preparedQuery.GetAttribute<List<string>>(PreparedQuery.Attribute.Batches);
+                    var objectName = query.GetAttribute<string>(Query.Attribute.ObjectName);
+                    var objectSchema = query.GetAttribute<string>(Query.Attribute.Schema);
+                    var parameters = query.GetAttribute<List<PhysicalProcedureParameter>>(Query.Attribute.Parameters);
+                    var Batches = query.GetAttribute<List<string>>(Query.Attribute.Batches);
 
                     _core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
@@ -107,23 +107,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResultCollection ExecuteExec(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResultCollection ExecuteExec(SessionState session, Query query)
         {
             try
             {
-                var schemaName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Schema);
-                var objectName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
+                var schemaName = query.GetAttribute<string>(Query.Attribute.Schema);
+                var objectName = query.GetAttribute<string>(Query.Attribute.ObjectName);
 
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var collapsedParameters = new List<string?>();
 
-                if (preparedQuery.ProcedureParameters != null)
+                if (query.ProcedureParameters != null)
                 {
-                    foreach (var parameter in preparedQuery.ProcedureParameters)
+                    foreach (var parameter in query.ProcedureParameters)
                     {
                         var collapsedParameter = StaticScalarExpressionProcessor.CollapseScalarQueryField(parameter.Expression,
-                            transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new());
+                            transactionReference.Transaction, query, query.ProcedureParameters, new());
 
                         collapsedParameters.Add(collapsedParameter);
                     }

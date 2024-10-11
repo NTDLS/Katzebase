@@ -38,14 +38,14 @@ module DMLExecutionBasicTests =
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
-        let preparedQueries = StaticParserBatch.Parse(plainInsert, userParameters)
-        let preparedQuery = preparedQueries.Item 0
+        let queries = StaticParserBatch.Parse(plainInsert, userParameters)
+        let query = queries.Item 0
         
-        equals [|"COL1"; "COL2"|] (preparedQuery.InsertFieldNames |> Seq.toArray)
-        equals 2 preparedQuery.InsertFieldValues.Count
+        equals [|"COL1"; "COL2"|] (query.InsertFieldNames |> Seq.toArray)
+        equals 2 query.InsertFieldValues.Count
 
-        let insert0 = preparedQuery.InsertFieldValues.Item 0
-        let insert1 = preparedQuery.InsertFieldValues.Item 1
+        let insert0 = query.InsertFieldValues.Item 0
+        let insert1 = query.InsertFieldValues.Item 1
 
         equals 2 insert0.Count
         equals 2 insert1.Count
@@ -80,25 +80,25 @@ module DMLExecutionBasicTests =
             () // Do nothing for unhandled cases
            
         let transactionReference = _core.Transactions.APIAcquire(preLogin)
-        let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
+        let fieldQueryCollection = QueryFieldCollection (query.Batch)
         let auxiliaryFields = KbInsensitiveDictionary<fstring> ()
         let collapsed01 = 
             ExprProc.CollapseScalarQueryField(
                 i0v1.Expression
                 , transactionReference.Transaction
-                , preparedQuery, fieldQueryCollection
+                , query, fieldQueryCollection
                 , auxiliaryFields)
         let collapsed11 = 
             ExprProc.CollapseScalarQueryField(
                 i1v1.Expression
                 , transactionReference.Transaction
-                , preparedQuery, fieldQueryCollection
+                , query, fieldQueryCollection
                 , auxiliaryFields)
 
         equals "2" collapsed01.me
         equals "B" collapsed11.me
 
-        let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
+        let queryResultCollection = _core.Query.ExecuteQuery(preLogin, query)
         _core.Transactions.Commit(preLogin)
 
         

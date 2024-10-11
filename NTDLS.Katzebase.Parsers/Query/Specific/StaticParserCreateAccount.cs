@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserCreateAccount
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Account
             };
@@ -19,20 +19,20 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
             }
-            query.AddAttribute(PreparedQuery.Attribute.Username, username);
+            query.AddAttribute(SupportingTypes.Query.Attribute.Username, username);
 
             tokenizer.EatIfNext("with");
 
             var options = new ExpectedQueryAttributes
             {
-                {PreparedQuery.Attribute.Password.ToString(), typeof(string) }
+                { SupportingTypes.Query.Attribute.Password.ToString(), typeof(string) }
             };
 
             var attributes = StaticParserAttributes.Parse(tokenizer, options);
 
-            if (attributes.TryGetValue(PreparedQuery.Attribute.Password.ToString(), out var plainTextPassword))
+            if (attributes.TryGetValue(SupportingTypes.Query.Attribute.Password.ToString(), out var plainTextPassword))
             {
-                query.AddAttribute(PreparedQuery.Attribute.PasswordHash, KbClient.HashPassword(plainTextPassword.Value?.ToString() ?? string.Empty));
+                query.AddAttribute(SupportingTypes.Query.Attribute.PasswordHash, KbClient.HashPassword(plainTextPassword.Value?.ToString() ?? string.Empty));
             }
 
             return query;

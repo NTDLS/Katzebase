@@ -7,9 +7,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserCreateRole
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Role
             };
@@ -18,13 +18,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [ {roleName} ].");
             }
-            query.AddAttribute(PreparedQuery.Attribute.RoleName, roleName);
+            query.AddAttribute(SupportingTypes.Query.Attribute.RoleName, roleName);
 
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedQueryAttributes
                 {
-                    {PreparedQuery.Attribute.IsAdministrator.ToString(), typeof(bool) }
+                    { SupportingTypes.Query.Attribute.IsAdministrator.ToString(), typeof(bool) }
                 };
 
                 query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));

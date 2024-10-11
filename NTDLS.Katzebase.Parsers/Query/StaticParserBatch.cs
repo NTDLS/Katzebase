@@ -37,11 +37,11 @@ namespace NTDLS.Katzebase.Parsers.Query
 
                 try
                 {
-                    var preparedQuery = StaticParserQuery.Parse(queryBatch, tokenizer);
+                    var query = StaticParserQuery.Parse(queryBatch, tokenizer);
 
                     var singleQueryText = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
-                    preparedQuery.Hash = StaticParserUtility.ComputeSHA256(singleQueryText);
-                    queryBatch.Add(preparedQuery);
+                    query.Hash = StaticParserUtility.ComputeSHA256(singleQueryText);
+                    queryBatch.Add(query);
                 }
                 catch (Exception ex)
                 {

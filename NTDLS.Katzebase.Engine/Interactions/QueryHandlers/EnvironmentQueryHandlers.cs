@@ -27,15 +27,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteAlter(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Configuration)
+                if (query.SubQueryType == SubQueryType.Configuration)
                 {
-                    _core.Environment.Alter(transactionReference.Transaction, preparedQuery.Attributes);
+                    _core.Environment.Alter(transactionReference.Transaction, query.Attributes);
                 }
                 else
                 {

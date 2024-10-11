@@ -1,17 +1,16 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Query.Validation
 {
     public static class ValidateFieldSchemaReferences
     {
-        public static void Validate(Tokenizer tokenizer, PreparedQuery query)
+        public static void Validate(Tokenizer tokenizer, SupportingTypes.Query query)
         {
             var exceptions = new List<Exception>();
 
-            if (query.TryGetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias, out var schemaAliasAttribute))
+            if (query.TryGetAttribute<string>(SupportingTypes.Query.Attribute.TargetSchemaAlias, out var schemaAliasAttribute))
             {
                 if (query.Schemas.Any(o => o.Alias.Is(schemaAliasAttribute)) == false)
                 {

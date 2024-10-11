@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserDropProcedure
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
+            var query = new SupportingTypes.Query(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Procedure
             };
@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             throw new NotImplementedException("Reimplement this query type.");
 
             /*
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, token);
+                query.AddAttribute(Query.QueryAttribute.ObjectName, token);
 
                 var parameters = new List<PhysicalProcedureParameter>();
 
@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     }
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Parameters, parameters);
+                query.AddAttribute(Query.QueryAttribute.Parameters, parameters);
 
                 if (tokenizer.GetNext().Is("on") == false)
                 {
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+                query.AddAttribute(Query.QueryAttribute.Schema, token);
 
                 if (tokenizer.GetNext().Is("as") == false)
                 {
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     }
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Batches, batches);
+                query.AddAttribute(Query.QueryAttribute.Batches, batches);
 
                 return query;
             */

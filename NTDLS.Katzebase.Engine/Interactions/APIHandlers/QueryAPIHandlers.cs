@@ -38,9 +38,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
+                var intermediateResult = _core.Query.ExplainPlan(session, query);
 
                 results.Add(intermediateResult);
             }
@@ -62,9 +62,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
+                var intermediateResult = _core.Query.ExplainOperations(session, query);
 
                 results.Add(intermediateResult);
             }
@@ -99,9 +99,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteQueryReply();
-            foreach (var preparedQuery in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
+                results.Add(_core.Query.ExecuteQuery(session, query));
             }
 
             session.ClearCurrentQuery();
@@ -120,9 +120,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteNonQueryReply();
-            foreach (var preparedQuery in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                results.Add(_core.Query.ExecuteNonQuery(session, preparedQuery));
+                results.Add(_core.Query.ExecuteNonQuery(session, query));
             }
 
             session.ClearCurrentQuery();

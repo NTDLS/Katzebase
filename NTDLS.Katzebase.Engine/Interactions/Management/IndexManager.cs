@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
-                    PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+                    Query query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -255,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
             PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
-            PreparedQuery query, KbInsensitiveDictionary<string?>? keyValues = null)
+            Query query, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
                 query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, keyValues);
@@ -282,7 +282,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return thisGroupResults;
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction transaction, PreparedQuery query,
+        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction transaction, Query query,
             IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, KbInsensitiveDictionary<string?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
@@ -419,7 +419,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookupRecursive(
             Transaction transaction,
-            PreparedQuery query,
+            Query query,
             IndexingConditionLookup Lookup,
             KbInsensitiveDictionary<string?>? keyValues,
              int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
@@ -477,7 +477,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Matching / Seeking / Scanning.
 
-        private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, PreparedQuery query, ConditionEntry condition,
+        private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, Query query, ConditionEntry condition,
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?>? auxiliaryFields)
         {
             //For join operations, check the keyValues for the raw value to lookup.

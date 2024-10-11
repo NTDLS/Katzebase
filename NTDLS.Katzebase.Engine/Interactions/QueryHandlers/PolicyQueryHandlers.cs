@@ -27,16 +27,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteCreateAccount(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreateAccount(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Account)
+                if (query.SubQueryType == SubQueryType.Account)
                 {
-                    var accountName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Username);
-                    var passwordHash = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
+                    var accountName = query.GetAttribute<string>(Query.Attribute.Username);
+                    var passwordHash = query.GetAttribute<string>(Query.Attribute.PasswordHash);
                     _core.Policies.CreateAccount(transactionReference.Transaction, accountName, passwordHash);
                 }
                 else
@@ -53,16 +53,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteCreateRole(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreateRole(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Role)
+                if (query.SubQueryType == SubQueryType.Role)
                 {
-                    var roleName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
-                    var IsAdministrator = preparedQuery.GetAttribute(PreparedQuery.Attribute.IsAdministrator, false);
+                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                    var IsAdministrator = query.GetAttribute(Query.Attribute.IsAdministrator, false);
                     _core.Policies.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
                 }
                 else
@@ -79,16 +79,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteAddUserToRole(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteAddUserToRole(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.AddUserToRole)
+                if (query.SubQueryType == SubQueryType.AddUserToRole)
                 {
-                    var roleName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
-                    var username = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Username);
+                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                    var username = query.GetAttribute<string>(Query.Attribute.Username);
                     _core.Policies.AddUserToRole(transactionReference.Transaction, roleName, username);
                 }
                 else
@@ -105,16 +105,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteRemoveUserFromRole(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteRemoveUserFromRole(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.RemoveUserFromRole)
+                if (query.SubQueryType == SubQueryType.RemoveUserFromRole)
                 {
-                    var roleName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
-                    var username = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Username);
+                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                    var username = query.GetAttribute<string>(Query.Attribute.Username);
                     _core.Policies.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
                 }
                 else

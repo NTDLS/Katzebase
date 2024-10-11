@@ -45,10 +45,10 @@ module DDLExecutionBasicTests =
 
         let countTest sql expectedCount = 
             try
-                let preparedQueries = StaticParserBatch.Parse(sql, userParameters)
-                let preparedQuery = preparedQueries.Item 0
+                let queries = StaticParserBatch.Parse(sql, userParameters)
+                let query = queries.Item 0
         
-                let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
+                let queryResultCollection = _core.Query.ExecuteQuery(preLogin, query)
                 equals 1 queryResultCollection.Collection.Count
 
                 let queryDocList = (queryResultCollection.Collection.Item 0).Rows

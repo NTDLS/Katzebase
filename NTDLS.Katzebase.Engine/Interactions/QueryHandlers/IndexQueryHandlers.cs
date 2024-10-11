@@ -29,17 +29,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteDrop(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDrop(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                string schemaName = preparedQuery.Schemas.First().Name;
+                string schemaName = query.Schemas.First().Name;
 
-                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
                     _core.Indexes.DropIndex(transactionReference.Transaction, schemaName,
-                        preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.IndexName));
+                        query.GetAttribute<string>(Query.Attribute.IndexName));
                 }
                 else
                 {
@@ -55,15 +55,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteAnalyze(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var analysis = _core.Indexes.AnalyzeIndex(transactionReference.Transaction,
-                    preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.Schema),
-                    preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.IndexName));
+                    query.GetAttribute<string>(Query.Attribute.Schema),
+                    query.GetAttribute<string>(Query.Attribute.IndexName));
 
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
 
@@ -77,15 +77,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteRebuild(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteRebuild(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                string schemaName = preparedQuery.Schemas.First().Name;
+                string schemaName = query.Schemas.First().Name;
 
-                var indexName = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.IndexName);
-                var indexPartitions = preparedQuery.GetAttribute(PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                var indexName = query.GetAttribute<string>(Query.Attribute.IndexName);
+                var indexPartitions = query.GetAttribute(Query.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -97,30 +97,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreate(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = preparedQuery.GetAttribute(
-                        PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                    var indexPartitions = query.GetAttribute(
+                        Query.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
                     {
-                        Name = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.IndexName),
-                        IsUnique = preparedQuery.GetAttribute<bool>(PreparedQuery.Attribute.IsUnique),
+                        Name = query.GetAttribute<string>(Query.Attribute.IndexName),
+                        IsUnique = query.GetAttribute<bool>(Query.Attribute.IsUnique),
                         Partitions = indexPartitions
                     };
 
-                    foreach (var field in preparedQuery.CreateIndexFields)
+                    foreach (var field in query.CreateIndexFields)
                     {
                         index.AddAttribute(new KbIndexAttribute() { Field = field });
                     }
 
-                    string schemaName = preparedQuery.Schemas.Single().Name;
+                    string schemaName = query.Schemas.Single().Name;
                     _core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid indexId);
                 }
                 else

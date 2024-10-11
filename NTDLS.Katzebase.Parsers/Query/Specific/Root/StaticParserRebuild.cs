@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserRebuild
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Index, SubQueryType.UniqueKey]);
 

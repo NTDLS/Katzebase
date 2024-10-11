@@ -35,12 +35,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSelect(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelect(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = StaticSearcherProcessor.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherProcessor.FindDocumentsByQuery(_core, transactionReference.Transaction, query);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -50,12 +50,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSelectInto(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelectInto(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var targetSchema = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaName);
+                var targetSchema = query.GetAttribute<string>(Query.Attribute.TargetSchemaName);
 
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write, LockOperation.Read);
                 }
 
-                var result = StaticSearcherProcessor.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherProcessor.FindDocumentsByQuery(_core, transactionReference.Transaction, query);
 
                 var duplicateFields = result.Fields
                     .GroupBy(o => o.Name)
@@ -100,27 +100,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <summary>
         /// Inserts a document into a schema.
         /// </summary>
-        internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteInsert(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var physicalSchema = _core.Schemas.Acquire(
-                    transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
+                    transactionReference.Transaction, query.Schemas.Single().Name, LockOperation.Write);
 
-                if (preparedQuery.InsertFieldValues != null)
+                if (query.InsertFieldValues != null)
                 {
                     //Executing a "insert into, values" statement.
 
-                    foreach (var insertFieldValues in preparedQuery.InsertFieldValues)
+                    foreach (var insertFieldValues in query.InsertFieldValues)
                     {
                         var keyValuePairs = new KbInsensitiveDictionary<string?>();
 
                         foreach (var insertValue in insertFieldValues)
                         {
                             var collapsedValue = insertValue.Expression.CollapseScalarQueryField(
-                                transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new());
+                                transactionReference.Transaction, query, new(query.Batch), new());
 
                             keyValuePairs.Add(insertValue.Alias, collapsedValue);
                         }
@@ -129,13 +129,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                     }
 
-                    return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.InsertFieldValues.Count);
+                    return transactionReference.CommitAndApplyMetricsThenReturnResults(query.InsertFieldValues.Count);
                 }
-                else if (preparedQuery.InsertSelectQuery != null)
+                else if (query.InsertSelectQuery != null)
                 {
                     //Executing a "insert into, select from" statement.
 
-                    var results = _core.Query.ExecuteQuery(session, preparedQuery.InsertSelectQuery);
+                    var results = _core.Query.ExecuteQuery(session, query.InsertSelectQuery);
 
                     if (results.Collection.Count == 0)
                     {
@@ -143,11 +143,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     }
                     else if (results.Collection.Count == 1)
                     {
-                        if (results.Collection[0].Fields.Count < preparedQuery.InsertFieldNames.Count)
+                        if (results.Collection[0].Fields.Count < query.InsertFieldNames.Count)
                         {
                             throw new KbProcessingException("Values list contains less values than the field list.");
                         }
-                        else if (results.Collection[0].Fields.Count > preparedQuery.InsertFieldNames.Count)
+                        else if (results.Collection[0].Fields.Count > query.InsertFieldNames.Count)
                         {
                             throw new KbProcessingException("Values list contains more values than the field list.");
                         }
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                             for (int fieldIndex = 0; fieldIndex < results.Collection[0].Fields.Count; fieldIndex++)
                             {
-                                keyValuePairs.Add(preparedQuery.InsertFieldNames[fieldIndex], row.Values[fieldIndex]);
+                                keyValuePairs.Add(query.InsertFieldNames[fieldIndex], row.Values[fieldIndex]);
                             }
 
                             var documentContent = JsonConvert.SerializeObject(keyValuePairs);
@@ -185,21 +185,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <summary>
         /// Updates a documents in a schema based on where clause and join conditions.
         /// </summary>
-        internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteUpdate(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
-                var targetSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
+                var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
+                var targetSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema.Name, LockOperation.Read);
 
                 var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
-                var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByPreparedQuery(
-                    _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
+                var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
+                    _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
 
                 var updatedDocuments = new Dictionary<DocumentPointer, KbInsensitiveDictionary<string?>>();
 
@@ -209,10 +209,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                     var modifiedElements = new KbInsensitiveDictionary<string?>();
 
-                    foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
+                    foreach (var updateValue in query.UpdateFieldValues.EnsureNotNull())
                     {
                         var collapsedValue = updateValue.Expression.CollapseScalarQueryField(
-                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, schemaElements);
+                            transactionReference.Transaction, query, query.UpdateFieldValues, schemaElements);
 
                         modifiedElements.Add(updateValue.Alias, collapsedValue);
                     }
@@ -231,14 +231,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSample(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                string schemaName = preparedQuery.Schemas.Single().Name;
+                string schemaName = query.Schemas.Single().Name;
                 var result = StaticSearcherProcessor.SampleSchemaDocuments(
-                    _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                    _core, transactionReference.Transaction, schemaName, query.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
@@ -249,14 +249,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteList(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                string schemaName = preparedQuery.Schemas.Single().Name;
+                string schemaName = query.Schemas.Single().Name;
                 var result = StaticSearcherProcessor.ListSchemaDocuments(
-                    _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                    _core, transactionReference.Transaction, schemaName, query.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
@@ -267,7 +267,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryExplain ExecuteExplainPlan(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplainPlan(SessionState session, Query query)
         {
             try
             {
@@ -275,16 +275,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var result = new KbQueryExplain();
 
-                foreach (var schema in preparedQuery.Schemas)
+                foreach (var schema in query.Schemas)
                 {
                     if (schema.Conditions != null)
                     {
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
-                            transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Alias);
+                            transactionReference.Transaction, query, physicalSchema, schema.Conditions, schema.Alias);
 
-                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Alias);
+                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, query, schema.Alias);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
@@ -299,7 +299,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryExplain ExecuteExplainOperations(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplainOperations(SessionState session, Query query)
         {
             try
             {
@@ -307,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var result = new KbQueryExplain();
 
-                foreach (var schema in preparedQuery.Schemas)
+                foreach (var schema in query.Schemas)
                 {
                     if (schema.Conditions != null)
                     {
@@ -325,19 +325,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDelete(SessionState session, Query query)
         {
             using var transactionReference = _core.Transactions.APIAcquire(session);
 
-            var targetSchemaAlias = preparedQuery.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
-            var firstSchema = preparedQuery.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
+            var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
+            var firstSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
 
             var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 
-            var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByPreparedQuery(
-                _core, transactionReference.Transaction, preparedQuery, gatherDocumentPointersForSchemaAliases);
+            var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
+                _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
 
             var documentsToDelete = new HashSet<DocumentPointer>();
 

@@ -27,12 +27,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteKillProcess(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteKillProcess(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var referencedProcessId = preparedQuery.GetAttribute<ulong>(PreparedQuery.Attribute.ProcessId);
+                var referencedProcessId = query.GetAttribute<ulong>(Query.Attribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -44,13 +44,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteSetVariable(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteSetVariable(SessionState session, Query query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                foreach (var variable in preparedQuery.VariableValues)
+                foreach (var variable in query.VariableValues)
                 {
                     if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
                         || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
