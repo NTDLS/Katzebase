@@ -6,15 +6,16 @@
 
 DECLARE @StartTime = 1
 
+--select @StartTime from Single
 
 --exec print('Top')
 
 --exec Sleep(1000)
 
-exec print(@StartTime)
+exec print(@StartTime + 20)
 
 
---select @StartTime from Single
+
 
 --commit transaction
 

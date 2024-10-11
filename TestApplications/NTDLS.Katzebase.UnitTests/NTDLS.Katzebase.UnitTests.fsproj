@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="README.md" />
+		<None Include="%40README.md" />
 		<None Include="Build.ps1" />
 		<None Include="app.config">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

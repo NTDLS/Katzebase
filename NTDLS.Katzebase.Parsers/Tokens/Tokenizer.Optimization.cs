@@ -53,68 +53,31 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                     break;
                 }
             }
+        }
+        private void SwapOutVariables(ref string query)
+        {
+            var triedConstants = new Dictionary<string, string>();
+            int nextTriedConstant = 0;
 
-            if (Variables.Collection.Count > 0)
+            //Predefined string constants.
+            //regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+(?=\s|$)");
+            var regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+");
+            while (true)
             {
-                var triedConstants = new Dictionary<string, string>();
-                int nextTriedConstant = 0;
+                var match = regex.Match(query);
 
-                //Predefined string constants.
-                //regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+(?=\s|$)");
-                regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)|(?<=\s|^)@\w+");
-                while (true)
+                if (match.Success)
                 {
-                    var match = regex.Match(query);
-
-                    if (match.Success)
+                    if (match.Value.StartsWith('@'))
                     {
-                        if (match.Value.StartsWith('@'))
-                        {
-                            //This is a variable, and unlike a constant - we require them to be declared.
+                        //This is a variable, and unlike a constant - we require them to be declared.
 
-                            if (Variables.Collection.TryGetValue(match.ToString(), out var variable))
-                            {
-                                if (variable.DataType == KbBasicDataType.String)
-                                {
-                                    string key = $"$s_{_literalKey++}$";
-                                    Variables.Collection.Add(key, new(variable.Value, KbBasicDataType.String));
-                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
-                                }
-                                else
-                                {
-                                    //Keep track of "constants" that we do not have definitions for, we will need replace these.
-                                    string key = $"$temp_const_{nextTriedConstant++}$";
-                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
-                                    triedConstants.Add(key, match.ToString());
-                                }
-                            }
-                            else
-                            {
-                                //This variable is not defined, we'll try to define it at "runtime" if the variable is declared in the script.
-                                //Unfortunately, we can't determine the data-type here so we'll go with string
-                                if (Variables.VariableForwardLookup.TryGetValue(match.Value, out var existingKey))
-                                {
-                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, existingKey);
-                                }
-                                else
-                                {
-                                    string key = $"$s_{_literalKey++}$";
-                                    Variables.Collection.Add(key, new("", KbBasicDataType.Undefined));
-                                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
-                                    //Keep track of variables so we can create the same "$s_nn}$" placeholder for multiple occurrences of the same variable.
-                                    Variables.VariableForwardLookup.Add(match.Value, key);
-                                    Variables.VariableReverseLookup.Add(key, match.Value);
-                                }
-
-                                //throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
-                            }
-                        }
-                        else if (Variables.Collection.TryGetValue(match.ToString(), out var constant))
+                        if (Variables.Collection.TryGetValue(match.ToString(), out var variable))
                         {
-                            if (constant.DataType == KbBasicDataType.String)
+                            if (variable.DataType == KbBasicDataType.String)
                             {
                                 string key = $"$s_{_literalKey++}$";
-                                Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.String));
+                                Variables.Collection.Add(key, new(variable.Value, KbBasicDataType.String));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else
@@ -127,6 +90,35 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                         }
                         else
                         {
+                            //This variable is not defined, we'll try to define it at "runtime" if the variable is declared in the script.
+                            //Unfortunately, we can't determine the data-type here so we'll go with string
+                            if (Variables.VariableForwardLookup.TryGetValue(match.Value, out var existingKey))
+                            {
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, existingKey);
+                            }
+                            else
+                            {
+                                string key = $"$s_{_literalKey++}$";
+                                Variables.Collection.Add(key, new("", KbBasicDataType.Undefined));
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                                //Keep track of variables so we can create the same "$s_nn}$" placeholder for multiple occurrences of the same variable.
+                                Variables.VariableForwardLookup.Add(match.Value, key);
+                                Variables.VariableReverseLookup.Add(key, match.Value);
+                            }
+
+                            //throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
+                        }
+                    }
+                    else if (Variables.Collection.TryGetValue(match.ToString(), out var constant))
+                    {
+                        if (constant.DataType == KbBasicDataType.String)
+                        {
+                            string key = $"$s_{_literalKey++}$";
+                            Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.String));
+                            query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                        }
+                        else
+                        {
                             //Keep track of "constants" that we do not have definitions for, we will need replace these.
                             string key = $"$temp_const_{nextTriedConstant++}$";
                             query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
@@ -135,15 +127,22 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                     }
                     else
                     {
-                        break;
+                        //Keep track of "constants" that we do not have definitions for, we will need replace these.
+                        string key = $"$temp_const_{nextTriedConstant++}$";
+                        query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                        triedConstants.Add(key, match.ToString());
                     }
                 }
-
-                //Replace the "constants" that were not defined.
-                foreach (var triedConstant in triedConstants)
+                else
                 {
-                    query = query.Replace(triedConstant.Key, triedConstant.Value);
+                    break;
                 }
+            }
+
+            //Replace the "constants" that were not defined.
+            foreach (var triedConstant in triedConstants)
+            {
+                query = query.Replace(triedConstant.Key, triedConstant.Value);
             }
         }
 
@@ -304,6 +303,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
+            SwapOutVariables(ref text);
             SwapOutNumericLiterals(ref text);
 
             int length;
