@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get transaction by process id for process id {processId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }
@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to remove transaction by process id for process {processId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to remove transactions by processID.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to recover uncommitted transactions.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -233,7 +233,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire transaction for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -249,7 +249,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to commit transaction for process {processId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }
@@ -265,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to rollback transaction for process {processId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }

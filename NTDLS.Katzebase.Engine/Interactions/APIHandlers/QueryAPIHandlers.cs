@@ -44,7 +44,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
-                    apiResults.Add(_core.Query.ExplainPlan(session, query));
+                    var apiResult = _core.Query.ExplainPlan(session, query);
+                    apiResults.Add(apiResult);
                 }
 
                 session.ClearCurrentQuery();
@@ -74,7 +75,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
-                    apiResults.Add(_core.Query.ExplainOperations(session, query));
+                    var apiResult = _core.Query.ExplainOperations(session, query);
+                    apiResults.Add(apiResult);
                 }
 
                 session.ClearCurrentQuery();
@@ -126,7 +128,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
-                    apiResults.Add(_core.Query.ExecuteQuery(session, query));
+                    var apiResult = _core.Query.ExecuteQuery(session, query);
+                    apiResults.Add(apiResult);
                 }
 
                 session.ClearCurrentQuery();
@@ -156,7 +159,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
-                    apiResults.Add(_core.Query.ExecuteNonQuery(session, query));
+                    var apiResult = _core.Query.ExecuteNonQuery(session, query);
+                    apiResults.Add(apiResult);
                 }
 
                 session.ClearCurrentQuery();

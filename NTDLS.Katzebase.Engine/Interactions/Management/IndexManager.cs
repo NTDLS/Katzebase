@@ -15,6 +15,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
+using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -86,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -171,7 +172,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -202,7 +203,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to drop index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -412,7 +413,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -584,7 +585,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to distill index base nodes.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -641,7 +642,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to distill index leaves.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -671,7 +672,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -694,7 +695,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -724,7 +725,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -751,7 +752,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -797,7 +798,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -823,7 +824,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -881,7 +882,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -1211,7 +1212,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -1228,7 +1229,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }

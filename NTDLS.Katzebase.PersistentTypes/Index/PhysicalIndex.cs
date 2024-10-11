@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
-using System.Reflection.Metadata.Ecma335;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index
 {

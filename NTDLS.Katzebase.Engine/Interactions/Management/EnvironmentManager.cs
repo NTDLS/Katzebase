@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -65,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to alter environment manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }

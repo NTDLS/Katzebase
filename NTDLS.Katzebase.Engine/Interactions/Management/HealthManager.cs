@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Semaphore;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -122,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment continuous health counter.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -168,7 +169,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment continuous health counter.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -213,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment discrete health counter.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }
@@ -258,7 +259,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment discrete health counter.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed.", ex);
                 throw;
             }
         }

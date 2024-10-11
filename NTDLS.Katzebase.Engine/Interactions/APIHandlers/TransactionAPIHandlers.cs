@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
 

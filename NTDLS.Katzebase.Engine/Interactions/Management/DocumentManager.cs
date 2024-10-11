@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -51,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire document for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -66,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire document page for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -74,8 +75,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal IEnumerable<DocumentPointer> AcquireDocumentPointers(
             Transaction transaction, string schemaName, LockOperation lockIntention)
         {
-            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            return AcquireDocumentPointers(transaction, physicalSchema, lockIntention);
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                return AcquireDocumentPointers(transaction, physicalSchema, lockIntention);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
         }
 
         internal IEnumerable<DocumentPointer> AcquireDocumentPointers(
@@ -103,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire document pointers for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -117,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire document page map for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -131,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -141,8 +150,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal DocumentPointer InsertDocument(Transaction transaction, string schemaName, object pageContent)
         {
-            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            return InsertDocument(transaction, physicalSchema, JsonConvert.SerializeObject(pageContent));
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                return InsertDocument(transaction, physicalSchema, JsonConvert.SerializeObject(pageContent));
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -150,8 +167,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal DocumentPointer InsertDocument(Transaction transaction, string schemaName, string pageContent)
         {
-            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            return InsertDocument(transaction, physicalSchema, pageContent);
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                return InsertDocument(transaction, physicalSchema, pageContent);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -242,7 +267,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to insert document for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -292,7 +317,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to update document for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -347,7 +372,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to delete documents for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }

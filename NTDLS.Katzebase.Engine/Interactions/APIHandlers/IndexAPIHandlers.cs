@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Models;
-using NTDLS.Katzebase.Api.Payloads;
+﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.ReliableMessaging;
@@ -45,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 var apiResults = new KbQueryIndexGetReply()
                 {
-                     Index = PhysicalIndex.ToApiPayload(physicalIndex)
+                    Index = PhysicalIndex.ToApiPayload(physicalIndex)
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
@@ -100,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
-                
+
                 bool doesIndexExist = indexCatalog.GetByName(param.IndexName) != null;
 
                 var apiResults = new KbQueryIndexExistsReply(doesIndexExist);

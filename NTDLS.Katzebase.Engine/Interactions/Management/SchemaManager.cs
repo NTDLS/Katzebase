@@ -10,6 +10,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Policy;
 using NTDLS.Katzebase.PersistentTypes.Schema;
+using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.PersistentTypes.Schema.PhysicalSchema;
@@ -156,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to alter schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -210,7 +211,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -236,7 +237,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to drop single for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -268,7 +269,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -293,7 +294,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }
@@ -360,7 +361,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
             finally
@@ -438,7 +439,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
             finally
@@ -477,7 +478,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
         }

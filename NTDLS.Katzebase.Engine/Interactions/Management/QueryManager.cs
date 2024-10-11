@@ -9,6 +9,7 @@ using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -95,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to explain query for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -121,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to explain query for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -229,7 +230,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to execute query for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -366,7 +367,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to execute non-query for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }

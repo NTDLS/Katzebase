@@ -2,6 +2,7 @@
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -20,30 +21,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal static T GetJsonNonTracked<T>(string filePath)
         {
-            LogManager.Debug($"IO:Read:{filePath}");
-
             try
             {
                 return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath)).EnsureNotNull();
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get non-tracked json for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
 
         internal static long GetDecompressedSizeTracked(string filePath)
         {
-            LogManager.Debug($"IO:Read:{filePath}");
-
             try
             {
                 return Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get non-tracked file length for {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -157,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -184,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put non-tracked json for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -197,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put non-tracked json for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -210,7 +207,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put non-tracked json for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -235,7 +232,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -250,7 +247,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()}  failed for file: [ {filePath} ].", ex);
                 throw;
             }
         }
@@ -282,8 +279,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.Settings.DeferredIOEnabled)
                 {
-                    LogManager.Debug($"IO:Write-Deferred:{filePath}");
-
                     transaction.DeferredIOs.Write((obj) =>
                     {
                         transaction.Instrumentation.Measure(PerformanceCounter.DeferredWrite, () =>
@@ -296,8 +291,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //  is infinitely more deterministic than the memory cache auto-ejections.
                     return;
                 }
-
-                LogManager.Debug($"IO:Write:{filePath}");
 
                 int approximateSizeInBytes = 0;
 
@@ -343,7 +336,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to put internal tracked file for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -362,13 +355,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 acquiredLockKey = transaction.LockDirectory(intendedOperation, diskPath);
 
-                LogManager.Debug($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
-
                 return Directory.Exists(diskPath);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{diskPath}].", ex);
                 throw;
             }
         }
@@ -388,8 +379,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
-                LogManager.Debug($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
-
                 if (doesFileExist == false)
                 {
                     Directory.CreateDirectory(diskPath);
@@ -398,7 +387,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create directory for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{diskPath}].", ex);
                 throw;
             }
         }
@@ -432,13 +421,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 acquiredLockKey = transaction.LockFile(intendedOperation, lowerFilePath);
 
-                LogManager.Debug($"IO:Exists-File:{transaction.ProcessId}->{filePath}");
-
                 return File.Exists(filePath);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to verify file for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -463,14 +450,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.RecordFileDelete(filePath);
 
-                LogManager.Debug($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
-
                 File.Delete(filePath);
                 Shared.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to delete file for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{filePath}].", ex);
                 throw;
             }
         }
@@ -494,13 +479,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.RecordPathDelete(diskPath);
 
-                LogManager.Debug($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
-
                 Directory.Delete(diskPath, true);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to delete path for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{diskPath}].", ex);
                 throw;
             }
         }

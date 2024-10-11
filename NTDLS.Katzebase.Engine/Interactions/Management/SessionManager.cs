@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -94,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    LogManager.Error($"Failed to upsert session for session {connectionId}.", ex);
+                    LogManager.Error($"{new StackFrame(1).GetMethod()} failed for session id: [{connectionId}].", ex);
                     throw;
                 }
             }));
@@ -142,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to remove sessions by processIDs.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{processId}].", ex);
                 throw;
             }
         }

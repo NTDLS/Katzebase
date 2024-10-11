@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Scripts;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -32,39 +33,79 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal KbQueryResultCollection CreateAccount(Transaction transaction, string username, string passwordHash)
-            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
-                new
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = username,
-                    PasswordHash = passwordHash
-                });
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        UserName = username,
+                        PasswordHash = passwordHash
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
 
         internal KbQueryResultCollection CreateRole(Transaction transaction, string roleName, bool isAdministrator)
-            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
-                new
-                {
-                    Id = Guid.NewGuid(),
-                    Name = roleName,
-                    IsAdministrator = isAdministrator
-                });
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = roleName,
+                        IsAdministrator = isAdministrator
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
 
         internal KbQueryResultCollection AddUserToRole(Transaction transaction, string roleName, string username)
-            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
-                new
-                {
-                    Id = Guid.NewGuid(),
-                    RoleName = roleName,
-                    Username = username
-                });
-
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleName = roleName,
+                        Username = username
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
         internal KbQueryResultCollection RemoveUserFromRole(Transaction transaction, string roleName, string username)
-            => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
-                new
-                {
-                    Id = Guid.NewGuid(),
-                    RoleName = roleName,
-                    Username = username
-                });
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        RoleName = roleName,
+                        Username = username
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+
+        }
     }
 }

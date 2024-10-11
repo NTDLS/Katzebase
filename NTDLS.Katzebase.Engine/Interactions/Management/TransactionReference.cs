@@ -116,5 +116,5 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             _disposed = true;
         }
     }
-
 }
+

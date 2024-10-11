@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Semaphore;
+using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -63,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to remove lock.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for object [{objectLock.ToString()}].", ex);
                 throw;
             }
         }
@@ -442,7 +443,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], object: [{intention.ToString()}].", ex);
                 throw;
             }
         }
