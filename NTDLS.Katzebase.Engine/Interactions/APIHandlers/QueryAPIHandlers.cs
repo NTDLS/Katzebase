@@ -40,9 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                var intermediateResult = _core.Query.ExplainPlan(session, query);
-
-                results.Add(intermediateResult);
+                results.Add(_core.Query.ExplainPlan(session, query));
             }
 
             session.ClearCurrentQuery();
@@ -64,9 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
-                var intermediateResult = _core.Query.ExplainOperations(session, query);
-
-                results.Add(intermediateResult);
+                results.Add(_core.Query.ExplainOperations(session, query));
             }
 
             session.ClearCurrentQuery();
@@ -96,9 +92,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
+            var results = new KbQueryQueryExecuteQueryReply();
+
             session.SetCurrentQuery(param.Statement);
 
-            var results = new KbQueryQueryExecuteQueryReply();
             foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteQuery(session, query));
@@ -117,9 +114,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
+            var results = new KbQueryQueryExecuteNonQueryReply();
+
             session.SetCurrentQuery(param.Statement);
 
-            var results = new KbQueryQueryExecuteNonQueryReply();
             foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteNonQuery(session, query));

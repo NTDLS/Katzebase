@@ -1,15 +1,8 @@
+create account testUser with (password = '')
 
-DECLARE @Username = 'Admin'
+create role testRole
 
-
-SELECT
-	20 + @Username + 100 as Username --TODO: AssertUnresolvedExpression
-FROM
-	Master:Account
-WHERE
-	Username = @Username
-
-
+alter role testRole add testUser
 
 
 --drop schema Master

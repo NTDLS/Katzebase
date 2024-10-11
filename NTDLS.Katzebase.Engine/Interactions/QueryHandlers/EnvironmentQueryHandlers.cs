@@ -1,8 +1,6 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
@@ -32,17 +30,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
-                if (query.SubQueryType == SubQueryType.Configuration)
-                {
-                    _core.Environment.Alter(transactionReference.Transaction, query.Attributes);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
-
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                var rowCount = _core.Environment.Alter(transactionReference.Transaction, query.Attributes);
+                return transactionReference.CommitAndApplyMetricsNonQuery(rowCount);
             }
             catch (Exception ex)
             {

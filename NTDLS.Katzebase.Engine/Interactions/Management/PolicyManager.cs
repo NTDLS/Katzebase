@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Api.Payloads.Response;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Scripts;
@@ -30,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateAccount(Transaction transaction, string username, string passwordHash)
+        internal KbQueryResultCollection CreateAccount(Transaction transaction, string username, string passwordHash)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
                 new
                 {
@@ -39,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     PasswordHash = passwordHash
                 });
 
-        internal void CreateRole(Transaction transaction, string roleName, bool isAdministrator)
+        internal KbQueryResultCollection CreateRole(Transaction transaction, string roleName, bool isAdministrator)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
                 new
                 {
@@ -48,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     IsAdministrator = isAdministrator
                 });
 
-        internal void AddUserToRole(Transaction transaction, string roleName, string username)
+        internal KbQueryResultCollection AddUserToRole(Transaction transaction, string roleName, string username)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
                 new
                 {
@@ -57,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     Username = username
                 });
 
-        internal void RemoveUserFromRole(Transaction transaction, string roleName, string username)
+        internal KbQueryResultCollection RemoveUserFromRole(Transaction transaction, string roleName, string username)
             => _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
                 new
                 {

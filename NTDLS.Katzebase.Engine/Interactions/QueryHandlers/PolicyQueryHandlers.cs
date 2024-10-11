@@ -1,8 +1,6 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
@@ -33,18 +31,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.Account)
-                {
-                    var accountName = query.GetAttribute<string>(Query.Attribute.Username);
-                    var passwordHash = query.GetAttribute<string>(Query.Attribute.PasswordHash);
-                    _core.Policies.CreateAccount(transactionReference.Transaction, accountName, passwordHash);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                var accountName = query.GetAttribute<string>(Query.Attribute.Username);
+                var passwordHash = query.GetAttribute<string>(Query.Attribute.PasswordHash);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                var results = _core.Policies.CreateAccount(transactionReference.Transaction, accountName, passwordHash);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
             {
@@ -59,18 +50,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.Role)
-                {
-                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                    var IsAdministrator = query.GetAttribute(Query.Attribute.IsAdministrator, false);
-                    _core.Policies.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                var IsAdministrator = query.GetAttribute(Query.Attribute.IsAdministrator, false);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                var results = _core.Policies.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
             {
@@ -85,18 +69,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.AddUserToRole)
-                {
-                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                    var username = query.GetAttribute<string>(Query.Attribute.Username);
-                    _core.Policies.AddUserToRole(transactionReference.Transaction, roleName, username);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                var username = query.GetAttribute<string>(Query.Attribute.Username);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                var results = _core.Policies.AddUserToRole(transactionReference.Transaction, roleName, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
             {
@@ -111,18 +88,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.RemoveUserFromRole)
-                {
-                    var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                    var username = query.GetAttribute<string>(Query.Attribute.Username);
-                    _core.Policies.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                var username = query.GetAttribute<string>(Query.Attribute.Username);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                var results = _core.Policies.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
             {

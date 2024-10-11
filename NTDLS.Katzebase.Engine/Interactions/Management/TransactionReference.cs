@@ -37,6 +37,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        internal KbActionResponse CommitAndApplyMetricsNonQuery(int rowCount)
+            => CommitAndApplyMetricsThenReturnResults(rowCount);
+
+        internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResult results)
+            => CommitAndApplyMetricsThenReturnResults(results.RowCount);
+
+
+        internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResultCollection results)
+            => CommitAndApplyMetricsThenReturnResults(results.Collection.Sum(o => o.RowCount));
+
         internal KbActionResponse CommitAndApplyMetricsThenReturnResults(int rowCount)
         {
             Commit();
@@ -52,9 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal KbActionResponse CommitAndApplyMetricsThenReturnResults()
-        {
-            return CommitAndApplyMetricsThenReturnResults(0);
-        }
+            => CommitAndApplyMetricsThenReturnResults(0);
 
         internal T CommitAndApplyMetricsThenReturnResults<T>(T result) where T : KbBaseActionResponse
         {

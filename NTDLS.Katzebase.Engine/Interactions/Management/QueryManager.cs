@@ -56,17 +56,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
         /// </summary>
-        internal void ExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
+        internal KbQueryResultCollection ExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
         {
+            var results = new KbQueryResultCollection();
+
             session.SetCurrentQuery(queryText);
 
             foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
             {
-                session.SetCurrentQuery(queryText);
-                _core.Query.ExecuteQuery(session, query);
+                results.Add(_core.Query.ExecuteQuery(session, query));
             }
 
             session.ClearCurrentQuery();
+
+            return results;
         }
 
         #endregion

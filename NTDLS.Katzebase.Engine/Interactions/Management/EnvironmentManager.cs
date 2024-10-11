@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Alter(Transaction transaction, IReadOnlyDictionary<string, QueryAttribute> configuration)
+        internal int Alter(Transaction transaction, IReadOnlyDictionary<string, QueryAttribute> configuration)
         {
             try
             {
@@ -45,18 +45,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var settingsType = _core.Settings.GetType();
 
+                int rowCount = 0;
+
                 foreach (var item in configuration)
                 {
                     //Update the running engine setting.
                     var property = settingsType.GetProperty(item.Key);
                     if (property != null && property.CanWrite)
                     {
+                        rowCount++;
                         property.SetValue(_core.Settings, Convert.ChangeType(item.Value.Value, property.PropertyType));
                     }
                 }
 
                 //Save the new settings to file.
                 File.WriteAllText(appSettingsPath, JsonConvert.SerializeObject(_core.Settings, Formatting.Indented));
+
+                return rowCount;
             }
             catch (Exception ex)
             {
