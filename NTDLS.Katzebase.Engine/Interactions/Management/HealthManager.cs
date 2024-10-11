@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
-using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Shared.EngineConstants;

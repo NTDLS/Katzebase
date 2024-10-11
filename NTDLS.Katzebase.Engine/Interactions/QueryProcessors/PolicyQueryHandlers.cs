@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
 
-namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
+namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 {
     /// <summary>
     /// Internal class methods for handling query requests related to policies.
@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate schema query handler.", ex);
+                LogManager.Error($"Failed to instantiate schema query handler.", ex);
                 throw;
             }
         }
