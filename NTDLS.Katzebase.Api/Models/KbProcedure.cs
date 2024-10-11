@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Api.Models
 {
     public class KbProcedure
     {
-        public KbInsensitiveDictionary<KbConstant>? UserParameters { get; set; } = null;
+        public KbInsensitiveDictionary<KbVariable>? UserParameters { get; set; } = null;
 
         public string ProcedureName { get; set; }
         public string SchemaName { get; set; }
@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Api.Models
             SchemaName = string.Empty;
         }
 
-        public KbProcedure(string fullyQualifiedProcedureName, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        public KbProcedure(string fullyQualifiedProcedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null)
         {
             UserParameters = userParameters;
 
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Api.Models
             }
         }
 
-        public KbProcedure(string schemaName, string procedureName, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        public KbProcedure(string schemaName, string procedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null)
         {
             ProcedureName = schemaName;
             SchemaName = procedureName;

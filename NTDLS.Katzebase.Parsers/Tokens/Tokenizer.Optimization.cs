@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <returns></returns>
         public string? ResolveLiteral(string token)
         {
-            if (Literals.TryGetValue(token, out var literal))
+            if (Variables.TryGetValue(token, out var literal))
             {
                 if (literal.DataType == KbBasicDataType.Undefined)
                 {
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.String, match.ToString()[1..^1]));
+                    Variables.Add(key, new(match.ToString()[1..^1], KbBasicDataType.String));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                                 if (variable.DataType == KbBasicDataType.String)
                                 {
                                     string key = $"$s_{_literalKey++}$";
-                                    Literals.Add(key, new(KbBasicDataType.String, variable.Value));
+                                    Variables.Add(key, new(variable.Value, KbBasicDataType.String));
                                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                 }
                                 else
@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             if (constant.DataType == KbBasicDataType.String)
                             {
                                 string key = $"$s_{_literalKey++}$";
-                                Literals.Add(key, new(KbBasicDataType.String, constant.Value));
+                                Variables.Add(key, new(constant.Value, KbBasicDataType.String));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$n_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.Numeric, match.ToString()));
+                    Variables.Add(key, new(match.ToString(), KbBasicDataType.Numeric));
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                                     if (variable.DataType == KbBasicDataType.Numeric)
                                     {
                                         string key = $"$n_{_literalKey++}$";
-                                        Literals.Add(key, new(KbBasicDataType.Numeric, variable.Value));
+                                        Variables.Add(key, new(variable.Value, KbBasicDataType.Numeric));
                                         query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                     }
                                     else
@@ -212,7 +212,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             else if (constant.DataType == KbBasicDataType.Numeric)
                             {
                                 string key = $"$n_{_literalKey++}$";
-                                Literals.Add(key, new(KbBasicDataType.Numeric, constant.Value));
+                                Variables.Add(key, new(constant.Value, KbBasicDataType.Numeric));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else

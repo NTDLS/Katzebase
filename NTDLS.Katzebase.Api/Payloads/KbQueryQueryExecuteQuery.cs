@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Api.Payloads
     {
         public Guid ConnectionId { get; set; }
         public string Statement { get; set; }
-        public KbInsensitiveDictionary<KbConstant>? UserParameters { get; set; }
+        public KbInsensitiveDictionary<KbVariable>? UserParameters { get; set; }
 
-        public KbQueryQueryExecuteQuery(Guid connectionId, string statement, KbInsensitiveDictionary<KbConstant>? userParameters)
+        public KbQueryQueryExecuteQuery(Guid connectionId, string statement, KbInsensitiveDictionary<KbVariable>? userParameters)
         {
             ConnectionId = connectionId;
             Statement = statement;

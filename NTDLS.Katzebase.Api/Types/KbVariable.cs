@@ -2,12 +2,12 @@
 
 namespace NTDLS.Katzebase.Api.Types
 {
-    public class KbConstant
+    public class KbVariable
     {
         public string? Value { get; set; }
         public KbBasicDataType DataType { get; set; }
 
-        public KbConstant(string? value, KbBasicDataType dataType)
+        public KbVariable(string? value, KbBasicDataType dataType)
         {
             Value = value;
             DataType = dataType;

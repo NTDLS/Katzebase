@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Explains the condition and join operations.
         /// </summary>
-        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Explains the condition and join plans, including applicable indexing.
         /// </summary>
-        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches documents using the given query and optional parameters.
         /// </summary>
-        public KbQueryQueryExecuteQueryReply Fetch(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryQueryExecuteQueryReply Fetch(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -121,7 +121,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches documents using the given query and optional parameters.
         /// </summary>
-        public IEnumerable<T> Fetch<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public IEnumerable<T> Fetch<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -162,7 +162,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches the first row, or throws an exception, using the given query and optional parameters.
         /// </summary>
-        public T FetchFirst<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public T FetchFirst<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
             => Fetch<T>(statement, userParameters, queryTimeout).First();
 
         #endregion
@@ -184,7 +184,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches the first row, or null using the given query and optional parameters.
         /// </summary>
-        public T? FetchFirstOrDefault<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public T? FetchFirstOrDefault<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
             => Fetch<T>(statement, userParameters, queryTimeout).FirstOrDefault();
 
         #endregion
@@ -206,7 +206,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T FetchSingle<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public T FetchSingle<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
             => Fetch<T>(statement, userParameters, queryTimeout).Single();
 
         #endregion
@@ -228,7 +228,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches a single row, or null, throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T? FetchSingleOrDefault<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public T? FetchSingleOrDefault<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
             => Fetch<T>(statement, userParameters, queryTimeout).SingleOrDefault();
 
         #endregion
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
         /// </summary>
-        public T? FetchScalar<T>(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public T? FetchScalar<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             var result = Fetch(statement, userParameters, queryTimeout);
             var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
@@ -284,7 +284,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Executes a statements using the supplied statement and optional parameters.
         /// </summary>
-        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 

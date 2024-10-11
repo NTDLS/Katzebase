@@ -25,42 +25,43 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         {
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value.EnsureNotNull());
+                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields,
+                    expressionNumeric.FunctionDependencies, expressionNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldExpressionString expressionString)
             {
-                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value.EnsureNotNull());
+                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields,
+                    expressionString.FunctionDependencies, expressionString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
                 //documentIdentifier.Value contains the schema qualified field name.
                 if (auxiliaryFields.TryGetValue(documentIdentifier.Value.EnsureNotNull(), out var exactAuxiliaryValue))
                 {
-                    return exactAuxiliaryValue; //TODO: Should auxiliaryFields really allow NULL values?
+                    return exactAuxiliaryValue?.AssertUnresolvedExpression();
                 }
 
                 //documentIdentifier.FieldName contains the field name.
                 if (auxiliaryFields.TryGetValue(documentIdentifier.FieldName, out var auxiliaryValue))
                 {
-                    return auxiliaryValue; //TODO: Should auxiliaryFields really allow NULL values?
+                    return auxiliaryValue?.AssertUnresolvedExpression();
                 }
 
                 transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value);
 
                 return null;
-                //throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                return query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull());
+                return query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
-                return query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull());
+                return query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldCollapsedValue collapsedValue)
             {
-                return collapsedValue.Value;
+                return collapsedValue.Value?.AssertUnresolvedExpression();
             }
             else
             {

@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Parsers.Query;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {
@@ -59,8 +58,8 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public int Length => _length;
         public string Text => _text;
         public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);
-        public KbInsensitiveDictionary<KbConstant> Variables { get; set; }
-        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; private set; } = new();
+
+        public KbInsensitiveDictionary<KbVariable> Variables { get; set; }
 
         #endregion
 
@@ -73,7 +72,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
         public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
+            KbInsensitiveDictionary<KbVariable>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
             _length = _text.Length;
@@ -98,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
         public Tokenizer(string text, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
+            KbInsensitiveDictionary<KbVariable>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
             _length = _text.Length;

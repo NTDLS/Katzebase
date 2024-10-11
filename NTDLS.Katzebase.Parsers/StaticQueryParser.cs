@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<KbConstant> givenConstants, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<KbVariable> givenConstants, KbInsensitiveDictionary<KbVariable>? userParameters = null)
         {
             var constants = givenConstants.Clone(); //Clone because we do not want to modify the global constants collection.
 
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers
             //queryText = PreParseQueryVariableDeclarations(queryText, ref constants);
 
             var tokenizer = new Tokenizer(queryText, true, constants);
-            var queryBatch = new QueryBatch(tokenizer.Literals);
+            var queryBatch = new QueryBatch(tokenizer.Variables);
 
             List<Exception> exceptions = new List<Exception>();
 
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Parsers
         /// <summary>
         /// Parse the variable declaration in the query and remove them from the query text.
         /// </summary>
-        static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbConstant> tokenizerConstants)
+        static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbVariable> tokenizerConstants)
         {
             var lines = queryText.Split("\n").Select(s => s.Trim());
             lines = lines.Where(o => o.StartsWith("const", StringComparison.InvariantCultureIgnoreCase));
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Parsers
                     }
                 }
 
-                tokenizerConstants.Add($"@{variableName}", new KbConstant(variableValue, variableType));
+                tokenizerConstants.Add($"@{variableName}", new KbVariable(variableValue, variableType));
 
                 queryText = queryText.Replace(line, "\n");
 

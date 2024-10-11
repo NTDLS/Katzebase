@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             }
         }
 
-        public KbInsensitiveDictionary<KbConstant> GlobalTokenizerConstants { get; } = new();
+        public KbInsensitiveDictionary<KbVariable> GlobalTokenizerConstants { get; } = new();
 
         public MockEngineCore()
         {

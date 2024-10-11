@@ -39,7 +39,7 @@ module DMLExecutionBasicTests =
 
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-        let userParameters = new KbInsensitiveDictionary<KbConstant>()
+        let userParameters = new KbInsensitiveDictionary<KbVariable>()
         let preparedQueries = StaticQueryParser.ParseBatch(plainInsert, userParameters)
         let preparedQuery = preparedQueries.Item 0
         

@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Executes a procedure with or without parameters. This method of calling a procedure performs various types of validation.
         /// </summary>
-        public KbQueryProcedureExecuteReply Execute(string fullyQualifiedProcedureName, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryProcedureExecuteReply Execute(string fullyQualifiedProcedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Executes a procedure with or without parameters. This method of calling a procedure performs various types of validation.
         /// </summary>
-        public KbQueryProcedureExecuteReply Execute(string schemaName, string procedureName, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null)
+        public KbQueryProcedureExecuteReply Execute(string schemaName, string procedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// <summary>
         /// Executes a procedure with or without parameters. This method of calling a procedure performs various types of validation.
         /// </summary>
-        public IEnumerable<T> Execute<T>(string schemaName, string procedureName, KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+        public IEnumerable<T> Execute<T>(string schemaName, string procedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Api.Management
         /// Executes a procedure with or without parameters. This method of calling a procedure performs various types of validation.
         /// </summary>
         public IEnumerable<T> Execute<T>(string fullyQualifiedProcedureName,
-            KbInsensitiveDictionary<KbConstant>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
+            KbInsensitiveDictionary<KbVariable>? userParameters = null, TimeSpan? queryTimeout = null) where T : new()
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 

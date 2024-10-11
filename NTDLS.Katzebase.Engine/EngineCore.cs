@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine
         /// <summary>
         /// Tokens that will be replaced by literal values by the tokenizer.
         /// </summary>
-        public KbInsensitiveDictionary<KbConstant> GlobalConstants { get; private set; } = new();
+        public KbInsensitiveDictionary<KbVariable> GlobalConstants { get; private set; } = new();
 
         internal OptimisticSemaphore LockManagementSemaphore { get; private set; } = new();
 

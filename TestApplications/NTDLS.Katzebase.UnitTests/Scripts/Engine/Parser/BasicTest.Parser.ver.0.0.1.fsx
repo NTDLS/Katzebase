@@ -44,9 +44,9 @@ module ParserBasicTests =
             equals "Variable not defined: [@Username]." pe.Message
 
         //[TODO-Test] will add another test case to verify ToUserParametersInsensitiveDictionary
-        let userParameters = new KbInsensitiveDictionary<KbConstant>()
-        userParameters.Add("@Username", new KbConstant("testUser", KbConstants.KbBasicDataType.String))
-        userParameters.Add("@PasswordHash", new KbConstant("testPassword", KbConstants.KbBasicDataType.String))
+        let userParameters = new KbInsensitiveDictionary<KbVariable>()
+        userParameters.Add("@Username", new KbVariable("testUser", KbConstants.KbBasicDataType.String))
+        userParameters.Add("@PasswordHash", new KbVariable("testPassword", KbConstants.KbBasicDataType.String))
         let preparedQueries = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
 
         equals 1 preparedQueries.Count 

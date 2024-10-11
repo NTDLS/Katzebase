@@ -40,7 +40,7 @@ module DDLExecutionBasicTests =
         _core.Transactions.Commit(preLogin)
         //let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count
-        let userParameters = new KbInsensitiveDictionary<KbConstant>()
+        let userParameters = new KbInsensitiveDictionary<KbVariable>()
 
 
         let countTest sql expectedCount = 
