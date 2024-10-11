@@ -55,6 +55,10 @@
         public enum KbMessageType
         {
             /// <summary>
+            /// Information supplied by the user, such as a call to print().
+            /// </summary>
+            User,
+            /// <summary>
             /// When communicating verbose information with the query result.
             /// </summary>
             Verbose,

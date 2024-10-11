@@ -4,15 +4,13 @@ using NTDLS.Katzebase.Parsers.Functions.System;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemTerminate
+    internal static class SystemSleep
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
-            var processId = function.Get<ulong>("processId");
-
-            core.Sessions.CloseByProcessId(processId);
-
-            return new KbQueryResultCollection();
+            var timeoutMilliseconds = function.Get<int>("timeoutMilliseconds");
+            Thread.Sleep(timeoutMilliseconds);
+            return  new KbQueryResultCollection();
         }
     }
 }

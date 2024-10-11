@@ -17,6 +17,8 @@ namespace NTDLS.Katzebase.Engine.Functions.System
 
             return functionName.ToLowerInvariant() switch
             {
+                "sleep" => SystemSleep.Execute(core, transaction, function),
+                "print" => SystemPrint.Execute(core, transaction, function),
                 "checkpointhealthcounters" => SystemCheckPointHealthCounters.Execute(core, transaction, function),
                 "clearcacheallocations" => SystemClearCacheAllocations.Execute(core, transaction, function),
                 "clearhealthcounters" => SystemClearHealthCounters.Execute(core, transaction, function),

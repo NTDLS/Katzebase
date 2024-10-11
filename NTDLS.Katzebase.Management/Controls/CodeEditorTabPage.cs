@@ -483,6 +483,8 @@ namespace NTDLS.Katzebase.Management.Controls
                     AppendToOutput($"{message.Text}", Color.DarkRed);
                 else if (message.MessageType == KbMessageType.Explain)
                     AppendToOutput($"{message.Text}", Color.DarkGreen);
+                else
+                    AppendToOutput($"{message.Text}", Color.Black);
             }
         }
         private void WriteMetrics(KbMetricCollection? metrics)

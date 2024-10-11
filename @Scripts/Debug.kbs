@@ -1,9 +1,22 @@
-create account testUser with (password = '')
+--create account testUser with (password = '')
+--create role testRole
+--alter role testRole add testUser
 
-create role testRole
+--begin transaction
 
-alter role testRole add testUser
+DECLARE @StartTime = 1
 
+
+--exec print('Top')
+
+--exec Sleep(1000)
+
+exec print(@StartTime)
+
+
+--select @StartTime from Single
+
+--commit transaction
 
 --drop schema Master
 

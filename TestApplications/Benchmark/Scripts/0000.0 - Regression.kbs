@@ -1,4 +1,4 @@
---Test constants and simple expressions
+exec print('Test constants and simple expressions: ' + DateTime())
 SELECT
 	10,
 	10 + 10,
@@ -16,13 +16,13 @@ SELECT
 FROM
 	Single
 
---Test 'SELECT *'
+exec print('Test SELECT *: ' + DateTime())
 SELECT
 	*
 FROM
 	WordList:Language
 
---Test WHERE equals.
+exec print('Test WHERE equals: ' + DateTime())
 SELECT
 	*
 FROM
@@ -30,7 +30,7 @@ FROM
 WHERE
 	Name = 'French'
 	
---Test WHERE with equals.
+exec print('Test WHERE with equals: ' + DateTime())
 SELECT
 	*
 FROM
@@ -38,7 +38,7 @@ FROM
 WHERE
 	L.Name = 'French'
 	
---Test SELECT * with alias.
+exec print('Test SELECT * with alias: ' + DateTime())
 SELECT
 	L.*
 FROM
@@ -46,7 +46,7 @@ FROM
 WHERE
 	L.Name = 'French'
 	
---Test WHERE LIKE '%...'.
+exec print('Test WHERE LIKE %...: ' + DateTime())
 SELECT
 	*
 FROM
@@ -54,7 +54,7 @@ FROM
 WHERE
 	Name LIKE 'F%'
 
---Test WHERE LIKE '...%'.
+exec print('Test WHERE LIKE ...%: ' + DateTime())
 SELECT
 	*
 FROM
@@ -62,7 +62,7 @@ FROM
 WHERE
 	Name LIKE '%h'
 	
---Test WHERE NOT LIKE '%...'.
+exec print('Test WHERE NOT LIKE %...: ' + DateTime())
 SELECT
 	*
 FROM
@@ -70,7 +70,7 @@ FROM
 WHERE
 	Name NOT LIKE 'F%'
 
---Test WHERE NOT LIKE '...%'.
+exec print('Test WHERE NOT LIKE ...%: ' + DateTime())
 SELECT
 	Name
 FROM
@@ -78,7 +78,7 @@ FROM
 WHERE
 	Name = 'French'
 
---Test SELECT column which does not exist.
+exec print('Test SELECT column which does not exist: ' + DateTime())
 SELECT
 	Id,
 	ColumnWhichDoesNotExist,
@@ -88,7 +88,7 @@ FROM
 WHERE
 	Name = 'French'
 
---Test WHERE column which does not exist.
+exec print('Test WHERE column which does not exist: ' + DateTime())
 SELECT
 	Name
 FROM
@@ -96,7 +96,7 @@ FROM
 WHERE
 	ColumnWhichDoesNotExist = 'French'
 
---Test WHERE column which does not exist OR valid condition.
+exec print('Test WHERE column which does not exist OR valid condition: ' + DateTime())
 SELECT
 	Name
 FROM
@@ -105,7 +105,7 @@ WHERE
 	Name = 'French'
 	OR ColumnWhichDoesNotExist = 'French'
 	
---Test WHERE column which does not exist AND valid condition
+exec print('Test WHERE column which does not exist AND valid condition: ' + DateTime())
 SELECT
 	Name
 FROM
@@ -114,7 +114,7 @@ WHERE
 	Name = 'French'
 	OR ColumnWhichDoesNotExist = 'French'
 	
---Test GROUP column which does not exist.
+exec print('Test GROUP column which does not exist: ' + DateTime())
 SELECT
 	ColumnWhichDoesNotExist,
 	Count(0) as CountOf
@@ -126,7 +126,7 @@ GROUP BY
 	ColumnWhichDoesNotExist
 
 
---Test GROUP column which does not exist.
+exec print('Test GROUP column which does not exist: ' + DateTime())
 SELECT
 	Count(0) as CountOf
 FROM
@@ -136,7 +136,7 @@ WHERE
 GROUP BY
 	ColumnWhichDoesNotExist
 	
---Test GROUP and ORDER column which does not exist.
+exec print('Test GROUP and ORDER column which does not exist: ' + DateTime())
 SELECT
 	Count(0) as CountOf
 FROM
@@ -148,7 +148,7 @@ GROUP BY
 ORDER BY
 	ColumnWhichDoesNotExist
 	
---Test ORDER column which does not exist.
+exec print('Test ORDER column which does not exist: ' + DateTime())
 SELECT
 	*
 FROM
@@ -158,7 +158,7 @@ WHERE
 ORDER BY
 	ColumnWhichDoesNotExist	
 
---Test GROUP BY with ORDER BY using aggregate ORDER BY.
+exec print('Test GROUP BY with ORDER BY using aggregate ORDER BY: ' + DateTime())
 SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,
@@ -184,7 +184,7 @@ ORDER BY
 	Avg(sw.Id / 60) asc,
 	sw.Text desc
 
---Test aggregate without group by.
+exec print('Test aggregate without group by: ' + DateTime())
 SELECT
 	Avg(sw.Id) as Average,
 	Count(0) as CountOf
@@ -202,7 +202,7 @@ WHERE
 	sw.Text = 'Car'
 	OR sw.Text = 'Gym'
 	
---Test TOP.
+exec print('Test TOP: ' + DateTime())
 SELECT TOP 10
 	*
 FROM
@@ -219,7 +219,7 @@ WHERE
 	sw.Text = 'Car'
 	OR sw.Text = 'Gym'
 
---Test TOP with OFFSET.
+exec print('Test TOP with OFFSET: ' + DateTime())
 SELECT TOP 10
 	*
 FROM
@@ -240,7 +240,7 @@ OFFSET 100
 DROP SCHEMA Temporary:Payload1
 DROP SCHEMA Temporary:Payload2
 
---Test SELECT INTO.
+exec print('Test SELECT INTO: ' + DateTime())
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -267,10 +267,10 @@ WHERE
 	
 SELECT * INTO Temporary:Payload2 FROM Temporary:Payload1
 
---Test DELETE from schema.
+exec print('Test DELETE from schema: ' + DateTime())
 DELETE FROM Temporary:Payload1 WHERE TargetLanguage = 'French'
 
---Test DELETE from alias.
+exec print('Test DELETE from alias: ' + DateTime())
 DELETE
 	p1
 FROM
@@ -278,7 +278,7 @@ FROM
 WHERE
 	p1.TargetLanguage = 'German'
 	
---Test DELETE from alias with JOIN.
+exec print('Test DELETE from alias with JOIN: ' + DateTime())
 DELETE
 	p1
 FROM
@@ -288,7 +288,7 @@ INNER JOIN WordList:Language as L
 WHERE
 	L.Id = 1 --English
 
---Test JOIN.
+exec print('Test JOIN: ' + DateTime())
 SELECT
 	T1.*
 FROM
@@ -296,7 +296,7 @@ FROM
 INNER JOIN WordList:Word as T2
 	ON T2.Id = T1.SourceWordId
 
---Test UPDATE.
+exec print('Test UPDATE: ' + DateTime())
 UPDATE
 	Temporary:Payload1
 SET
@@ -304,7 +304,7 @@ SET
 WHERE
 	TargetLanguage = 'Finnish'
 	
---Test UPDATE with join.
+exec print('Test UPDATE with join: ' + DateTime())
 UPDATE
 	p1
 SET
@@ -321,31 +321,31 @@ WHERE
 DROP SCHEMA Temporary:InsertTest1
 CREATE SCHEMA Temporary:InsertTest1
 
---Test VALUES INSERT.
+exec print('Test VALUES INSERT: ' + DateTime())
 INSERT INTO Temporary:InsertTest1(FirstName, LastName)
 VALUES('Jane', 'Doe'),('John', 'Doe')
 
---Test VALUES INSERT with expression.
+exec print('Test VALUES INSERT with expression: ' + DateTime())
 INSERT INTO Temporary:InsertTest1(Id, FirstName, LastName)
 VALUES(1, 'Jane', 'Doe'),(2, 'John', 'Doe'),(3, 'Test', Guid() + ' (some expression)')
 
 DROP SCHEMA Temporary:InsertTest2
 CREATE SCHEMA Temporary:InsertTest2
 
---Test RAGGED INSERT.
+exec print('Test RAGGED INSERT: ' + DateTime())
 INSERT INTO Temporary:InsertTest2
 (FirstName = 'John', LastName = 'Doe'),
 (FirstName = 'Fred', MiddleName = 'Joe', LastName = 'Doe'),
 (FirstName = 'Jane', LastName = 'Doe')
 
 
---Test RAGGED INSERT with expression
+exec print('Test RAGGED INSERT with expression: ' + DateTime())
 INSERT INTO Temporary:InsertTest2
 (FirstName = 'John', LastName = 'Doe'),
 (FirstName = 'Fred', MiddleName = Guid(), LastName = 'Doe'),
 (FirstName = 'Jane', LastName = 'Doe')
 
----Test complex SELECT and complex WHERE.
+exec print('-Test complex SELECT and complex WHERE: ' + DateTime())
 SELECT
 	Sha1('t'),
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
@@ -370,47 +370,47 @@ WHERE
 ORDER BY
 	10
 
---Test index creation.
+exec print('Test index creation: ' + DateTime())
 CREATE INDEX ix_Temporary_SourceWord_TargetWord
 (
 	SourceWord,
 	TargetWord
 ) ON Temporary:Payload1
 
---Test index rebuild.
+exec print('Test index rebuild: ' + DateTime())
 REBUILD INDEX ix_Temporary_SourceWord_TargetWord ON Temporary:Payload1
 REBUILD INDEX ix_Temporary_SourceWord_TargetWord ON Temporary:Payload1 WITH (Partitions = 1)
 REBUILD INDEX ix_Temporary_SourceWord_TargetWord ON Temporary:Payload1 WITH (Partitions = 10)
 REBUILD INDEX ix_Temporary_SourceWord_TargetWord ON Temporary:Payload1 WITH (Partitions = 100)
 
---Test index analyze.
+exec print('Test index analyze: ' + DateTime())
 ANALYZE INDEX ix_Temporary_SourceWord_TargetWord ON Temporary:Payload1
 
---Test unique key creation.
+exec print('Test unique key creation: ' + DateTime())
 CREATE UNIQUEKEY uk_Temporary_SourceWordId_TargetWordId
 (
 	SourceWordId,
 	TargetWordId
 ) ON Temporary:Payload1
 
---Test unique key rebuild.
+exec print('Test unique key rebuild: ' + DateTime())
 REBUILD INDEX uk_Temporary_SourceWordId_TargetWordId ON Temporary:Payload1
 REBUILD INDEX uk_Temporary_SourceWordId_TargetWordId ON Temporary:Payload1 WITH (Partitions = 1)
 REBUILD INDEX uk_Temporary_SourceWordId_TargetWordId ON Temporary:Payload1 WITH (Partitions = 10)
 REBUILD INDEX uk_Temporary_SourceWordId_TargetWordId ON Temporary:Payload1 WITH (Partitions = 100)
 
---Test unique key analyze.
+exec print('Test unique key analyze: ' + DateTime())
 ANALYZE INDEX uk_Temporary_SourceWordId_TargetWordId ON Temporary:Payload1
 
---Test analysis.
+exec print('Test analysis: ' + DateTime())
 ANALYZE SCHEMA Temporary:Payload1
 ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = false)
 ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = true)
 
---Test ALTER schema.
+exec print('Test ALTER schema: ' + DateTime())
 ALTER schema Temporary:Payload1 WITH (PageSize = 100)
 
---Test functions:
+exec print('Test functions: ' + DateTime())
 
 exec CheckpointHealthCounters()
 exec ClearCacheAllocations()
@@ -447,7 +447,7 @@ exec Cancel(0) --pid:0 never exists, so this is not a great test.
 exec Terminate(0) --pid:0 never exists, so this is not a great test.
 exec ShowThreadPools()
 
---Test scalar functions:
+exec print('Test scalar functions: ' + DateTime())
 SELECT IsBetween(50, 10, 100) FROM Single
 SELECT IsBetween(200, 10, 100) FROM Single
 SELECT IsEqual('string1', 'string2')  FROM Single
@@ -487,7 +487,7 @@ SELECT Trim('hello world', 'dhle') FROM Single
 SELECT Trim('     hello world     ') FROM Single
 SELECT IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False') FROM Single
 
---Test aggregate functions
+exec print('Test aggregate functions: ' + DateTime())
 SELECT
 	Avg(L.Id) as Avg,
 	Count(L.Id) as Count,
@@ -509,7 +509,7 @@ SELECT
 FROM
 	WordList:Language as L
 
---Test aggregate functions
+exec print('Test aggregate functions: ' + DateTime())
 SELECT
 	Avg(L.Id) as Avg,
 	Count(L.Id) as Count,
