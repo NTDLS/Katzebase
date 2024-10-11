@@ -1,7 +1,6 @@
-﻿using NTDLS.Katzebase.Parsers.Query.Fields;
-using static NTDLS.Katzebase.Api.KbConstants;
+﻿using static NTDLS.Katzebase.Api.KbConstants;
 
-namespace NTDLS.Katzebase.Parsers.Query
+namespace NTDLS.Katzebase.Parsers.Query.Fields
 {
     /// <summary>
     /// Contains the highest level of query fields, these are things like a select list or update list.

@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 if (tokenizer.TryEatIfNext("join") == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [join], found: [{tokenizer.EatGetNextEvaluated()}]");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [join], found: [{tokenizer.EatGetNextResolved()}]");
                 }
 
                 var schemaScriptLine = tokenizer.GetCurrentLineNumber();
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 }
                 else
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [as] (schema alias), found: [{tokenizer.EatGetNextEvaluated()}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [as] (schema alias), found: [{tokenizer.EatGetNextResolved()}].");
                 }
 
                 if (tokenizer.TryEatIfNext("on", out var onToken) == false)

@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserDeclare
     {

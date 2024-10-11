@@ -1,7 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
-using NTDLS.Katzebase.Parsers.Query.Specific.Helpers;
+using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             ParseRecursive(queryBatch, tokenizer, conditionCollection, conditionCollection, endOfWhereCaret);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
-            conditionCollection.Hash = StaticParserUtility.GetSHA256Hash(conditionCollection.MathematicalExpression);
+            conditionCollection.Hash = StaticParserUtility.ComputeSHA256(conditionCollection.MathematicalExpression);
 
             return conditionCollection;
         }

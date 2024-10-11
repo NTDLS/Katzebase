@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserKill
     {
@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
         {
             var query = new PreparedQuery(queryBatch, QueryType.Kill, tokenizer.GetCurrentLineNumber());
 
-            var referencedProcessId = tokenizer.EatGetNextEvaluated<ulong>();
+            var referencedProcessId = tokenizer.EatGetNextResolved<ulong>();
             try
             {
                 query.AddAttribute(PreparedQuery.Attribute.ProcessId, referencedProcessId);

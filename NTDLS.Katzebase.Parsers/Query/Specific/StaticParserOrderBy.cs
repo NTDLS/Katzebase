@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Query.Specific

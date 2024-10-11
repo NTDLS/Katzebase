@@ -6,7 +6,6 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
-using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -772,7 +771,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
             else if (field.Expression is QueryFieldConstantNumeric constantNumeric)
             {
-                var numericValue = query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull());
+                var numericValue = query.Batch.Variables.Resolve(constantNumeric.Value.EnsureNotNull());
 
                 if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
                 {
@@ -784,7 +783,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
             else if (field.Expression is QueryFieldConstantString constantString)
             {
-                var stringValue = query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull());
+                var stringValue = query.Batch.Variables.Resolve(constantString.Value.EnsureNotNull());
                 return stringValue;
             }
 

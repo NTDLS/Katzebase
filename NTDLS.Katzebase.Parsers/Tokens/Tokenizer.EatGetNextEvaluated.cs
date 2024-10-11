@@ -5,39 +5,39 @@
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
         /// </summary>
-        public T? EatGetNextEvaluated<T>(char[] delimiters)
-            => Helpers.Converters.ConvertToNullable<T>(EatGetNextEvaluated(delimiters));
+        public T? EatGetNextResolved<T>(char[] delimiters)
+            => Helpers.Converters.ConvertToNullable<T>(EatGetNextResolved(delimiters));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
         /// </summary>
-        public T? EatGetNextEvaluated<T>()
-            => Helpers.Converters.ConvertToNullable<T>(EatGetNextEvaluated(_standardTokenDelimiters));
+        public T? EatGetNextResolved<T>()
+            => Helpers.Converters.ConvertToNullable<T>(EatGetNextResolved(_standardTokenDelimiters));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
         /// </summary>
-        public string? EatGetNextEvaluated()
+        public string? EatGetNextResolved()
             => ResolveLiteral(EatGetNext(_standardTokenDelimiters, out _));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
         /// </summary>
-        public string? EatGetNextEvaluated(char[] delimiters)
+        public string? EatGetNextResolved(char[] delimiters)
             => ResolveLiteral(EatGetNext(delimiters, out _));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters,
         ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
         /// </summary>
-        public string? EatGetNextEvaluated(out char outStoppedOnDelimiter)
+        public string? EatGetNextResolved(out char outStoppedOnDelimiter)
             => ResolveLiteral(EatGetNext(_standardTokenDelimiters, out outStoppedOnDelimiter));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters,
         ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
         /// </summary>
-        public string? EatGetNextEvaluated(char[] delimiters, out char outStoppedOnDelimiter)
+        public string? EatGetNextResolved(char[] delimiters, out char outStoppedOnDelimiter)
             => ResolveLiteral(EatGetNext(delimiters, out outStoppedOnDelimiter));
     }
 }

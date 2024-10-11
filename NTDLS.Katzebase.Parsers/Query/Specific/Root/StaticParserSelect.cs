@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserSelect
     {
@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
             {
-                query.RowLimit = tokenizer.EatGetNextEvaluated<int>();
+                query.RowLimit = tokenizer.EatGetNextResolved<int>();
             }
 
             //Parse field list.
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             //Parse "into".
             if (tokenizer.TryEatIfNext("into"))
             {
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var selectIntoSchema) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var selectIntoSchema) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(selectIntoSchema)}].");
                 }
@@ -53,10 +53,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             //Parse primary schema.
             if (!tokenizer.TryEatIfNext("from"))
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [from], found: [{tokenizer.EatGetNextEvaluated()}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [from], found: [{tokenizer.EatGetNextResolved()}].");
             }
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
             }
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextResolved()}].");
                 }
                 query.GroupBy = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextResolved()}].");
                 }
                 query.OrderBy = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             //Parse "limit" clause.
             if (tokenizer.TryEatIfNext("offset"))
             {
-                query.RowOffset = tokenizer.EatGetNextEvaluated<int>();
+                query.RowOffset = tokenizer.EatGetNextResolved<int>();
             }
 
             return query;

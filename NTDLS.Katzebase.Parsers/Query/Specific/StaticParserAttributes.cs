@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
@@ -14,34 +15,21 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
         {
             var results = new KbInsensitiveDictionary<QueryAttribute>();
 
-            if (tokenizer.TryIsNextCharacter('(') == false)
-            {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [(], found: [{tokenizer.NextCharacter}].");
-            }
-            tokenizer.EatNextCharacter();
+            tokenizer.EatIfNext('(');
 
             while (!tokenizer.IsExhausted())
             {
-                string attributeName = tokenizer.EatGetNext();
-                if (tokenizer.TryIsNextCharacter('=') == false)
-                {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [=], found: [{tokenizer.NextCharacter}].");
-                }
-                tokenizer.EatNextCharacter();
+                string attributeName = tokenizer.EatGetNextResolved().EnsureNotNull();
 
-                string? attributeValue = tokenizer.EatGetNext();
+                tokenizer.EatIfNext('=');
 
                 if (expectedOptions.TryGetValue(attributeName, out var matchedOptionType) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(),
-                        $"Expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}], found: [{tokenizer.ResolveLiteral(attributeName)}]");
+                        $"Expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}], found: [{attributeName}]");
                 }
 
-                if (tokenizer.Variables.Collection.TryGetValue(attributeValue, out var literal))
-                {
-                    attributeValue = literal.Value;
-                }
-
+                var attributeValue = tokenizer.EatGetNextResolved();
                 var convertedValue = expectedOptions.ValidateAndConvert(tokenizer, attributeName, attributeValue);
                 var option = new QueryAttribute(attributeName, convertedValue, convertedValue.GetType());
                 results.Add(attributeName, option);
@@ -52,11 +40,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 }
             }
 
-            if (tokenizer.TryIsNextCharacter(')') == false)
-            {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected: [)], found: [{tokenizer.NextCharacter}].");
-            }
-            tokenizer.EatNextCharacter();
+            tokenizer.EatIfNext(')');
 
             return results;
         }

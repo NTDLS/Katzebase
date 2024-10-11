@@ -1,10 +1,11 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserInsert
     {
@@ -32,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             tokenizer.EatIfNext("into");
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
@@ -153,7 +154,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 }
                 else
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [values], [select], found: [{tokenizer.EatGetNextEvaluated()}]");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [values], [select], found: [{tokenizer.EatGetNextResolved()}]");
                 }
             }
             else

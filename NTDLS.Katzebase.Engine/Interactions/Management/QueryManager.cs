@@ -4,10 +4,10 @@ using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
+using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            var preparedQueries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             session.SetCurrentQuery(queryText);
 
-            foreach (var preparedQuery in StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
+            foreach (var preparedQuery in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
             {
                 session.SetCurrentQuery(queryText);
                 _core.Query.ExecuteQuery(session, preparedQuery);
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticQueryParser.ParseBatch(statement.ToString(), _core.GlobalConstants);
+            var batch = StaticParserBatch.Parse(statement.ToString(), _core.GlobalConstants);
             if (batch.Count > 1)
             {
                 throw new KbProcessingException("Expected only one procedure call per batch.");

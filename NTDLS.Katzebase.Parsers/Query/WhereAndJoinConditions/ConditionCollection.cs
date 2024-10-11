@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
+﻿using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -135,7 +136,7 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
+                        left = $"{FieldCollection.QueryBatch.Variables.Resolve(entry.Left.Value)}";
                     }
 
                     string right;
@@ -149,9 +150,8 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
+                        right = $"{FieldCollection.QueryBatch.Variables.Resolve(entry.Right.Value)}";
                     }
-
 
                     result.AppendLine("• " + Pad(1 + depth) + $"[{left}] {entry.Qualifier} [{right}].");
                 }

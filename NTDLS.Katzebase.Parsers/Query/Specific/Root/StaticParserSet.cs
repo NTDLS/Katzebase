@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserSet
     {
@@ -14,7 +14,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             };
 
             string variableName = tokenizer.EatGetNext();
-            string variableValue = tokenizer.EatGetNextEvaluated() ?? string.Empty;
+            string variableValue = tokenizer.EatGetNextResolved() ?? string.Empty;
 
             query.VariableValues.Add(new(variableName, variableValue));
 

@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Parsers.Query;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {
@@ -55,7 +56,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public int Caret { get; set; } = 0;
         public int Length => _length;
         public string Text => _text;
-        public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);
+        public string Hash => _hash ??= StaticParserUtility.ComputeSHA256(_text);
         public QueryVariables Variables { get; set; } = new();
 
         #endregion

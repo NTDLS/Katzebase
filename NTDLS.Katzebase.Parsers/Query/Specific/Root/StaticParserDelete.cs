@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserDelete
     {
@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 //Query: DELETE FROM [schema] WHERE [conditions]
 
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
                 }
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 //Query: DELETE [alias] FROM [schema] as [alias] INNER JOIN [schema] as [alias]
 
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var targetAlias) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var targetAlias) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{targetAlias}].");
                 }
@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
                 tokenizer.EatIfNext("from");
 
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
                 }

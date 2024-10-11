@@ -1,10 +1,9 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.Exposed;
-using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 
-namespace NTDLS.Katzebase.Parsers.Query
+namespace NTDLS.Katzebase.Parsers.Query.Fields
 {
     /// <summary>
     /// Collection of query fields, which contains their names and values.

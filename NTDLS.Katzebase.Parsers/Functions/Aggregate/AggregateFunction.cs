@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
             string description = string.Empty;
             if (tokenizer.TryEatIfNext('|'))
             {
-                description = tokenizer.EatGetNextEvaluated() ?? string.Empty;
+                description = tokenizer.EatGetNextResolved() ?? string.Empty;
             }
 
             if (!tokenizer.IsExhausted())

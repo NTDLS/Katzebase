@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
             string description = string.Empty;
             if (tokenizer.TryEatIfNext('|'))
             {
-                description = tokenizer.EatGetNextEvaluated() ?? string.Empty;
+                description = tokenizer.EatGetNextResolved() ?? string.Empty;
             }
 
             if (!tokenizer.IsExhausted())

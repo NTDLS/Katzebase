@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -6,9 +7,9 @@ using static NTDLS.Katzebase.Parsers.Constants;
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
     /// <summary>
-    /// Contains a parsed query via StaticQueryParser.PrepareQuery();
+    /// Contains a parsed query via StaticParserQuery.Parse();
     /// </summary>
-    public class PreparedQuery(QueryBatch queryBatch, Constants.QueryType queryType, int? fileLine)
+    public class PreparedQuery(QueryBatch queryBatch, QueryType queryType, int? fileLine)
     {
         public enum Attribute
         {

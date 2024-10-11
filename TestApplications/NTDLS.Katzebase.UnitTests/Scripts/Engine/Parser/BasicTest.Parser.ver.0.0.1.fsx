@@ -13,16 +13,16 @@ open System.Collections.Generic
 
 
 module ParserBasicTests =
+    open NTDLS.Katzebase.Api
+    open NTDLS.Katzebase.Api.Exceptions
+    open NTDLS.Katzebase.Api.Types
     open NTDLS.Katzebase.Parsers
     open NTDLS.Katzebase.Parsers.Query.Fields
-    open NTDLS.Katzebase.Api
-    open NTDLS.Katzebase.Api.Types
-    open NTDLS.Katzebase.Api.Exceptions
-    open NTDLS.Katzebase.Shared
+    open NTDLS.Katzebase.Parsers.Query
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =
         let userParameters = null
-        let preparedQueries = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
+        let preparedQueries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
         
         equals 1 preparedQueries.Count 
 
@@ -37,7 +37,7 @@ module ParserBasicTests =
     let ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (outputOpt:ITestOutputHelper option) =
         try
             let userParameters = null
-            let _ = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
+            let _ = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
             ()
         with
         | :? KbParserException as pe ->
@@ -47,7 +47,7 @@ module ParserBasicTests =
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
         userParameters.Add("@Username", new KbVariable("testUser", KbConstants.KbBasicDataType.String))
         userParameters.Add("@PasswordHash", new KbVariable("testPassword", KbConstants.KbBasicDataType.String))
-        let preparedQueries = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
+        let preparedQueries = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
 
         equals 1 preparedQueries.Count 
 

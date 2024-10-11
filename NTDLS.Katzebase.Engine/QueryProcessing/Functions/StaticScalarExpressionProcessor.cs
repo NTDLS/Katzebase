@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
-using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
@@ -53,11 +52,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                return query.Batch.GetLiteralValue(constantNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                return query.Batch.Variables.Resolve(constantNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
-                return query.Batch.GetLiteralValue(constantString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                return query.Batch.Variables.Resolve(constantString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldCollapsedValue collapsedValue)
             {
@@ -124,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);
-                            expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(textValue));
+                            expressionVariables.Add(mathVariable, query.Batch.Variables.Resolve(textValue));
                         }
                         else
                         {
@@ -153,14 +152,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
                     //This is a string placeholder, get the literal value and complain about it.
-                    throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
+                    throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.Variables.Resolve(token)}]");
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a numeric placeholder, get the literal value and append it.
                     string mathVariable = $"v{variableNumber++}";
                     expressionString = expressionString.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(token));
+                    expressionVariables.Add(mathVariable, query.Batch.Variables.Resolve(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
@@ -282,12 +281,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                         stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
                     }
 
-                    stringResult.Append(query.Batch.GetLiteralValue(token));
+                    stringResult.Append(query.Batch.Variables.Resolve(token));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a numeric placeholder, get the literal value and append it.
-                    mathBuffer.Append(query.Batch.GetLiteralValue(token));
+                    mathBuffer.Append(query.Batch.Variables.Resolve(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
@@ -295,7 +294,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 }
                 else
                 {
-                    var value = query.Batch.GetLiteralValue(token);
+                    var value = query.Batch.Variables.Resolve(token);
 
                     if (double.TryParse(value, out _))
                     {

@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             if (tokenizer.TryEatIfNext("size"))
             {
-                query.RowLimit = tokenizer.EatGetNextEvaluated<int>();
+                query.RowLimit = tokenizer.EatGetNextResolved<int>();
             }
             else
             {

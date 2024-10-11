@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Specific.Helpers;
+using NTDLS.Katzebase.Parsers.Query;
 using System.Text;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
@@ -154,6 +154,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         /// <summary>
         /// Throws an exception if a value contains an unresolved string or numeric placeholder.
+        /// This function can be removed when we are fairly confident that we no longer have issues with this.
         /// </summary>
         public static string? AssertUnresolvedExpression(this string value)
         {

@@ -1,11 +1,12 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;
 
-namespace NTDLS.Katzebase.Parsers.Query.Specific
+namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserUpdate
     {
@@ -37,7 +38,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             var query = new PreparedQuery(queryBatch, QueryType.Update, tokenizer.GetCurrentLineNumber());
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var updateSchemaNameOrAlias) == false)
+            if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var updateSchemaNameOrAlias) == false)
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name or alias, found: [{tokenizer.ResolveLiteral(updateSchemaNameOrAlias)}].");
             }
@@ -57,7 +58,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             while (!tokenizer.IsExhausted())
             {
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var fieldName) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var fieldName) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.ResolveLiteral(fieldName)}].");
                 }
@@ -80,7 +81,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             //Parse primary schema, otherwise use updateSchemaNameOrAlias
             if (tokenizer.TryEatIfNext("from"))
             {
-                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+                if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
                 }

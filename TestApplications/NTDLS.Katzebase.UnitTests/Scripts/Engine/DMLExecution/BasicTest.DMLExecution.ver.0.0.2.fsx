@@ -14,12 +14,10 @@ open System
 open System.Collections.Generic
 
 module DMLExecutionBasicTests =
-    open NTDLS.Katzebase.Parsers
-    open NTDLS.Katzebase.Parsers.Query    
-    open NTDLS.Katzebase.Parsers.Query.Fields    
     open NTDLS.Katzebase.Api.Types
-    open NTDLS.Katzebase.Engine.QueryProcessing
     open NTDLS.Katzebase.Engine.QueryProcessing.Functions
+    open NTDLS.Katzebase.Parsers.Query.Fields    
+    open NTDLS.Katzebase.Parsers.Query
 
     type ExprProc = StaticScalarExpressionProcessor
 
@@ -40,7 +38,7 @@ module DMLExecutionBasicTests =
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
-        let preparedQueries = StaticQueryParser.ParseBatch(plainInsert, userParameters)
+        let preparedQueries = StaticParserBatch.Parse(plainInsert, userParameters)
         let preparedQuery = preparedQueries.Item 0
         
         equals [|"COL1"; "COL2"|] (preparedQuery.InsertFieldNames |> Seq.toArray)
