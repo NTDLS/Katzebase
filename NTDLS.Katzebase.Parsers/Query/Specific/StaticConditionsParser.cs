@@ -139,6 +139,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     //This is a string placeholder, we're all good.
                     tokenizer.EatNext();
                 }
+                else if (token.StartsWith("$v_") && token.EndsWith('$')) //A variable placeholder.
+                {
+                    //This is a variable placeholder, we're all good.
+                    tokenizer.EatNext();
+                }
                 else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
                 {
                     //This is a numeric placeholder, we're all good.

@@ -7,7 +7,6 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.Fields;
-using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
 using System.Diagnostics;
@@ -47,9 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var variablePlaceholder = query.GetAttribute<string>(Query.Attribute.VariablePlaceholder);
-                var expression = query.GetAttribute<string>(Query.Attribute.Expression);
-
-                var mockField = new QueryFieldExpressionString(null, expression);
+                var expressionField = query.GetAttribute<IQueryField>(Query.Attribute.Expression);
                 var mockFields = new SelectFieldCollection(query.Batch);
 
                 var auxiliaryValues = new KbInsensitiveDictionary<string?>();
@@ -58,8 +55,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     auxiliaryValues.Add(literal.Key, literal.Value.Value);
                 }
 
-                var collapsedExpression = mockField.CollapseScalarQueryField
-                            (transactionReference.Transaction, query, mockFields, auxiliaryValues);
+                var collapsedExpression = expressionField.CollapseScalarQueryField(
+                    transactionReference.Transaction, query, mockFields, auxiliaryValues);
 
                 if (double.TryParse(collapsedExpression, out var _))
                 {
@@ -69,6 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 {
                     query.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.String);
                 }
+
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }

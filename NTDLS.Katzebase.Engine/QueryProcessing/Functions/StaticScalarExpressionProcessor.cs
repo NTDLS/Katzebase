@@ -154,6 +154,22 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                     //This is a string placeholder, get the literal value and complain about it.
                     throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.Variables.Resolve(token)}]");
                 }
+                else if (token.StartsWith("$v_") && token.EndsWith('$'))
+                {
+                    if (query.Batch.Variables.Collection.TryGetValue(token, out var variable))
+                    {
+                        if (variable.DataType == KbBasicDataType.Numeric)
+                        {
+                            //This is a numeric variable, get the value and append it.
+                            string mathVariable = $"v{variableNumber++}";
+                            expressionString = expressionString.Replace(token, mathVariable);
+
+                            //TODO: I think I need to collapse this: variable.Value
+                            expressionVariables.Add(mathVariable, variable.Value);
+                        }
+                    }
+                    throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.Variables.Resolve(token)}]");
+                }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a numeric placeholder, get the literal value and append it.
@@ -282,6 +298,31 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                     }
 
                     stringResult.Append(query.Batch.Variables.Resolve(token));
+                }
+                else if (token.StartsWith("$v_") && token.EndsWith('$'))
+                {
+                    bool isNumeric = false;
+
+                    if (query.Batch.Variables.Collection.TryGetValue(token, out var variable))
+                    {
+                        if (variable.DataType == KbBasicDataType.Numeric)
+                        {
+                            //This is a numeric variable, get the value and append it.
+                            mathBuffer.Append(variable.Value);
+                            isNumeric = true;
+                        }
+                    }
+
+                    if (isNumeric == false)
+                    {
+                        //Variable was not numeric, terminate the match buffer(if any) and build the string.
+                        if (mathBuffer.Length > 0)
+                        {
+                            stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
+                        }
+
+                        stringResult.Append(query.Batch.Variables.Resolve(token));
+                    }
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {

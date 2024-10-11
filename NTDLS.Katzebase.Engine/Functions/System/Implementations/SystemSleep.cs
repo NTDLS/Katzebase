@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
         {
             var timeoutMilliseconds = function.Get<int>("timeoutMilliseconds");
             Thread.Sleep(timeoutMilliseconds);
-            return  new KbQueryResultCollection();
+            return new KbQueryResultCollection();
         }
     }
 }

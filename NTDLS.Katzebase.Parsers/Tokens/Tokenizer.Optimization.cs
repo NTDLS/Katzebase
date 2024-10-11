@@ -98,7 +98,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             }
                             else
                             {
-                                string key = $"$s_{_literalKey++}$";
+                                //We parse strings before numeric, so its just a convenient place to parse variables.
+                                //The type of the variable cannot be determined until it is set.
+                                string key = $"$v_{_literalKey++}$";
                                 Variables.Collection.Add(key, new("", KbBasicDataType.Undefined));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                 //Keep track of variables so we can create the same "$s_nn}$" placeholder for multiple occurrences of the same variable.

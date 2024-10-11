@@ -4,7 +4,7 @@
 
 --begin transaction
 
-DECLARE @StartTime = 1
+DECLARE @StartTime = Guid()
 
 --select @StartTime from Single
 
@@ -12,7 +12,7 @@ DECLARE @StartTime = 1
 
 --exec Sleep(1000)
 
-exec print(@StartTime + 20)
+exec print( 20 + @StartTime + 'hello' + @StartTime + 20)
 
 
 

@@ -20,6 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /* Token Placeholders:
          * $n_0$ = numeric.
          * $s_0$ = string.
+         * $v_0$ = variable, type not determined until set.
          * $x_0$ = expression (result from a function call).
          * $f_0$ = document field placeholder.
          */

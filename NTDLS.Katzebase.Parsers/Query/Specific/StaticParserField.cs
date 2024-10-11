@@ -101,6 +101,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     tokenizer.EatNext();
                     buffer.Append(token);
                 }
+                else if (token.StartsWith("$v_") && token.EndsWith('$')) //A variable placeholder.
+                {
+                    tokenizer.EatNext();
+                    buffer.Append(token);
+                }
                 else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
                 {
                     tokenizer.EatNext();
@@ -278,6 +283,18 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     }
                     continue;
                 }
+                else if (token.StartsWith("$v_") && token.EndsWith('$'))
+                {
+                    if (tokenizer.Variables.Collection.TryGetValue(token, out var variable))
+                    {
+                        if (variable.DataType != KbBasicDataType.Numeric)
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
+                    return false;
+                }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
                     //This is a string, so this is not a numeric operation.
@@ -364,6 +381,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
                     //This is a string constant, we're all good.
+                    continue;
+                }
+                else if (token.StartsWith("$v_") && token.EndsWith('$'))
+                {
+                    //This is a variable, we're all good.
                     continue;
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
