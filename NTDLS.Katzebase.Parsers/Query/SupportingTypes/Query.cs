@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Parsers.Constants;
 

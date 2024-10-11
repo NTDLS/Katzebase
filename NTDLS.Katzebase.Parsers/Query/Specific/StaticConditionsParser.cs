@@ -1,10 +1,9 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
+using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 

@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
+namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     /// <summary>
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there

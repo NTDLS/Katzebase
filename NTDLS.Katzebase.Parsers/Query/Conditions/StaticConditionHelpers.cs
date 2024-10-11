@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
+namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     public static class StaticConditionHelpers
     {
@@ -26,10 +26,10 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
 
         private static readonly string[] _logicalQualifiers = ["=", "!=", ">", "<", ">=", "<=", "like", "not like", "between", "not between"];
         public static bool IsLogicalQualifier(string text)
-           => (_logicalQualifiers).Contains(text.ToLowerInvariant());
+           => _logicalQualifiers.Contains(text.ToLowerInvariant());
 
         private static readonly string[] _logicalConnectors = ["and", "or"];
         public static bool IsLogicalConnector(string text)
-           => (_logicalConnectors).Contains(text.ToLowerInvariant());
+           => _logicalConnectors.Contains(text.ToLowerInvariant());
     }
 }

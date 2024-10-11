@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Parsers.Query
                 _ => throw new KbNotImplementedException($"Query type is not implemented: [{token}]."),
             };
 
-            ValidateFieldSchemaReferences.Validate(tokenizer, query);
+            BasicQueryValidation.Assert(tokenizer, query);
 
             return query;
         }

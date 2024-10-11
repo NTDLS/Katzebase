@@ -4,9 +4,9 @@ using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Query.Validation
 {
-    public static class ValidateFieldSchemaReferences
+    public static class BasicQueryValidation
     {
-        public static void Validate(Tokenizer tokenizer, SupportingTypes.Query query)
+        public static void Assert(Tokenizer tokenizer, SupportingTypes.Query query)
         {
             var exceptions = new List<Exception>();
 

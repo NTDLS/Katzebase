@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
+﻿namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     public interface ICondition
     {

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
+namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     public class ConditionEntry : ICondition
     {

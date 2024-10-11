@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+﻿using NTDLS.Katzebase.Parsers.Query.Conditions;
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {

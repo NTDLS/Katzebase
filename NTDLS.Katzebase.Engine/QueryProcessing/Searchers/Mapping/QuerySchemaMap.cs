@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Parsers.Query.SupportingTypes.QuerySchema;

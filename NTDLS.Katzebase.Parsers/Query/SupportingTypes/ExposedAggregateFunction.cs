@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 
-namespace NTDLS.Katzebase.Parsers.Query.Exposed
+namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
     public class ExposedAggregateFunction
     {

@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+﻿using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.PersistentTypes.Index;
 
 namespace NTDLS.Katzebase.Parsers.Indexes.Matching

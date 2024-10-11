@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Parsers.Query.Fields;
 
-namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
+namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     public static class ConditionExtensions
     {

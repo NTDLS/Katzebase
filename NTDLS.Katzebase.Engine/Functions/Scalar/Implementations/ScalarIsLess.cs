@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Parsers.Query.Conditions;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 {

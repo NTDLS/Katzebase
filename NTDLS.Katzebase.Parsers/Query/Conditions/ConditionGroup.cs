@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using static NTDLS.Katzebase.Parsers.Constants;
 
-namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
+namespace NTDLS.Katzebase.Parsers.Query.Conditions
 {
     /// <summary>
     /// A collection of conditions of which all are to be evaluated with AND connectors.

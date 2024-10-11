@@ -2,11 +2,10 @@
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
+using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
