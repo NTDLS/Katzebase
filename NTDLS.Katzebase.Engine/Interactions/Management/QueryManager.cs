@@ -24,6 +24,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly EngineCore _core;
         public QueryAPIHandlers APIHandlers { get; private set; }
 
+        private readonly QueryType[] _nonQueryTypes =
+            [
+                QueryType.Delete,
+                QueryType.Rebuild,
+                QueryType.Create,
+                QueryType.Alter,
+                QueryType.Set,
+                QueryType.Kill,
+                QueryType.Drop,
+                QueryType.Begin,
+                QueryType.Commit,
+                QueryType.Insert,
+                QueryType.Update,
+                QueryType.SelectInto,
+                QueryType.Rollback,
+                QueryType.Declare
+            ];
+
         internal QueryManager(EngineCore core)
         {
             _core = core;
@@ -105,19 +123,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (query.QueryType == QueryType.Select
-                    || query.QueryType == QueryType.Delete
-                    || query.QueryType == QueryType.Update)
+                switch (query.QueryType)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteExplainOperations(session, query);
-                }
-                else if (query.QueryType == QueryType.Set)
-                {
-                    return new KbQueryExplain();
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    case QueryType.Select:
+                    case QueryType.Delete:
+                    case QueryType.Insert:
+                    case QueryType.Update:
+                        return _core.Documents.QueryHandlers.ExecuteExplainOperations(session, query);
+                    default:
+                        return new KbQueryExplain(); //No explanation for these operations.
                 }
             }
             catch (Exception ex)
@@ -169,63 +183,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (query.QueryType == QueryType.Select)
+                if (_nonQueryTypes.Contains(query.QueryType)) //Reroute to non-query as appropriate:
                 {
-                    return _core.Documents.QueryHandlers.ExecuteSelect(session, query).ToCollection();
+                    var nonQueryResult = ExecuteNonQuery(session, query);
+                    return KbQueryResult.FromActionResponse(nonQueryResult).ToCollection();
                 }
-                else if (query.QueryType == QueryType.Sample)
+
+                switch (query.QueryType)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteSample(session, query).ToCollection();
-                }
-                else if (query.QueryType == QueryType.Exec)
-                {
-                    return _core.Procedures.QueryHandlers.ExecuteExec(session, query);
-                }
-                else if (query.QueryType == QueryType.List)
-                {
-                    if (query.SubQueryType == SubQueryType.Documents)
-                    {
-                        return _core.Documents.QueryHandlers.ExecuteList(session, query).ToCollection();
-                    }
-                    else if (query.SubQueryType == SubQueryType.Schemas)
-                    {
-                        return _core.Schemas.QueryHandlers.ExecuteList(session, query).ToCollection();
-                    }
-                    throw new KbEngineException("Invalid list query subtype.");
-                }
-                if (query.QueryType == QueryType.Analyze)
-                {
-                    if (query.SubQueryType == SubQueryType.Index)
-                    {
-                        return _core.Indexes.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
-                    }
-                    else if (query.SubQueryType == SubQueryType.Schema)
-                    {
-                        return _core.Schemas.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
-                    }
-                    throw new KbEngineException("Invalid analyze query subtype.");
-                }
-                else if (query.QueryType == QueryType.Delete
-                    || query.QueryType == QueryType.Rebuild
-                    || query.QueryType == QueryType.Create
-                    || query.QueryType == QueryType.Alter
-                    || query.QueryType == QueryType.Set
-                    || query.QueryType == QueryType.Kill
-                    || query.QueryType == QueryType.Drop
-                    || query.QueryType == QueryType.Begin
-                    || query.QueryType == QueryType.Commit
-                    || query.QueryType == QueryType.Insert
-                    || query.QueryType == QueryType.Update
-                    || query.QueryType == QueryType.SelectInto
-                    || query.QueryType == QueryType.Rollback
-                    || query.QueryType == QueryType.Declare)
-                {
-                    //Reroute to non-query as appropriate:
-                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(session, query)).ToCollection();
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    case QueryType.Select:
+                        return _core.Documents.QueryHandlers.ExecuteSelect(session, query).ToCollection();
+                    case QueryType.Sample:
+                        return _core.Documents.QueryHandlers.ExecuteSample(session, query).ToCollection();
+                    case QueryType.Exec:
+                        return _core.Procedures.QueryHandlers.ExecuteExec(session, query);
+                    case QueryType.List:
+                        if (query.SubQueryType == SubQueryType.Documents)
+                        {
+                            return _core.Documents.QueryHandlers.ExecuteList(session, query).ToCollection();
+                        }
+                        else if (query.SubQueryType == SubQueryType.Schemas)
+                        {
+                            return _core.Schemas.QueryHandlers.ExecuteList(session, query).ToCollection();
+                        }
+                        throw new KbEngineException("Invalid list query subtype.");
+                    case QueryType.Analyze:
+                        if (query.SubQueryType == SubQueryType.Index)
+                        {
+                            return _core.Indexes.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
+                        }
+                        else if (query.SubQueryType == SubQueryType.Schema)
+                        {
+                            return _core.Schemas.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
+                        }
+                        throw new KbEngineException("Invalid analyze query subtype.");
+                    default:
+                        throw new NotImplementedException();
                 }
             }
             catch (Exception ex)
@@ -239,130 +232,103 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (query.QueryType == QueryType.Declare)
+                switch (query.QueryType)
                 {
-                    return _core.Procedures.QueryHandlers.ExecuteDeclare(session, query);
-                }
-                else if (query.QueryType == QueryType.Insert)
-                {
-                    return _core.Documents.QueryHandlers.ExecuteInsert(session, query);
-                }
-                else if (query.QueryType == QueryType.Update)
-                {
-                    return _core.Documents.QueryHandlers.ExecuteUpdate(session, query);
-                }
-                else if (query.QueryType == QueryType.SelectInto)
-                {
-                    return _core.Documents.QueryHandlers.ExecuteSelectInto(session, query);
-                }
-                else if (query.QueryType == QueryType.Delete)
-                {
-                    return _core.Documents.QueryHandlers.ExecuteDelete(session, query);
-                }
-                else if (query.QueryType == QueryType.Kill)
-                {
-                    return _core.Sessions.QueryHandlers.ExecuteKillProcess(session, query);
-                }
-                else if (query.QueryType == QueryType.Set)
-                {
-                    return _core.Sessions.QueryHandlers.ExecuteSetVariable(session, query);
-                }
-                else if (query.QueryType == QueryType.Rebuild)
-                {
-                    if (query.SubQueryType == SubQueryType.Index
-                        || query.SubQueryType == SubQueryType.UniqueKey)
-                    {
-                        return _core.Indexes.QueryHandlers.ExecuteRebuild(session, query);
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Create)
-                {
-                    if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
-                    {
-                        return _core.Indexes.QueryHandlers.ExecuteCreate(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Procedure)
-                    {
-                        return _core.Procedures.QueryHandlers.ExecuteCreate(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Schema)
-                    {
-                        return _core.Schemas.QueryHandlers.ExecuteCreate(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Account)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteCreateAccount(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Role)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteCreateRole(session, query);
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Alter)
-                {
-                    if (query.SubQueryType == SubQueryType.Schema)
-                    {
-                        return _core.Schemas.QueryHandlers.ExecuteAlter(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Configuration)
-                    {
-                        return _core.Environment.QueryHandlers.ExecuteAlter(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.AddUserToRole)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteAddUserToRole(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.RemoveUserFromRole)
-                    {
-                        return _core.Policies.QueryHandlers.ExecuteRemoveUserFromRole(session, query);
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Drop)
-                {
-                    if (query.SubQueryType == SubQueryType.Index
-                        || query.SubQueryType == SubQueryType.UniqueKey)
-                    {
-                        return _core.Indexes.QueryHandlers.ExecuteDrop(session, query);
-                    }
-                    else if (query.SubQueryType == SubQueryType.Schema)
-                    {
-                        return _core.Schemas.QueryHandlers.ExecuteDrop(session, query);
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Begin)
-                {
-                    if (query.SubQueryType == SubQueryType.Transaction)
-                    {
-                        _core.Transactions.QueryHandlers.Begin(session);
-                        return new KbActionResponse();
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Rollback)
-                {
-                    if (query.SubQueryType == SubQueryType.Transaction)
-                    {
-                        _core.Transactions.QueryHandlers.Rollback(session);
-                        return new KbActionResponse();
-                    }
-                    throw new NotImplementedException();
-                }
-                else if (query.QueryType == QueryType.Commit)
-                {
-                    if (query.SubQueryType == SubQueryType.Transaction)
-                    {
-                        _core.Transactions.QueryHandlers.Commit(session);
-                        return new KbActionResponse();
-                    }
-                    throw new NotImplementedException();
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    case QueryType.Declare:
+                        return _core.Procedures.QueryHandlers.ExecuteDeclare(session, query);
+                    case QueryType.Insert:
+                        return _core.Documents.QueryHandlers.ExecuteInsert(session, query);
+                    case QueryType.Update:
+                        return _core.Documents.QueryHandlers.ExecuteUpdate(session, query);
+                    case QueryType.SelectInto:
+                        return _core.Documents.QueryHandlers.ExecuteSelectInto(session, query);
+                    case QueryType.Delete:
+                        return _core.Documents.QueryHandlers.ExecuteDelete(session, query);
+                    case QueryType.Kill:
+                        return _core.Sessions.QueryHandlers.ExecuteKillProcess(session, query);
+                    case QueryType.Set:
+                        return _core.Sessions.QueryHandlers.ExecuteSetVariable(session, query);
+                    case QueryType.Rebuild:
+                        if (query.SubQueryType == SubQueryType.Index
+                            || query.SubQueryType == SubQueryType.UniqueKey)
+                        {
+                            return _core.Indexes.QueryHandlers.ExecuteRebuild(session, query);
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Create:
+                        if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
+                        {
+                            return _core.Indexes.QueryHandlers.ExecuteCreate(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Procedure)
+                        {
+                            return _core.Procedures.QueryHandlers.ExecuteCreate(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Schema)
+                        {
+                            return _core.Schemas.QueryHandlers.ExecuteCreate(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Account)
+                        {
+                            return _core.Policies.QueryHandlers.ExecuteCreateAccount(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Role)
+                        {
+                            return _core.Policies.QueryHandlers.ExecuteCreateRole(session, query);
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Alter:
+                        if (query.SubQueryType == SubQueryType.Schema)
+                        {
+                            return _core.Schemas.QueryHandlers.ExecuteAlter(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Configuration)
+                        {
+                            return _core.Environment.QueryHandlers.ExecuteAlter(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.AddUserToRole)
+                        {
+                            return _core.Policies.QueryHandlers.ExecuteAddUserToRole(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.RemoveUserFromRole)
+                        {
+                            return _core.Policies.QueryHandlers.ExecuteRemoveUserFromRole(session, query);
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Drop:
+                        if (query.SubQueryType == SubQueryType.Index
+                            || query.SubQueryType == SubQueryType.UniqueKey)
+                        {
+                            return _core.Indexes.QueryHandlers.ExecuteDrop(session, query);
+                        }
+                        else if (query.SubQueryType == SubQueryType.Schema)
+                        {
+                            return _core.Schemas.QueryHandlers.ExecuteDrop(session, query);
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Begin:
+                        if (query.SubQueryType == SubQueryType.Transaction)
+                        {
+                            _core.Transactions.QueryHandlers.Begin(session);
+                            return new KbActionResponse();
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Rollback:
+                        if (query.SubQueryType == SubQueryType.Transaction)
+                        {
+                            _core.Transactions.QueryHandlers.Rollback(session);
+                            return new KbActionResponse();
+                        }
+                        throw new NotImplementedException();
+                    case QueryType.Commit:
+                        if (query.SubQueryType == SubQueryType.Transaction)
+                        {
+                            _core.Transactions.QueryHandlers.Commit(session);
+                            return new KbActionResponse();
+                        }
+                        throw new NotImplementedException();
+                    default:
+                        throw new NotImplementedException();
                 }
             }
             catch (Exception ex)
