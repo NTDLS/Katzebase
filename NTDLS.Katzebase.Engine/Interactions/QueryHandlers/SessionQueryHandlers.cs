@@ -1,7 +1,9 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -39,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute variable set for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -72,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute variable set for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }

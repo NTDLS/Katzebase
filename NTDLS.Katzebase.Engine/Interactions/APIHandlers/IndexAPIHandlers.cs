@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.ReliableMessaging;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -41,18 +42,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var physicalIndex = indexCatalog.GetByName(param.IndexName);
-                KbIndex? indexPayload = null;
 
-                if (physicalIndex != null)
+                var apiResults = new KbQueryIndexGetReply()
                 {
-                    indexPayload = PhysicalIndex.ToClientPayload(physicalIndex);
-                }
+                     Index = PhysicalIndex.ToApiPayload(physicalIndex)
+                };
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexGetReply(indexPayload), 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -67,19 +67,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = new KbQueryIndexListReply();
 
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
-                if (indexCatalog != null)
+                var apiResults = new KbQueryIndexListReply();
+
+                foreach (var index in indexCatalog.Collection)
                 {
-                    result.Collection.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
+                    var apiPayload = PhysicalIndex.ToApiPayload(index);
+                    if (apiPayload != null)
+                    {
+                        apiResults.Add(apiPayload);
+                    }
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, apiResults.Collection.Count);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to list indexes for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -95,12 +100,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
-                bool value = indexCatalog.GetByName(param.IndexName) != null;
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexExistsReply(value));
+                
+                bool doesIndexExist = indexCatalog.GetByName(param.IndexName) != null;
+
+                var apiResults = new KbQueryIndexExistsReply(doesIndexExist);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -116,11 +125,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.CreateIndex(transactionReference.Transaction, param.Schema, param.Index, out Guid newId);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexCreateReply(newId), 0);
+
+                var apiResults = new KbQueryIndexCreateReply(newId);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, 0);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -136,11 +148,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName, param.NewPartitionCount);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexRebuildReply());
+                var apiResults = new KbQueryIndexRebuildReply();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -156,11 +169,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 _core.Indexes.DropIndex(transactionReference.Transaction, param.Schema, param.IndexName);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexDropReply());
+                var apiResults = new KbQueryIndexDropReply();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }

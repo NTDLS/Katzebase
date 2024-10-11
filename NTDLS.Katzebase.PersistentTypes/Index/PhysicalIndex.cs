@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
+using System.Reflection.Metadata.Ecma335;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index
 {
@@ -92,9 +93,14 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
             return persistIndex;
         }
 
-        static public KbIndex ToClientPayload(PhysicalIndex index)
+        static public KbIndex? ToApiPayload(PhysicalIndex? index)
         {
-            var persistIndex = new KbIndex()
+            if (index == null)
+            {
+                return null;
+            }
+
+            var apiResult = new KbIndex()
             {
                 Id = index.Id,
                 Name = index.Name,
@@ -106,10 +112,10 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
 
             foreach (var attribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PhysicalIndexAttribute.ToClientPayload(attribute));
+                apiResult.AddAttribute(PhysicalIndexAttribute.ToClientPayload(attribute));
             }
 
-            return persistIndex;
+            return apiResult;
         }
     }
 }

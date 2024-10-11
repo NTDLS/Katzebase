@@ -4,11 +4,13 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -30,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate document query handler.", ex);
+                LogManager.Error($"Failed to instantiate document query handler.", ex);
                 throw;
             }
         }
@@ -45,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document select for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -92,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document select for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -177,7 +179,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document insert for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -226,7 +228,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document update for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -244,7 +246,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document sample for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -262,7 +264,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document list for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -294,7 +296,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document explain for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -320,35 +322,43 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to execute document explain for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
 
         internal KbActionResponse ExecuteDelete(SessionState session, Query query)
         {
-            using var transactionReference = _core.Transactions.APIAcquire(session);
-
-            var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
-            var firstSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
-
-            var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
-
-            var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
-
-            var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
-                _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
-
-            var documentsToDelete = new HashSet<DocumentPointer>();
-
-            foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
+            try
             {
-                documentsToDelete.Add(schemaIntersectionRowDocumentIdentifier.Key);
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
+                var firstSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
+
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
+
+                var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
+
+                var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
+                    _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
+
+                var documentsToDelete = new HashSet<DocumentPointer>();
+
+                foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
+                {
+                    documentsToDelete.Add(schemaIntersectionRowDocumentIdentifier.Key);
+                }
+
+                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentsToDelete);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count);
             }
-
-            _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentsToDelete);
-
-            return transactionReference.CommitAndApplyMetricsThenReturnResults(schemaIntersectionRowDocumentIdentifierCollection.Count);
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
     }
 }

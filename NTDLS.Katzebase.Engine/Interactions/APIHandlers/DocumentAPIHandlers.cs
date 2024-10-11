@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.ReliableMessaging;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -37,12 +38,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = (KbQueryDocumentSampleReply)StaticSearcherProcessor.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
+                var nativeResults = StaticSearcherProcessor.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
+
+                var apiResults = new KbQueryDocumentSampleReply()
+                {
+                    Rows = nativeResults.Rows,
+                    Fields = nativeResults.Fields
+                };
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, apiResults.Rows.Count);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to execute document sample for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -77,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to execute document list for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -100,17 +108,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var result = new KbQueryDocumentStoreReply()
+
+                var apiResults = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(
                         transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId
                 };
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 1);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, 1);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to execute document store for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }

@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.ReliableMessaging;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -34,18 +35,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
-            var results = new KbQueryQueryExplainPlanReply();
-
-            session.SetCurrentQuery(param.Statement);
-
-            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            try
             {
-                results.Add(_core.Query.ExplainPlan(session, query));
+                var apiResults = new KbQueryQueryExplainPlanReply();
+
+                session.SetCurrentQuery(param.Statement);
+
+                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                foreach (var query in queries)
+                {
+                    apiResults.Add(_core.Query.ExplainPlan(session, query));
+                }
+
+                session.ClearCurrentQuery();
+
+                return apiResults;
             }
-
-            session.ClearCurrentQuery();
-
-            return results;
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
 
         public KbQueryQueryExplainOperationReply ExecuteExplainOperation(RmContext context, KbQueryQueryExplainOperation param)
@@ -55,19 +65,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-
-            var results = new KbQueryQueryExplainOperationReply();
-
-            session.SetCurrentQuery(param.Statement);
-
-            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            try
             {
-                results.Add(_core.Query.ExplainOperations(session, query));
+                var apiResults = new KbQueryQueryExplainOperationReply();
+
+                session.SetCurrentQuery(param.Statement);
+
+                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                foreach (var query in queries)
+                {
+                    apiResults.Add(_core.Query.ExplainOperations(session, query));
+                }
+
+                session.ClearCurrentQuery();
+
+                return apiResults;
             }
-
-            session.ClearCurrentQuery();
-
-            return results;
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
 
         public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
@@ -77,12 +95,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
+            try
+            {
+                session.SetCurrentQuery(param.Procedure.ProcedureName);
+                var apiResults = (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session, param.Procedure);
+                session.ClearCurrentQuery();
 
-            session.SetCurrentQuery(param.Procedure.ProcedureName);
-            var result = (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session, param.Procedure);
-            session.ClearCurrentQuery();
-
-            return result;
+                return apiResults;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
 
         public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
@@ -92,18 +117,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-            var results = new KbQueryQueryExecuteQueryReply();
-
-            session.SetCurrentQuery(param.Statement);
-
-            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            try
             {
-                results.Add(_core.Query.ExecuteQuery(session, query));
+                var apiResults = new KbQueryQueryExecuteQueryReply();
+
+                session.SetCurrentQuery(param.Statement);
+
+                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                foreach (var query in queries)
+                {
+                    apiResults.Add(_core.Query.ExecuteQuery(session, query));
+                }
+
+                session.ClearCurrentQuery();
+
+                return apiResults;
             }
-
-            session.ClearCurrentQuery();
-
-            return results;
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
 
         public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(RmContext context, KbQueryQueryExecuteNonQuery param)
@@ -113,19 +147,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-
-            var results = new KbQueryQueryExecuteNonQueryReply();
-
-            session.SetCurrentQuery(param.Statement);
-
-            foreach (var query in StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters))
+            try
             {
-                results.Add(_core.Query.ExecuteNonQuery(session, query));
+                var apiResults = new KbQueryQueryExecuteNonQueryReply();
+
+                session.SetCurrentQuery(param.Statement);
+
+                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                foreach (var query in queries)
+                {
+                    apiResults.Add(_core.Query.ExecuteNonQuery(session, query));
+                }
+
+                session.ClearCurrentQuery();
+
+                return apiResults;
             }
-
-            session.ClearCurrentQuery();
-
-            return results;
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
         }
     }
 }

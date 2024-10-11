@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.ReliableMessaging;
+using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -41,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
-                var result = new KbQuerySchemaListReply();
+                var apiResults = new KbQuerySchemaListReply();
 
                 if (physicalSchema.DiskPath == null)
                 {
@@ -53,14 +54,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 foreach (var item in schemaCatalog.Collection)
                 {
-                    result.Collection.Add(item.ToClientPayload(physicalSchema.Id, param.Schema));
+                    apiResults.Collection.Add(item.ToClientPayload(physicalSchema.Id, param.Schema));
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to get schema list for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -89,11 +90,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     pathBuilder.Append(':');
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaCreateReply());
+                var apiResults = new KbQuerySchemaCreateReply();
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to create schema lineage for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -114,15 +117,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
-                bool schemaExists = false;
+                bool doesSchemaExists = false;
 
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
                     var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read, LockOperation.Stability);
 
-                    schemaExists = schema != null && schema.Exists;
-                    if (schemaExists == false)
+                    doesSchemaExists = schema != null && schema.Exists;
+                    if (doesSchemaExists == false)
                     {
                         break;
                     }
@@ -130,11 +133,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     pathBuilder.Append(':');
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaExistsReply(schemaExists));
+                var apiResults = new KbQuerySchemaExistsReply(doesSchemaExists);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to confirm schema for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -175,11 +180,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     _core.IO.PutJson(transactionReference.Transaction, parentSchemaCatalogFile, parentCatalog);
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaDropReply());
+                var apiResults = new KbQuerySchemaDropReply();
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to drop schema for process {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }

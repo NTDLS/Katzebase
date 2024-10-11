@@ -2,7 +2,9 @@
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Scripts.Models;
+using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -29,6 +31,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
+            SessionState? session = null;
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -41,7 +45,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 }
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-
 #if DEBUG
                 if (param.Username == "debug")
                 {
@@ -49,18 +52,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                     LogManager.Debug($"Logged in mock user [{param.Username}].");
 
-                    var session = _core.Sessions.CreateSession(context.ConnectionId, SessionManager.BuiltInSystemUserName, param.ClientName);
-
-                    var result = new KbQueryServerStartSessionReply
+                    session = _core.Sessions.CreateSession(context.ConnectionId, SessionManager.BuiltInSystemUserName, param.ClientName);
+#if DEBUG
+                    Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+                    LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+                    var apiResults = new KbQueryServerStartSessionReply
                     {
                         ProcessId = session.ProcessId,
                         ConnectionId = context.ConnectionId,
                         ServerTimeUTC = DateTime.UtcNow
                     };
-                    return result;
+                    return apiResults;
                 }
 #endif
-
                 var account = _core.Query.ExecuteQuery<AccountLogin>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
                     new
                     {
@@ -74,23 +79,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 {
                     LogManager.Debug($"Logged in user [{param.Username}].");
 
-                    var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+                    session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+#if DEBUG
+                    Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+                    LogManager.Debug(Thread.CurrentThread.Name);
+#endif
 
-                    var result = new KbQueryServerStartSessionReply
+                    var apiResults = new KbQueryServerStartSessionReply
                     {
                         ProcessId = session.ProcessId,
                         ConnectionId = context.ConnectionId,
                         ServerTimeUTC = DateTime.UtcNow
                     };
-                    return result;
+                    return apiResults;
                 }
 
                 throw new Exception("Invalid username or password.");
-
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to start session for session id {context.ConnectionId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session?.ProcessId}].", ex);
                 throw;
             }
         }
@@ -106,11 +114,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 _core.Sessions.CloseByProcessId(session.ProcessId);
 
-                return new KbQueryServerCloseSessionReply();
+                var apiResults = new KbQueryServerCloseSessionReply();
+
+                return apiResults;
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
@@ -118,7 +128,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
-
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -127,11 +136,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 _core.Sessions.CloseByProcessId(param.ReferencedProcessId);
 
-                return new KbQueryServerTerminateProcessReply(); ;
+                var apiResult = new KbQueryServerTerminateProcessReply();
+
+                return apiResult;
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
         }
