@@ -12,6 +12,8 @@ using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers
 {
+
+
     public class StaticQueryParser
     {
         /// <summary>
@@ -31,12 +33,10 @@ namespace NTDLS.Katzebase.Parsers
                 constants.Add(param.Key, param.Value);
             }
 
-            //queryText = PreParseQueryVariableDeclarations(queryText, ref constants);
-
             var tokenizer = new Tokenizer(queryText, true, constants);
             var queryBatch = new QueryBatch(tokenizer.Variables);
 
-            List<Exception> exceptions = new List<Exception>();
+            var exceptions = new List<Exception>();
 
             while (!tokenizer.IsExhausted())
             {
@@ -121,71 +121,6 @@ namespace NTDLS.Katzebase.Parsers
 
             return preparedQuery;
         }
-
-        /*
-        /// <summary>
-        /// Parse the variable declaration in the query and remove them from the query text.
-        /// </summary>
-        static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbVariable> tokenizerConstants)
-        {
-            var lines = queryText.Split("\n").Select(s => s.Trim());
-            lines = lines.Where(o => o.StartsWith("const", StringComparison.InvariantCultureIgnoreCase));
-
-            int lineNumber = 1;
-
-            foreach (var line in lines)
-            {
-                var lineTokenizer = new TokenizerSlim(line);
-
-                if (!lineTokenizer.TryEatIsNextToken("const", out var token))
-                {
-                    throw new KbParserException(lineNumber, $"Expected [const], found: [{token}].");
-                }
-
-                if (lineTokenizer.NextCharacter != '@')
-                {
-                    throw new KbParserException(lineNumber, $"Expected [@], found: [{lineTokenizer.NextCharacter}].");
-                }
-                lineTokenizer.EatNextCharacter();
-
-                if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
-                {
-                    throw new KbParserException(lineNumber, $"Expected constant variable name, found: [{token}].");
-                }
-
-                if (lineTokenizer.NextCharacter != '=')
-                {
-                    throw new KbParserException(lineNumber, $"Expected [=], found: [{lineTokenizer.NextCharacter}].");
-                }
-                lineTokenizer.EatNextCharacter();
-
-                var variableValue = lineTokenizer.Remainder().Trim();
-
-                KbBasicDataType variableType;
-                if (variableValue.StartsWith('\'') && variableValue.EndsWith('\''))
-                {
-                    variableType = KbBasicDataType.String;
-                    variableValue = variableValue[1..^1];
-                }
-                else
-                {
-                    variableType = KbBasicDataType.Numeric;
-                    if (variableValue != null && double.TryParse(variableValue?.ToString(), out _) == false)
-                    {
-                        throw new KbParserException(lineNumber, $"Expected numeric value, found: [{variableName}].");
-                    }
-                }
-
-                tokenizerConstants.Add($"@{variableName}", new KbVariable(variableValue, variableType));
-
-                queryText = queryText.Replace(line, "\n");
-
-                lineNumber++;
-            }
-
-            return queryText.TrimEnd() + "\n";
-        }
-        */
 
         public static string ComputeSHA256(string rawData)
         {

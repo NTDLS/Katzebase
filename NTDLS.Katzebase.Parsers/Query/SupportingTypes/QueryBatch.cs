@@ -1,24 +1,28 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 
 namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
 {
-    public class QueryBatch(KbInsensitiveDictionary<KbVariable> literals)
+    public class QueryBatch(QueryVariables variables)
         : List<PreparedQuery>
     {
-        public KbInsensitiveDictionary<KbVariable> Variables { get; set; } = literals;
+        public QueryVariables Variables { get; set; } = variables;
 
         public string? GetLiteralValue(string? value)
         {
             if (value == null) return null;
 
-            if (Variables.TryGetValue(value, out var literal))
+            if (Variables.Collection.TryGetValue(value, out var literal))
             {
                 if (literal.DataType == KbBasicDataType.Undefined)
                 {
+                    if (Variables.VariableReverseLookup.TryGetValue(value, out var variableName))
+                    {
+                        throw new KbParserException($"Variable is undefined: [{variableName}].");
+                    }
+
                     throw new KbParserException("Variable is undefined.");
                 }
 
@@ -31,10 +35,15 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         {
             if (value != null)
             {
-                if (Variables.TryGetValue(value, out var literal))
+                if (Variables.Collection.TryGetValue(value, out var literal))
                 {
                     if (literal.DataType == KbBasicDataType.Undefined)
                     {
+                        if (Variables.VariableReverseLookup.TryGetValue(value, out var variableName))
+                        {
+                            throw new KbParserException($"Variable is undefined: [{variableName}].");
+                        }
+
                         throw new KbParserException("Variable is undefined.");
                     }
 

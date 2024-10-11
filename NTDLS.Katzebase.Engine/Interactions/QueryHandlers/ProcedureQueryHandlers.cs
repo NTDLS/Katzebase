@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var mockFields = new SelectFieldCollection(preparedQuery.Batch);
 
                 var auxiliaryValues = new KbInsensitiveDictionary<string?>();
-                foreach (var literal in preparedQuery.Batch.Variables)
+                foreach (var literal in preparedQuery.Batch.Variables.Collection)
                 {
                     auxiliaryValues.Add(literal.Key, literal.Value.Value);
                 }
@@ -60,11 +60,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (double.TryParse(collapsedExpression, out var _))
                 {
-                    preparedQuery.Batch.Variables[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.Numeric);
+                    preparedQuery.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.Numeric);
                 }
                 else
                 {
-                    preparedQuery.Batch.Variables[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.String);
+                    preparedQuery.Batch.Variables.Collection[variablePlaceholder] = new KbVariable(collapsedExpression, KbBasicDataType.String);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();

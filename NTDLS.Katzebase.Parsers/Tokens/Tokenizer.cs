@@ -47,8 +47,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         #endregion
 
         #region Public properties.
-        public KbInsensitiveDictionary<string> RuntimeVariableForwardLookup { get; private set; } = new();
-        public KbInsensitiveDictionary<string> RuntimeVariableReverseLookup { get; private set; } = new();
 
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
         public char? NextCharacter => Caret < _length ? _text[Caret] : null;
@@ -58,8 +56,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public int Length => _length;
         public string Text => _text;
         public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);
-
-        public KbInsensitiveDictionary<KbVariable> Variables { get; set; }
+        public QueryVariables Variables { get; set; } = new();
 
         #endregion
 
@@ -72,13 +69,13 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
         public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbVariable>? predefinedConstants = null)
+            KbInsensitiveDictionary<KbVariable>? givenVariables = null)
         {
             _text = new string(text.ToCharArray());
             _length = _text.Length;
             _standardTokenDelimiters = standardTokenDelimiters;
 
-            Variables = predefinedConstants ?? new();
+            Variables.Collection = givenVariables ?? new();
 
             if (optimizeForTokenization)
             {
@@ -97,13 +94,13 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
         public Tokenizer(string text, bool optimizeForTokenization = false,
-            KbInsensitiveDictionary<KbVariable>? predefinedConstants = null)
+            KbInsensitiveDictionary<KbVariable>? givenVariables = null)
         {
             _text = new string(text.ToCharArray());
             _length = _text.Length;
             _standardTokenDelimiters = ['\r', '\n', ' '];
 
-            Variables = predefinedConstants ?? new();
+            Variables.Collection = givenVariables ?? new();
 
             if (optimizeForTokenization)
             {

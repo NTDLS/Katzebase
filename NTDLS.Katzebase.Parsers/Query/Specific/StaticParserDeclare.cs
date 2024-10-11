@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             var endOfDeclareCaret = tokenizer.FindEndOfQuerySegment();
 
-            if (tokenizer.Variables.TryGetValue(variablePlaceholder, out var identifier))
+            if (tokenizer.Variables.Collection.TryGetValue(variablePlaceholder, out var identifier))
             {
                 var expression = tokenizer.EatSubStringAbsolute(endOfDeclareCaret).Trim();
 

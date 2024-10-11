@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                         $"Expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}], found: [{tokenizer.ResolveLiteral(attributeName)}]");
                 }
 
-                if (tokenizer.Variables.TryGetValue(attributeValue, out var literal))
+                if (tokenizer.Variables.Collection.TryGetValue(attributeValue, out var literal))
                 {
                     attributeValue = literal.Value;
                 }

@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <returns></returns>
         public string? ResolveLiteral(string token)
         {
-            if (Variables.TryGetValue(token, out var literal))
+            if (Variables.Collection.TryGetValue(token, out var literal))
             {
                 if (literal.DataType == KbBasicDataType.Undefined)
                 {
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    Variables.Add(key, new(match.ToString()[1..^1], KbBasicDataType.String));
+                    Variables.Collection.Add(key, new(match.ToString()[1..^1], KbBasicDataType.String));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
-            if (Variables.Count > 0)
+            if (Variables.Collection.Count > 0)
             {
                 var triedConstants = new Dictionary<string, string>();
                 int nextTriedConstant = 0;
@@ -72,12 +72,12 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                         {
                             //This is a variable, and unlike a constant - we require them to be declared.
 
-                            if (Variables.TryGetValue(match.ToString(), out var variable))
+                            if (Variables.Collection.TryGetValue(match.ToString(), out var variable))
                             {
                                 if (variable.DataType == KbBasicDataType.String)
                                 {
                                     string key = $"$s_{_literalKey++}$";
-                                    Variables.Add(key, new(variable.Value, KbBasicDataType.String));
+                                    Variables.Collection.Add(key, new(variable.Value, KbBasicDataType.String));
                                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                 }
                                 else
@@ -92,29 +92,29 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             {
                                 //This variable is not defined, we'll try to define it at "runtime" if the variable is declared in the script.
                                 //Unfortunately, we can't determine the data-type here so we'll go with string
-                                if (RuntimeVariableForwardLookup.TryGetValue(match.Value, out var existingKey))
+                                if (Variables.VariableForwardLookup.TryGetValue(match.Value, out var existingKey))
                                 {
                                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, existingKey);
                                 }
                                 else
                                 {
                                     string key = $"$s_{_literalKey++}$";
-                                    Variables.Add(key, new("", KbBasicDataType.Undefined));
+                                    Variables.Collection.Add(key, new("", KbBasicDataType.Undefined));
                                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                     //Keep track of variables so we can create the same "$s_nn}$" placeholder for multiple occurrences of the same variable.
-                                    RuntimeVariableForwardLookup.Add(match.Value, key);
-                                    RuntimeVariableReverseLookup.Add(key, match.Value);
+                                    Variables.VariableForwardLookup.Add(match.Value, key);
+                                    Variables.VariableReverseLookup.Add(key, match.Value);
                                 }
 
                                 //throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
                             }
                         }
-                        else if (Variables.TryGetValue(match.ToString(), out var constant))
+                        else if (Variables.Collection.TryGetValue(match.ToString(), out var constant))
                         {
                             if (constant.DataType == KbBasicDataType.String)
                             {
                                 string key = $"$s_{_literalKey++}$";
-                                Variables.Add(key, new(constant.Value, KbBasicDataType.String));
+                                Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.String));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$n_{_literalKey++}$";
-                    Variables.Add(key, new(match.ToString(), KbBasicDataType.Numeric));
+                    Variables.Collection.Add(key, new(match.ToString(), KbBasicDataType.Numeric));
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
@@ -170,7 +170,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
-            if (Variables.Count > 0)
+            if (Variables.Collection.Count > 0)
             {
                 var triedConstants = new Dictionary<string, string>();
                 int nextTriedConstant = 0;
@@ -183,17 +183,17 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                     if (match.Success)
                     {
-                        if (Variables.TryGetValue(match.ToString(), out var constant))
+                        if (Variables.Collection.TryGetValue(match.ToString(), out var constant))
                         {
                             if (match.Value.StartsWith('@'))
                             {
                                 //This is a variable, and unlike a constant - we require them to be declared.
-                                if (Variables.TryGetValue(match.ToString(), out var variable))
+                                if (Variables.Collection.TryGetValue(match.ToString(), out var variable))
                                 {
                                     if (variable.DataType == KbBasicDataType.Numeric)
                                     {
                                         string key = $"$n_{_literalKey++}$";
-                                        Variables.Add(key, new(variable.Value, KbBasicDataType.Numeric));
+                                        Variables.Collection.Add(key, new(variable.Value, KbBasicDataType.Numeric));
                                         query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                     }
                                     else
@@ -212,7 +212,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             else if (constant.DataType == KbBasicDataType.Numeric)
                             {
                                 string key = $"$n_{_literalKey++}$";
-                                Variables.Add(key, new(constant.Value, KbBasicDataType.Numeric));
+                                Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.Numeric));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else
