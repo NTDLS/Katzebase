@@ -36,7 +36,7 @@
             tabControlBody.SelectedIndexChanged += TabControlBody_SelectedIndexChanged;
         }
 
-        public void Show(FindType findType, string defaultFindText)
+        public void Show(FindType findType, string? defaultFindText)
         {
             Show();
 

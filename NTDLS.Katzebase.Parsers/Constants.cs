@@ -5,6 +5,8 @@
         public enum QueryType
         {
             None,
+            Grant,
+            Deny,
             Alter,
             Analyze,
             Begin,
@@ -29,6 +31,9 @@
         public enum SubQueryType
         {
             None,
+            Read,
+            Write,
+            Manage,
             Account,
             Configuration,
             Documents,
