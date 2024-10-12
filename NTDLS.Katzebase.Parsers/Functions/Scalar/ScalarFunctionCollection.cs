@@ -25,6 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
                 "Boolean IsNull (String value = null)|'Returns true if the given value is null, otherwise false.'",
                 "Boolean IsString (String value)|'Returns true if the given value cannot be converted to a numeric.'",
                 "Numeric Checksum (String text)|'Returns a numeric CRC32 for the given value.'",
+                "Numeric DateAdd (String dateTime, String interval, Numeric offset)|'Increments the supplied date-time by the given interval and offset.'",
                 "Numeric DateDiff (String date1, String date2, String interval)|'Returns the difference between two date/time values in the given intervals.'",
                 "Numeric IfNullNumeric (Numeric value = null, Numeric defaultValue = 0)|'Returns the supplied default value when the given value is null.'",
                 "Numeric LastIndexOf (String textToFind, String textToSearch, Numeric offset = -1)|'Returns the zero based index for the last occurrence of the second given value in the first value.'",

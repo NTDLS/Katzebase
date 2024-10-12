@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             var date2String = function.Get<string?>("date2");
             var interval = function.Get<string?>("interval")?.ToLowerInvariant();
 
-            if (date1String == null && date2String == null)
+            if (date1String == null || date2String == null)
             {
                 return null;
             }
@@ -25,8 +25,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 throw new KbProcessingException($"Expected a valid date-time expression, found: [{date2String}].");
             }
-
-            var timespan = date2 - date1;
 
             switch (interval)
             {

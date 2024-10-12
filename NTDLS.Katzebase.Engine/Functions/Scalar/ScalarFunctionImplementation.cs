@@ -20,6 +20,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "checksum" => ScalarChecksum.Execute(function),
                 "coalesce" => ScalarCoalesce.Execute(parameters),
                 "concat" => ScalarConcat.Execute(parameters),
+                "dateadd" => ScalarDateAdd.Execute(function),
                 "datediff" => ScalarDateDiff.Execute(function),
                 "datetime" => ScalarDateTime.Execute(function),
                 "datetimeutc" => ScalarDateTimeUTC.Execute(function),
