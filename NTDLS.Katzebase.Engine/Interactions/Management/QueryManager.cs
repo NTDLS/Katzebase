@@ -97,19 +97,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (query.QueryType == QueryType.Select
-                    || query.QueryType == QueryType.Delete
-                    || query.QueryType == QueryType.Update)
+                switch (query.QueryType)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteExplainPlan(session, query);
-                }
-                else if (query.QueryType == QueryType.Set)
-                {
-                    return new KbQueryExplain();
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    case QueryType.Delete:
+                    case QueryType.Insert:
+                    case QueryType.Select:
+                    case QueryType.Update:
+                        return _core.Documents.QueryHandlers.ExecuteExplainPlan(session, query);
+                    default:
+                        return new KbQueryExplain(); //No explanation for these operations.
                 }
             }
             catch (Exception ex)
