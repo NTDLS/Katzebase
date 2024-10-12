@@ -1,116 +1,23 @@
 
---create account testUser with (password = '')
---create role testRole
---alter role testRole add testUser
-
---begin transaction
-
---declare @StartTime = DateTimeUTC()
---exec Sleep(1000)
---exec Print('Duration: ' + FormatNumeric(DateDiff(@StartTime, DateTimeUTC(), 'ms'), 'n0') + 'ms')
-
-/*
-"Boolean IsNull (String value)|'Returns true if the given value is null, otherwise false.'",
-"String IfNull (String value, String defaultValue)|'Returns the supplied default value when the given value is null.'",
-"String NullIf (String value, Boolean conditional)|'Returns null if the supplied conditional is true.'",
-"Numeric IfNullNumeric (Numeric value, Numeric defaultValue)|'Returns the supplied default value when the given value is null.'",
-"Numeric NullIfNumeric (Numeric value, Boolean conditional)|'Returns null if the supplied conditional is true.'",
-*/
-SELECT
-	ABS(-10),   -- Returns 10
-	ABS(5),     -- Returns 5
-	ABS(-23.67), -- Returns 23.67
-	Ceil(4.2),    -- Returns 5
-	Ceil(-4.8),   -- Returns -4
-	Ceil(7.0),    -- Returns 7 (already an integer)	
-	Floor(4.8),    -- Returns 4
-	Floor(-4.2),   -- Returns -5
-	Floor(7.0),    -- Returns 7 (already an integer)
-	Pow(2, 3),   -- Returns 8 (2 raised to the power of 3)
-	Pow(5, 2),   -- Returns 25 (5 squared)
-	Pow(10, -1) -- Returns 0.1 (10 raised to the power of -1)	
-FROM
-	Single
-
-
-	
-	
-
-
---commit transaction
-
---drop schema Master
-
---create schema Master:Membership
-
-/*
---insert into Master:Account (Id = 1, Username = 'Admin', PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
-
---delete from Master:Account where Username != 'admin'
---select * from Master:Account
---select * from Master:Role
---drop schema Master
-
---ALTER SCHEMA WordList
-
-SELECT * FROM Master:Account
-SELECT * FROM Master:Role
-DELETE FROM Master:Membership WHERE AccountId != '0154731f-2d22-4c74-8de5-81bf6fa7751e'
-DELETE FROM Master:Membership WHERE AccountId = '0154731f-2d22-4c74-8de5-81bf6fa7751e' AND RoleId != '19c7bf41-7343-4271-87e0-a6173e2a3ce7'
-
-CREATE UNIQUEKEY uk_Membership(
-    AccountId,
-    RoleId
-) ON Master:Membership WITH (PARTITIONS=10)
-
-
-CREATE ACCOUNT MyUser WITH (Password = 'test') --Done
-CREATE ROLE TestAdminRole WITH (IsAdministrator = false)  --Done
-CREATE ROLE TestUserRole  --Done
-
-ALTER ROLE TestUserRole ADD MyUser
-
-insert into Master:Membership (AccountId = 'b65e4fe5-d150-4008-9817-7063b11371cc', RoleId = 'a77bfa2e-ca2d-40bf-b05c-aa9d58507d5d')
-
-SELECT * FROM Master:Membership 
-
---ALTER ROLE TestUserRole ADD TestUserRole
-*/
-/*--Need to add these:
-
-CREATE ROLE TestRole
-CREATE ACCOUNT MyUser
-ALTER ROLE TestRole ADD MyUser
-
-ALTER SCHEMA WordList ADD ROLE TestRole
-	WITH (ALLOW ALL, DENY DELETE, Recursive)
-
-*/
+exec print('Test RAGGED INSERT: ' + DateTime())
+INSERT INTO Temporary
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe'),
+--Messy format;
+(FirstName  :   'John1', LastName: 'Doe1'),
+(
+FirstName:
+'Fred1', MiddleName
+:
+'Joe1', LastName: 'Doe1'),
+(FirstName
+:'Jane1', LastName: 'Doe1'
+)
 
 
 
-/*
-SELECT
-	A.Id as AccountId,
-	R.Id as RoldId,
-	R.IsAdministrator
-FROM
-	Master:Account as A
-INNER JOIN Master:Membership as M
-	ON M.AccountId = A.Id
-INNER JOIN Master:Role as R
-	ON R.Id = M.RoleId
+select * from Temporary
 
 
-SELECT Username, PasswordHash FROM Master:Account WHERE Username = 'admin' AND PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-*/
-/*
-SELECT
-	R.IsAdministrator
-FROM
-	Master:Account as A
-INNER JOIN Master:Membership as M
-	ON M.AccountId = A.Id
-INNER JOIN Master:Role as R
-	ON R.Id = M.RoleId
-*/
+delete from Temporary

@@ -45,19 +45,19 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             int firstParenthesesCaret = tokenizer.Caret;
 
             tokenizer.EatIfNext('(');
-            tokenizer.EatGetNext(); //Skip the fieldName.
+            tokenizer.EatGetNext([':', ','], out var outStoppedOnDelimiter); //Skip the fieldName.
 
-            if (tokenizer.TryIsNext(','))
+            if (outStoppedOnDelimiter == ',')
             {
                 fieldParserType = FieldParserType.ValueListPossibleSelectFrom;
             }
-            else if (tokenizer.TryIsNext('='))
+            else if (outStoppedOnDelimiter == ':')
             {
                 fieldParserType = FieldParserType.KeyValue;
             }
             else
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected: [,] or [=], found: [{tokenizer.NextCharacter}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected: [,] or [:], found: [{outStoppedOnDelimiter}].");
             }
             tokenizer.SetCaret(firstParenthesesCaret);
 
@@ -73,8 +73,18 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 
                     while (!tokenizer.IsExhausted())
                     {
-                        var fieldName = tokenizer.EatGetNext();
-                        tokenizer.EatIfNext('=');
+                        var fieldName = tokenizer.EatGetNext([' ', ':'], out outStoppedOnDelimiter);
+
+                        if (outStoppedOnDelimiter == ' ')
+                        {
+                            //Parsing: "FirstName : 'Value'"
+                            tokenizer.EatIfNext(':');
+                        }
+                        else
+                        {
+                            //Parsing: "FirstName:'Value'"
+                        }
+
                         bool isTextRemaining = tokenizer.EatGetSingleFieldExpression([")"], out var fieldExpression);
 
                         var queryField = StaticParserField.Parse(tokenizer, fieldExpression, queryFieldCollection);

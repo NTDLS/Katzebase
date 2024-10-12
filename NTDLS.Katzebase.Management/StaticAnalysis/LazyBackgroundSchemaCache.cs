@@ -169,8 +169,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             OnCacheItemAdded = null;
             OnCacheItemRemoved = null;
 
-            _thread?.Join();
-            _thread = null;
+            //_thread?.Join();
+            //_thread = null;
         }
 
         private bool ProcessSchemaQueue()

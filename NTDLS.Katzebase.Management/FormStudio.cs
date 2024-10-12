@@ -339,12 +339,12 @@ namespace NTDLS.Katzebase.Management
 
         private void ToolStripButtonFind_Click(object sender, EventArgs e)
         {
-            ShowFind();
+            ShowFind(CurrentTabFilePage()?.Editor.SelectedText);
         }
 
         private void ToolStripButtonReplace_Click(object sender, EventArgs e)
         {
-            ShowReplace();
+            ShowReplace(CurrentTabFilePage()?.Editor.SelectedText);
         }
 
         private void ToolStripButtonRedo_Click(object sender, EventArgs e)
@@ -447,25 +447,25 @@ namespace NTDLS.Katzebase.Management
         private bool _lastSearchCaseSensitive = false;
         private string _lastReplaceText = string.Empty;
 
-        public void ShowFind()
+        public void ShowFind(string? selectedText)
         {
             if (_findReplaceForm == null || _findReplaceForm.IsDisposed)
             {
                 _findReplaceForm = new FormFindReplace(this, _lastSearchText, _lastReplaceText);
             }
 
-            _findReplaceForm.Show(FormFindReplace.FindType.Find);
+            _findReplaceForm.Show(FormFindReplace.FindType.Find, selectedText);
             _findReplaceForm.BringToFront();
         }
 
-        public void ShowReplace()
+        public void ShowReplace(string? selectedText)
         {
             if (_findReplaceForm == null || _findReplaceForm.IsDisposed)
             {
                 _findReplaceForm = new FormFindReplace(this, _lastSearchText, _lastReplaceText);
             }
 
-            _findReplaceForm.Show(FormFindReplace.FindType.Replace);
+            _findReplaceForm.Show(FormFindReplace.FindType.Replace, selectedText);
             _findReplaceForm.BringToFront();
         }
 
@@ -500,7 +500,7 @@ namespace NTDLS.Katzebase.Management
             {
                 if (string.IsNullOrEmpty(_lastSearchText))
                 {
-                    ShowFind();
+                    ShowFind(CurrentTabFilePage()?.Editor.SelectedText);
                 }
                 else
                 {

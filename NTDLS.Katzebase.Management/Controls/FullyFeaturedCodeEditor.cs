@@ -404,17 +404,17 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.F)
             {
-                CodeTabPage.StudioForm.ShowFind();
+                CodeTabPage.StudioForm.ShowFind(SelectedText);
             }
             else if ((Control.ModifierKeys & Keys.Control) == Keys.Control && e.Key == Key.H)
             {
-                CodeTabPage.StudioForm.ShowReplace();
+                CodeTabPage.StudioForm.ShowReplace(SelectedText);
             }
             else if (e.Key == Key.F3)
             {
                 if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
                 {
-                    CodeTabPage.StudioForm.ShowFind();
+                    CodeTabPage.StudioForm.ShowFind(SelectedText);
                 }
                 else
                 {

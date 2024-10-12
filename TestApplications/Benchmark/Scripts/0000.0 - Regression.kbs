@@ -333,17 +333,29 @@ DROP SCHEMA Temporary:InsertTest2
 CREATE SCHEMA Temporary:InsertTest2
 
 exec print('Test RAGGED INSERT: ' + DateTime())
-INSERT INTO Temporary:InsertTest2
-(FirstName = 'John', LastName = 'Doe'),
-(FirstName = 'Fred', MiddleName = 'Joe', LastName = 'Doe'),
-(FirstName = 'Jane', LastName = 'Doe')
+
+exec print('Test RAGGED INSERT: ' + DateTime())
+INSERT INTO Temporary:InsertTest1
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe'),
+--Messy format;
+(FirstName  :   'John1', LastName: 'Doe1'),
+(
+FirstName:
+'Fred1', MiddleName
+:
+'Joe1', LastName: 'Doe1'),
+(FirstName
+:'Jane1', LastName: 'Doe1'
+)
 
 
 exec print('Test RAGGED INSERT with expression: ' + DateTime())
 INSERT INTO Temporary:InsertTest2
-(FirstName = 'John', LastName = 'Doe'),
-(FirstName = 'Fred', MiddleName = Guid(), LastName = 'Doe'),
-(FirstName = 'Jane', LastName = 'Doe')
+(FirstName:'John', LastName:'Doe'),
+(FirstName:'Fred', MiddleName:Guid(), LastName:'Doe'),
+(FirstName:'Jane', LastName:'Doe')
 
 exec print('-Test complex SELECT and complex WHERE: ' + DateTime())
 SELECT

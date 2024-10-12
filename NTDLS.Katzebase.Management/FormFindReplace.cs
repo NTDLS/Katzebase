@@ -36,25 +36,37 @@
             tabControlBody.SelectedIndexChanged += TabControlBody_SelectedIndexChanged;
         }
 
-        public void Show(FindType findType)
+        public void Show(FindType findType, string defaultFindText)
         {
             Show();
 
             if (findType == FindType.Find)
             {
+                Text = "Find";
+
                 AcceptButton = buttonFind_FindNext;
                 CancelButton = buttonFind_Close;
                 tabControlBody.SelectedTab = tabPageFind;
+
+                if (string.IsNullOrEmpty(defaultFindText) == false)
+                {
+                    textBoxFindText.Text = defaultFindText;
+                }
                 textBoxFindText.Focus();
-                Text = "Find";
             }
             if (findType == FindType.Replace)
             {
+                Text = "Replace";
+
                 AcceptButton = buttonReplace_FindNext;
                 CancelButton = buttonReplace_Close;
                 tabControlBody.SelectedTab = tabPageReplace;
+
+                if (string.IsNullOrEmpty(defaultFindText) == false)
+                {
+                    textBoxFindReplaceText.Text = defaultFindText;
+                }
                 textBoxFindReplaceText.Focus();
-                Text = "Replace";
             }
         }
 
