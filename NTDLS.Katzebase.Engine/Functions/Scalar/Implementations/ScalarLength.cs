@@ -6,7 +6,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return function.Get<string>("text").Length.ToString();
+            var text = function.Get<string>("text");
+            if (text == null)
+            {
+                return null;
+            }
+            return text.Length.ToString();
         }
     }
 }

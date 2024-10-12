@@ -7,7 +7,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(function.Get<string>("text"));
+            var text = function.Get<string>("text");
+            if (text == null)
+            {
+                return null;
+            }
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
         }
     }
 }

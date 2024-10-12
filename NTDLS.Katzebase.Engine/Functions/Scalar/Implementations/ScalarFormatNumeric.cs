@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Parsers.Functions.Scalar;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 {
@@ -7,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
             var value = function.Get<double>("value");
-            var format = function.Get<string>("format").ToLowerInvariant();
+            var format = function.Get<string>("format").EnsureNotNull().ToLowerInvariant();
             return value.ToString(format);
         }
     }

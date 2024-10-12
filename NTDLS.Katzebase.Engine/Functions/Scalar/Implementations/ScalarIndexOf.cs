@@ -6,8 +6,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return function.Get<string>("textToSearch").IndexOf(
-                function.Get<string>("textToFind"), function.Get<int>("offset"), StringComparison.InvariantCultureIgnoreCase).ToString();
+            var textToSearch = function.Get<string>("textToSearch");
+            var textToFind = function.Get<string>("textToFind");
+            if (textToSearch == null || textToFind == null)
+            {
+                return null;
+            }
+            return textToSearch.IndexOf(textToFind, function.Get<int>("offset"), StringComparison.InvariantCultureIgnoreCase).ToString();
         }
     }
 }

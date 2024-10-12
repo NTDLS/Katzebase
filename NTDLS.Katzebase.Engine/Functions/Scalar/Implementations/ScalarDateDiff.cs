@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         {
             var date1String = function.Get<string>("date1");
             var date2String = function.Get<string>("date2");
-            var interval = function.Get<string>("interval").ToLowerInvariant();
+            var interval = function.Get<string>("interval").EnsureNotNull().ToLowerInvariant();
 
             if (DateTime.TryParse(date1String, out var date1) == false)
             {
@@ -140,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 
                 case "day":
                 case "dy":
-                        return (date2 - date1).TotalDays.ToString();
+                    return (date2 - date1).TotalDays.ToString();
 
                 case "hour":
                 case "hh":
