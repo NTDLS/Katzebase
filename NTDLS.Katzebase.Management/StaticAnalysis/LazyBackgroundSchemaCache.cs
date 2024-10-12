@@ -169,6 +169,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             OnCacheItemAdded = null;
             OnCacheItemRemoved = null;
 
+            //Waiting on the thread to end can cause a deadlock since the thread invokes the UI thread.
             //_thread?.Join();
             //_thread = null;
         }

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using NTDLS.Helpers;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
