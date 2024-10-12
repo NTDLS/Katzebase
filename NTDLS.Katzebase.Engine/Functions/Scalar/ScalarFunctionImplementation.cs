@@ -17,6 +17,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
 
             return functionName.ToLowerInvariant() switch
             {
+                "abs" => ScalarAbs.Execute(function),
+                "ceil" => ScalarCeil.Execute(function),
                 "checksum" => ScalarChecksum.Execute(function),
                 "coalesce" => ScalarCoalesce.Execute(parameters),
                 "concat" => ScalarConcat.Execute(parameters),
@@ -27,6 +29,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "documentid" => ScalarDocumentID.Execute(function, rowValues),
                 "documentpage" => ScalarDocumentPage.Execute(function, rowValues),
                 "documentuid" => ScalarDocumentUID.Execute(function, rowValues),
+                "floor" => ScalarFloor.Execute(function),
                 "formatdatetime" => ScalarFormatDateTime.Execute(function),
                 "formatnumeric" => ScalarFormatNumeric.Execute(function),
                 "guid" => ScalarGuid.Execute(function),
@@ -53,6 +56,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "length" => ScalarLength.Execute(function),
                 "nullif" => ScalarNullIf.Execute(function),
                 "nullifnumeric" => ScalarNullIfNumeric.Execute(function),
+                "pow" => ScalarPow.Execute(function),
                 "right" => ScalarRight.Execute(function),
                 "round" => ScalarRound.Execute(function),
                 "sha1" => ScalarSha1.Execute(function),
