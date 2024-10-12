@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var text = function.Get<string>("text");
+            var text = function.Get<string?>("text");
             if (text == null)
             {
                 return null;

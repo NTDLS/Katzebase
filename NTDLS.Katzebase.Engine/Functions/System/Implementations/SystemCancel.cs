@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Parsers.Functions.System;
 
@@ -8,9 +9,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
-            var processId = function.Get<ulong>("processId");
+            var processId = function.Get<ulong?>("processId");
 
-            core.Transactions.CloseByProcessID(processId);
+            if (processId != null)
+            {
+                core.Transactions.CloseByProcessID(processId.EnsureNotNull());
+            }
 
             return new KbQueryResultCollection();
         }

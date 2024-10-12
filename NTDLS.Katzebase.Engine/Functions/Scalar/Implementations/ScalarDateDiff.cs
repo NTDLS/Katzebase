@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
@@ -8,9 +7,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var date1String = function.Get<string>("date1");
-            var date2String = function.Get<string>("date2");
-            var interval = function.Get<string>("interval").EnsureNotNull().ToLowerInvariant();
+            var date1String = function.Get<string?>("date1");
+            var date2String = function.Get<string?>("date2");
+            var interval = function.Get<string?>("interval")?.ToLowerInvariant();
+
+            if (date1String == null && date2String == null)
+            {
+                return null;
+            }
 
             if (DateTime.TryParse(date1String, out var date1) == false)
             {

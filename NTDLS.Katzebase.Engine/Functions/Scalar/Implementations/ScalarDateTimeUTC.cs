@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return DateTime.UtcNow.ToString(function.Get<string>("format"));
+            return DateTime.UtcNow.ToString(function.Get<string?>("format"));
         }
     }
 }

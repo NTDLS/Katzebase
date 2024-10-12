@@ -8,11 +8,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            if (function.Get<bool>("conditional"))
+            if (function.Get<bool?>("conditional") == true)
             {
                 return null;
             }
-            return function.Get<string>("value");
+            return function.Get<string?>("value");
         }
     }
 }

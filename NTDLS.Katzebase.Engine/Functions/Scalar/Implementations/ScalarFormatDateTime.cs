@@ -7,7 +7,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var datetimeString = function.Get<string>("datetime");
+            var datetimeString = function.Get<string?>("datetime");
+            if (datetimeString == null)
+            {
+                return null;
+            }
 
             if (DateTime.TryParse(datetimeString, out var datetime) == false)
             {

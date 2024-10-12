@@ -6,13 +6,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var characters = function.GetNullable<string?>("characters");
+            var characters = function.Get<string?>("characters");
             if (characters != null)
             {
-                return function.Get<string>("text")?.Trim(characters.ToCharArray());
+                return function.Get<string?>("text")?.Trim(characters.ToCharArray());
             }
 
-            return function.Get<string>("text")?.Trim();
+            return function.Get<string?>("text")?.Trim();
         }
     }
 }

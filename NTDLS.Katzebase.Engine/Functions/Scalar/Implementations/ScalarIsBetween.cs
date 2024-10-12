@@ -8,7 +8,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(Transaction transaction, ScalarFunctionParameterValueCollection function)
         {
-            return (ConditionEntry.IsMatchBetween(transaction, function.Get<int>("value"), function.Get<int>("rangeLow"), function.Get<int>("rangeHigh")) == true).ToString();
+            return (ConditionEntry.IsMatchBetween(transaction,
+                function.Get<int?>("value"),
+                function.Get<int?>("rangeLow"),
+                function.Get<int?>("rangeHigh")) == true).ToString();
         }
     }
 }

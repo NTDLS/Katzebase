@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
-            var showAll = function.Get("showAll", false);
+            var showAll = function.Get<bool?>("showAll");
 
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();

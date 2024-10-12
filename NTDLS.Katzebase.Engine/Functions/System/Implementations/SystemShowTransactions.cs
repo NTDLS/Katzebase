@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             var txSnapshots = core.Transactions.Snapshot();
 
-            var processId = function.GetNullable<ulong?>("processId");
+            var processId = function.Get<ulong?>("processId");
             if (processId != null)
             {
                 txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();

@@ -6,8 +6,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var textToSearch = function.Get<string>("textToSearch");
-            var textToFind = function.Get<string>("textToFind");
+            var textToSearch = function.Get<string?>("textToSearch");
+            var textToFind = function.Get<string?>("textToFind");
             if (textToSearch == null || textToFind == null)
             {
                 return null;

@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var sessions = core.Sessions.CloneSessions();
             var txSnapshots = core.Transactions.Snapshot();
 
-            var processId = function.GetNullable<ulong?>("processId");
+            var processId = function.Get<ulong?>("processId");
             if (processId != null)
             {
                 sessions = sessions.Where(o => o.Value.ProcessId == processId).ToDictionary(o => o.Key, o => o.Value);

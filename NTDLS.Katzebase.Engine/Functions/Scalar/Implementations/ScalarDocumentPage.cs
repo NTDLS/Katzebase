@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function, KbInsensitiveDictionary<string?> rowValues)
         {
-            var rowId = rowValues.FirstOrDefault(o => o.Key == $"{function.Get<string>("schemaAlias")}.{EngineConstants.UIDMarker}");
+            var rowId = rowValues.FirstOrDefault(o => o.Key == $"{function.Get<string?>("schemaAlias")}.{EngineConstants.UIDMarker}");
             if (rowId.Value == null)
             {
                 return null;

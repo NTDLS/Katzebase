@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
     {
         public static string? Execute(AggregateFunctionParameterValueCollection function, GroupAggregateFunctionParameter parameters)
         {
-            if (function.Get<bool>("caseSensitive"))
+            if (function.Get<bool?>("caseSensitive") == true)
             {
                 return parameters.AggregationValues.Distinct(StringComparer.InvariantCultureIgnoreCase).Count().ToString();
             }

@@ -8,10 +8,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var value = function.Get<string>("value");
+            var value = function.Get<string?>("value");
             if (value == null)
             {
-                return function.Get<string>("defaultValue");
+                return function.Get<string?>("defaultValue");
             }
             return value;
         }

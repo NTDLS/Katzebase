@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var results = new KbQueryResultCollection();
             var result = results.AddNew();
 
-            var expression = function.Get<string>("expression");
+            var expression = function.Get<string?>("expression");
             if (expression != null)
             {
                 result.Messages.Add(new KbQueryResultMessage(expression, Api.KbConstants.KbMessageType.User));

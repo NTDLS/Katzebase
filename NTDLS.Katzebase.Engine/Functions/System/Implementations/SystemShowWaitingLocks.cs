@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             var waitingTxSnapshots = core.Locking.SnapshotWaitingTransactions().ToList();
 
-            var processId = function.GetNullable<ulong?>("processId");
+            var processId = function.Get<ulong?>("processId");
             if (processId != null)
             {
                 waitingTxSnapshots = waitingTxSnapshots.Where(o => o.Key.ProcessId == processId).ToList();

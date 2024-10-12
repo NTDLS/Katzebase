@@ -6,7 +6,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
     {
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return function.Get<bool>("condition") ? function.Get<string>("whenTrue") : function.Get<string>("whenFalse");
+            return function.Get<bool?>("condition") == true
+                ? function.Get<string?>("whenTrue")
+                : function.Get<string?>("whenFalse");
         }
     }
 }
