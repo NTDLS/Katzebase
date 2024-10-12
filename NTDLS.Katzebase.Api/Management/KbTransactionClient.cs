@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryTransactionBegin(_client.ServerConnectionId), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         public void Commit(TimeSpan? queryTimeout = null)
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryTransactionCommit(_client.ServerConnectionId), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         public void Rollback(TimeSpan? queryTimeout = null)
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryTransactionRollback(_client.ServerConnectionId), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
     }
 }

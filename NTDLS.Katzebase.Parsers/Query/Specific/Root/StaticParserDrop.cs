@@ -9,7 +9,15 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
     {
         internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Schema, SubQueryType.Index, SubQueryType.UniqueKey, SubQueryType.Procedure]);
+            var querySubType = tokenizer.EatIfNextEnum(
+                [
+                    SubQueryType.Account,
+                    SubQueryType.Index,
+                    SubQueryType.Procedure,
+                    SubQueryType.Role,
+                    SubQueryType.Schema,
+                    SubQueryType.UniqueKey
+                ]);
 
             return querySubType switch
             {
@@ -17,6 +25,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 SubQueryType.Index => StaticParserDropIndex.Parse(queryBatch, tokenizer),
                 SubQueryType.UniqueKey => StaticParserDropUniqueKey.Parse(queryBatch, tokenizer),
                 SubQueryType.Procedure => StaticParserDropProcedure.Parse(queryBatch, tokenizer),
+                SubQueryType.Account => StaticParserDropAccount.Parse(queryBatch, tokenizer),
+                SubQueryType.Role => StaticParserDropRole.Parse(queryBatch, tokenizer),
 
                 _ => throw new KbNotImplementedException($"Query type is not implemented: [{querySubType}].")
             };

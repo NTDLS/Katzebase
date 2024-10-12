@@ -1,23 +1,12 @@
+CREATE ACCOUNT TestUser WITH (Password = 'abc123!')
+CREATE ROLE TestRole WITH (IsAdministrator = false)
 
-exec print('Test RAGGED INSERT: ' + DateTime())
-INSERT INTO Temporary
-(FirstName: 'John', LastName: 'Doe'),
-(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
-(FirstName: 'Jane', LastName: 'Doe'),
---Messy format;
-(FirstName  :   'John1', LastName: 'Doe1'),
-(
-FirstName:
-'Fred1', MiddleName
-:
-'Joe1', LastName: 'Doe1'),
-(FirstName
-:'Jane1', LastName: 'Doe1'
-)
+ALTER ROLE TestRole ADD TestUser
 
+SELECT * FROM Master:Account
+SELECT * FROM Master:Role
+SELECT * FROM Master:Membership
 
-
-select * from Temporary
-
-
-delete from Temporary
+ALTER ROLE TestRole REMOVE TestUser
+DROP ACCOUNT TestUser
+DROP ROLE testRole

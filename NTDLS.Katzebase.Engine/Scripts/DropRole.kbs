@@ -1,0 +1,13 @@
+DELETE
+	M
+FROM
+	Master:Role as R
+INNER JOIN Master:Membership as M
+	ON M.Role = R.Id
+WHERE
+	R.Name = @Name
+
+DELETE FROM
+	Master:Role
+WHERE
+	Name = @Name

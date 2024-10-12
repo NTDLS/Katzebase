@@ -4,8 +4,10 @@ FROM
 	Master:Account as A
 INNER JOIN Master:Membership as M
 	ON M.AccountId = A.Id
-INNER JOIN Master:Role as R
-	ON R.Id = M.RoleId
 WHERE
 	A.Username = @Username
-	AND R.Name = @RoleName
+
+DELETE FROM
+	Master:Account
+WHERE
+	UserName = @UserName

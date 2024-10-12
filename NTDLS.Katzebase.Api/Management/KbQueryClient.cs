@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         #endregion
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         #endregion
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         #endregion
@@ -142,7 +142,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             var resultCollection = _client.Connection.Query(
                 new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
 
             if (resultCollection.Collection.Count > 1)
             {
@@ -346,7 +346,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         #endregion

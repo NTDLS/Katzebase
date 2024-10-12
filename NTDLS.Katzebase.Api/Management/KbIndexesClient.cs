@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result.Value;
+                .ContinueWith(t => t.ValidateTaskResult()).Result.Value;
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName, newPartitionCount), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryIndexList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
     }
 }

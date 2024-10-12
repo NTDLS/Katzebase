@@ -1,6 +1,6 @@
 INSERT INTO Master:Role
 (
-	Id = @Id,
-	Name = @Name,
-	IsAdministrator = @IsAdministrator
+	Id: @Id,
+	Name: @Name,
+	IsAdministrator: @IsAdministrator
 )

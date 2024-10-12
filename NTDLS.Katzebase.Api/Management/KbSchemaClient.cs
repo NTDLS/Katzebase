@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQuerySchemaCreate(_client.ServerConnectionId, schema, pageSize), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQuerySchemaExists(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result.Value;
+                .ContinueWith(t => t.ValidateTaskResult()).Result.Value;
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             _ = _client.Connection.Query(
                 new KbQuerySchemaDrop(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQuerySchemaList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQuerySchemaList(_client.ServerConnectionId, ":"), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
     }
 }

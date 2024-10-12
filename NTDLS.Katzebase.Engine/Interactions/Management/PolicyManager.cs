@@ -32,6 +32,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        internal KbQueryResultCollection DropAccount(Transaction transaction, string username)
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropAccount.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        UserName = username
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResultCollection DropRole(Transaction transaction, string roleName)
+        {
+            try
+            {
+                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropRole.kbs"),
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = roleName
+                    });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
+
         internal KbQueryResultCollection CreateAccount(Transaction transaction, string username, string passwordHash)
         {
             try

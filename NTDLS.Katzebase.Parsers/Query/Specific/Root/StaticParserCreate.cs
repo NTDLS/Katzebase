@@ -9,8 +9,15 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
     {
         internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Schema, SubQueryType.Index,
-                SubQueryType.Role, SubQueryType.Account, SubQueryType.UniqueKey, SubQueryType.Procedure]);
+            var querySubType = tokenizer.EatIfNextEnum(
+                [
+                    SubQueryType.Account,
+                    SubQueryType.Index,
+                    SubQueryType.Procedure,
+                    SubQueryType.Role,
+                    SubQueryType.Schema,
+                    SubQueryType.UniqueKey
+                ]);
 
             return querySubType switch
             {

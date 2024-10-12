@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             VariablePlaceholder,
             Expression,
             IsAdministrator,
-            Username,
+            UserName,
             Password,
             PasswordHash,
             RoleName,

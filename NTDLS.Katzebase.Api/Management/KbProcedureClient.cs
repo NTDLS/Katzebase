@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             return _client.Connection.Query(
                 new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             var resultCollection = _client.Connection.Query(
                 new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
 
             if (resultCollection.Collection.Count > 1)
             {
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Api.Management
 
             var resultCollection = _client.Connection.Query(
                 new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => _client.ValidateTaskResult(t)).Result;
+                .ContinueWith(t => t.ValidateTaskResult()).Result;
 
             if (resultCollection.Collection.Count > 1)
             {

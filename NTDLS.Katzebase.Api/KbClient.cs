@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Management;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.ReliableMessaging;
@@ -204,15 +203,6 @@ namespace NTDLS.Katzebase.Api
                 ServerConnectionId = Guid.Empty;
                 ProcessId = 0;
             }
-        }
-
-        internal T ValidateTaskResult<T>(Task<T> task)
-        {
-            if (task.IsCompletedSuccessfully == false)
-            {
-                throw new KbAPIResponseException(task.Exception?.GetRoot()?.Message ?? "Unspecified api error has occurred.");
-            }
-            return task.Result;
         }
 
         #region IDisposable.

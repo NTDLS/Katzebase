@@ -1,9 +1,20 @@
-﻿using NTDLS.Katzebase.Api.Types;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Types;
 
 namespace NTDLS.Katzebase.Api
 {
     public static class KbExtensions
     {
+        internal static T ValidateTaskResult<T>(this Task<T> task)
+        {
+            if (task.IsCompletedSuccessfully == false)
+            {
+                throw new KbAPIResponseException(task.Exception?.GetRoot()?.Message ?? "Unspecified api error has occurred.");
+            }
+            return task.Result;
+        }
+
         public static IEnumerable<T> MapTo<T>(this Payloads.Response.KbQueryResult result) where T : new()
         {
             var results = new List<T>();

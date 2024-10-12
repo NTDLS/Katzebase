@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
                 }
-                query.AddAttribute(SupportingTypes.Query.Attribute.Username, username);
+                query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
             }
             else if (action.Is("remove"))
             {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
                 }
-                query.AddAttribute(SupportingTypes.Query.Attribute.Username, username);
+                query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
             }
             else
             {
