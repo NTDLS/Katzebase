@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
     {
         public List<SystemFunctionParameterValue> Values { get; private set; } = new();
 
-        public T Get<T>(string name)
+        public T? Get<T>(string name)
         {
             try
             {
@@ -16,14 +16,14 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
 
                 if (parameter.Value == null)
                 {
-                    if (parameter.Parameter.DefaultValue == null)
+                    if (parameter.Parameter.HasDefault == false)
                     {
                         throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
-                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Converters.ConvertTo<T>(parameter.Value);
+                return Converters.ConvertToNullable<T>(parameter.Value);
             }
             catch (Exception ex)
             {

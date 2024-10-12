@@ -163,8 +163,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                             //This is a numeric variable, get the value and append it.
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);
-
-                            //TODO: I think I need to collapse this: variable.Value
                             expressionVariables.Add(mathVariable, variable.Value);
                         }
                     }
@@ -407,7 +405,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        private static string CollapseScalarFunction(Transaction transaction, Query query, QueryFieldCollection fieldCollection,
+        private static string? CollapseScalarFunction(Transaction transaction, Query query, QueryFieldCollection fieldCollection,
             KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
             var collapsedParameters = new List<string?>();
@@ -425,8 +423,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             //Execute function with the parameters from above ↑
             var methodResult = ScalarFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, auxiliaryFields);
 
-            //TODO: think through the nullability here.
-            return methodResult ?? string.Empty;
+            return methodResult;
         }
     }
 }

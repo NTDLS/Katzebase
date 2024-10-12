@@ -42,13 +42,13 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                 if (parenClose > parenOpen)
                 {
-                    throw new KbParserException(GetLineNumber(i), $"Parentheses mismatch..");
+                    throw new KbParserException(GetLineNumber(i), $"Parentheses mismatch.");
                 }
             }
 
             if (parenClose != parenOpen)
             {
-                throw new KbParserException(GetLineNumber(lastClose), $"Parentheses mismatch..");
+                throw new KbParserException(GetLineNumber(lastClose), $"Parentheses mismatch.");
             }
         }
     }

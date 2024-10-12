@@ -126,7 +126,8 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
 
             for (int protoParamIndex = 0; protoParamIndex < Parameters.Count; protoParamIndex++)
             {
-                if (Parameters[protoParamIndex].Type == KbSystemFunctionParameterType.StringInfinite)
+                if (Parameters[protoParamIndex].Type == KbSystemFunctionParameterType.StringInfinite
+                    || Parameters[protoParamIndex].Type == KbSystemFunctionParameterType.NumericInfinite)
                 {
                     //This is an infinite parameter, and since these are intended to be defined as the last
                     //parameter in the prototype, it eats the remainder of the passed parameters.
@@ -134,7 +135,9 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                     {
                         result.Values.Add(new SystemFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
                     }
-                    break;
+                    //We return here because we want to skip the parameter count check.
+                    //This is ok, because we hit an "infinite parameter".
+                    return result;
                 }
 
                 if (protoParamIndex >= values.Count)
@@ -156,7 +159,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 satisfiedParameterCount++;
             }
 
-            if (satisfiedParameterCount != Parameters.Count)
+            if (satisfiedParameterCount != Parameters.Count || values.Count > Parameters.Count)
             {
                 throw new KbFunctionException($"Incorrect number of parameters passed to [{Name}].");
             }

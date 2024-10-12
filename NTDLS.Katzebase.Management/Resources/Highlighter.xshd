@@ -73,10 +73,9 @@
       <Word>MinQueryThreads</Word>
       <Word>QueryThreadWeight</Word>
       <Word>ReleaseCacheAllocations</Word>
-      <Word>ShowThreadPools</Word>
       <Word>ShowAggregateFunctions</Word>
-      <Word>ShowBlockTree</Word>
       <Word>ShowBlocks</Word>
+      <Word>ShowBlockTree</Word>
       <Word>ShowCacheAllocations</Word>
       <Word>ShowCachePages</Word>
       <Word>ShowCachePartitions</Word>
@@ -87,11 +86,12 @@
       <Word>ShowScalarFunctions</Word>
       <Word>ShowSystemAggregateFunctions</Word>
       <Word>ShowSystemFunctions</Word>
+      <Word>ShowThreadPools</Word>
       <Word>ShowTransactions</Word>
       <Word>ShowVersion</Word>
       <Word>ShowWaitingLocks</Word>
-      <Word>Terminate</Word>
       <Word>Terminate</Word>			
+      <Word>Terminate</Word>
       <Word>TraceWaitTimes</Word>
     </Keywords>
     
@@ -102,13 +102,18 @@
       <Word>Concat</Word>
       <Word>Count</Word>
       <Word>CountDistinct</Word>
+      <Word>DateDiff</Word>
       <Word>DateTime</Word>
       <Word>DateTimeUTC</Word>
       <Word>DocumentID</Word>
       <Word>DocumentPage</Word>
       <Word>DocumentUID</Word>
+      <Word>FormatDateTime</Word>
+      <Word>FormatNumeric</Word>
       <Word>GeometricMean</Word>
       <Word>Guid</Word>
+      <Word>IfNull</Word>
+      <Word>IfNullNumeric</Word>
       <Word>IIF</Word>
       <Word>IndexOf</Word>
       <Word>IsBetween</Word>
@@ -124,6 +129,7 @@
       <Word>IsNotBetween</Word>
       <Word>IsNotEqual</Word>
       <Word>IsNotLike</Word>
+      <Word>IsNull</Word>
       <Word>IsString</Word>
       <Word>LastIndexOf</Word>
       <Word>Left</Word>
@@ -135,104 +141,110 @@
       <Word>Min</Word>
       <Word>MinString</Word>
       <Word>Mode</Word>
+      <Word>NullIf</Word>
+      <Word>NullIfNumeric</Word>
+      <Word>Print</Word>
       <Word>Right</Word>
+      <Word>Round</Word>
       <Word>Sha1</Word>
       <Word>Sha1Agg</Word>
       <Word>Sha256</Word>
       <Word>Sha256Agg</Word>
       <Word>Sha512</Word>
       <Word>Sha512Agg</Word>
+      <Word>Sleep</Word>
       <Word>SubString</Word>
       <Word>Sum</Word>
       <Word>ToLower</Word>
+      <Word>ToNumeric</Word>
       <Word>ToProper</Word>
+      <Word>ToString</Word>
       <Word>ToUpper</Word>
       <Word>Trim</Word>
       <Word>Variance</Word>
     </Keywords>
 
     <Keywords color="Keywords">
-      <Word>go</Word>
-      <Word>procedure</Word>
-      <Word>between</Word>
+      <Word>account</Word>
+      <Word>add</Word>
+      <Word>alter</Word>
+      <Word>analyze</Word>
       <Word>and</Word>
       <Word>as</Word>
       <Word>asc</Word>
       <Word>begin</Word>
+      <Word>between</Word>
       <Word>by</Word>
       <Word>catalog</Word>
       <Word>commit</Word>
-      <Word>rollback</Word>
+      <Word>configuration</Word>
       <Word>create</Word>
-      <Word>account</Word>
-      <Word>role</Word>
-      <Word>add</Word>
-      <Word>remove</Word>
-      <Word>alter</Word>
+      <Word>declare</Word>
       <Word>delete</Word>
       <Word>desc</Word>
+      <Word>documents</Word>
       <Word>drop</Word>
+      <Word>exec</Word>
       <Word>from</Word>
-      <Word>index</Word>
-      <Word>with</Word>
-      <Word>partitions</Word>
-      <Word>pagesize</Word>
+      <Word>group</Word>
       <Word>IncludePhysicalPages</Word>
+      <Word>index</Word>
       <Word>inner</Word>
       <Word>insert</Word>
       <Word>into</Word>
       <Word>join</Word>
+      <Word>kill</Word>
       <Word>like</Word>
-      <Word>schemas</Word>
-      <Word>documents</Word>
       <Word>list</Word>
       <Word>not</Word>
+      <Word>offset</Word>
       <Word>on</Word>
       <Word>or</Word>
       <Word>order</Word>
+      <Word>pagesize</Word>
+      <Word>partitions</Word>
+      <Word>procedure</Word>
       <Word>rebuild</Word>
-      <Word>configuration</Word>
-      <Word>analyze</Word>
+      <Word>remove</Word>
+      <Word>role</Word>
+      <Word>rollback</Word>
       <Word>sample</Word>
-      <Word>size</Word>
       <Word>schema</Word>
-      <Word>kill</Word>
-      <Word>values</Word>		
+      <Word>schemas</Word>
       <Word>select</Word>
       <Word>set</Word>
-      <Word>declare</Word>
-      <Word>exec</Word>
+      <Word>size</Word>
       <Word>terminate</Word>
       <Word>top</Word>
       <Word>transaction</Word>
       <Word>uniquekey</Word>
       <Word>update</Word>
+      <Word>values</Word>		
       <Word>where</Word>
-      <Word>offset</Word>
-      <Word>group</Word>
+      <Word>with</Word>
       <!-- BEGIN CONFIGURATION ITEMS-->
       <Word>BaseAddress</Word>
-      <Word>DataRootPath</Word>
-      <Word>TransactionDataPath</Word>
-      <Word>LogDirectory</Word>
-      <Word>FlushLog</Word>
-      <Word>DefaultDocumentPageSize</Word>
-      <Word>UseCompression</Word>
-      <Word>HealthMonitoringEnabled</Word>
-      <Word>HealthMonitoringChekpointSeconds</Word>
-      <Word>HealthMonitoringInstanceLevelEnabled</Word>
-      <Word>HealthMonitoringInstanceLevelTimeToLiveSeconds</Word>
-      <Word>MaxIdleConnectionSeconds</Word>
-      <Word>DefaultIndexPartitions</Word>
-      <Word>DeferredIOEnabled</Word>
-      <Word>WriteTraceData</Word>
       <Word>CacheEnabled</Word>
       <Word>CacheMaxMemory</Word>
-      <Word>CacheScavengeInterval</Word>
       <Word>CachePartitions</Word>
+      <Word>CacheScavengeInterval</Word>
       <Word>CacheSeconds</Word>
+      <Word>DataRootPath</Word>
+      <Word>DefaultDocumentPageSize</Word>
+      <Word>DefaultIndexPartitions</Word>
+      <Word>DeferredIOEnabled</Word>
+      <Word>FlushLog</Word>
+      <Word>HealthMonitoringChekpointSeconds</Word>
+      <Word>HealthMonitoringEnabled</Word>
+      <Word>HealthMonitoringInstanceLevelEnabled</Word>
+      <Word>HealthMonitoringInstanceLevelTimeToLiveSeconds</Word>
+      <Word>LogDirectory</Word>
+      <Word>MaxIdleConnectionSeconds</Word>
       <Word>MaxQueryThreads</Word>
       <Word>MinQueryThreads</Word>
+      <Word>TransactionDataPath</Word>
+      <Word>UseCompression</Word>
+      <Word>WriteTraceData</Word>
       <!-- END CONFIGURATION ITEMS-->			
     </Keywords>
   </RuleSet>

@@ -131,7 +131,8 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
 
             for (int protoParamIndex = 1; protoParamIndex < Parameters.Count; protoParamIndex++) //Compensate for the aggregate value list which is not really passed by parameter.
             {
-                if (Parameters[protoParamIndex].Type == KbAggregateFunctionParameterType.StringInfinite)
+                if (Parameters[protoParamIndex].Type == KbAggregateFunctionParameterType.StringInfinite
+                    || Parameters[protoParamIndex].Type == KbAggregateFunctionParameterType.NumericInfinite)
                 {
                     //This is an infinite parameter, and since these are intended to be defined as the last
                     //parameter in the prototype, it eats the remainder of the passed parameters.
@@ -139,7 +140,9 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
                     {
                         result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
                     }
-                    break;
+                    //We return here because we want to skip the parameter count check.
+                    //This is ok, because we hit an "infinite parameter".
+                    return result;
                 }
 
                 if (protoParamIndex > values.Count)
@@ -161,7 +164,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
                 satisfiedParameterCount++;
             }
 
-            if (satisfiedParameterCount != Parameters.Count)
+            if (satisfiedParameterCount != Parameters.Count || values.Count > Parameters.Count)
             {
                 throw new KbFunctionException($"Incorrect number of parameters passed to aggregate function: [{Name}].");
             }

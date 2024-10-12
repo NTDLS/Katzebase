@@ -4,16 +4,22 @@
 
 --begin transaction
 
-DECLARE @StartTime = Guid()
-
---select @StartTime from Single
-
---exec print('Top')
-
+--declare @StartTime = DateTimeUTC()
 --exec Sleep(1000)
+--exec Print('Duration: ' + FormatNumeric(DateDiff(@StartTime, DateTimeUTC(), 'ms'), 'n0') + 'ms')
 
-exec print( 20 + @StartTime + 'hello' + @StartTime + 20)
+/*
+"Boolean IsNull (String value)|'Returns true if the given value is null, otherwise false.'",
+"String IfNull (String value, String defaultValue)|'Returns the supplied default value when the given value is null.'",
+"String NullIf (String value, Boolean conditional)|'Returns null if the supplied conditional is true.'",
+"Numeric IfNullNumeric (Numeric value, Numeric defaultValue)|'Returns the supplied default value when the given value is null.'",
+"Numeric NullIfNumeric (Numeric value, Boolean conditional)|'Returns null if the supplied conditional is true.'",
+*/
 
+select
+	nullif(1, 'jj')
+from
+	Single
 
 
 
