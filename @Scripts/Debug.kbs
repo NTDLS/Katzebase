@@ -17,10 +17,38 @@
 */
 
 select
-	nullif(1, 'jj')
+	NullIf('Value', IsEqual('Test', 'Test')),
+	NullIf('Value', IsEqual('Test', 'Test_new')),
+	IsNull('test'),
+	IsNull(null),
+
+	NullIfNumeric(10, IsEqual('Test', 'Test')),
+	NullIfNumeric(10, IsEqual('Test', 'Test_new')),
+	IfNullNumeric(10, 20),
+	IfNullNumeric(null, 20),
+
+	IfNull(null, 'Default Value'),
+	IfNull('First Value', 'Default Value')
 from
 	Single
+	
+DECLARE @StartDate = DateTimeUTC()
+	
+select
+	DateDiff(@StartDate, DateTime(), 'minute'),
+	FormatDateTime(@StartDate, 'hh:mm:ss.ms tt'),
+	FormatDateTime(@StartDate, 'yyyy/MM/dd'),
+	FormatNumeric(123456.456789, "n1"),
+	FormatNumeric(123456.456789, "c"),
+	'Prefix' + 10 + ToString(50) + 10 + 'Suffix',
+	'Prefix' + 10 + ToNumeric(50) + 10 + 'Suffix',
+	Round(123456.456789, 2)
+from
+	Single	
 
+
+	
+	
 
 
 --commit transaction

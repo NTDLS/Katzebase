@@ -487,6 +487,36 @@ SELECT Trim('hello world', 'dhle') FROM Single
 SELECT Trim('     hello world     ') FROM Single
 SELECT IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False') FROM Single
 
+select
+	NullIf('Value', IsEqual('Test', 'Test')),
+	NullIf('Value', IsEqual('Test', 'Test_new')),
+	IsNull('test'),
+	IsNull(null),
+
+	NullIfNumeric(10, IsEqual('Test', 'Test')),
+	NullIfNumeric(10, IsEqual('Test', 'Test_new')),
+	IfNullNumeric(10, 20),
+	IfNullNumeric(null, 20),
+
+	IfNull(null, 'Default Value'),
+	IfNull('First Value', 'Default Value')
+from
+	Single
+	
+DECLARE @StartDate = DateTimeUTC()
+	
+select
+	DateDiff(@StartDate, DateTime(), 'minute'),
+	FormatDateTime(@StartDate, 'hh:mm:ss.ms tt'),
+	FormatDateTime(@StartDate, 'yyyy/MM/dd'),
+	FormatNumeric(123456.456789, "n1"),
+	FormatNumeric(123456.456789, "c"),
+	'Prefix' + 10 + ToString(50) + 10 + 'Suffix',
+	'Prefix' + 10 + ToNumeric(50) + 10 + 'Suffix',
+	Round(123456.456789, 2)
+from
+	Single
+
 exec print('Test aggregate functions: ' + DateTime())
 SELECT
 	Avg(L.Id) as Avg,
@@ -532,3 +562,8 @@ FROM
 	WordList:Word as L
 WHERE
 	L.Text LIKE '%oad%'
+	
+exec print('Sleeping: ' + DateTime())
+declare @StartTime = DateTimeUTC()
+exec Sleep(1000)
+exec Print('Duration: ' + FormatNumeric(DateDiff(@StartTime, DateTimeUTC(), 'ms'), 'n0') + 'ms')
