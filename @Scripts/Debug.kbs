@@ -1,3 +1,4 @@
+
 --create account testUser with (password = '')
 --create role testRole
 --alter role testRole add testUser
@@ -15,36 +16,21 @@
 "Numeric IfNullNumeric (Numeric value, Numeric defaultValue)|'Returns the supplied default value when the given value is null.'",
 "Numeric NullIfNumeric (Numeric value, Boolean conditional)|'Returns null if the supplied conditional is true.'",
 */
-
-select
-	NullIf('Value', IsEqual('Test', 'Test')),
-	NullIf('Value', IsEqual('Test', 'Test_new')),
-	IsNull('test'),
-	IsNull(null),
-
-	NullIfNumeric(10, IsEqual('Test', 'Test')),
-	NullIfNumeric(10, IsEqual('Test', 'Test_new')),
-	IfNullNumeric(10, 20),
-	IfNullNumeric(null, 20),
-
-	IfNull(null, 'Default Value'),
-	IfNull('First Value', 'Default Value')
-from
+SELECT
+	ABS(-10),   -- Returns 10
+	ABS(5),     -- Returns 5
+	ABS(-23.67), -- Returns 23.67
+	Ceil(4.2),    -- Returns 5
+	Ceil(-4.8),   -- Returns -4
+	Ceil(7.0),    -- Returns 7 (already an integer)	
+	Floor(4.8),    -- Returns 4
+	Floor(-4.2),   -- Returns -5
+	Floor(7.0),    -- Returns 7 (already an integer)
+	Pow(2, 3),   -- Returns 8 (2 raised to the power of 3)
+	Pow(5, 2),   -- Returns 25 (5 squared)
+	Pow(10, -1) -- Returns 0.1 (10 raised to the power of -1)	
+FROM
 	Single
-	
-DECLARE @StartDate = DateTimeUTC()
-	
-select
-	DateDiff(@StartDate, DateTime(), 'minute'),
-	FormatDateTime(@StartDate, 'hh:mm:ss.ms tt'),
-	FormatDateTime(@StartDate, 'yyyy/MM/dd'),
-	FormatNumeric(123456.456789, "n1"),
-	FormatNumeric(123456.456789, "c"),
-	'Prefix' + 10 + ToString(50) + 10 + 'Suffix',
-	'Prefix' + 10 + ToNumeric(50) + 10 + 'Suffix',
-	Round(123456.456789, 2)
-from
-	Single	
 
 
 	

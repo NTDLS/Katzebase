@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
             var x = function.Get<double?>("x");
-            var y = function.Get<double?>("x");
+            var y = function.Get<double?>("y");
             if (x == null || y == null)
             {
                 return null;

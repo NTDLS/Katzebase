@@ -563,6 +563,22 @@ FROM
 WHERE
 	L.Text LIKE '%oad%'
 	
+SELECT
+	ABS(-10),   -- Returns 10
+	ABS(5),     -- Returns 5
+	ABS(-23.67), -- Returns 23.67
+	Ceil(4.2),    -- Returns 5
+	Ceil(-4.8),   -- Returns -4
+	Ceil(7.0),    -- Returns 7 (already an integer)	
+	Floor(4.8),    -- Returns 4
+	Floor(-4.2),   -- Returns -5
+	Floor(7.0),    -- Returns 7 (already an integer)
+	Pow(2, 3),   -- Returns 8 (2 raised to the power of 3)
+	Pow(5, 2),   -- Returns 25 (5 squared)
+	Pow(10, -1) -- Returns 0.1 (10 raised to the power of -1)	
+FROM
+	Single
+	
 exec print('Sleeping: ' + DateTime())
 declare @StartTime = DateTimeUTC()
 exec Sleep(1000)
