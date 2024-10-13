@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine
         internal CacheManager Cache;
         internal KatzebaseSettings Settings;
 
-        public PolicyManager Policies;
+        public PolicyManager Policy;
         public SchemaManager Schemas;
         public EnvironmentManager Environment;
         public DocumentManager Documents;
@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine
             Transactions = new TransactionManager(this);
 
             LogManager.Information("Initializing policy manager.");
-            Policies = new PolicyManager(this);
+            Policy = new PolicyManager(this);
 
             LogManager.Information("Initializing schema manager.");
             Schemas = new SchemaManager(this);

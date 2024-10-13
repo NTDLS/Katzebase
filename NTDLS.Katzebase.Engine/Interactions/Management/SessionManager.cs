@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
-using System.Data;
 using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management

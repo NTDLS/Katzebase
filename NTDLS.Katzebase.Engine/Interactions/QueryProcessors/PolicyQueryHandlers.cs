@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     Name = roleName
                 });
 
-                var results = _core.Schemas.Grant(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
+                var results = _core.Policy.GrantRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     Name = roleName
                 });
 
-                var results = _core.Schemas.Deny(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
+                var results = _core.Policy.DenyRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     Name = roleName
                 });
 
-                var results = _core.Schemas.Revoke(transactionReference.Transaction, schemaName, roleId, permission);
+                var results = _core.Policy.RevokeRole(transactionReference.Transaction, schemaName, roleId, permission);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -123,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
 
-                var results = _core.Policies.DropRole(transactionReference.Transaction, roleName);
+                var results = _core.Policy.DropRole(transactionReference.Transaction, roleName);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
-                var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
+                var results = _core.Policy.DropAccount(transactionReference.Transaction, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -160,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
                 var passwordHash = query.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
 
-                var results = _core.Policies.CreateAccount(transactionReference.Transaction, username, passwordHash);
+                var results = _core.Policy.CreateAccount(transactionReference.Transaction, username, passwordHash);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -179,7 +179,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var IsAdministrator = query.GetAttribute(PreparedQuery.Attribute.IsAdministrator, false);
 
-                var results = _core.Policies.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
+                var results = _core.Policy.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -198,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
-                var results = _core.Policies.AddUserToRole(transactionReference.Transaction, roleName, username);
+                var results = _core.Policy.AddUserToRole(transactionReference.Transaction, roleName, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -217,7 +217,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
-                var results = _core.Policies.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
+                var results = _core.Policy.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
