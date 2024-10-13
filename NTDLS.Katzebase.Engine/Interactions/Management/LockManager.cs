@@ -212,7 +212,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
                 //  section "Locking.CriticalSectionLockManagement", we will only need:
-                return _collection.TryWriteAll([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
+                return _collection.TryWriteAllNullable([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
                 {
                     ObjectLockKey? lockKey = null;
 
@@ -415,7 +415,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                                 //Get a list of transactions that are blocked by the current transaction.
                                 var blockedByMe = waitingTransactions.Where(
-                                    o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(
+                                    o => o.BlockedByKeys.Read((obj) => obj.Where(
                                         k => k.ProcessId == transaction.ProcessId).Any())).ToList();
 
                                 foreach (var blocked in blockedByMe)

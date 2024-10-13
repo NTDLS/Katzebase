@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
+using System.Data;
 using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -56,49 +57,50 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal SessionState CreateSession(Guid connectionId, string username, string clientName = "", bool isInternalSystemSession = false)
         {
-            return _collection.Write(((obj) =>
+            var roles = new List<KbRole>();
+
+            if (username != BuiltInSystemUserName)
             {
-                try
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                //Get the user roles so they can be assigned to the session.
+                roles.AddRange(_core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }));
+                systemSession.Commit();
+            }
+
+            return _collection.Write((obj) =>
                 {
-                    if (obj.TryGetValue(connectionId, out SessionState? session))
+                    try
                     {
-                        session.LastCheckInTime = DateTime.UtcNow;
-                        return session;
-                    }
-                    else
-                    {
-                        ulong processId = _nextProcessId++;
-
-                        var roles = new List<KbRole>();
-
-                        if (username == BuiltInSystemUserName)
+                        if (obj.TryGetValue(connectionId, out SessionState? session))
                         {
-                            //We add a mock administrator role because when a role with [IsAdministrator == true]
-                            //  exists then all other role checks are ignored.
-                            roles.Add(new KbRole(Guid.Parse(BuiltInSystemUserName), "Administrator") { IsAdministrator = true });
+                            session.LastCheckInTime = DateTime.UtcNow;
+                            return session;
                         }
                         else
                         {
-                            //Get the user roles so they can be assigned to the session.
-                            using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                            roles = _core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"), new { username }).ToList();
-                            systemSession.Commit();
+                            ulong processId = _nextProcessId++;
+
+                            if (username == BuiltInSystemUserName)
+                            {
+                                //We add a mock administrator role because when a role with [IsAdministrator == true]
+                                //  exists then all other role checks are ignored.
+                                roles.Add(new KbRole(Guid.Parse(BuiltInSystemUserName), "Administrator") { IsAdministrator = true });
+                            }
+
+                            session = new SessionState(processId, connectionId,
+                                username == BuiltInSystemUserName ? "system" : username,
+                                clientName, roles, isInternalSystemSession);
+
+                            obj.Add(connectionId, session);
+                            return session;
                         }
-
-                        session = new SessionState(processId, connectionId,
-                            username == BuiltInSystemUserName ? "system" : username,
-                            clientName, roles, isInternalSystemSession);
-
-                        obj.Add(connectionId, session);
-                        return session;
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogManager.Error($"{new StackFrame(1).GetMethod()} failed for session id: [{connectionId}].", ex);
-                    throw;
-                }
-            }));
+                    catch (Exception ex)
+                    {
+                        LogManager.Error($"{new StackFrame(1).GetMethod()} failed for session id: [{connectionId}].", ex);
+                        throw;
+                    }
+                });
         }
 
         internal SessionState GetSession(Guid connectionId)
