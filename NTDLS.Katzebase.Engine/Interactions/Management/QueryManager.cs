@@ -34,6 +34,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 QueryType.Kill,
                 QueryType.Drop,
                 QueryType.Begin,
+                QueryType.Grant,
+                QueryType.Deny,
                 QueryType.Commit,
                 QueryType.Insert,
                 QueryType.Update,
@@ -244,6 +246,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return _core.Sessions.QueryHandlers.ExecuteKillProcess(session, query);
                     case QueryType.Set:
                         return _core.Sessions.QueryHandlers.ExecuteSetVariable(session, query);
+                    case QueryType.Grant:
+                        return _core.Policies.QueryHandlers.ExecuteGrant(session, query);
+                    case QueryType.Deny:
+                        return _core.Policies.QueryHandlers.ExecuteDeny(session, query);
                     case QueryType.Rebuild:
                         switch (query.SubQueryType)
                         {

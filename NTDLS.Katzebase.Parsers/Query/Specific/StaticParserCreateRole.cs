@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var roleName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [ {roleName} ].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [{roleName}].");
             }
             query.AddAttribute(SupportingTypes.Query.Attribute.RoleName, roleName);
 

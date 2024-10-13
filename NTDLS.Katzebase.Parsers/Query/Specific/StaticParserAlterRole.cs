@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var roleName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [ {roleName} ].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [{roleName}].");
             }
             query.AddAttribute(SupportingTypes.Query.Attribute.RoleName, roleName);
 
@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var username) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [{username}].");
                 }
                 query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
             }
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var username) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [ {username} ].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [{username}].");
                 }
                 query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
             }

@@ -27,6 +27,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        internal KbActionResponse ExecuteGrant(SessionState session, Query query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+
+                var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        internal KbActionResponse ExecuteDeny(SessionState session, Query query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+
+                var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteDropRole(SessionState session, Query query)
         {
             try

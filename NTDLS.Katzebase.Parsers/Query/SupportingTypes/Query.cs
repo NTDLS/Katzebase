@@ -13,6 +13,8 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
     {
         public enum Attribute
         {
+            PolicyType,
+            Recursive,
             VariablePlaceholder,
             Expression,
             IsAdministrator,

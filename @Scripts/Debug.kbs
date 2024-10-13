@@ -1,3 +1,4 @@
+/*
 CREATE SCHEMA PermissionTest
 
 ALTER ROLE TestRole REMOVE TestUser
@@ -8,15 +9,16 @@ CREATE ACCOUNT TestUser WITH (Password = 'abc123!')
 CREATE ROLE TestRole WITH (IsAdministrator = false)
 
 ALTER ROLE TestRole ADD TestUser
+*/
+GRANT Read ON PermissionTest to TestRole WITH (Recursive = True) --Select
+--DENY Write ON PermissionTest to TestRole WITH (Recursive = True) --Insert, update, delete
+--DENY Manage ON PermissionTest to TestRole WITH (Recursive = True) --Create, drop, create index, etc.
 
-GRANT Read ON PermissionTest WITH (Recursive = True) --Select
-DENY Write ON PermissionTest WITH (Recursive = True) --Insert, update, delete
-DENY Manage ON PermissionTest WITH (Recursive = True) --Create, drop, create index, etc.
-
-
+/*
 SELECT * FROM Master:Account
 SELECT * FROM Master:Role
 SELECT * FROM Master:Membership
+*/
 
 /*
  All, //Allow/deny ALL of the policy types.
