@@ -43,10 +43,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
+                systemSession.Commit();
 
                 var results = _core.Policy.GrantRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -72,10 +74,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
+                systemSession.Commit();
 
                 var results = _core.Policy.DenyRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -100,10 +104,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
 
-                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
+                systemSession.Commit();
 
                 var results = _core.Policy.RevokeRole(transactionReference.Transaction, schemaName, roleId, permission);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);

@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Engine.Sessions
     /// </summary>
     internal class InternalSystemSessionTransaction(EngineCore core, SessionState session, TransactionReference transactionReference) : IDisposable
     {
-        public EngineCore Core { get; set; } = core;
-        public SessionState Session { get; set; } = session;
-        public TransactionReference TransactionReference { get; set; } = transactionReference;
+        public EngineCore Core { get; private set; } = core;
+        public SessionState Session { get; private set; } = session;
+        public TransactionReference TransactionReference { get; private set; } = transactionReference;
         public Transaction Transaction => TransactionReference.Transaction;
 
         public void Commit()
