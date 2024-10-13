@@ -326,9 +326,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             case SubQueryType.Configuration:
                                 return _core.Environment.QueryHandlers.ExecuteAlter(session, query);
                             case SubQueryType.AddUserToRole:
-                                return _core.Policy.QueryHandlers.ExecuteAddUserToRole(session, query);
+                                return _core.Policy.QueryHandlers.ExecuteAddAccountToRole(session, query);
                             case SubQueryType.RemoveUserFromRole:
-                                return _core.Policy.QueryHandlers.ExecuteRemoveUserFromRole(session, query);
+                                return _core.Policy.QueryHandlers.ExecuteRemoveAccountFromRole(session, query);
                             default:
                                 throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
                         }

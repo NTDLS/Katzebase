@@ -36,7 +36,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Create/Drop account.
 
-
+        /// <summary>
+        /// Creates an account.
+        /// </summary>
         internal KbQueryResultCollection CreateAccount(Transaction transaction, string username, string passwordHash)
         {
             try
@@ -56,6 +58,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Deletes an account.
+        /// </summary>
         internal KbQueryResultCollection DropAccount(Transaction transaction, string username)
         {
             try
@@ -78,6 +83,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Create/Drop role.
 
+        /// <summary>
+        /// Creates a role.
+        /// </summary>
         internal KbQueryResultCollection CreateRole(Transaction transaction, string roleName, bool isAdministrator)
         {
             try
@@ -97,6 +105,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Deletes a role.
+        /// </summary>
         internal KbQueryResultCollection DropRole(Transaction transaction, string roleName)
         {
             try
@@ -119,7 +130,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Add/Remove role memberhship.
 
-        internal KbQueryResultCollection AddUserToRole(Transaction transaction, string roleName, string username)
+        /// <summary>
+        /// Adds an account to a role.
+        /// </summary>
+        internal KbQueryResultCollection AddAccountToRole(Transaction transaction, string roleName, string username)
         {
             try
             {
@@ -137,7 +151,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw;
             }
         }
-        internal KbQueryResultCollection RemoveUserFromRole(Transaction transaction, string roleName, string username)
+
+        /// <summary>
+        /// Removes an account from a role.
+        /// </summary>
+        internal KbQueryResultCollection RemoveAccountFromRole(Transaction transaction, string roleName, string username)
         {
             try
             {
@@ -160,6 +178,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Grant/Deny/Revoke on schema.
 
+        /// <summary>
+        /// Grants a permission to a role on a given schema.
+        /// </summary>
         internal KbQueryResult GrantRole(Transaction transaction, string schemaName, Guid roleId, SecurityPolicyPermission permission, bool isRecursive)
         {
             try
@@ -208,6 +229,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Denies a permission to a role on a given schema.
+        /// </summary>
         internal KbQueryResult DenyRole(Transaction transaction, string schemaName, Guid roleId, SecurityPolicyPermission permission, bool isRecursive)
         {
             try
@@ -256,6 +280,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Removes explicit permission from a role on a given schema.
+        /// </summary>
         internal KbQueryResult RevokeRole(Transaction transaction, string schemaName, Guid roleId, SecurityPolicyPermission permission)
         {
             try

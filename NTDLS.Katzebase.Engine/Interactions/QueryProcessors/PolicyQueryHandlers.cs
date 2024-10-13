@@ -29,6 +29,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        #region Grant/Deny/Revoke on schema.
+
         /// <summary>
         /// Grants a permission to a role on a given schema.
         /// </summary>
@@ -121,6 +123,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        #endregion
+
+        #region Create/Drop role.
+
+        /// <summary>
+        /// Deletes a role.
+        /// </summary>
         internal KbActionResponse ExecuteDropRole(SessionState session, PreparedQuery query)
         {
             try
@@ -139,43 +148,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDropAccount(SessionState session, PreparedQuery query)
-        {
-            try
-            {
-                using var transactionReference = _core.Transactions.APIAcquire(session);
-
-                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
-
-                var results = _core.Policy.DropAccount(transactionReference.Transaction, username);
-                return transactionReference.CommitAndApplyMetricsNonQuery(results);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
-                throw;
-            }
-        }
-
-        internal KbActionResponse ExecuteCreateAccount(SessionState session, PreparedQuery query)
-        {
-            try
-            {
-                using var transactionReference = _core.Transactions.APIAcquire(session);
-
-                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
-                var passwordHash = query.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
-
-                var results = _core.Policy.CreateAccount(transactionReference.Transaction, username, passwordHash);
-                return transactionReference.CommitAndApplyMetricsNonQuery(results);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
-                throw;
-            }
-        }
-
+        /// <summary>
+        /// Creates a role.
+        /// </summary>
         internal KbActionResponse ExecuteCreateRole(SessionState session, PreparedQuery query)
         {
             try
@@ -195,16 +170,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteAddUserToRole(SessionState session, PreparedQuery query)
+        #endregion
+
+        #region Create/Drop account.
+
+        /// <summary>
+        /// Creates an account.
+        /// </summary>
+        internal KbActionResponse ExecuteCreateAccount(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+                var passwordHash = query.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
 
-                var results = _core.Policy.AddUserToRole(transactionReference.Transaction, roleName, username);
+                var results = _core.Policy.CreateAccount(transactionReference.Transaction, username, passwordHash);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -214,16 +196,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteRemoveUserFromRole(SessionState session, PreparedQuery query)
+        /// <summary>
+        /// Deletes an account.
+        /// </summary>
+        internal KbActionResponse ExecuteDropAccount(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
-                var results = _core.Policy.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
+                var results = _core.Policy.DropAccount(transactionReference.Transaction, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -232,5 +216,55 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 throw;
             }
         }
+
+        #endregion
+
+        #region Add/Remove role memberhship.
+
+        /// <summary>
+        /// Adds an account to a role.
+        /// </summary>
+        internal KbActionResponse ExecuteAddAccountToRole(SessionState session, PreparedQuery query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+
+                var results = _core.Policy.AddAccountToRole(transactionReference.Transaction, roleName, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Removes an account from a role.
+        /// </summary>
+        internal KbActionResponse ExecuteRemoveAccountFromRole(SessionState session, PreparedQuery query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+
+                var results = _core.Policy.RemoveAccountFromRole(transactionReference.Transaction, roleName, username);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        #endregion
     }
 }
