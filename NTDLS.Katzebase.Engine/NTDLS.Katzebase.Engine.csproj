@@ -29,6 +29,7 @@
     <None Remove="Scripts\CreateRole.kbs" />
     <None Remove="Scripts\DropAccount.kbs" />
     <None Remove="Scripts\DropRole.kbs" />
+    <None Remove="Scripts\GetRoleId.kbs" />
     <None Remove="Scripts\RemoveUserFromRole.kbs" />
   </ItemGroup>
 
@@ -46,6 +47,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\CreateMasterSchema.kbs" />
     <EmbeddedResource Include="Scripts\AddUserToRole.kbs" />
+    <EmbeddedResource Include="Scripts\GetRoleId.kbs" />
     <EmbeddedResource Include="Scripts\DropRole.kbs" />
     <EmbeddedResource Include="Scripts\DropAccount.kbs" />
     <EmbeddedResource Include="Scripts\RemoveUserFromRole.kbs" />

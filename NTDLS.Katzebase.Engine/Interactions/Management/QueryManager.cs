@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
@@ -57,6 +58,38 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Internal helpers.
 
         /// <summary>
+        /// Executes a query and returns the first row and field object.
+        /// </summary>
+        internal T? ExecuteScalar<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        {
+            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            var results = _core.Query.ExecuteQuery(session, queries[0]);
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException();
+            }
+
+            if (results.Collection.Count == 0)
+            {
+                return default;
+            }
+            else if (results.Collection[0].Rows.Count == 0)
+            {
+                return default;
+            }
+            else if (results.Collection[0].Rows[0].Values.Count == 0)
+            {
+                return default;
+            }
+
+            return Converters.ConvertToNullable<T>(results.Collection[0].RowValue(0, 0));
+        }
+
+        /// <summary>
         /// Executes a query and returns the mapped object.
         /// </summary>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
@@ -71,6 +104,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 throw new KbMultipleRecordSetsException();
             }
+
+            if (results.Collection.Count == 0)
+            {
+                return new List<T>();
+            }
+
             return results.Collection[0].MapTo<T>();
         }
 

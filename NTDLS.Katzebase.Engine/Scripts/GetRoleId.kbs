@@ -1,0 +1,6 @@
+SELECT
+	Id
+FROM
+	Master:Role
+WHERE
+	Name = @Name

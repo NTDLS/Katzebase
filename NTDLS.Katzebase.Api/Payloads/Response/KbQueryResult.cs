@@ -34,6 +34,14 @@ namespace NTDLS.Katzebase.Api.Payloads.Response
         }
 
         /// <summary>
+        /// Returns the value of the given row and field.
+        /// </summary>
+        public string? RowValue(int rowIndex, int fieldIndex)
+        {
+            return Rows[rowIndex].Values[fieldIndex];
+        }
+
+        /// <summary>
         /// Returns the value of the given field on the given row.
         /// </summary>
         /// <param name="row"></param>

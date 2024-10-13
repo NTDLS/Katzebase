@@ -13,13 +13,9 @@ namespace NTDLS.Katzebase.PersistentTypes.Policy
         public SecurityPolicyType PolicyType { get; set; }
 
         /// <summary>
-        /// AccountId to apply this policy to, if both AccountId and RoleId are NULL then this policy applies to all accounts.
+        /// RoleId to apply this policy to.
         /// </summary>
-        public int? AccountId { get; set; }
-        /// <summary>
-        /// RoleId to apply this policy to, if both AccountId and RoleId are NULL then this policy applies to all accounts.
-        /// </summary>
-        public int? RoleId { get; set; }
+        public Guid RoleId { get; set; }
         public bool IsRecursive { get; set; }
     }
 }

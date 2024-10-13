@@ -180,12 +180,14 @@
       <Word>configuration</Word>
       <Word>create</Word>
       <Word>declare</Word>
+      <Word>deny</Word>
       <Word>delete</Word>
       <Word>desc</Word>
       <Word>documents</Word>
       <Word>drop</Word>
       <Word>exec</Word>
       <Word>from</Word>
+      <Word>grant</Word>
       <Word>group</Word>
       <Word>IncludePhysicalPages</Word>
       <Word>index</Word>
@@ -196,6 +198,7 @@
       <Word>kill</Word>
       <Word>like</Word>
       <Word>list</Word>
+      <Word>manage</Word>
       <Word>not</Word>
       <Word>offset</Word>
       <Word>on</Word>
@@ -204,6 +207,7 @@
       <Word>pagesize</Word>
       <Word>partitions</Word>
       <Word>procedure</Word>
+      <Word>read</Word>
       <Word>rebuild</Word>
       <Word>remove</Word>
       <Word>role</Word>
@@ -222,6 +226,7 @@
       <Word>values</Word>		
       <Word>where</Word>
       <Word>with</Word>
+      <Word>write</Word>
       <!-- BEGIN CONFIGURATION ITEMS-->
       <Word>BaseAddress</Word>
       <Word>CacheEnabled</Word>

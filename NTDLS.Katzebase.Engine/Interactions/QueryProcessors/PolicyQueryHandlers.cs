@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
@@ -33,9 +34,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+                var schemaName = query.Schemas.Single().Name;
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
+                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                {
+                    Name = roleName
+                });
+
+                var results = _core.Schemas.Grant(transactionReference.Transaction, schemaName, roleId, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -51,9 +59,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+                var schemaName = query.Schemas.Single().Name;
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
+                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                {
+                    Name = roleName
+                });
+
+                var results = _core.Schemas.Deny(transactionReference.Transaction, schemaName, roleId, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)

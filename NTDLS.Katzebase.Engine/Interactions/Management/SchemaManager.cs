@@ -541,5 +541,41 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             return result;
         }
+
+        internal KbQueryResult Grant(Transaction transaction, string schemaName, Guid RoleId, bool isRecursive)
+        {
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var policyCatalog = _core.IO.GetJson<PhysicalPolicyCatalog>(transaction, physicalSchema.PolicyCatalogFileFilePath(), LockOperation.Write);
+
+                throw new KbNotImplementedException();
+
+                return new KbQueryResult();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult Deny(Transaction transaction, string schemaName, Guid RoleId, bool isRecursive)
+        {
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var policyCatalog = _core.IO.GetJson<PhysicalPolicyCatalog>(transaction, physicalSchema.PolicyCatalogFileFilePath(), LockOperation.Write);
+
+                throw new KbNotImplementedException();
+
+                return new KbQueryResult();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
     }
 }
