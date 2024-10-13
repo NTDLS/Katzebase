@@ -10,8 +10,10 @@ CREATE ROLE TestRole WITH (IsAdministrator = false)
 ALTER ROLE TestRole ADD TestUser
 
 GRANT Read ON PermissionTest to TestRole WITH (Recursive = True) --Select
-DENY Write ON PermissionTest to TestRole WITH (Recursive = True) --Insert, update, delete
-DENY Manage ON PermissionTest to TestRole WITH (Recursive = True) --Create, drop, create index, etc.
+--DENY Write ON PermissionTest to TestRole WITH (Recursive = True) --Insert, update, delete
+--DENY Manage ON PermissionTest to TestRole WITH (Recursive = True) --Create, drop, create index, etc.
+
+--REVOKE ALL FROM PermissionTest to TestRole  --Create, drop, create index, etc.
 
 /*
 SELECT * FROM Master:Account

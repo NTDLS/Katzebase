@@ -16,14 +16,15 @@
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
 
-        public enum SecurityPolicy
+        public enum SecurityPolicyRule
         {
-            Allow,
+            Grant,
             Deny
         }
 
-        public enum SecurityPolicyType
+        public enum SecurityPolicyPermission
         {
+            All,
             Read, //Select.
             Write, //Update/Insert/Delete.
             Manage //Drop/Create objects within the schema (such as sub-schemas, indexes, etc).

@@ -180,8 +180,9 @@
       <Word>configuration</Word>
       <Word>create</Word>
       <Word>declare</Word>
-      <Word>deny</Word>
       <Word>delete</Word>
+      <Word>to</Word>
+      <Word>deny</Word>
       <Word>desc</Word>
       <Word>documents</Word>
       <Word>drop</Word>
@@ -201,6 +202,7 @@
       <Word>manage</Word>
       <Word>not</Word>
       <Word>offset</Word>
+      <Word>to</Word>
       <Word>on</Word>
       <Word>or</Word>
       <Word>order</Word>
@@ -210,6 +212,7 @@
       <Word>read</Word>
       <Word>rebuild</Word>
       <Word>remove</Word>
+      <Word>revoke</Word>
       <Word>role</Word>
       <Word>rollback</Word>
       <Word>sample</Word>

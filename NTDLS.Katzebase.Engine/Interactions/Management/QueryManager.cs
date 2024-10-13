@@ -27,22 +27,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private readonly QueryType[] _nonQueryTypes =
             [
-                QueryType.Delete,
-                QueryType.Rebuild,
-                QueryType.Create,
                 QueryType.Alter,
-                QueryType.Set,
-                QueryType.Kill,
-                QueryType.Drop,
                 QueryType.Begin,
-                QueryType.Grant,
-                QueryType.Deny,
                 QueryType.Commit,
+                QueryType.Create,
+                QueryType.Declare,
+                QueryType.Delete,
+                QueryType.Deny,
+                QueryType.Drop,
+                QueryType.Grant,
                 QueryType.Insert,
-                QueryType.Update,
-                QueryType.SelectInto,
+                QueryType.Kill,
+                QueryType.Rebuild,
+                QueryType.Revoke,
                 QueryType.Rollback,
-                QueryType.Declare
+                QueryType.SelectInto,
+                QueryType.Set,
+                QueryType.Update
             ];
 
         internal QueryManager(EngineCore core)
@@ -289,6 +290,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return _core.Policies.QueryHandlers.ExecuteGrant(session, query);
                     case QueryType.Deny:
                         return _core.Policies.QueryHandlers.ExecuteDeny(session, query);
+                    case QueryType.Revoke:
+                        return _core.Policies.QueryHandlers.ExecuteRevoke(session, query);
                     case QueryType.Rebuild:
                         switch (query.SubQueryType)
                         {

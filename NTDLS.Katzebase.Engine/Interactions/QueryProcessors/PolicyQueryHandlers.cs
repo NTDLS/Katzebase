@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 {
@@ -28,6 +29,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        /// <summary>
+        /// Grants a permission to a role on a given schema.
+        /// </summary>
         internal KbActionResponse ExecuteGrant(SessionState session, PreparedQuery query)
         {
             try
@@ -36,6 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var schemaName = query.Schemas.Single().Name;
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
                 var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
@@ -43,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     Name = roleName
                 });
 
-                var results = _core.Schemas.Grant(transactionReference.Transaction, schemaName, roleId, isRecursive);
+                var results = _core.Schemas.Grant(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -53,6 +58,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        /// <summary>
+        /// Denies a permission to a role on a given schema.
+        /// </summary>
         internal KbActionResponse ExecuteDeny(SessionState session, PreparedQuery query)
         {
             try
@@ -61,6 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var schemaName = query.Schemas.Single().Name;
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
                 var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
@@ -68,7 +77,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                     Name = roleName
                 });
 
-                var results = _core.Schemas.Deny(transactionReference.Transaction, schemaName, roleId, isRecursive);
+                var results = _core.Schemas.Deny(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
+                return transactionReference.CommitAndApplyMetricsNonQuery(results);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Removes explicit permission from a role on a given schema.
+        /// </summary>
+        internal KbActionResponse ExecuteRevoke(SessionState session, PreparedQuery query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                var schemaName = query.Schemas.Single().Name;
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
+
+                var roleId = _core.Query.ExecuteScalar<Guid>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                {
+                    Name = roleName
+                });
+
+                var results = _core.Schemas.Revoke(transactionReference.Transaction, schemaName, roleId, permission);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)

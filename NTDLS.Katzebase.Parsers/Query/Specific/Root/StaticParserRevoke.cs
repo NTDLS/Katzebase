@@ -7,15 +7,15 @@ using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
-    public static class StaticParserDeny
+    public static class StaticParserRevoke
     {
         internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Deny, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Revoke, tokenizer.GetCurrentLineNumber());
 
             query.AddAttribute(PreparedQuery.Attribute.SecurityPolicyPermission, tokenizer.EatIfNextEnum<SecurityPolicyPermission>());
 
-            tokenizer.EatIfNext("on");
+            tokenizer.EatIfNext("from");
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
@@ -30,16 +30,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [{roleName}].");
             }
             query.AddAttribute(PreparedQuery.Attribute.RoleName, roleName);
-
-            if (tokenizer.TryEatIfNext("with"))
-            {
-                var options = new ExpectedQueryAttributes
-                {
-                    { PreparedQuery.Attribute.Recursive.ToString(), typeof(bool) }
-                };
-
-                query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
-            }
 
             return query;
         }

@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
         {
             var query = new PreparedQuery(queryBatch, QueryType.Grant, tokenizer.GetCurrentLineNumber());
 
-            query.AddAttribute(PreparedQuery.Attribute.PolicyType, tokenizer.EatIfNextEnum<SecurityPolicyType>());
+            query.AddAttribute(PreparedQuery.Attribute.SecurityPolicyPermission, tokenizer.EatIfNextEnum<SecurityPolicyPermission>());
 
             tokenizer.EatIfNext("on");
 

@@ -5,21 +5,22 @@
         public enum QueryType
         {
             None,
-            Grant,
-            Deny,
             Alter,
             Analyze,
             Begin,
             Commit,
-            Declare,
             Create,
+            Declare,
             Delete,
+            Deny,
             Drop,
             Exec,
+            Grant,
             Insert,
             Kill,
             List,
             Rebuild,
+            Revoke,
             Rollback,
             Sample,
             Select,
@@ -31,21 +32,21 @@
         public enum SubQueryType
         {
             None,
-            Read,
-            Write,
-            Manage,
             Account,
+            AddUserToRole,
             Configuration,
             Documents,
             Index,
+            Manage,
             Procedure,
-            Role,
-            AddUserToRole,
+            Read,
             RemoveUserFromRole,
+            Role,
             Schema,
             Schemas,
             Transaction,
-            UniqueKey
+            UniqueKey,
+            Write
         }
 
         public enum LogicalConnector
@@ -58,16 +59,16 @@
         public enum LogicalQualifier
         {
             None,
-            Equals,
-            Like,
-            NotEquals,
-            NotLike,
             Between,
-            NotBetween,
-            LessThan,
+            Equals,
             GreaterThan,
+            GreaterThanOrEqual,
+            LessThan,
             LessThanOrEqual,
-            GreaterThanOrEqual
+            Like,
+            NotBetween,
+            NotEquals,
+            NotLike
         }
     }
 }

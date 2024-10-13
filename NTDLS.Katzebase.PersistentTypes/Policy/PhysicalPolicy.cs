@@ -7,10 +7,10 @@ namespace NTDLS.Katzebase.PersistentTypes.Policy
     public class PhysicalPolicy
     {
         [JsonConverter(typeof(StringEnumConverter))]
-        public SecurityPolicy Policy { get; set; }
+        public SecurityPolicyRule Rule { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        public SecurityPolicyType PolicyType { get; set; }
+        public SecurityPolicyPermission Permission { get; set; }
 
         /// <summary>
         /// RoleId to apply this policy to.
