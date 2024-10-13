@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserDelete
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Delete, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Delete, tokenizer.GetCurrentLineNumber());
 
             if (tokenizer.TryEatIfNext("from"))
             {
@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 }
 
                 query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
-                query.AddAttribute(SupportingTypes.Query.Attribute.TargetSchemaAlias, string.Empty);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, string.Empty);
             }
             else
             {
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{targetAlias}].");
                 }
-                query.AddAttribute(SupportingTypes.Query.Attribute.TargetSchemaAlias, targetAlias.ToLowerInvariant());
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, targetAlias.ToLowerInvariant());
 
                 tokenizer.EatIfNext("from");
 

@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteSelect(SessionState session, Query query)
+        internal KbQueryResult ExecuteSelect(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -52,12 +52,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteSelectInto(SessionState session, Query query)
+        internal KbQueryResult ExecuteSelectInto(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var targetSchema = query.GetAttribute<string>(Query.Attribute.TargetSchemaName);
+                var targetSchema = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaName);
 
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
         /// <summary>
         /// Inserts a document into a schema.
         /// </summary>
-        internal KbActionResponse ExecuteInsert(SessionState session, Query query)
+        internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -187,13 +187,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
         /// <summary>
         /// Updates a documents in a schema based on where clause and join conditions.
         /// </summary>
-        internal KbActionResponse ExecuteUpdate(SessionState session, Query query)
+        internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
+                var targetSchemaAlias = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema.Name, LockOperation.Read);
@@ -233,7 +233,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteSample(SessionState session, Query query)
+        internal KbQueryResult ExecuteSample(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -251,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteList(SessionState session, Query query)
+        internal KbQueryResult ExecuteList(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -269,7 +269,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryExplain ExecuteExplainPlan(SessionState session, Query query)
+        internal KbQueryExplain ExecuteExplainPlan(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -301,7 +301,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryExplain ExecuteExplainOperations(SessionState session, Query query)
+        internal KbQueryExplain ExecuteExplainOperations(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -327,13 +327,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDelete(SessionState session, Query query)
+        internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var targetSchemaAlias = query.GetAttribute<string>(Query.Attribute.TargetSchemaAlias);
+                var targetSchemaAlias = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
                 var firstSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);

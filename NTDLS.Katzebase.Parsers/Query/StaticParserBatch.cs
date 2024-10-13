@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Parsers.Query
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch Parse(string queryText, KbInsensitiveDictionary<KbVariable> givenConstants,
+        static public PreparedQueryBatch Parse(string queryText, KbInsensitiveDictionary<KbVariable> givenConstants,
             KbInsensitiveDictionary<KbVariable>? userParameters = null)
         {
             var constants = givenConstants.Clone(); //Clone because we do not want to modify the global constants collection.
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Parsers.Query
             }
 
             var tokenizer = new Tokenizer(queryText, true, constants);
-            var queryBatch = new QueryBatch(tokenizer.Variables);
+            var queryBatch = new PreparedQueryBatch(tokenizer.Variables);
 
             var exceptions = new List<Exception>();
 

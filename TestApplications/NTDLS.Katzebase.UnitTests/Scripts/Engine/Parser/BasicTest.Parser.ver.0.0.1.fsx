@@ -28,7 +28,7 @@ module ParserBasicTests =
 
         let pq0 = queries[0]
 
-        equals "master:account" (pq0.Schemas.Item 0).Name
+        equals "MASTER:ACCOUNT" (pq0.Schemas.Item 0).Name
         equals Constants.QueryType.Select pq0.QueryType
         equals 0 pq0.Conditions.Collection.Count
 
@@ -37,7 +37,7 @@ module ParserBasicTests =
     let ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (outputOpt:ITestOutputHelper option) =
         try
             let userParameters = null
-            let _ = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
+            let _ = StaticParserBatch.Parse("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
             ()
         with
         | :? KbParserException as pe ->
@@ -52,7 +52,7 @@ module ParserBasicTests =
         equals 1 queries.Count 
 
         let pq0 = queries[0]
-        equals "master:account" (pq0.Schemas.Item 0).Name
+        equals "MASTER:ACCOUNT" (pq0.Schemas.Item 0).Name
         equals Constants.QueryType.Select pq0.QueryType
         equals 1 pq0.Conditions.Collection.Count
         equals 4 pq0.Conditions.FieldCollection.Count

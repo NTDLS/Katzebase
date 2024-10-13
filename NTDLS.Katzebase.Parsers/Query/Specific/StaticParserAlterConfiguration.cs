@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserAlterConfiguration
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Alter, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Alter, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Configuration
             };

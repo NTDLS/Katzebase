@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserDropIndex
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Index
             };
@@ -20,8 +20,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected index name, found: [{indexName}].");
             }
 
-            query.AddAttribute(SupportingTypes.Query.Attribute.IndexName, indexName);
-            query.AddAttribute(SupportingTypes.Query.Attribute.IsUnique, false);
+            query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery.Attribute.IsUnique, false);
 
             tokenizer.EatIfNext("on");
 
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
-            query.AddAttribute(SupportingTypes.Query.Attribute.Schema, schemaName);
+            query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
 
             return query;
         }

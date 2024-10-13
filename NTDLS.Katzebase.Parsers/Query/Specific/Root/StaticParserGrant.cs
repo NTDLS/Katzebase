@@ -9,11 +9,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserGrant
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Grant, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Grant, tokenizer.GetCurrentLineNumber());
 
-            query.AddAttribute(SupportingTypes.Query.Attribute.PolicyType, tokenizer.EatIfNextEnum<SecurityPolicyType>());
+            query.AddAttribute(PreparedQuery.Attribute.PolicyType, tokenizer.EatIfNextEnum<SecurityPolicyType>());
 
             tokenizer.EatIfNext("on");
 
@@ -29,13 +29,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [{roleName}].");
             }
-            query.AddAttribute(SupportingTypes.Query.Attribute.RoleName, roleName);
+            query.AddAttribute(PreparedQuery.Attribute.RoleName, roleName);
 
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedQueryAttributes
                 {
-                    { SupportingTypes.Query.Attribute.Recursive.ToString(), typeof(bool) }
+                    { PreparedQuery.Attribute.Recursive.ToString(), typeof(bool) }
                 };
 
                 query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));

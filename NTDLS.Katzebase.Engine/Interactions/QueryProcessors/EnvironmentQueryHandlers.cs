@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteAlter(SessionState session, Query query)
+        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery query)
         {
             try
             {

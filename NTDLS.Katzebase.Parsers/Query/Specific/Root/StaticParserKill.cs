@@ -7,14 +7,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserKill
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Kill, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Kill, tokenizer.GetCurrentLineNumber());
 
             var referencedProcessId = tokenizer.EatGetNextResolved<ulong>();
             try
             {
-                query.AddAttribute(SupportingTypes.Query.Attribute.ProcessId, referencedProcessId);
+                query.AddAttribute(PreparedQuery.Attribute.ProcessId, referencedProcessId);
             }
             catch
             {

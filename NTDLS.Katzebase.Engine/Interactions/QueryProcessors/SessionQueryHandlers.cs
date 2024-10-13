@@ -29,12 +29,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteKillProcess(SessionState session, Query query)
+        internal KbActionResponse ExecuteKillProcess(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-                var referencedProcessId = query.GetAttribute<ulong>(Query.Attribute.ProcessId);
+                var referencedProcessId = query.GetAttribute<ulong>(PreparedQuery.Attribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteSetVariable(SessionState session, Query query)
+        internal KbActionResponse ExecuteSetVariable(SessionState session, PreparedQuery query)
         {
             try
             {

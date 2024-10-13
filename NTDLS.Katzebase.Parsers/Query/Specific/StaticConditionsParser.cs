@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
         /// and all conditions in a ConditionGroup will be comprised solely of AND conditions. This way we can use the groups to match indexes
         /// before evaluating the whole expression on the limited set of documents we derived from the indexing operations.
         /// </summary>
-        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer, string conditionsText, int endOfWhereCaret, string leftHandAliasOfJoin = "")
+        public static ConditionCollection Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer, string conditionsText, int endOfWhereCaret, string leftHandAliasOfJoin = "")
         {
             var conditionCollection = new ConditionCollection(queryBatch, conditionsText, leftHandAliasOfJoin);
 
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             return conditionCollection;
         }
 
-        private static void ParseRecursive(QueryBatch queryBatch, Tokenizer tokenizer,
+        private static void ParseRecursive(PreparedQueryBatch queryBatch, Tokenizer tokenizer,
             ConditionCollection conditionCollection, ConditionGroup parentConditionGroup,
             int endOfWhereCaret, ConditionGroup? givenCurrentConditionGroup = null)
         {

@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// obtaining a list of DocumentPointers instead of fields/rows. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
         internal static DocumentLookupRowCollection GetDocumentsByConditions(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, Query query)
+            QuerySchemaMap schemaMap, PreparedQuery query)
         {
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query);
 
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// joined schemas (also using indexing). Expands rowset for one-to-many, many-to-many and many-to-one joins.
         /// </summary>
         public static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, Query query, List<string>? gatherDocumentPointersForSchemaAliases = null)
+            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases = null)
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentPointersForSchemaAliases);
 
@@ -308,7 +308,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
             /// </summary>
             static bool IsJoinExpressionMatch(Transaction transaction,
-            Query query, ConditionCollection? givenConditions, SchemaIntersectionRow schemaIntersectionRow)
+            PreparedQuery query, ConditionCollection? givenConditions, SchemaIntersectionRow schemaIntersectionRow)
             {
                 if (givenConditions == null)
                 {
@@ -358,7 +358,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #region Internal IsWhereClauseMatch().
 
-            static bool IsWhereClauseMatch(Transaction transaction, Query query,
+            static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
                 ConditionCollection? givenConditions, KbInsensitiveDictionary<string?> documentElements)
             {
                 if (givenConditions == null)
@@ -409,7 +409,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
         /// </summary>
         private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, Query query, List<string>? gatherDocumentPointersForSchemaAliases)
+            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -497,7 +497,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         ///     scalar and aggregate function execution, and builds a expression-collapsed list of all values required for sorting.
         /// </summary>
         private static MaterializedRowCollection MaterializeRowValues(EngineCore core, Transaction transaction,
-            Query query, SchemaIntersectionRowCollection intersectedRowCollection)
+            PreparedQuery query, SchemaIntersectionRowCollection intersectedRowCollection)
         {
             var materializedRowCollection = new MaterializedRowCollection();
 
@@ -712,7 +712,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             return materializedRowCollection;
         }
 
-        private static string? MaterializeRowField(Transaction transaction, Query query, SchemaIntersectionRow row,
+        private static string? MaterializeRowField(Transaction transaction, PreparedQuery query, SchemaIntersectionRow row,
             KbInsensitiveDictionary<string?> flattenedSchemaElements, QueryField field, FieldCollapseType fieldCollapseType)
         {
             if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)

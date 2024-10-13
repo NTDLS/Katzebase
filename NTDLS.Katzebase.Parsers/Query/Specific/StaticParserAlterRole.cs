@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserAlterRole
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Alter, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Alter, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Role
             };
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected role name, found: [{roleName}].");
             }
-            query.AddAttribute(SupportingTypes.Query.Attribute.RoleName, roleName);
+            query.AddAttribute(PreparedQuery.Attribute.RoleName, roleName);
 
             tokenizer.EatIfNext(["add", "remove"], out var action);
 
@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [{username}].");
                 }
-                query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
+                query.AddAttribute(PreparedQuery.Attribute.UserName, username);
             }
             else if (action.Is("remove"))
             {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected username, found: [{username}].");
                 }
-                query.AddAttribute(SupportingTypes.Query.Attribute.UserName, username);
+                query.AddAttribute(PreparedQuery.Attribute.UserName, username);
             }
             else
             {

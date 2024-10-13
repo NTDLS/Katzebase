@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Parsers.Query
         /// <summary>
         /// Parse the single query in the batch.
         /// </summary>
-        static public SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        static public PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.GetNext();
 

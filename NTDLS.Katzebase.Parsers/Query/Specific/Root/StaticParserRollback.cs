@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserRollback
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Rollback, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Rollback, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.Transaction])
             };

@@ -39,14 +39,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
         /// <summary>
         /// Declares a variable, collapses any expression.
         /// </summary>
-        internal KbActionResponse ExecuteDeclare(SessionState session, Query query)
+        internal KbActionResponse ExecuteDeclare(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var variablePlaceholder = query.GetAttribute<string>(Query.Attribute.VariablePlaceholder);
-                var expressionField = query.GetAttribute<IQueryField>(Query.Attribute.Expression);
+                var variablePlaceholder = query.GetAttribute<string>(PreparedQuery.Attribute.VariablePlaceholder);
+                var expressionField = query.GetAttribute<IQueryField>(PreparedQuery.Attribute.Expression);
                 var mockFields = new SelectFieldCollection(query.Batch);
 
                 var auxiliaryValues = new KbInsensitiveDictionary<string?>();
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteCreate(SessionState session, Query query)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -85,10 +85,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (query.SubQueryType == SubQueryType.Procedure)
                 {
-                    var objectName = query.GetAttribute<string>(Query.Attribute.ObjectName);
-                    var objectSchema = query.GetAttribute<string>(Query.Attribute.Schema);
-                    var parameters = query.GetAttribute<List<PhysicalProcedureParameter>>(Query.Attribute.Parameters);
-                    var Batches = query.GetAttribute<List<string>>(Query.Attribute.Batches);
+                    var objectName = query.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
+                    var objectSchema = query.GetAttribute<string>(PreparedQuery.Attribute.Schema);
+                    var parameters = query.GetAttribute<List<PhysicalProcedureParameter>>(PreparedQuery.Attribute.Parameters);
+                    var Batches = query.GetAttribute<List<string>>(PreparedQuery.Attribute.Batches);
 
                     _core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
@@ -106,12 +106,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResultCollection ExecuteExec(SessionState session, Query query)
+        internal KbQueryResultCollection ExecuteExec(SessionState session, PreparedQuery query)
         {
             try
             {
-                var schemaName = query.GetAttribute<string>(Query.Attribute.Schema);
-                var objectName = query.GetAttribute<string>(Query.Attribute.ObjectName);
+                var schemaName = query.GetAttribute<string>(PreparedQuery.Attribute.Schema);
+                var objectName = query.GetAttribute<string>(PreparedQuery.Attribute.ObjectName);
 
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 

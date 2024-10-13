@@ -7,9 +7,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Fields
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    public class QueryFieldCollection(QueryBatch queryBatch) : List<QueryField>
+    public class QueryFieldCollection(PreparedQueryBatch queryBatch) : List<QueryField>
     {
-        public QueryBatch QueryBatch { get; private set; } = queryBatch;
+        public PreparedQueryBatch QueryBatch { get; private set; } = queryBatch;
 
         /// <summary>
         /// A list of all distinct document identifiers from all fields, even nested expressions.

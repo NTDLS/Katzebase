@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserCreateSchema
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Create, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Schema
             };
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
-            query.AddAttribute(SupportingTypes.Query.Attribute.Schema, schemaName);
+            query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
 
             if (tokenizer.TryEatIfNext("with"))
             {

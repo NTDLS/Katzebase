@@ -12,11 +12,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// This class maps the schema and documents to a query supplied schema alias.
     /// The key to the dictionary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
-    internal class QuerySchemaMap(EngineCore core, Transaction transaction, Query query) : KbInsensitiveDictionary<QuerySchemaMapItem>
+    internal class QuerySchemaMap(EngineCore core, Transaction transaction, PreparedQuery query) : KbInsensitiveDictionary<QuerySchemaMapItem>
     {
         private readonly EngineCore _core = core;
         public Transaction Transaction { get; private set; } = transaction;
-        public Query Query { get; private set; } = query;
+        public PreparedQuery Query { get; private set; } = query;
 
         /// <summary>
         /// Adds a mapping to the schema mapping collection.

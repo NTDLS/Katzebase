@@ -27,13 +27,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteGrant(SessionState session, Query query)
+        internal KbActionResponse ExecuteGrant(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
                 var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -45,13 +45,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDeny(SessionState session, Query query)
+        internal KbActionResponse ExecuteDeny(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
                 var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -63,13 +63,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDropRole(SessionState session, Query query)
+        internal KbActionResponse ExecuteDropRole(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
 
                 var results = _core.Policies.DropRole(transactionReference.Transaction, roleName);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -81,13 +81,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDropAccount(SessionState session, Query query)
+        internal KbActionResponse ExecuteDropAccount(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
                 var results = _core.Policies.DropAccount(transactionReference.Transaction, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -99,14 +99,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteCreateAccount(SessionState session, Query query)
+        internal KbActionResponse ExecuteCreateAccount(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
-                var passwordHash = query.GetAttribute<string>(Query.Attribute.PasswordHash);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
+                var passwordHash = query.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
 
                 var results = _core.Policies.CreateAccount(transactionReference.Transaction, username, passwordHash);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -118,14 +118,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteCreateRole(SessionState session, Query query)
+        internal KbActionResponse ExecuteCreateRole(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                var IsAdministrator = query.GetAttribute(Query.Attribute.IsAdministrator, false);
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var IsAdministrator = query.GetAttribute(PreparedQuery.Attribute.IsAdministrator, false);
 
                 var results = _core.Policies.CreateRole(transactionReference.Transaction, roleName, IsAdministrator);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -137,14 +137,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteAddUserToRole(SessionState session, Query query)
+        internal KbActionResponse ExecuteAddUserToRole(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
                 var results = _core.Policies.AddUserToRole(transactionReference.Transaction, roleName, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
@@ -156,14 +156,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteRemoveUserFromRole(SessionState session, Query query)
+        internal KbActionResponse ExecuteRemoveUserFromRole(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                var roleName = query.GetAttribute<string>(Query.Attribute.RoleName);
-                var username = query.GetAttribute<string>(Query.Attribute.UserName);
+                var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
+                var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
                 var results = _core.Policies.RemoveUserFromRole(transactionReference.Transaction, roleName, username);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);

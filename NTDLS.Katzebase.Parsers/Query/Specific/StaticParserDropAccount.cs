@@ -7,9 +7,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserDropAccount
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Drop, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.Account
             };
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected account username, found: [{userName}].");
             }
 
-            query.AddAttribute(SupportingTypes.Query.Attribute.UserName, userName);
+            query.AddAttribute(PreparedQuery.Attribute.UserName, userName);
 
             return query;
         }

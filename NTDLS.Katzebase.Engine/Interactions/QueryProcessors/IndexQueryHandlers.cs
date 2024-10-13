@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDrop(SessionState session, Query query)
+        internal KbActionResponse ExecuteDrop(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
                     _core.Indexes.DropIndex(transactionReference.Transaction, schemaName,
-                        query.GetAttribute<string>(Query.Attribute.IndexName));
+                        query.GetAttribute<string>(PreparedQuery.Attribute.IndexName));
                 }
                 else
                 {
@@ -57,15 +57,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteAnalyze(SessionState session, Query query)
+        internal KbQueryResult ExecuteAnalyze(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
                 var analysis = _core.Indexes.AnalyzeIndex(transactionReference.Transaction,
-                    query.GetAttribute<string>(Query.Attribute.Schema),
-                    query.GetAttribute<string>(Query.Attribute.IndexName));
+                    query.GetAttribute<string>(PreparedQuery.Attribute.Schema),
+                    query.GetAttribute<string>(PreparedQuery.Attribute.IndexName));
 
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
 
@@ -79,15 +79,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteRebuild(SessionState session, Query query)
+        internal KbActionResponse ExecuteRebuild(SessionState session, PreparedQuery query)
         {
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
-                var indexName = query.GetAttribute<string>(Query.Attribute.IndexName);
-                var indexPartitions = query.GetAttribute(Query.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                var indexName = query.GetAttribute<string>(PreparedQuery.Attribute.IndexName);
+                var indexPartitions = query.GetAttribute(PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteCreate(SessionState session, Query query)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -108,12 +108,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
                     var indexPartitions = query.GetAttribute(
-                        Query.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                        PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
                     {
-                        Name = query.GetAttribute<string>(Query.Attribute.IndexName),
-                        IsUnique = query.GetAttribute<bool>(Query.Attribute.IsUnique),
+                        Name = query.GetAttribute<string>(PreparedQuery.Attribute.IndexName),
+                        IsUnique = query.GetAttribute<bool>(PreparedQuery.Attribute.IsUnique),
                         Partitions = indexPartitions
                     };
 

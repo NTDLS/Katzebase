@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Parsers.Query.Fields
 {
-    public class GroupByFieldCollection(QueryBatch queryBatch)
+    public class GroupByFieldCollection(PreparedQueryBatch queryBatch)
         : QueryFieldCollection(queryBatch)
     {
     }

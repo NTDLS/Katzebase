@@ -27,9 +27,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             ValueListPossibleSelectFrom
         }
 
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Insert, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Insert, tokenizer.GetCurrentLineNumber());
 
             tokenizer.EatIfNext("into");
 

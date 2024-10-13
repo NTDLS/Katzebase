@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
         /// <param name="stopAtTokens">Array of tokens for which the parsing will stop if encountered.</param>
         /// <param name="allowEntireConsumption">If true, in the event that stopAtTokens are not found, the entire remaining text will be consumed.</param>
         /// <returns></returns>
-        public static T Parse<T>(QueryBatch queryBatch, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption, Func<QueryBatch, T> factory)
+        public static T Parse<T>(PreparedQueryBatch queryBatch, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption, Func<PreparedQueryBatch, T> factory)
             where T : QueryFieldCollection
         {
             var queryFields = factory(queryBatch);

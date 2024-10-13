@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-        internal KbQueryExplain ExplainPlan(SessionState session, Query query)
+        internal KbQueryExplain ExplainPlan(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryExplain ExplainOperations(SessionState session, Query query)
+        internal KbQueryExplain ExplainOperations(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -177,7 +177,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
         }
 
-        internal KbQueryResultCollection ExecuteQuery(SessionState session, Query query)
+        internal KbQueryResultCollection ExecuteQuery(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -226,7 +226,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbBaseActionResponse ExecuteNonQuery(SessionState session, Query query)
+        internal KbBaseActionResponse ExecuteNonQuery(SessionState session, PreparedQuery query)
         {
             try
             {

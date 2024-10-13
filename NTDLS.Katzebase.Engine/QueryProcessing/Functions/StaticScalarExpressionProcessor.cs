@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
         public static string? CollapseScalarQueryField(this IQueryField queryField, Transaction transaction,
-            Query query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields)
+            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
         public static string? CollapseScalarExpressionFunctionParameter(this IExpressionFunctionParameter parameter, Transaction transaction,
-            Query query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies)
+            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies)
         {
             if (parameter is ExpressionFunctionParameterString parameterString)
             {
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         ///     recursive function calls.
         /// </summary>
         private static string? CollapseScalarFunctionNumericParameter(Transaction transaction,
-            Query query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
+            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
             //Build a cachable numeric expression, interpolate the values and execute the expression.
@@ -208,7 +208,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
         private static string CollapseScalarFunctionStringParameter(Transaction transaction,
-            Query query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
+            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
@@ -405,7 +405,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        private static string? CollapseScalarFunction(Transaction transaction, Query query, QueryFieldCollection fieldCollection,
+        private static string? CollapseScalarFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
             KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
             var collapsedParameters = new List<string?>();

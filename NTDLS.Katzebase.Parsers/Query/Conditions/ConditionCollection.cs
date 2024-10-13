@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
         public string NextExpressionVariable()
             => $"v{_nextExpressionVariable++}";
 
-        public ConditionCollection(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
+        public ConditionCollection(PreparedQueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
             : base(LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
             SchemaAlias = schemaAlias;
         }
 
-        public ConditionCollection(QueryBatch queryBatch)
+        public ConditionCollection(PreparedQueryBatch queryBatch)
             : base(LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);

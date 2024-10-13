@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserJoin
     {
-        public static List<QuerySchema> Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static List<QuerySchema> Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
             var result = new List<QuerySchema>();
 

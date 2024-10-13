@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryResult FindDocumentsByQuery(EngineCore core, Transaction transaction, Query query)
+        internal static KbQueryResult FindDocumentsByQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
@@ -144,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         ///     just the distinct document pointers for the specified schema.
         /// </summary>
         internal static SchemaIntersectionRowDocumentIdentifierCollection FindDocumentPointersByQuery(
-            EngineCore core, Transaction transaction, Query query, List<string> gatherDocumentPointersForSchemaAliases)
+            EngineCore core, Transaction transaction, PreparedQuery query, List<string> gatherDocumentPointersForSchemaAliases)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 

@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
         }
 
-        internal KbQueryResult ExecuteAnalyze(SessionState session, Query query)
+        internal KbQueryResult ExecuteAnalyze(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (query.SubQueryType == SubQueryType.Schema)
                 {
-                    var includePhysicalPages = query.GetAttribute(Query.Attribute.IncludePhysicalPages, false);
+                    var includePhysicalPages = query.GetAttribute(PreparedQuery.Attribute.IncludePhysicalPages, false);
                     result = _core.Schemas.AnalyzePages(transactionReference.Transaction, schemaName, includePhysicalPages);
                 }
                 else
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteDrop(SessionState session, Query query)
+        internal KbActionResponse ExecuteDrop(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteAlter(SessionState session, Query query)
+        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (query.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = query.GetAttribute(Query.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                    var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = query.Schemas.Single().Name;
                     _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
                 }
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbActionResponse ExecuteCreate(SessionState session, Query query)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery query)
         {
             try
             {
@@ -118,7 +118,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (query.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = query.GetAttribute(Query.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                    var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = query.Schemas.Single().Name;
                     _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
                 }
@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
-        internal KbQueryResult ExecuteList(SessionState session, Query query)
+        internal KbQueryResult ExecuteList(SessionState session, PreparedQuery query)
         {
             try
             {

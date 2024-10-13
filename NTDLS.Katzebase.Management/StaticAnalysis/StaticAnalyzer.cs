@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
     internal class StaticAnalyzer
     {
         public static List<Action> ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
-            List<CachedSchema>? schemaCache, QueryBatch batch, Query query)
+            List<CachedSchema>? schemaCache, PreparedQueryBatch batch, PreparedQuery query)
         {
             var actions = new List<Action>();
 

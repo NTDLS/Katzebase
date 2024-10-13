@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserRebuildUniqueKey
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Rebuild, tokenizer.GetCurrentLineNumber())
+            var query = new PreparedQuery(queryBatch, QueryType.Rebuild, tokenizer.GetCurrentLineNumber())
             {
                 SubQueryType = SubQueryType.UniqueKey
             };
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected unique key name, found: [{tokenizer.ResolveLiteral(indexName)}].");
             }
-            query.AddAttribute(SupportingTypes.Query.Attribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
 
             tokenizer.EatIfNext("on");
 

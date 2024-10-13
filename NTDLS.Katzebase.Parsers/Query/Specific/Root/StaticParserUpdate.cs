@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 {
     public static class StaticParserUpdate
     {
-        internal static SupportingTypes.Query Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
             /*Example query:
              * 
@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 	         *  
              */
 
-            var query = new SupportingTypes.Query(queryBatch, QueryType.Update, tokenizer.GetCurrentLineNumber());
+            var query = new PreparedQuery(queryBatch, QueryType.Update, tokenizer.GetCurrentLineNumber());
 
             if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var updateSchemaNameOrAlias) == false)
             {
@@ -106,13 +106,13 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(updateSchemaNameOrAlias)).FirstOrDefault()
                     ?? throw new KbParserException(query.ScriptLine, $"Update schema now found in query: [{updateSchemaNameOrAlias}].");
 
-                query.AddAttribute(SupportingTypes.Query.Attribute.TargetSchemaAlias, targetSchema.Alias);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, targetSchema.Alias);
             }
             else
             {
                 //The query did not have a from, so the schema specified on the UPDATE line is the schema name.
                 query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), updateSchemaNameOrAlias.ToLowerInvariant(), QuerySchemaUsageType.Primary));
-                query.AddAttribute(SupportingTypes.Query.Attribute.TargetSchemaAlias, string.Empty);
+                query.AddAttribute(PreparedQuery.Attribute.TargetSchemaAlias, string.Empty);
             }
 
             if (tokenizer.TryEatIfNext("where"))

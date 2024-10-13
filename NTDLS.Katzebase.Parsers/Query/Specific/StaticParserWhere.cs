@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
     public static class StaticParserWhere
     {
-        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static ConditionCollection Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
             var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" group ", " order ", " offset ", " inner "]);
             string conditionText = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
