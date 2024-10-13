@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine
         public EngineCore(KatzebaseSettings settings)
         {
 #if DEBUG
-            ThreadLockOwnershipTracking.Enable();
+            ThreadLockOwnershipTracking.Enable(); //NTDLS.Semaphore
 #endif
 
             Settings = settings;
