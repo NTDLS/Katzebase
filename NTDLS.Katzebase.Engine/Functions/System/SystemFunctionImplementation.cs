@@ -17,11 +17,11 @@ namespace NTDLS.Katzebase.Engine.Functions.System
 
             return functionName.ToLowerInvariant() switch
             {
-                "sleep" => SystemSleep.Execute(core, transaction, function),
-                "print" => SystemPrint.Execute(core, transaction, function),
+                "cancel" => SystemCancel.Execute(core, transaction, function),
                 "checkpointhealthcounters" => SystemCheckPointHealthCounters.Execute(core, transaction, function),
                 "clearcacheallocations" => SystemClearCacheAllocations.Execute(core, transaction, function),
                 "clearhealthcounters" => SystemClearHealthCounters.Execute(core, transaction, function),
+                "print" => SystemPrint.Execute(core, transaction, function),
                 "releasecacheallocations" => SystemReleaseCacheAllocations.Execute(core, transaction, function),
                 "showaggregatefunctions" => SystemShowAggregateFunctions.Execute(core, transaction, function),
                 "showblocks" => SystemShowBlocks.Execute(core, transaction, function),
@@ -32,15 +32,16 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showhealthcounters" => SystemShowHealthCounters.Execute(core, transaction, function),
                 "showlocks" => SystemShowLocks.Execute(core, transaction, function),
                 "showmemoryutilization" => SystemShowMemoryUtilization.Execute(core, transaction, function),
+                "showpolicy" => SystemShowPolicy.Execute(core, transaction, function),
                 "showprocesses" => SystemShowProcesses.Execute(core, transaction, function),
                 "showscalarfunctions" => SystemShowScalarFunctions.Execute(core, transaction, function),
                 "showsystemfunctions" => SystemShowSystemFunctions.Execute(core, transaction, function),
+                "showthreadpools" => SystemShowThreadPools.Execute(core, transaction, function),
                 "showtransactions" => SystemShowTransactions.Execute(core, transaction, function),
                 "showversion" => SystemShowVersion.Execute(core, transaction, function),
                 "showwaitinglocks" => SystemShowWaitingLocks.Execute(core, transaction, function),
+                "sleep" => SystemSleep.Execute(core, transaction, function),
                 "terminate" => SystemTerminate.Execute(core, transaction, function),
-                "cancel" => SystemCancel.Execute(core, transaction, function),
-                "showthreadpools" => SystemShowThreadPools.Execute(core, transaction, function),
 
                 _ => throw new KbNotImplementedException($"The system function is not implemented: [{functionName}].")
             };

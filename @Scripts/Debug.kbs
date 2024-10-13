@@ -1,5 +1,51 @@
-CREATE SCHEMA PermissionTest
+--select * from Single
 
+exec ShowPolicy('PermissionTest:SchemaB:SubSchemaA')
+
+--GRANT ALL ON : to Default WITH (Recursive = True)
+
+/* Create PermissionTest schemas.
+CREATE SCHEMA PermissionTest
+CREATE SCHEMA PermissionTest:SchemaA
+CREATE SCHEMA PermissionTest:SchemaB
+CREATE SCHEMA PermissionTest:SchemaC
+CREATE SCHEMA PermissionTest:SchemaD
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaA
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaB
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaC
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaD
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaA
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaB
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaC
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaD
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaA
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaB
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaC
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaD
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaA
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaB
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaC
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaD
+
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaA:Leaf1
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaB:Leaf2
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaC:Leaf3
+CREATE SCHEMA PermissionTest:SchemaA:SubSchemaD:Leaf4
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaA:Leaf5
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaB:Leaf6
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaC:Leaf7
+CREATE SCHEMA PermissionTest:SchemaB:SubSchemaD:Leaf8
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaA:Leaf9
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaB:Leaf10
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaC:Leaf11
+CREATE SCHEMA PermissionTest:SchemaC:SubSchemaD:Leaf12
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaA:Leaf13
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaB:Leaf14
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaC:Leaf15
+CREATE SCHEMA PermissionTest:SchemaD:SubSchemaD:Leaf16
+*/
+
+/*
 ALTER ROLE TestRole REMOVE TestUser
 DROP ACCOUNT TestUser
 DROP ROLE testRole
@@ -7,13 +53,14 @@ DROP ROLE testRole
 CREATE ACCOUNT TestUser WITH (Password = 'abc123!')
 CREATE ROLE TestRole WITH (IsAdministrator = false)
 
-ALTER ROLE TestRole ADD TestUser
+ALTER ROLE Administrators ADD admin
 
 GRANT Read ON PermissionTest to TestRole WITH (Recursive = True) --Select
 --DENY Write ON PermissionTest to TestRole WITH (Recursive = True) --Insert, update, delete
 --DENY Manage ON PermissionTest to TestRole WITH (Recursive = True) --Create, drop, create index, etc.
 
 --REVOKE ALL FROM PermissionTest to TestRole  --Create, drop, create index, etc.
+*/
 
 /*
 SELECT * FROM Master:Account

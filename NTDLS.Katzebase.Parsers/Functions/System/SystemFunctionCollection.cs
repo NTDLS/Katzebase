@@ -24,6 +24,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 "ShowHealthCounters()|'Displays the health counters that are tracked by the engine.'",
                 "ShowLocks(Numeric processId=null)|'Displays all locks, what type of lock and the object which has been locked. Optionally specifying a process id to filter by.'",
                 "ShowMemoryUtilization()|'Displays the operating system level memory utilization used by the database engine.'",
+                "ShowPolicy(string schemaName)|'Returns the policies for the given schema as they will be applied for the currently logged in account.'",
                 "ShowProcesses(numeric processId=null)|'Displays all active processes, their session ID, process ID and various transaction information. Optionally specifying a process id to filter on.'",
                 "ShowScalarFunctions()|'Displays the list of built-in scalar functions and their parameters.'",
                 "ShowSystemFunctions()|'Displays the list of built-in system functions and their parameters.'",

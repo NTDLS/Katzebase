@@ -42,6 +42,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+
+
+
                 var result = StaticSearcherProcessor.FindDocumentsByQuery(_core, transactionReference.Transaction, query);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
