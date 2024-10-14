@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -49,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "CreateAccount.kbs",
+                var result = transaction.ExecuteNonQuery("CreateAccount.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -74,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "DropAccount.kbs",
+                var result = transaction.ExecuteNonQuery("DropAccount.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -102,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "CreateRole.kbs",
+                var result = transaction.ExecuteNonQuery("CreateRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -127,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "DropRole.kbs",
+                var result = transaction.ExecuteNonQuery("DropRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -155,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "AddUserToRole.kbs",
+                var result = transaction.ExecuteNonQuery("AddUserToRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -180,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "RemoveUserFromRole.kbs",
+                var result = transaction.ExecuteNonQuery("RemoveUserFromRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -476,11 +477,46 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             policy.IsSet = true;
                         }
 
-                        var resulingPolicy = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
-                        writeCache[cacheKey] = resulingPolicy;
-                        return resulingPolicy;
+                        var resultingPolicy = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
+                        writeCache[cacheKey] = resultingPolicy;
+                        return resultingPolicy;
                     });
                 });
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Returns the realized security policy on the given schema foe the current account.
+        /// This result is cached.
+        /// </summary>
+        internal List<AccountPolicyDescriptor> GetSchemaSecurityPolicies(Transaction transaction, string schemaName)
+        {
+            try
+            {
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Stability);
+                var policyCatalog = _core.IO.GetJson<PhysicalPolicyCatalog>(transaction, physicalSchema.PolicyCatalogFileFilePath(), LockOperation.Read);
+                var roles = transaction.ExecuteQuery<KbRole>("GetRoles.kbs");
+
+                var result = new List<AccountPolicyDescriptor>();
+
+                foreach (var policy in policyCatalog.Collection)
+                {
+                    result.Add(new AccountPolicyDescriptor
+                    {
+                        InheritedFromRole = roles.FirstOrDefault(o => o.Id == policy.RoleId)?.Name ?? "<orphaned>",
+                        Permission = policy.Permission,
+                        Rule = policy.Rule,
+                        IsSet = true
+
+                    });
+                }
+
+                return result;
             }
             catch (Exception ex)
             {

@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 var apiResults = new KbQueryQueryExplainPlanReply();
 
-                session.SetCurrentQuery(param.Statement);
+                session.PushCurrentQuery(param.Statement);
 
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     apiResults.Add(apiResult);
                 }
 
-                session.ClearCurrentQuery();
+                session.PopCurrentQuery();
 
                 return apiResults;
             }
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 var apiResults = new KbQueryQueryExplainOperationReply();
 
-                session.SetCurrentQuery(param.Statement);
+                session.PushCurrentQuery(param.Statement);
 
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     apiResults.Add(apiResult);
                 }
 
-                session.ClearCurrentQuery();
+                session.PopCurrentQuery();
 
                 return apiResults;
             }
@@ -99,9 +99,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                session.SetCurrentQuery(param.Procedure.ProcedureName);
+                session.PushCurrentQuery(param.Procedure.ProcedureName);
                 var apiResults = (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session, param.Procedure);
-                session.ClearCurrentQuery();
+                session.PopCurrentQuery();
 
                 return apiResults;
             }
@@ -123,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 var apiResults = new KbQueryQueryExecuteQueryReply();
 
-                session.SetCurrentQuery(param.Statement);
+                session.PushCurrentQuery(param.Statement);
 
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     apiResults.Add(apiResult);
                 }
 
-                session.ClearCurrentQuery();
+                session.PopCurrentQuery();
 
                 return apiResults;
             }
@@ -154,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 var apiResults = new KbQueryQueryExecuteNonQueryReply();
 
-                session.SetCurrentQuery(param.Statement);
+                session.PushCurrentQuery(param.Statement);
 
                 var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
@@ -163,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     apiResults.Add(apiResult);
                 }
 
-                session.ClearCurrentQuery();
+                session.PopCurrentQuery();
 
                 return apiResults;
             }

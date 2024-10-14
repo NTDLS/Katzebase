@@ -1,6 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api;
-using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -57,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             AggregateFunctionCollection.Initialize();
         }
 
-        #region Internal helpers.
+        #region Internal-system query utilities.
 
         /// <summary>
         /// Creates an ephemeral system session, executes a query returning the first row and field object, then commits the transaction.
@@ -66,45 +64,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal T? SystemExecuteScalarAndCommit<T>(string queryText, object? userParameters = null) where T : new()
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-            using var system = _core.Sessions.CreateEphemeralSystemSession();
-            var result = SystemExecuteScalar<T>(system.Session, queryText, userParameters);
-            system.Commit();
+            using var ephemeral = _core.Sessions.CreateEphemeralSystemSession();
+            var result = ephemeral.Transaction.ExecuteScalar<T>(queryText, userParameters);
+            ephemeral.Commit();
             return result;
-        }
-
-        /// <summary>
-        /// Executes a query and returns the first row and field object.
-        /// Internal system usage only.
-        /// </summary>
-        internal T? SystemExecuteScalar<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
-        {
-            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-
-            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
-            if (queries.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
-            }
-            var results = _core.Query.ExecuteQuery(session, queries[0]);
-            if (queries.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException();
-            }
-
-            if (results.Collection.Count == 0)
-            {
-                return default;
-            }
-            else if (results.Collection[0].Rows.Count == 0)
-            {
-                return default;
-            }
-            else if (results.Collection[0].Rows[0].Values.Count == 0)
-            {
-                return default;
-            }
-
-            return Converters.ConvertToNullable<T>(results.Collection[0].RowValue(0, 0));
         }
 
         /// <summary>
@@ -114,37 +77,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal IEnumerable<T> SystemExecuteQueryAndCommit<T>(string queryText, object? userParameters = null) where T : new()
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-            using var system = _core.Sessions.CreateEphemeralSystemSession();
-            var result = SystemExecuteQuery<T>(system.Session, queryText, userParameters);
-            system.Commit();
+            using var ephemeral = _core.Sessions.CreateEphemeralSystemSession();
+            var result = ephemeral.Transaction.ExecuteQuery<T>(queryText, userParameters);
+            ephemeral.Commit();
             return result;
-        }
-
-        /// <summary>
-        /// Executes a query and returns the mapped object.
-        /// Internal system usage only.
-        /// </summary>
-        internal IEnumerable<T> SystemExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
-        {
-            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-
-            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
-            if (queries.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
-            }
-            var results = _core.Query.ExecuteQuery(session, queries[0]);
-            if (queries.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException();
-            }
-
-            if (results.Collection.Count == 0)
-            {
-                return new List<T>();
-            }
-
-            return results.Collection[0].MapTo<T>();
         }
 
         /// <summary>
@@ -154,32 +90,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal KbQueryResultCollection SystemExecuteAndCommitNonQuery(string queryText, object? userParameters = null)
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-            using var system = _core.Sessions.CreateEphemeralSystemSession();
-            var result = SystemExecuteNonQuery(system.Session, queryText, userParameters);
-            system.Commit();
+            using var ephemeral = _core.Sessions.CreateEphemeralSystemSession();
+            var result = ephemeral.Transaction.ExecuteNonQuery(queryText, userParameters);
+            ephemeral.Commit();
             return result;
-        }
-
-        /// <summary>
-        /// Executes a query without a result.
-        /// Internal system usage only.
-        /// </summary>
-        internal KbQueryResultCollection SystemExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
-        {
-            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
-
-            var results = new KbQueryResultCollection();
-
-            session.SetCurrentQuery(queryText);
-
-            foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
-            {
-                results.Add(_core.Query.ExecuteQuery(session, query));
-            }
-
-            session.ClearCurrentQuery();
-
-            return results;
         }
 
         #endregion
