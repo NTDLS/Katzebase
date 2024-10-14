@@ -18,6 +18,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         #region Public properties.
 
+        /// <summary>
+        /// Whether the tokenizer should skip a delimiter when it is encountered. Note that whitespace is always skipped.
+        /// </summary>
+        public bool SkipDelimiter { get; set; } = true;
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
         public bool IsExhausted() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
@@ -90,7 +94,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             {
                 if (delimiters.Contains(_text[_caret]) == true)
                 {
-                    _caret++; //skip the delimiter.
+                    if (SkipDelimiter)
+                    {
+                        _caret++;
+                    }
                     break;
                 }
 
@@ -119,7 +126,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             {
                 if (_standardTokenDelimiters.Contains(_text[_caret]) == true)
                 {
-                    _caret++; //skip the delimiter.
+                    if (SkipDelimiter)
+                    {
+                        _caret++;
+                    }
                     break;
                 }
 
@@ -152,7 +162,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (delimiters.Contains(_text[_caret]) == true)
                 {
                     outStoppedAtDelimiter = _text[_caret];
-                    _caret++; //skip the delimiter.
+                    if (SkipDelimiter)
+                    {
+                        _caret++;
+                    }
                     break;
                 }
 
@@ -184,7 +197,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (delimiters.Contains(_text[_caret]) == true)
                 {
                     outStoppedAtDelimiter = _text[_caret];
-                    _caret++; //skip the delimiter.
+                    if (SkipDelimiter)
+                    {
+                        _caret++;
+                    }
                     break;
                 }
 
@@ -216,7 +232,10 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (_standardTokenDelimiters.Contains(_text[_caret]) == true)
                 {
                     outStoppedAtDelimiter = _text[_caret];
-                    _caret++; //skip the delimiter.
+                    if (SkipDelimiter)
+                    {
+                        _caret++;
+                    }
                     break;
                 }
 

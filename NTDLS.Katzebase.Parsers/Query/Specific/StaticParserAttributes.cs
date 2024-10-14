@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Parsers.Query.Specific
 {
-    public static class StaticParserAttributes
+    internal static class StaticParserAttributes
     {
         /// <summary>
         /// Parses "with options" and returns the dictionary of values that can be added to a prepared query.

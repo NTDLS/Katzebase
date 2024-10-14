@@ -1,0 +1,13 @@
+CREATE SCHEMA TestData
+
+-- Table: Person
+CREATE SCHEMA TestData:Person
+
+-- Table: Address (1-to-1 relationship with Person)
+CREATE SCHEMA TestData:Address
+
+-- Table: Order (1-to-many relationship with Person)
+CREATE SCHEMA TestData:SalesOrder
+
+-- Table: SalesOrderItem (1-to-many relationship with SalesOrder)
+CREATE SCHEMA TestData:SalesOrderItem

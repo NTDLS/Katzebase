@@ -6,10 +6,7 @@ using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Api.KbConstants;
-
-[assembly: InternalsVisibleTo("NTDLS.Katzebase.Engine.Tests")]
 
 namespace NTDLS.Katzebase.Engine
 {

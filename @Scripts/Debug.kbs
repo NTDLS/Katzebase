@@ -1,15 +1,3 @@
---Get Total Amount Spent by Each Person
-SELECT
-	p.PersonID--, p.FirstName, p.LastName
-	--, SUM(o.TotalAmount) AS TotalSpent
-FROM
-	TestData:Person as p
-INNER JOIN TestData:SalesOrder as o
-	ON p.PersonID = o.PersonID
-GROUP BY
-	p.PersonID
-	--, p.FirstName, p.LastName
-
 /*
 CREATE SCHEMA TestData
 
@@ -58,7 +46,7 @@ INSERT INTO TestData:SalesOrderItem (OrderItemID, OrderID, ProductName, Quantity
 (7, 6, 'Keyboard', 1, 50.00)
 */
 
-/*
+
 --Get All Persons and Their Addresses (1-to-1 Relationship)
 SELECT
 	p.PersonID, p.FirstName, p.LastName, a.Street, a.City, a.State, a.ZipCode
@@ -85,17 +73,65 @@ INNER JOIN TestData:SalesOrder as o
 
 --Get Total Amount Spent by Each Person
 SELECT
-	p.PersonID, p.FirstName, p.LastName
-	--, SUM(o.TotalAmount) AS TotalSpent
+	p.PersonID,
+	p.FirstName,
+	p.LastName,
+	Count(o.TotalAmount) AS OrdersCount,
+	SUM(o.TotalAmount) AS TotalSpent
 FROM
 	TestData:Person as p
 INNER JOIN TestData:SalesOrder as o
 	ON p.PersonID = o.PersonID
---GROUP BY
-	--p.PersonID, p.FirstName, p.LastName
-*/
+GROUP BY
+	p.PersonID, p.FirstName, p.LastName
 
---select * from Single
+--Not yet implemented.
+SELECT
+	p.PersonID, p.FirstName, p.LastName
+FROM
+	TestData:Person as p
+OUTER JOIN TestData:SalesOrder as o
+	ON o.PersonID = p.PersonID
+WHERE
+	o.OrderID IS NULL
+
+--Get All Orders and Their Items (1-to-Many Relationship)
+SELECT
+	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID
+
+--Get the Number of Orders Placed by Each Person
+SELECT
+	p.PersonID, p.FirstName, p.LastName, COUNT(o.OrderID) AS OrderCount
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON o.PersonID = p.PersonID
+GROUP BY
+	p.PersonID, p.FirstName, p.LastName
+
+--Get Total Quantity of Items Ordered per Order
+SELECT
+	o.OrderID, SUM(oi.Quantity) AS TotalItems
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID
+GROUP BY
+	o.OrderID
+	
+--Get Orders and Items for a Specific Person
+SELECT
+	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID 
+WHERE
+	o.PersonID = 1 -- Change to the desired PersonID
 
 /*
 exec ShowMySchemaPolicy('PermissionTest:SchemaB:SubSchemaA')

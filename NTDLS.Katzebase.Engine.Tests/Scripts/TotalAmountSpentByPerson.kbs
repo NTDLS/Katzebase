@@ -1,0 +1,23 @@
+--Get Total Amount Spent by Each Person
+SELECT
+	p.PersonID,
+	p.FirstName,
+	p.LastName,
+	Count(o.TotalAmount) AS OrdersCount,
+	SUM(o.TotalAmount) AS TotalSpent
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON p.PersonID = o.PersonID
+GROUP BY
+	p.PersonID, p.FirstName, p.LastName
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+PersonID	FirstName	LastName	OrdersCount	TotalSpent
+1	John	Doe	2	370.85
+2	Jane	Smith	1	99.99
+3	Emily	Johnson	1	305.6
+4	Michael	Brown	2	255.4
+}
+*/

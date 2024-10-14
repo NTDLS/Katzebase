@@ -1,0 +1,19 @@
+--Get All Person with Orders Details (Many-to-1 Relationship)
+SELECT
+	o.OrderID, p.FirstName, p.LastName, o.OrderDate, o.TotalAmount
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON p.PersonID = o.PersonID
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+OrderID	FirstName	LastName	OrderDate	TotalAmount
+1	John	Doe	2024-01-01	150.75
+3	Jane	Smith	2024-01-07	99.99
+2	John	Doe	2024-01-05	220.10
+4	Emily	Johnson	2024-01-10	305.60
+5	Michael	Brown	2024-01-12	180.40
+6	Michael	Brown	2024-01-15	75.00
+}
+*/

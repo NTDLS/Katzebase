@@ -1,0 +1,19 @@
+--Get the Number of Orders Placed by Each Person
+SELECT
+	p.PersonID, p.FirstName, p.LastName, COUNT(o.OrderID) AS OrderCount
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON o.PersonID = p.PersonID
+GROUP BY
+	p.PersonID, p.FirstName, p.LastName
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+PersonID	FirstName	LastName	OrderCount	
+1	John	Doe	2	
+2	Jane	Smith	1	
+3	Emily	Johnson	1	
+4	Michael	Brown	2	
+}
+*/

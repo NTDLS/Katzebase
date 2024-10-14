@@ -1,3 +1,5 @@
+using NTDLS.Katzebase.Engine.Tests.Helpers;
+
 namespace NTDLS.Katzebase.Engine.Tests
 {
     public class EngineCoreTests : IClassFixture<EngineCoreFixture>
@@ -34,6 +36,20 @@ namespace NTDLS.Katzebase.Engine.Tests
             Assert.Equal("Hello World", firstResult.Value(0, "Element4"));
             Assert.Equal("Text20", firstResult.Value(0, "Element5"));
             Assert.Equal("20Text", firstResult.Value(0, "Element6"));
+        }
+
+        [Fact]
+        public void TestBasicQueries()
+        {
+            QueryExpectation.ValidateScriptResults(_engine, "NumberOfOrdersPlacedByEachPerson.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "OrdersAndItemsForSpecificPerson.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "OrdersAndTheirItems.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "OrdersWithPersonDetails.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "PersonsAndTheirAddresses.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "PersonsWithoutOrders.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "PersonWithOrdersDetails.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "TotalAmountSpentByPerson.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "TotalQuantityOfItemsOrderedPerOrder.kbs");
         }
 
         [Fact]

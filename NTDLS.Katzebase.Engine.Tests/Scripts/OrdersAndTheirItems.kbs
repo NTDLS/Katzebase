@@ -1,0 +1,20 @@
+--Get All Orders and Their Items (1-to-Many Relationship)
+SELECT
+	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+OrderID	OrderDate	OrderItemID	ProductName	Quantity	Price
+1	2024-01-01	1	Laptop	1	150.75
+2	2024-01-05	2	Monitor	2	110.05
+3	2024-01-07	3	Headphones	1	99.99
+5	2024-01-12	5	Chair	1	180.40
+4	2024-01-10	4	Desk	1	305.60
+6	2024-01-15	6	Mouse	1	25.00
+6	2024-01-15	7	Keyboard	1	50.00
+}
+*/

@@ -1,0 +1,17 @@
+--Get Orders and Items for a Specific Person
+SELECT
+	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID 
+WHERE
+	o.PersonID = @PersonId
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+OrderID	OrderDate	OrderItemID	ProductName	Quantity	Price
+1	2024-01-01	1	Laptop	1	150.75
+2	2024-01-05	2	Monitor	2	110.05
+}
+*/

@@ -1,0 +1,21 @@
+--Get Total Quantity of Items Ordered per Order
+SELECT
+	o.OrderID, SUM(oi.Quantity) AS TotalItems
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:SalesOrderItem as oi
+	ON oi.OrderID = o.OrderID
+GROUP BY
+	o.OrderID
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+OrderID	TotalItems
+1	1
+2	2
+3	1
+4	1
+5	1
+6	2
+}
+*/
