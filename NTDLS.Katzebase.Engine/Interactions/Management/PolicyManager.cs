@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -331,6 +332,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
+        internal void EnforceSchemaPolicy(Transaction transaction, string schemaName, SecurityPolicyPermission requiredPermission)
+        {
+            var heldPermissions = GetCurrentAccountSchemaPermission(transaction, schemaName);
+            if (!heldPermissions.Any(o => o.Value.Permission == requiredPermission))
+            {
+                throw new KbPermissionNotHeld($"Permission not held: [{requiredPermission}] on [{schemaName}]");
+            }
+        }
+
+        internal void EnforceAdministratorPolicy(Transaction transaction)
+        {
+            if (!transaction.Session.Roles.Any(o => o.IsAdministrator))
+            {
+                throw new KbPermissionNotHeld($"Permission not held: [Administrator]");
+            }
+        }
+
         /// <summary>
         /// Test schema permission cache.
         /// </summary>
@@ -410,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         var policy = applicablePolicies[applicablePolicy.Key];
                                         policy.Rule = SecurityPolicyRule.Deny;
                                         policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == deniedByRole.RoleId).Name;
-                                        policy.InheritedFromSchema = physicalSchema.Name;
+                                        policy.InheritedFromSchema = physicalSchema.VirtualPath;
                                         policy.IsSet = true;
                                     }
                                     else if (grantedByRole != null)
@@ -419,7 +437,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         var policy = applicablePolicies[applicablePolicy.Key];
                                         policy.Rule = SecurityPolicyRule.Grant;
                                         policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == grantedByRole.RoleId).Name;
-                                        policy.InheritedFromSchema = physicalSchema.Name;
+                                        policy.InheritedFromSchema = physicalSchema.VirtualPath;
                                         policy.IsSet = true;
                                     }
                                     else

@@ -1,4 +1,6 @@
-﻿using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
@@ -39,20 +41,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var schemaName = query.Schemas.Single().Name;
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                var roleId = _core.Query.ExecuteScalar<Guid?>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
                 systemSession.Commit();
 
-                var results = _core.Policy.GrantRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
+                if (roleId == null)
+                {
+                    throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
+                }
+
+                var results = _core.Policy.GrantRole(transactionReference.Transaction, schemaName, roleId.EnsureNotNull(), permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -70,20 +76,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var schemaName = query.Schemas.Single().Name;
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                var roleId = _core.Query.ExecuteScalar<Guid?>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
                 systemSession.Commit();
 
-                var results = _core.Policy.DenyRole(transactionReference.Transaction, schemaName, roleId, permission, isRecursive);
+                if (roleId == null)
+                {
+                    throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
+                }
+
+                var results = _core.Policy.DenyRole(transactionReference.Transaction, schemaName, roleId.EnsureNotNull(), permission, isRecursive);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -101,19 +111,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var schemaName = query.Schemas.Single().Name;
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-                var roleId = _core.Query.ExecuteScalar<Guid>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
+                var roleId = _core.Query.ExecuteScalar<Guid?>(systemSession.Session, EmbeddedScripts.Load("GetRoleId.kbs"), new
                 {
                     Name = roleName
                 });
                 systemSession.Commit();
 
-                var results = _core.Policy.RevokeRole(transactionReference.Transaction, schemaName, roleId, permission);
+                if (roleId == null)
+                {
+                    throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
+                }
+
+                var results = _core.Policy.RevokeRole(transactionReference.Transaction, schemaName, roleId.EnsureNotNull(), permission);
                 return transactionReference.CommitAndApplyMetricsNonQuery(results);
             }
             catch (Exception ex)
@@ -135,7 +149,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
 
                 var results = _core.Policy.DropRole(transactionReference.Transaction, roleName);
@@ -156,7 +169,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var IsAdministrator = query.GetAttribute(PreparedQuery.Attribute.IsAdministrator, false);
 
@@ -229,7 +241,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
@@ -251,7 +262,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
-
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 

@@ -2,7 +2,11 @@
 
 exec ShowMySchemaPolicy('PermissionTest:SchemaB:SubSchemaA')
 
-exec RefreshMyRoles
+deny write on PermissionTest:SchemaB to Default with (recursive = true)
+
+revoke all on PermissionTest:SchemaB from Default
+
+--exec RefreshMyRoles
 
 --GRANT ALL ON : to Default WITH (Recursive = True)
 

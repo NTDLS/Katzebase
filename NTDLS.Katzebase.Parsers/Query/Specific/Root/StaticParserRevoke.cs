@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 
             query.AddAttribute(PreparedQuery.Attribute.SecurityPolicyPermission, tokenizer.EatIfNextEnum<SecurityPolicyPermission>());
 
-            tokenizer.EatIfNext("from");
+            tokenizer.EatIfNext("on");
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
 
-            tokenizer.EatIfNext("to");
+            tokenizer.EatIfNext("from");
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var roleName) == false)
             {
