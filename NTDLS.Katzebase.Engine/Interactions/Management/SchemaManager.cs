@@ -101,43 +101,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             if (doesMasterSchemaExist == false)
             {
                 LogManager.Information("Initializing master schema.");
-                using (var system = _core.Sessions.CreateEphemeralSystemSession())
-                {
-                    _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateMasterSchema.kbs"));
-                    system.Commit();
-                }
-
-                using (var system = _core.Sessions.CreateEphemeralSystemSession())
-                {
-                    _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateDefaultUsersAndRoles.kbs"));
-                    system.Commit();
-                }
+                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateMasterSchema.kbs"));
+                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateDefaultUsersAndRoles.kbs"));
+                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateSingleSchema.kbs"));
+                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("InitializeSingleSchema.kbs"));
             }
 
             LogManager.Information("Initializing ephemeral schemas.");
-            RecycleEphemeralSchemas();
-        }
-
-        public void RecycleEphemeralSchemas()
-        {
-            using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-
-            //Drop and create "Temporary" schema.
-            if (AcquireVirtual(systemSession.Transaction, "Temporary", LockOperation.Read, LockOperation.Stability).Exists)
-            {
-                Drop(systemSession.Transaction, "Temporary");
-            }
-            CreateSingleSchema(systemSession.Transaction, "Temporary");
-
-            //Drop and create "Single" schema (then insert a single row).
-            if (AcquireVirtual(systemSession.Transaction, "Single", LockOperation.Read, LockOperation.Stability).Exists)
-            {
-                Drop(systemSession.Transaction, "Single");
-            }
-            CreateSingleSchema(systemSession.Transaction, "Single");
-            _core.Documents.InsertDocument(systemSession.Transaction, "Single", "{ephemeral: null}");
-
-            systemSession.Commit();
+            _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("DropCreateTemporarySchema.kbs"));
+            _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("InitializeSingleSchema.kbs"));
         }
 
         internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)

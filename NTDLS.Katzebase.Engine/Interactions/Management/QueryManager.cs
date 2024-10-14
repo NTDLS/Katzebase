@@ -117,6 +117,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
         /// </summary>
+        internal KbQueryResultCollection ExecuteAndCommitNonQuery(string queryText, object? userParameters = null)
+        {
+            using var system = _core.Sessions.CreateEphemeralSystemSession();
+            var result = ExecuteNonQuery(system.Session, queryText, userParameters);
+            system.Commit();
+            return result;
+        }
+
+        /// <summary>
+        /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
+        /// </summary>
         internal KbQueryResultCollection ExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
         {
             var results = new KbQueryResultCollection();
