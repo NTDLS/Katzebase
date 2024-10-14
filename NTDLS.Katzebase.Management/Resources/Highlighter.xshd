@@ -86,6 +86,7 @@
       <Word>ShowMySchemaPolicy</Word>
       <Word>ShowProcesses</Word>
       <Word>ShowScalarFunctions</Word>
+      <Word>ShowSchemaPolicy</Word>
       <Word>ShowSystemAggregateFunctions</Word>
       <Word>ShowSystemFunctions</Word>
       <Word>ShowThreadPools</Word>

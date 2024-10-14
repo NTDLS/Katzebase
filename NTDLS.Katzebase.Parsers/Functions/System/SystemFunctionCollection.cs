@@ -28,6 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 "ShowMySchemaPolicy(string schemaName)|false|'Returns the policies for the given schema as they will be applied for the currently logged in account.'",
                 "ShowProcesses(numeric processId=null)|true|'Displays all active processes, their session ID, process ID and various transaction information. Optionally specifying a process id to filter on.'",
                 "ShowScalarFunctions()|false|'Displays the list of built-in scalar functions and their parameters.'",
+                "ShowSchemaPolicy(string schemaName)|false|'Returns the policies defined for a specific schema.'",
                 "ShowSystemFunctions()|false|'Displays the list of built-in system functions and their parameters.'",
                 "ShowThreadPools()|true|'Displays thread pool performance metrics.'",
                 "ShowTransactions(Numeric processId=null)|true|'Displays all transactions that are current active. Optionally specifying a process id.'",

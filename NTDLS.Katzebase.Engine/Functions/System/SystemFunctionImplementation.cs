@@ -33,6 +33,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showlocks" => SystemShowLocks.Execute(core, transaction, function),
                 "showmemoryutilization" => SystemShowMemoryUtilization.Execute(core, transaction, function),
                 "showmyschemapolicy" => SystemShowMySchemaPolicy.Execute(core, transaction, function),
+                "showschemapolicy" => SystemShowSchemaPolicy.Execute(core, transaction, function),
                 "showprocesses" => SystemShowProcesses.Execute(core, transaction, function),
                 "showscalarfunctions" => SystemShowScalarFunctions.Execute(core, transaction, function),
                 "showsystemfunctions" => SystemShowSystemFunctions.Execute(core, transaction, function),

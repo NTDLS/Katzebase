@@ -155,3 +155,7 @@ NTDLS.Katzebase.Management/obj/
 NTDLS.Katzebase.PersistentTypes/bin/
 
 NTDLS.Katzebase.PersistentTypes/obj/
+
+*.cache
+
+NTDLS.Katzebase.Engine.Tests/obj/

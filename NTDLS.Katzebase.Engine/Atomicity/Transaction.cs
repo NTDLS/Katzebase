@@ -1,13 +1,17 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Helpers;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Interfaces;
+using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Api.KbConstants;
@@ -90,6 +94,92 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Any temporary schemas that have been created in this transaction.
         /// </summary>
         public OptimisticCriticalResource<HashSet<string>> TemporarySchemas { get; private set; } = new();
+
+        #endregion
+
+        #region Internal-system query utilities.
+
+        /// <summary>
+        /// Executes a query and returns the mapped object.
+        /// Internal system usage only.
+        /// </summary>
+        internal IEnumerable<T> ExecuteQuery<T>(string queryText, object? userParameters = null) where T : new()
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+
+            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            var results = _core.Query.ExecuteQuery(Session, queries[0]);
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException();
+            }
+
+            if (results.Collection.Count == 0)
+            {
+                return new List<T>();
+            }
+
+            return results.Collection[0].MapTo<T>();
+        }
+
+        /// <summary>
+        /// Executes a query without a result.
+        /// Internal system usage only.
+        /// </summary>
+        internal KbQueryResultCollection ExecuteNonQuery(string queryText, object? userParameters = null)
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+            var results = new KbQueryResultCollection();
+            Session.PushCurrentQuery(queryText);
+
+            foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
+            {
+                results.Add(_core.Query.ExecuteQuery(Session, query));
+            }
+
+            Session.PopCurrentQuery();
+
+            return results;
+        }
+
+        /// <summary>
+        /// Executes a query and returns the first row and field object.
+        /// Internal system usage only.
+        /// </summary>
+        internal T? ExecuteScalar<T>(string queryText, object? userParameters = null) where T : new()
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+
+            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            var results = _core.Query.ExecuteQuery(Session, queries[0]);
+            if (queries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException();
+            }
+
+            if (results.Collection.Count == 0)
+            {
+                return default;
+            }
+            else if (results.Collection[0].Rows.Count == 0)
+            {
+                return default;
+            }
+            else if (results.Collection[0].Rows[0].Values.Count == 0)
+            {
+                return default;
+            }
+
+            return Converters.ConvertToNullable<T>(results.Collection[0].RowValue(0, 0));
+        }
 
         #endregion
 
