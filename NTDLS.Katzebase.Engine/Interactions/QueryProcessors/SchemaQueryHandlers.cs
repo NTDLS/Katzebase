@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 string schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 string schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 

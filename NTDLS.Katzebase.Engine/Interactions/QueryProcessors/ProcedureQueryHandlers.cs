@@ -131,8 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 {
                     if (SystemFunctionCollection.TryGetFunction(objectName, out var systemFunction))
                     {
-
-                        #region EnforceSchemaPolicy.
+                        #region Security policy enforcment.
 
                         if (systemFunction.RequiresAdministrator)
                         {

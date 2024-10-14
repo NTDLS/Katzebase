@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var targetSchema = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaName);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var targetSchema = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaName);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -230,7 +230,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var targetSchemaAlias = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -285,7 +285,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Read);
 
@@ -310,7 +310,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Write);
 
@@ -336,7 +336,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var result = new KbQueryExplain();
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -377,7 +377,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var result = new KbQueryExplain();
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {
@@ -413,7 +413,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var targetSchemaAlias = query.GetAttribute<string>(PreparedQuery.Attribute.TargetSchemaAlias);
                 var targetSchema = query.Schemas.Where(o => o.Alias.Is(targetSchemaAlias)).Single();
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 foreach (var schema in query.Schemas)
                 {

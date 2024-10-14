@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 

@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
 
@@ -171,7 +171,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
@@ -198,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
@@ -230,7 +230,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
@@ -289,7 +289,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
@@ -317,7 +317,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                #region EnforceSchemaPolicy.
+                #region Security policy enforcment.
 
                 _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
 
