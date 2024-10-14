@@ -7,6 +7,15 @@ namespace NTDLS.Katzebase.Engine.Scripts
     {
         private static readonly MemoryCache _cache = new("ManagedDataStorageInstance");
 
+        public static string GetScriptOrLoadFile(string textOrFile)
+        {
+            if (textOrFile.EndsWith(".kbs", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return Load(textOrFile);
+            }
+            return textOrFile;
+        }
+
         public static string Load(string scriptNameOrText)
         {
             string cacheKey = $":{scriptNameOrText.ToLowerInvariant()}".Replace('.', ':').Replace('\\', ':').Replace('/', ':');

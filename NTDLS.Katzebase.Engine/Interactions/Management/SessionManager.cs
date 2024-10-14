@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -60,16 +59,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             if (username != BuiltInSystemUserName)
             {
-                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
                 //Get the user roles so they can be assigned to the session.
-                var userRoles = _core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"),
+                var userRoles = _core.Query.SystemExecuteQueryAndCommit<KbRole>("AccountRoles.kbs",
                     new
                     {
                         Username = username
                     });
 
                 roles.AddRange(userRoles);
-                systemSession.Commit();
             }
 
             return _collection.Write((obj) =>

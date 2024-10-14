@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Security;
 using NTDLS.Katzebase.PersistentTypes.Policy;
 using NTDLS.Semaphore;
@@ -50,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "CreateAccount.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -75,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropAccount.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "DropAccount.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -103,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "CreateRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -128,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropRole.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "DropRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -156,7 +155,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "AddUserToRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),
@@ -181,7 +180,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
+                var result = _core.Query.SystemExecuteNonQuery(transaction.Session, "RemoveUserFromRole.kbs",
                     new
                     {
                         Id = Guid.NewGuid(),

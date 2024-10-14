@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Parsers.Functions.System;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
@@ -13,9 +12,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var results = new KbQueryResultCollection();
             var result = results.AddNew();
 
-            using var systemSession = core.Sessions.CreateEphemeralSystemSession();
-
-            transaction.Session.Roles = core.Query.ExecuteQuery<KbRole>(systemSession.Session, EmbeddedScripts.Load("AccountRoles.kbs"),
+            transaction.Session.Roles = core.Query.SystemExecuteQuery<KbRole>(transaction.Session, "AccountRoles.kbs",
                 new
                 {
                     Username = transaction.Session.Username
@@ -26,9 +23,6 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var message = $"{role.Name}" + (role.IsAdministrator ? " (Administrator)" : "");
                 result.Messages.Add(new KbQueryResultMessage(message, Api.KbConstants.KbMessageType.User));
             }
-
-
-            systemSession.Commit();
 
             return results;
         }

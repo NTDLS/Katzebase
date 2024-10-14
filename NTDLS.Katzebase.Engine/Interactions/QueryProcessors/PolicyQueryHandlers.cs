@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
@@ -53,10 +52,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.ExecuteScalar<Guid?>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
-                {
-                    Name = roleName
-                });
+                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                    new
+                    {
+                        Name = roleName
+                    });
 
                 if (roleId == null)
                 {
@@ -93,10 +93,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.ExecuteScalar<Guid?>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
-                {
-                    Name = roleName
-                });
+                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                    new
+                    {
+                        Name = roleName
+                    });
 
                 if (roleId == null)
                 {
@@ -132,10 +133,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
 
-                var roleId = _core.Query.ExecuteScalar<Guid?>(session, EmbeddedScripts.Load("GetRoleId.kbs"), new
-                {
-                    Name = roleName
-                });
+                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                    new
+                    {
+                        Name = roleName
+                    });
 
                 if (roleId == null)
                 {

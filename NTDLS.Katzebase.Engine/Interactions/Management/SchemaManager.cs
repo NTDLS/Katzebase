@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Policy;
@@ -101,15 +100,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             if (doesMasterSchemaExist == false)
             {
                 LogManager.Information("Initializing master schema.");
-                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateMasterSchema.kbs"));
-                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateDefaultUsersAndRoles.kbs"));
-                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("CreateSingleSchema.kbs"));
-                _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("InitializeSingleSchema.kbs"));
+                _core.Query.SystemExecuteAndCommitNonQuery("CreateMasterSchema.kbs");
+                _core.Query.SystemExecuteAndCommitNonQuery("CreateDefaultUsersAndRoles.kbs");
+                _core.Query.SystemExecuteAndCommitNonQuery("CreateSingleSchema.kbs");
+                _core.Query.SystemExecuteAndCommitNonQuery("InitializeSingleSchema.kbs");
             }
 
             LogManager.Information("Initializing ephemeral schemas.");
-            _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("DropCreateTemporarySchema.kbs"));
-            _core.Query.ExecuteAndCommitNonQuery(EmbeddedScripts.Load("InitializeSingleSchema.kbs"));
+            _core.Query.SystemExecuteAndCommitNonQuery("DropAndCreateTemporarySchema.kbs");
+            _core.Query.SystemExecuteAndCommitNonQuery("InitializeTemporarySchema.kbs");
         }
 
         internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)

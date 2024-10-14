@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
@@ -59,10 +60,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Internal helpers.
 
         /// <summary>
-        /// Executes a query and returns the first row and field object.
+        /// Creates an ephemeral system session, executes a query returning the first row and field object, then commits the transaction.
+        /// Internal system usage only.
         /// </summary>
-        internal T? ExecuteScalar<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        internal T? SystemExecuteScalarAndCommit<T>(string queryText, object? userParameters = null) where T : new()
         {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+            using var system = _core.Sessions.CreateEphemeralSystemSession();
+            var result = SystemExecuteScalar<T>(system.Session, queryText, userParameters);
+            system.Commit();
+            return result;
+        }
+
+        /// <summary>
+        /// Executes a query and returns the first row and field object.
+        /// Internal system usage only.
+        /// </summary>
+        internal T? SystemExecuteScalar<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+
             var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (queries.Count > 1)
             {
@@ -91,10 +108,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Executes a query and returns the mapped object.
+        /// Creates an ephemeral system session, executes a query returning the mapped object, then commits the transaction.
+        /// Internal system usage only.
         /// </summary>
-        internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        internal IEnumerable<T> SystemExecuteQueryAndCommit<T>(string queryText, object? userParameters = null) where T : new()
         {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+            using var system = _core.Sessions.CreateEphemeralSystemSession();
+            var result = SystemExecuteQuery<T>(system.Session, queryText, userParameters);
+            system.Commit();
+            return result;
+        }
+
+        /// <summary>
+        /// Executes a query and returns the mapped object.
+        /// Internal system usage only.
+        /// </summary>
+        internal IEnumerable<T> SystemExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+
             var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (queries.Count > 1)
             {
@@ -115,21 +148,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
+        /// Creates an ephemeral system session, executes a query without a result, then commits the transaction.
+        /// Internal system usage only.
         /// </summary>
-        internal KbQueryResultCollection ExecuteAndCommitNonQuery(string queryText, object? userParameters = null)
+        internal KbQueryResultCollection SystemExecuteAndCommitNonQuery(string queryText, object? userParameters = null)
         {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
             using var system = _core.Sessions.CreateEphemeralSystemSession();
-            var result = ExecuteNonQuery(system.Session, queryText, userParameters);
+            var result = SystemExecuteNonQuery(system.Session, queryText, userParameters);
             system.Commit();
             return result;
         }
 
         /// <summary>
-        /// Executes a query without a result. This function is designed to be used internally and will happily parse a batch unlike the internal ExecuteQuery().
+        /// Executes a query without a result.
+        /// Internal system usage only.
         /// </summary>
-        internal KbQueryResultCollection ExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
+        internal KbQueryResultCollection SystemExecuteNonQuery(SessionState session, string queryText, object? userParameters = null)
         {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+
             var results = new KbQueryResultCollection();
 
             session.SetCurrentQuery(queryText);

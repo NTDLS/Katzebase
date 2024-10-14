@@ -30,7 +30,7 @@
     <None Remove="Scripts\CreateRole.kbs" />
     <None Remove="Scripts\CreateSingleSchema.kbs" />
     <None Remove="Scripts\DropAccount.kbs" />
-    <None Remove="Scripts\DropCreateTemporarySchema.kbs" />
+    <None Remove="Scripts\DropAndCreateTemporarySchema.kbs" />
     <None Remove="Scripts\DropRole.kbs" />
     <None Remove="Scripts\GetRoleId.kbs" />
     <None Remove="Scripts\InitializeSingleSchema.kbs" />
@@ -52,7 +52,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\CreateDefaultUsersAndRoles.kbs" />
     <EmbeddedResource Include="Scripts\InitializeTemporarySchema.kbs" />
-    <EmbeddedResource Include="Scripts\DropCreateTemporarySchema.kbs" />
+    <EmbeddedResource Include="Scripts\DropAndCreateTemporarySchema.kbs" />
     <EmbeddedResource Include="Scripts\InitializeSingleSchema.kbs" />
     <EmbeddedResource Include="Scripts\CreateSingleSchema.kbs" />
     <EmbeddedResource Include="Scripts\CreateMasterSchema.kbs" />

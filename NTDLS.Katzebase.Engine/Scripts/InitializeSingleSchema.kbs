@@ -1,2 +1,2 @@
-INSERT INTO SINGLE (ephemeral:null)
-GRANT READ ON Single TO DEFAULT
+INSERT INTO SINGLE (value:null)
+GRANT READ ON Single TO Default

@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Scripts.Models;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
@@ -66,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     return apiResults;
                 }
 #endif
-                var account = _core.Query.ExecuteQuery<AccountLogin>(systemSession.Session, EmbeddedScripts.Load("AccountLogin.kbs"),
+                var account = _core.Query.SystemExecuteQuery<AccountLogin>(systemSession.Session, "AccountLogin.kbs",
                     new
                     {
                         param.Username,
