@@ -1,1 +1,1 @@
-GRANT ALL ON Temporary TO Default
+GRANT ALL ON Temporary TO Default WITH (Recursive = true)

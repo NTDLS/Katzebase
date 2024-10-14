@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -38,6 +39,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Read);
+
+                #endregion
+
                 var nativeResults = StaticSearcherProcessor.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentSampleReply()
@@ -72,6 +80,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Read);
+
+                #endregion
+
                 var nativeResults = StaticSearcherProcessor.ListSchemaDocuments(
                     _core, transactionReference.Transaction, param.Schema, param.Count);
 
@@ -108,6 +123,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Write);
+
+                #endregion
 
                 var apiResults = new KbQueryDocumentStoreReply()
                 {

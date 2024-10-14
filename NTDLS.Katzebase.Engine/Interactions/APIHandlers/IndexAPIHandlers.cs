@@ -38,6 +38,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var physicalIndex = indexCatalog.GetByName(param.IndexName);
@@ -66,6 +73,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
 
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 var apiResults = new KbQueryIndexListReply();
@@ -98,6 +111,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 bool doesIndexExist = indexCatalog.GetByName(param.IndexName) != null;
@@ -123,6 +143,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 _core.Indexes.CreateIndex(transactionReference.Transaction, param.Schema, param.Index, out Guid newId);
 
                 var apiResults = new KbQueryIndexCreateReply(newId);
@@ -146,6 +173,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName, param.NewPartitionCount);
                 var apiResults = new KbQueryIndexRebuildReply();
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
@@ -167,6 +201,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 _core.Indexes.DropIndex(transactionReference.Transaction, param.Schema, param.IndexName);
                 var apiResults = new KbQueryIndexDropReply();
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);

@@ -40,6 +40,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Read);
+
+                #endregion
+
+
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var apiResults = new KbQuerySchemaListReply();
@@ -80,6 +88,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
 
@@ -115,6 +130,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Read);
+
+                #endregion
+
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
                 bool doesSchemaExists = false;
@@ -158,6 +180,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var segments = param.Schema.Split(':');
                 var parentSchemaName = segments[^1];
 
