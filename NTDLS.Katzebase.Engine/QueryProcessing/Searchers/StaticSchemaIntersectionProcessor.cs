@@ -700,7 +700,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     //Test to see if we've hit a row limit.
                     //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
-                    if (materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                    if (query.RowLimit > 0 && materializedRowCollection.Rows.Count >= query.RowLimit && query.OrderBy.Count == 0)
                     {
                         break;
                     }
