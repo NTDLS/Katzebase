@@ -52,11 +52,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                return query.Batch.Variables.Resolve(constantNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                return query.Batch.Variables.Resolve(constantNumeric.Value)?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
-                return query.Batch.Variables.Resolve(constantString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                return query.Batch.Variables.Resolve(constantString.Value)?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldCollapsedValue collapsedValue)
             {

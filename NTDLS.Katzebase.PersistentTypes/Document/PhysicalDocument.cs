@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
     [ProtoContract]
     public class PhysicalDocument
     {
-        [ProtoMember(1)]
+        [ProtoMember(1), NullWrappedValue]
         public KbInsensitiveDictionary<string?> Elements { get; set; }
 
         [ProtoMember(2)]
