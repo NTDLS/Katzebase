@@ -22,6 +22,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal PolicyQueryHandlers QueryHandlers { get; private set; }
         public PolicyAPIHandlers APIHandlers { get; private set; }
 
+        readonly OptimisticCriticalResource<Dictionary<string, Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor>>> _schemaPolicyCache = new();
+
         internal PolicyManager(EngineCore core)
         {
             _core = core;
@@ -308,15 +310,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-        class ApplicablePermission
-        {
-            public SecurityPolicyPermission Permission { get; set; }
-            public SecurityPolicyRule Rule { get; set; }
-        }
-
-        readonly OptimisticCriticalResource<Dictionary<string, Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor>>> _schemaPolicyCache = new();
-
-
         /// <summary>
         /// Test schema permission cache.
         /// </summary>
@@ -338,10 +331,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var applicablePolicies = new Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor>();
 
+                        //Add all un-set permissions to the result.
                         var allPermissions = Enum.GetValues<SecurityPolicyPermission>().Where(o => o != SecurityPolicyPermission.All);
                         foreach (var allPermission in allPermissions)
                         {
-                            applicablePolicies.Add(allPermission, new AccountPolicyDescriptor());
+                            applicablePolicies.Add(allPermission, new AccountPolicyDescriptor()
+                            {
+                                Permission = allPermission,
+                                Rule = SecurityPolicyRule.Deny
+                            });
                         }
 
                         var administratorRole = transaction.Session.Roles.FirstOrDefault(o => o.IsAdministrator);
@@ -352,7 +350,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             {
                                 var policy = applicablePolicies[applicablePolicy.Key];
                                 policy.Rule = SecurityPolicyRule.Grant;
-                                policy.Permission = applicablePolicy.Key;
                                 policy.InheritedFromRole = administratorRole.Name;
                                 policy.IsSet = true;
                             }
@@ -391,7 +388,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         //If there are any deny policies, then they take precedent.
                                         var policy = applicablePolicies[applicablePolicy.Key];
                                         policy.Rule = SecurityPolicyRule.Deny;
-                                        policy.Permission = applicablePolicy.Key;
                                         policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == deniedByRole.RoleId).Name;
                                         policy.InheritedFromSchema = physicalSchema.Name;
                                         policy.IsSet = true;
@@ -401,7 +397,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         //If there ary any grant policies, then use that rule.
                                         var policy = applicablePolicies[applicablePolicy.Key];
                                         policy.Rule = SecurityPolicyRule.Grant;
-                                        policy.Permission = applicablePolicy.Key;
                                         policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == grantedByRole.RoleId).Name;
                                         policy.InheritedFromSchema = physicalSchema.Name;
                                         policy.IsSet = true;
@@ -432,7 +427,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             //If there were any policies left undefined, then default to deny.
                             var policy = applicablePolicies[applicablePolicy.Key];
                             policy.Rule = SecurityPolicyRule.Deny;
-                            policy.Permission = applicablePolicy.Key;
                             policy.IsSet = true;
                         }
 
