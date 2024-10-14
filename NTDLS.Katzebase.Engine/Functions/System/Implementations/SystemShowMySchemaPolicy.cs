@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Parsers.Functions.System;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowPolicy
+    internal static class SystemShowMySchemaPolicy
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
@@ -15,6 +15,8 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("Schema");
             result.AddField("Permission");
             result.AddField("Rule");
+            result.AddField("InheritedFromRole");
+            result.AddField("InheritedFromSchema");
 
             var schemaName = function.Get<string>("schemaName").EnsureNotNull();
 
@@ -22,12 +24,13 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var policy in policies)
             {
-
                 var values = new List<string?>
                 {
                     schemaName,
-                    policy.Key.ToString(),
-                    policy.Value.ToString(),
+                    policy.Value.Permission.ToString(),
+                    policy.Value.Rule.ToString(),
+                    policy.Value.InheritedFromRole,
+                    policy.Value.InheritedFromSchema
                 };
                 result.AddRow(values);
             }

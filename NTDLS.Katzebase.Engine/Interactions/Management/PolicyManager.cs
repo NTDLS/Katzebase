@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.Scripts;
+using NTDLS.Katzebase.Engine.Security;
 using NTDLS.Katzebase.PersistentTypes.Policy;
 using NTDLS.Semaphore;
 using System.Data;
@@ -313,12 +314,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             public SecurityPolicyRule Rule { get; set; }
         }
 
-        OptimisticCriticalResource<Dictionary<string, Dictionary<SecurityPolicyPermission, SecurityPolicyRule>>> _schemaPolicyCache = new();
+        readonly OptimisticCriticalResource<Dictionary<string, Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor>>> _schemaPolicyCache = new();
+
 
         /// <summary>
         /// Test schema permission cache.
         /// </summary>
-        internal Dictionary<SecurityPolicyPermission, SecurityPolicyRule> GetCurrentAccountSchemaPermission(Transaction transaction, string schemaName)
+        internal Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor> GetCurrentAccountSchemaPermission(Transaction transaction, string schemaName)
         {
             try
             {
@@ -328,31 +330,36 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (readCache.TryGetValue(cacheKey, out var cachedPolicy))
                     {
-                        return cachedPolicy;
+                        //return cachedPolicy;
                     }
 
                     //Nothing cached for this schema, walk the tree and determine the applicable permissions.
                     return _schemaPolicyCache.Write(writeCache =>
                     {
-                        var applicablePolicies = new Dictionary<SecurityPolicyPermission, SecurityPolicyRule?>();
+                        var applicablePolicies = new Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor>();
 
                         var allPermissions = Enum.GetValues<SecurityPolicyPermission>().Where(o => o != SecurityPolicyPermission.All);
                         foreach (var allPermission in allPermissions)
                         {
-                            applicablePolicies.Add(allPermission, null);
+                            applicablePolicies.Add(allPermission, new AccountPolicyDescriptor());
                         }
 
-                        if (transaction.Session.Roles.Any(o => o.IsAdministrator))
+                        var administratorRole = transaction.Session.Roles.FirstOrDefault(o => o.IsAdministrator);
+                        if (administratorRole != null)
                         {
                             //Administrators have all permissions.
                             foreach (var applicablePolicy in applicablePolicies)
                             {
-                                applicablePolicies[applicablePolicy.Key] = SecurityPolicyRule.Grant;
+                                var policy = applicablePolicies[applicablePolicy.Key];
+                                policy.Rule = SecurityPolicyRule.Grant;
+                                policy.Permission = applicablePolicy.Key;
+                                policy.InheritedFromRole = administratorRole.Name;
+                                policy.IsSet = true;
                             }
 
-                            var adminCachePolicies = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
-                            writeCache.Add(cacheKey, adminCachePolicies);
-                            return adminCachePolicies;
+                            var adminCachePolicy = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
+                            writeCache[cacheKey] = adminCachePolicy;
+                            return adminCachePolicy;
                         }
 
                         var userRoleIds = transaction.Session.Roles.Select(o => o.Id);
@@ -369,22 +376,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (schemaRoles.Count > 0)
                             {
                                 //Loop though all policies that have yet to be defined.
-                                foreach (var applicablePolicy in applicablePolicies.Where(o => o.Value == null))
+                                foreach (var applicablePolicy in applicablePolicies.Where(o => o.Value.IsSet == false))
                                 {
                                     //Get the security policies for the schema that matches the policy that we have yet to define.
                                     //We only look for recursive policies, unless the schema is the one that was passed in.
                                     var schemaPoliciesForUndefinedPermission = schemaRoles
                                         .Where(o => o.Permission == applicablePolicy.Key && (o.IsRecursive || physicalSchema.Id == givenSchemaId));
 
-                                    if (schemaPoliciesForUndefinedPermission.Any(o => o.Rule == SecurityPolicyRule.Deny))
+                                    var deniedByRole = schemaPoliciesForUndefinedPermission.FirstOrDefault(o => o.Rule == SecurityPolicyRule.Deny);
+                                    var grantedByRole = schemaPoliciesForUndefinedPermission.FirstOrDefault(o => o.Rule == SecurityPolicyRule.Grant);
+
+                                    if (deniedByRole != null)
                                     {
                                         //If there are any deny policies, then they take precedent.
-                                        applicablePolicies[applicablePolicy.Key] = SecurityPolicyRule.Deny;
+                                        var policy = applicablePolicies[applicablePolicy.Key];
+                                        policy.Rule = SecurityPolicyRule.Deny;
+                                        policy.Permission = applicablePolicy.Key;
+                                        policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == deniedByRole.RoleId).Name;
+                                        policy.InheritedFromSchema = physicalSchema.Name;
+                                        policy.IsSet = true;
                                     }
-                                    else if (schemaPoliciesForUndefinedPermission.Any(o => o.Rule == SecurityPolicyRule.Grant))
+                                    else if (grantedByRole != null)
                                     {
                                         //If there ary any grant policies, then use that rule.
-                                        applicablePolicies[applicablePolicy.Key] = SecurityPolicyRule.Grant;
+                                        var policy = applicablePolicies[applicablePolicy.Key];
+                                        policy.Rule = SecurityPolicyRule.Grant;
+                                        policy.Permission = applicablePolicy.Key;
+                                        policy.InheritedFromRole = transaction.Session.Roles.First(o => o.Id == grantedByRole.RoleId).Name;
+                                        policy.InheritedFromSchema = physicalSchema.Name;
+                                        policy.IsSet = true;
                                     }
                                     else
                                     {
@@ -392,7 +412,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     }
                                 }
 
-                                if (applicablePolicies.All(o => o.Value != null))
+                                if (applicablePolicies.All(o => o.Value.IsSet))
                                 {
                                     //If all policies have been defined, then there is no reason to continue.
                                 }
@@ -407,15 +427,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             physicalSchema = _core.Schemas.AcquireParent(transaction, physicalSchema, LockOperation.Stability);
                         }
 
-                        //If there were any policies left undefined, then default to deny.
                         foreach (var applicablePolicy in applicablePolicies.Where(o => o.Value == null))
                         {
-                            applicablePolicies[applicablePolicy.Key] = SecurityPolicyRule.Deny;
+                            //If there were any policies left undefined, then default to deny.
+                            var policy = applicablePolicies[applicablePolicy.Key];
+                            policy.Rule = SecurityPolicyRule.Deny;
+                            policy.Permission = applicablePolicy.Key;
+                            policy.IsSet = true;
                         }
 
-                        var cachePolicies = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
-                        writeCache.Add(cacheKey, cachePolicies);
-                        return cachePolicies;
+                        var resulingPolicy = applicablePolicies.ToDictionary(o => o.Key, o => o.Value.EnsureNotNull());
+                        writeCache[cacheKey] = resulingPolicy;
+                        return resulingPolicy;
                     });
                 });
             }

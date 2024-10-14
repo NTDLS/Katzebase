@@ -72,6 +72,7 @@
       <Word>ClearHealthCounters</Word>
       <Word>MinQueryThreads</Word>
       <Word>QueryThreadWeight</Word>
+      <Word>RefreshMyRoles</Word>
       <Word>ReleaseCacheAllocations</Word>
       <Word>ShowAggregateFunctions</Word>
       <Word>ShowBlocks</Word>
@@ -82,6 +83,7 @@
       <Word>ShowHealthCounters</Word>
       <Word>ShowLocks</Word>
       <Word>ShowMemoryUtilization</Word>
+      <Word>ShowMySchemaPolicy</Word>
       <Word>ShowProcesses</Word>
       <Word>ShowScalarFunctions</Word>
       <Word>ShowSystemAggregateFunctions</Word>
@@ -90,8 +92,8 @@
       <Word>ShowTransactions</Word>
       <Word>ShowVersion</Word>
       <Word>ShowWaitingLocks</Word>
-      <Word>Terminate</Word>			
       <Word>Terminate</Word>
+      <Word>Terminate</Word>			
       <Word>TraceWaitTimes</Word>
     </Keywords>
     

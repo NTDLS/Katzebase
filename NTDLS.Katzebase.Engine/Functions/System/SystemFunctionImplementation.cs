@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showhealthcounters" => SystemShowHealthCounters.Execute(core, transaction, function),
                 "showlocks" => SystemShowLocks.Execute(core, transaction, function),
                 "showmemoryutilization" => SystemShowMemoryUtilization.Execute(core, transaction, function),
-                "showpolicy" => SystemShowPolicy.Execute(core, transaction, function),
+                "showmyschemapolicy" => SystemShowMySchemaPolicy.Execute(core, transaction, function),
                 "showprocesses" => SystemShowProcesses.Execute(core, transaction, function),
                 "showscalarfunctions" => SystemShowScalarFunctions.Execute(core, transaction, function),
                 "showsystemfunctions" => SystemShowSystemFunctions.Execute(core, transaction, function),
@@ -40,6 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showtransactions" => SystemShowTransactions.Execute(core, transaction, function),
                 "showversion" => SystemShowVersion.Execute(core, transaction, function),
                 "showwaitinglocks" => SystemShowWaitingLocks.Execute(core, transaction, function),
+                "refreshmyroles" => SystemRefreshMyRoles.Execute(core, transaction, function),
                 "sleep" => SystemSleep.Execute(core, transaction, function),
                 "terminate" => SystemTerminate.Execute(core, transaction, function),
 
