@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 {
@@ -38,6 +39,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var result = new KbQueryResult();
 
                 if (query.SubQueryType == SubQueryType.Schema)
@@ -66,6 +73,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 if (query.SubQueryType == SubQueryType.Schema)
                 {
                     _core.Schemas.Drop(transactionReference.Transaction, schemaName);
@@ -90,16 +103,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.Schema)
-                {
-                    var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
-                    string schemaName = query.Schemas.Single().Name;
-                    _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                string schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
+                var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
@@ -116,16 +129,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
-                if (query.SubQueryType == SubQueryType.Schema)
-                {
-                    var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
-                    string schemaName = query.Schemas.Single().Name;
-                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
-                }
-                else
-                {
-                    throw new KbNotImplementedException();
-                }
+                string schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
+                var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
@@ -143,20 +156,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var result = new KbQueryResult();
 
-                if (query.SubQueryType == SubQueryType.Schemas)
-                {
-                    var schemaList = _core.Schemas.GetListOfChildren(
-                        transactionReference.Transaction, query.Schemas.Single().Name, query.RowLimit);
+                var schemaName = query.Schemas.Single().Name;
 
-                    result.Fields.Add(new KbQueryField("Name"));
-                    result.Fields.Add(new KbQueryField("Path"));
+                #region EnforceSchemaPolicy.
 
-                    result.Rows.AddRange(schemaList.Select(o => new KbQueryRow([o.Item1, o.Item2])));
-                }
-                else
-                {
-                    throw new KbEngineException("Invalid list query subtype.");
-                }
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
+                var schemaList = _core.Schemas.GetListOfChildren(
+                    transactionReference.Transaction, schemaName, query.RowLimit);
+
+                result.Fields.Add(new KbQueryField("Name"));
+                result.Fields.Add(new KbQueryField("Path"));
+
+                result.Rows.AddRange(schemaList.Select(o => new KbQueryRow([o.Item1, o.Item2])));
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }

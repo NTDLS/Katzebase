@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 {
@@ -38,6 +39,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
                     _core.Indexes.DropIndex(transactionReference.Transaction, schemaName,
@@ -63,8 +70,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
+                var schemaName = query.GetAttribute<string>(PreparedQuery.Attribute.Schema);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var analysis = _core.Indexes.AnalyzeIndex(transactionReference.Transaction,
-                    query.GetAttribute<string>(PreparedQuery.Attribute.Schema),
+                    schemaName,
                     query.GetAttribute<string>(PreparedQuery.Attribute.IndexName));
 
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
@@ -86,6 +101,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 string schemaName = query.Schemas.First().Name;
 
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var indexName = query.GetAttribute<string>(PreparedQuery.Attribute.IndexName);
                 var indexPartitions = query.GetAttribute(PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
@@ -105,6 +126,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
+                string schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
                     var indexPartitions = query.GetAttribute(
@@ -122,7 +151,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                         index.AddAttribute(new KbIndexAttribute() { Field = field });
                     }
 
-                    string schemaName = query.Schemas.Single().Name;
                     _core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid indexId);
                 }
                 else

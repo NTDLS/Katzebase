@@ -11,13 +11,15 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
     {
         public string Name { get; private set; }
         public string Description { get; private set; }
+        public bool RequiresAdministrator { get; set; }
 
         public List<SystemFunctionParameterPrototype> Parameters { get; private set; } = new();
 
-        public SystemFunction(string name, List<SystemFunctionParameterPrototype> parameters, string description)
+        public SystemFunction(string name, List<SystemFunctionParameterPrototype> parameters, bool requiresAdministrator, string description)
         {
             Name = name;
             Description = description;
+            RequiresAdministrator = requiresAdministrator;
             Parameters.AddRange(parameters);
         }
 
@@ -104,18 +106,20 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
                 }
             }
 
-            string description = string.Empty;
-            if (tokenizer.TryEatIfNext('|'))
-            {
-                description = tokenizer.EatGetNextResolved() ?? string.Empty;
-            }
+            tokenizer.EatIfNext('|');
+
+            var requiresAdministrator = NTDLS.Helpers.Converters.ConvertTo<bool>(tokenizer.EatGetNext());
+
+            tokenizer.EatIfNext('|');
+            var description = tokenizer.EatGetNextResolved() ?? string.Empty;
+
 
             if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"Failed to parse system function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new SystemFunction(functionName, parameters, description);
+            return new SystemFunction(functionName, parameters, requiresAdministrator, description);
         }
 
         internal SystemFunctionParameterValueCollection ApplyParameters(List<string?> values)

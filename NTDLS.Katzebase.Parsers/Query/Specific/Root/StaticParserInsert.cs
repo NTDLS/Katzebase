@@ -38,6 +38,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
+            query.AddAttribute(PreparedQuery.Attribute.TargetSchemaName, schemaName);
 
             var fieldParserType = FieldParserType.None;
 

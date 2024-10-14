@@ -42,6 +42,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
@@ -77,6 +84,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
@@ -112,6 +126,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
                 var schemaName = query.Schemas.Single().Name;
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, schemaName, SecurityPolicyPermission.Manage);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
 
@@ -149,6 +170,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
 
                 var results = _core.Policy.DropRole(transactionReference.Transaction, roleName);
@@ -169,6 +197,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var IsAdministrator = query.GetAttribute(PreparedQuery.Attribute.IsAdministrator, false);
 
@@ -195,6 +230,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
 
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
                 var passwordHash = query.GetAttribute<string>(PreparedQuery.Attribute.PasswordHash);
 
@@ -216,6 +257,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
 
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
@@ -241,6 +288,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 
@@ -262,6 +316,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var username = query.GetAttribute<string>(PreparedQuery.Attribute.UserName);
 

@@ -2,6 +2,17 @@
 
 exec ShowMySchemaPolicy('PermissionTest:SchemaB:SubSchemaA')
 
+select * from PermissionTest:SchemaB:SubSchemaA
+delete from PermissionTest:SchemaB:SubSchemaA
+
+exec ShowLocks
+
+
+insert into PermissionTest:SchemaB:SubSchemaA
+(
+	FirstName: 'John', LastName: 'Doe'
+)
+
 deny write on PermissionTest:SchemaB to Default with (recursive = true)
 
 revoke all on PermissionTest:SchemaB from Default

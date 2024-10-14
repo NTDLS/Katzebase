@@ -131,6 +131,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 {
                     if (SystemFunctionCollection.TryGetFunction(objectName, out var systemFunction))
                     {
+
+                        #region EnforceSchemaPolicy.
+
+                        if (systemFunction.RequiresAdministrator)
+                        {
+                            _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+                        }
+
+                        #endregion
+
                         var systemFunctionResult = SystemFunctionImplementation.ExecuteFunction(
                             _core, transactionReference.Transaction, objectName, collapsedParameters);
 

@@ -32,6 +32,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var rowCount = _core.Environment.Alter(transactionReference.Transaction, query.Attributes);
                 return transactionReference.CommitAndApplyMetricsNonQuery(rowCount);
             }

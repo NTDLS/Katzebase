@@ -34,6 +34,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             try
             {
                 using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region EnforceSchemaPolicy.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
                 var referencedProcessId = query.GetAttribute<ulong>(PreparedQuery.Attribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);

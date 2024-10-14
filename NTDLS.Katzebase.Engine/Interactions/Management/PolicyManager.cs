@@ -335,7 +335,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal void EnforceSchemaPolicy(Transaction transaction, string schemaName, SecurityPolicyPermission requiredPermission)
         {
             var heldPermissions = GetCurrentAccountSchemaPermission(transaction, schemaName);
-            if (!heldPermissions.Any(o => o.Value.Permission == requiredPermission))
+            if (!heldPermissions.Any(o => o.Value.Permission == requiredPermission && o.Value.Rule == SecurityPolicyRule.Grant))
             {
                 throw new KbPermissionNotHeld($"Permission not held: [{requiredPermission}] on [{schemaName}]");
             }
@@ -356,7 +356,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                string cacheKey = schemaName.ToLowerInvariant();
+                string cacheKey = $"[{transaction.Session.Username.ToLowerInvariant()}]:[{schemaName.ToLowerInvariant()}]";
 
                 return _schemaPolicyCache.UpgradableRead(readCache =>
                 {
