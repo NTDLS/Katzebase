@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var results = new KbQueryResultCollection();
             var result = results.AddNew();
 
-            transaction.Session.Roles = core.Query.SystemExecuteQuery<KbRole>(transaction.Session, "AccountRoles.kbs",
+            transaction.Session.Roles = transaction.ExecuteQuery<KbRole>("AccountRoles.kbs",
                 new
                 {
                     Username = transaction.Session.Username

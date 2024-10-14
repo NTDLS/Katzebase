@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// The query currently associated with the session.
         /// </summary>
-        public Stack<string> QueryText { get; set; } = new();
+        public Stack<string> QueryTextStack { get; private set; } = new();
 
         /// <summary>
         /// Settings associated with the connection.
@@ -106,12 +106,18 @@ namespace NTDLS.Katzebase.Engine.Sessions
         }
 
         public void PushCurrentQuery(string statement)
-            => QueryText.Push(statement);
+            => QueryTextStack.Push(statement);
 
         public void PopCurrentQuery()
-            => QueryText.Pop();
+            => QueryTextStack.Pop();
 
-        public void CurrentQuery()
-            => QueryText.Peek();
+        public string CurrentQueryText()
+        {
+            if (QueryTextStack.TryPeek(out var queryString))
+            {
+                return queryString;
+            }
+            return string.Empty;
+        }
     }
 }

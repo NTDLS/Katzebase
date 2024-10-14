@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                var roleId = transactionReference.Transaction.ExecuteScalar<Guid?>("GetRoleId.kbs",
                     new
                     {
                         Name = roleName
@@ -93,7 +93,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
                 var isRecursive = query.GetAttribute(PreparedQuery.Attribute.Recursive, false);
 
-                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                var roleId = transactionReference.Transaction.ExecuteScalar<Guid?>("GetRoleId.kbs",
                     new
                     {
                         Name = roleName
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var roleName = query.GetAttribute<string>(PreparedQuery.Attribute.RoleName);
                 var permission = query.GetAttribute<SecurityPolicyPermission>(PreparedQuery.Attribute.SecurityPolicyPermission);
 
-                var roleId = _core.Query.SystemExecuteScalar<Guid?>(session, "GetRoleId.kbs",
+                var roleId = transactionReference.Transaction.ExecuteScalar<Guid?>("GetRoleId.kbs",
                     new
                     {
                         Name = roleName

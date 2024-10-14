@@ -43,11 +43,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new Exception("No username was specified.");
                 }
 
-                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                using var ephemeral = _core.Sessions.CreateEphemeralSystemSession();
 #if DEBUG
                 if (param.Username == "debug")
                 {
-                    systemSession.Commit();
+                    ephemeral.Commit();
 
                     LogManager.Debug($"Logged in mock user [{param.Username}].");
 
@@ -65,14 +65,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     return apiResults;
                 }
 #endif
-                var account = _core.Query.SystemExecuteQuery<AccountLogin>(systemSession.Session, "AccountLogin.kbs",
+                var account = ephemeral.Transaction.ExecuteQuery<AccountLogin>("AccountLogin.kbs",
                     new
                     {
                         param.Username,
                         param.PasswordHash
                     }).FirstOrDefault();
 
-                systemSession.Commit();
+                ephemeral.Commit();
 
                 if (account != null)
                 {

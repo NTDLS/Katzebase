@@ -6,7 +6,10 @@ using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Api.KbConstants;
+
+[assembly: InternalsVisibleTo("NTDLS.Katzebase.Engine.Tests")]
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -48,9 +51,9 @@ namespace NTDLS.Katzebase.Engine
             var fileVersion = string.Join(".", (fileVersionInfo.FileVersion?.Split('.').Take(3)).EnsureNotNull());
 
             //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
-            GlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
-            GlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
-            GlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
+            GlobalConstants.Add("true", new("1", KbBasicDataType.Numeric) { IsConstant = true });
+            GlobalConstants.Add("false", new("0", KbBasicDataType.Numeric) { IsConstant = true });
+            GlobalConstants.Add("null", new(null, KbBasicDataType.Undefined) { IsConstant = true });
 
             LogManager.Information($"{fileVersionInfo.ProductName} v{fileVersion} PID:{System.Environment.ProcessId}");
 

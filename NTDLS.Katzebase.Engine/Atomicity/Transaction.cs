@@ -150,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Executes a query and returns the first row and field object.
         /// Internal system usage only.
         /// </summary>
-        internal T? ExecuteScalar<T>(string queryText, object? userParameters = null) where T : new()
+        internal T? ExecuteScalar<T>(string queryText, object? userParameters = null) //where T : new()
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
 

@@ -37,9 +37,9 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         public MockEngineCore()
         {
             //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
-            GlobalTokenizerConstants.Add("true", new("1", KbBasicDataType.Numeric));
-            GlobalTokenizerConstants.Add("false", new("0", KbBasicDataType.Numeric));
-            GlobalTokenizerConstants.Add("null", new(null, KbBasicDataType.Undefined));
+            GlobalTokenizerConstants.Add("true", new("1", KbBasicDataType.Numeric) { IsConstant = true });
+            GlobalTokenizerConstants.Add("false", new("0", KbBasicDataType.Numeric) { IsConstant = true });
+            GlobalTokenizerConstants.Add("null", new(null, KbBasicDataType.Undefined) { IsConstant = true });
 
             SystemFunctionCollection.Initialize();
             ScalarFunctionCollection.Initialize();

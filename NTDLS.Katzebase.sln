@@ -51,6 +51,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "NTDLS.Katzebase.UnitTests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Api", "NTDLS.Katzebase.Api\NTDLS.Katzebase.Api.csproj", "{957FB6A4-69CE-45C5-A4F1-EA713338E692}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.Engine.Tests", "NTDLS.Katzebase.Engine.Tests\NTDLS.Katzebase.Engine.Tests.csproj", "{B4A25CA7-7675-4CC2-B083-49E12D349EB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,10 @@ Global
 		{957FB6A4-69CE-45C5-A4F1-EA713338E692}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{957FB6A4-69CE-45C5-A4F1-EA713338E692}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{957FB6A4-69CE-45C5-A4F1-EA713338E692}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +133,7 @@ Global
 		{4D7E5071-C089-4A44-AD26-23C00FA5B6A6} = {7ADB6C27-7022-46C9-A0BD-FF2667492931}
 		{7AC9ACBC-7FD0-442D-914C-6DED12EDA644} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{957FB6A4-69CE-45C5-A4F1-EA713338E692} = {192F1A3E-4A59-40A3-B746-4E133E9A31B5}
+		{B4A25CA7-7675-4CC2-B083-49E12D349EB0} = {08463189-3AA6-472B-8116-584F09A0A305}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16ADDA6D-28A3-4730-94D0-61E6D3E723B0}

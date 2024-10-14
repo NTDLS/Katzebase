@@ -517,9 +517,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 explanation.AppendLine("        }");
             }
             explanation.AppendLine("    }");
-            if (string.IsNullOrEmpty(transaction.Session.QueryText) == false)
+            if (string.IsNullOrEmpty(transaction.Session.CurrentQueryText()) == false)
             {
-                explanation.AppendLine($"    Query: {transaction.Session.QueryText}");
+                explanation.AppendLine($"    Query: {transaction.Session.QueryTextStack}");
             }
             explanation.AppendLine("}");
 

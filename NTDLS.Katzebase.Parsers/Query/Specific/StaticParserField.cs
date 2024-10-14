@@ -37,6 +37,20 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                         throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Aggregate function must be called with parentheses: [{token}]");
                     }
 
+                    if (parentTokenizer.Variables.Collection.TryGetValue(token, out var variableOrConstant))
+                    {
+                        if (variableOrConstant.IsConstant)
+                        {
+                            if (variableOrConstant.DataType == KbBasicDataType.Numeric)
+                            {
+                                return new QueryFieldConstantNumeric(parentTokenizer.GetCurrentLineNumber(), variableOrConstant.Value);
+                            }
+
+                            //String and "undefined" data type.
+                            return new QueryFieldConstantString(parentTokenizer.GetCurrentLineNumber(), variableOrConstant.Value);
+                        }
+                    }
+
                     var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(parentTokenizer.GetCurrentLineNumber(), token);
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
                     queryFields.DocumentIdentifiers.Add(fieldKey, queryFieldDocumentIdentifier);
