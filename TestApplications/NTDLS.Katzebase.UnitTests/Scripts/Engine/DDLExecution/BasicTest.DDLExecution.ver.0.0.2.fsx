@@ -35,10 +35,10 @@ module DDLExecutionBasicTests =
         
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 123, value: '456'\r\n)") |> ignore
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 321, value: '654'\r\n)") |> ignore
+        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 123, value: '456'\r\n)") |> ignore
+        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 321, value: '654'\r\n)") |> ignore
         _core.Transactions.Commit(preLogin)
-        //let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+        //let cnt = _core.Query.SystemExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
 
@@ -56,7 +56,7 @@ module DDLExecutionBasicTests =
                 equals $"{expectedCount}" queryDocList[0].Values[0].me
 
                 let sc =
-                    _core.Query.ExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                    _core.Query.SystemExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
                     |> Seq.toArray
                     |> Array.item 0
 

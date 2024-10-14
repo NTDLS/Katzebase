@@ -103,7 +103,7 @@ module DMLExecutionBasicTests =
 
         
         let rString = 
-            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchemaDML} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchemaDML} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 2 rString.Length
@@ -111,14 +111,14 @@ module DMLExecutionBasicTests =
         equals "B" rString[1].COL2
 
         let rInt = 
-            _core.Query.ExecuteQuery<TwoColumnInt>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQuery<TwoColumnInt>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 1 rInt.Length
         equals 1 rInt[0].COL1
 
         let rDouble = 
-            _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 1 rDouble.Length
@@ -126,7 +126,7 @@ module DMLExecutionBasicTests =
 
         try
             let rDouble = 
-                _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                _core.Query.SystemExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
                 |> Seq.toArray
 
             ()

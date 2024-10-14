@@ -169,8 +169,8 @@ type QueryFieldConstantString with
 let testSchemaDDL = "testSchDDL"
 let testSchemaDML = "testSchDML"
 
-_core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDDL}")
-_core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDDL}")
+_core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDDL}")
+_core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDDL}")
 
-_core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDML}")
-_core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDML}")
+_core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDML}")
+_core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDML}")

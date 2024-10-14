@@ -30,13 +30,13 @@ module DDLExecutionBasicTests =
         let testSchema = "testSchDDL"
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         try
-            _core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
+            _core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
         with
         | exn ->
             ()
-        _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 123, value = '456'\r\n)")
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 321, value = '654'\r\n)")
+        _core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
+        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 123, value = '456'\r\n)")
+        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 321, value = '654'\r\n)")
         _core.Transactions.Commit(preLogin)
         //let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count

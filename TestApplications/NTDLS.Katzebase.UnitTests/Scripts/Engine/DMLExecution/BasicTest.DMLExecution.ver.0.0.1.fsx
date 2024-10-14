@@ -39,11 +39,11 @@ module DMLExecutionBasicTests =
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         try
-            _core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
+            _core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
         with
         | exn ->
             ()
-        _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
+        _core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
 
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
         let preparedQueries = StaticQueryParser.ParseBatch(plainInsert, _core.GlobalConstants, userParameters)
