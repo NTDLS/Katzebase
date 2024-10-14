@@ -92,31 +92,68 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
         }
 
         /// <summary>
-        /// Tests the actual data-set against the expectations.
+        /// Loops through all data-sets, their rows, and fields, ensuring that all of them are in the expectations.
+        /// Also validates result-set count, row-counts and field-counts.
         /// </summary>
         public void Validate(KbQueryResultCollection actualDatasets)
         {
-            //Ensure we have the same number of result-sets.
+            //Ensure we have the expected result-set count.
             Assert.Equal(ExpectedDatasets.Count, actualDatasets.Collection.Count);
 
             if (GetAttribute(ExpectationAttribute.EnforceRowOrder, false))
             {
-                //Not yet implemented.
-                throw new NotImplementedException("EnforceRowOrder is not implemented.");
+                for (int datasetOrdinal = 0; datasetOrdinal < actualDatasets.Collection.Count; datasetOrdinal++)
+                {
+                    var actualDatasetRows = actualDatasets.Collection[datasetOrdinal].Rows;
+                    var expectedDatasetRows = ExpectedDatasets[datasetOrdinal];
+
+                    //Ensure that this result-set has the expected row count.
+                    Assert.Equal(expectedDatasetRows.Count, actualDatasetRows.Count);
+
+                    for (int rowOrdinal = 0; rowOrdinal < actualDatasetRows.Count; rowOrdinal++)
+                    {
+                        var actualDatasetRow = actualDatasets.Collection[datasetOrdinal].Rows[rowOrdinal];
+                        var expectedDatasetRow = expectedDatasetRows[datasetOrdinal];
+
+                        //Ensure that the row at the same index matches the row expectation.
+                        Assert.Equal(ValuesHash(expectedDatasetRow.Values), ValuesHash(actualDatasetRow.Values));
+                    }
+                }
             }
             else
             {
-                for (int i = 0; i < ExpectedDatasets.Count; i++)
+                for (int datasetOrdinal = 0; datasetOrdinal < actualDatasets.Collection.Count; datasetOrdinal++)
                 {
-                    var expectedDataset = ExpectedDatasets[i];
-                    var actualDataset = actualDatasets.Collection[i].Rows;
+                    var actualDatasetRows = actualDatasets.Collection[datasetOrdinal].Rows;
+                    var expectedDatasetRows = ExpectedDatasets[datasetOrdinal];
 
-                    //Ensure that this result-set has the same row count.
-                    Assert.Equal(expectedDataset.Count, actualDataset.Count);
+                    //Ensure that this result-set has the expected row count.
+                    Assert.Equal(expectedDatasetRows.Count, actualDatasetRows.Count);
 
-                    //TODO: Validate rows.
+                    var matchedExpectationRows = new HashSet<ExpectedRow>();
+
+                    for (int rowOrdinal = 0; rowOrdinal < actualDatasetRows.Count; rowOrdinal++)
+                    {
+                        var actualDatasetRow = actualDatasets.Collection[datasetOrdinal].Rows[rowOrdinal];
+
+                        var actualDatasetValuesHash = ValuesHash(actualDatasetRow.Values);
+
+                        //Find the actual row in the expected dataset, omitting rows we have already matched.
+                        var matchedExpectation = expectedDatasetRows.FirstOrDefault(o =>
+                            matchedExpectationRows.Contains(o) == false && ValuesHash(o.Values) == actualDatasetValuesHash);
+
+                        Assert.NotNull(matchedExpectation);
+                        matchedExpectationRows.Add(matchedExpectation);
+                    }
                 }
             }
+        }
+
+        private static string ValuesHash(IEnumerable<string?> values)
+        {
+            //We bake the row-count into the hash so that it gets validated too.
+            string valuesHash = $"[{string.Join("],[", values.Select(o => o ?? "_$NULL$_"))}]({values.Count()})";
+            return Shared.Helpers.GetSHA256Hash(valuesHash);
         }
 
         #region Get Attributes.
