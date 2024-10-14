@@ -2,7 +2,6 @@ CREATE SCHEMA Master
 CREATE SCHEMA Master:Account
 CREATE SCHEMA Master:Role
 CREATE SCHEMA Master:Membership
-CREATE SCHEMA Master:LastONE
 
 CREATE UNIQUEKEY uk_Account(
     Username
@@ -16,9 +15,3 @@ CREATE UNIQUEKEY uk_Membership(
     AccountId,
     RoleId
 ) ON Master:Membership WITH (PARTITIONS=10)
-
-CREATE ROLE Administrators WITH (IsAdministrator = true)
-
-CREATE ACCOUNT admin WITH (Password = '')
-
-ALTER ROLE Administrators ADD admin

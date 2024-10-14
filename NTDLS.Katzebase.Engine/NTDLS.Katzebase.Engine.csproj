@@ -25,6 +25,7 @@
     <None Remove="Scripts\AccountRoles.kbs" />
     <None Remove="Scripts\AddUserToRole.kbs" />
     <None Remove="Scripts\CreateAccount.kbs" />
+    <None Remove="Scripts\CreateDefaultUsersAndRoles.kbs" />
     <None Remove="Scripts\CreateMasterSchema.kbs" />
     <None Remove="Scripts\CreateRole.kbs" />
     <None Remove="Scripts\DropAccount.kbs" />
@@ -45,6 +46,7 @@
 	</AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Scripts\CreateDefaultUsersAndRoles.kbs" />
     <EmbeddedResource Include="Scripts\CreateMasterSchema.kbs" />
     <EmbeddedResource Include="Scripts\AddUserToRole.kbs" />
     <EmbeddedResource Include="Scripts\GetRoleId.kbs" />

@@ -1,0 +1,11 @@
+CREATE ROLE Administrators WITH (IsAdministrator = true)
+CREATE ROLE Default
+
+DENY ALL ON : TO Default WITH (Recursive = true)
+GRANT READ ON Master:Account TO Default
+GRANT READ ON Master:Role TO Default
+GRANT READ ON Master:Membership TO Default
+
+CREATE ACCOUNT admin WITH (Password = '')
+
+ALTER ROLE Administrators ADD admin

@@ -91,14 +91,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 IOManager.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, PolicyCatalogFile), new PhysicalPolicyCatalog());
             }
 
-            using var system = _core.Sessions.CreateEphemeralSystemSession();
-            var masterSchema = _core.Schemas.AcquireVirtual(system.Transaction, "Master", LockOperation.Write, LockOperation.Write);
-            if (masterSchema.Exists == false)
+            bool doesMasterSchemaExist;
+            using (var system = _core.Sessions.CreateEphemeralSystemSession())
+            {
+                doesMasterSchemaExist = _core.Schemas.AcquireVirtual(system.Transaction, "Master", LockOperation.Write, LockOperation.Write).Exists;
+                system.Commit();
+            }
+
+            if (doesMasterSchemaExist == false)
             {
                 LogManager.Information("Initializing master schema.");
-                _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateMasterSchema.kbs"));
+                using (var system = _core.Sessions.CreateEphemeralSystemSession())
+                {
+                    _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateMasterSchema.kbs"));
+                    system.Commit();
+                }
+
+                using (var system = _core.Sessions.CreateEphemeralSystemSession())
+                {
+                    _core.Query.ExecuteNonQuery(system.Session, EmbeddedScripts.Load("CreateDefaultUsersAndRoles.kbs"));
+                    system.Commit();
+                }
             }
-            system.Commit();
 
             LogManager.Information("Initializing ephemeral schemas.");
             RecycleEphemeralSchemas();
