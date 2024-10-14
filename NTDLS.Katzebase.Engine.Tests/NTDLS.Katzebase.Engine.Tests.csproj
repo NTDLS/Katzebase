@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Scripts\SelectFromSingle.kbs" />
+    <None Remove="Scripts\ConstantsAndSimpleExpressions.kbs" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\SelectFromSingle.kbs" />
+    <EmbeddedResource Include="Scripts\ConstantsAndSimpleExpressions.kbs" />
   </ItemGroup>
 
   <ItemGroup>

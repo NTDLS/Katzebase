@@ -1,5 +1,103 @@
+--Get Total Amount Spent by Each Person
+SELECT
+	p.PersonID--, p.FirstName, p.LastName
+	--, SUM(o.TotalAmount) AS TotalSpent
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON p.PersonID = o.PersonID
+GROUP BY
+	p.PersonID
+	--, p.FirstName, p.LastName
+
+/*
+CREATE SCHEMA TestData
+
+-- Table: Person
+CREATE SCHEMA TestData:Person
+
+-- Table: Address (1-to-1 relationship with Person)
+CREATE SCHEMA TestData:Address
+
+-- Table: Order (1-to-many relationship with Person)
+CREATE SCHEMA TestData:SalesOrder
+
+-- Table: SalesOrderItem (1-to-many relationship with SalesOrder)
+CREATE SCHEMA TestData:SalesOrderItem
+
+
+INSERT INTO TestData:Person (PersonID, FirstName, LastName, BirthDate) VALUES
+(1, 'John', 'Doe', '1980-01-15'),
+(2, 'Jane', 'Smith', '1990-06-22'),
+(3, 'Emily', 'Johnson', '1975-09-10'),
+(4, 'Michael', 'Brown', '1985-12-05'),
+(5, 'Emma', 'Davis', '1992-03-17')
+
+INSERT INTO TestData:Address (AddressID, PersonID, Street, City, State, ZipCode) VALUES
+(1, 1, '123 Elm St', 'Springfield', 'IL', '62704'),
+(2, 2, '456 Oak St', 'Greenville', 'SC', '29601'),
+(3, 3, '789 Maple Ave', 'Seattle', 'WA', '98101'),
+(4, 4, '321 Pine St', 'Austin', 'TX', '73301'),
+(5, 5, '654 Birch St', 'Orlando', 'FL', '32801')
+
+INSERT INTO TestData:SalesOrder (OrderID, PersonID, OrderDate, TotalAmount) VALUES
+(1, 1, '2024-01-01', 150.75),
+(2, 1, '2024-01-05', 220.10),
+(3, 2, '2024-01-07', 99.99),
+(4, 3, '2024-01-10', 305.60),
+(5, 4, '2024-01-12', 180.40),
+(6, 4, '2024-01-15', 75.00)
+	
+INSERT INTO TestData:SalesOrderItem (OrderItemID, OrderID, ProductName, Quantity, Price) VALUES
+(1, 1, 'Laptop', 1, 150.75),
+(2, 2, 'Monitor', 2, 110.05),
+(3, 3, 'Headphones', 1, 99.99),
+(4, 4, 'Desk', 1, 305.60),
+(5, 5, 'Chair', 1, 180.40),
+(6, 6, 'Mouse', 1, 25.00),
+(7, 6, 'Keyboard', 1, 50.00)
+*/
+
+/*
+--Get All Persons and Their Addresses (1-to-1 Relationship)
+SELECT
+	p.PersonID, p.FirstName, p.LastName, a.Street, a.City, a.State, a.ZipCode
+FROM
+	TestData:Person as p
+INNER JOIN TestData:Address as A
+	ON p.PersonID = a.PersonID
+
+--Get All Orders with Person Details (1-to-Many Relationship)
+SELECT
+	o.OrderID, p.FirstName, p.LastName, o.OrderDate, o.TotalAmount
+FROM
+	TestData:SalesOrder as o
+INNER JOIN TestData:Person as p
+	ON o.PersonID = p.PersonID
+
+--Get All Person with Orders Details (Many-to-1 Relationship)
+SELECT
+	o.OrderID, p.FirstName, p.LastName, o.OrderDate, o.TotalAmount
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON p.PersonID = o.PersonID
+
+--Get Total Amount Spent by Each Person
+SELECT
+	p.PersonID, p.FirstName, p.LastName
+	--, SUM(o.TotalAmount) AS TotalSpent
+FROM
+	TestData:Person as p
+INNER JOIN TestData:SalesOrder as o
+	ON p.PersonID = o.PersonID
+--GROUP BY
+	--p.PersonID, p.FirstName, p.LastName
+*/
+
 --select * from Single
 
+/*
 exec ShowMySchemaPolicy('PermissionTest:SchemaB:SubSchemaA')
 
 select * from PermissionTest:SchemaB:SubSchemaA
@@ -20,7 +118,7 @@ revoke all on PermissionTest:SchemaB from Default
 --exec RefreshMyRoles
 
 --GRANT ALL ON : to Default WITH (Recursive = True)
-
+*/
 /* Create PermissionTest schemas.
 CREATE SCHEMA PermissionTest
 CREATE SCHEMA PermissionTest:SchemaA

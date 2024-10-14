@@ -127,6 +127,26 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         /// <summary>
+        /// Executes a query and returns the collection
+        /// Internal system usage only.
+        /// </summary>
+        internal KbQueryResultCollection ExecuteQuery(string queryText, object? userParameters = null)
+        {
+            queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
+            var results = new KbQueryResultCollection();
+            Session.PushCurrentQuery(queryText);
+
+            foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
+            {
+                results.Add(_core.Query.ExecuteQuery(Session, query));
+            }
+
+            Session.PopCurrentQuery();
+
+            return results;
+        }
+
+        /// <summary>
         /// Executes a query without a result.
         /// Internal system usage only.
         /// </summary>
@@ -178,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 return default;
             }
 
-            return Converters.ConvertToNullable<T>(results.Collection[0].RowValue(0, 0));
+            return Converters.ConvertToNullable<T>(results.Collection[0].Value(0, 0));
         }
 
         #endregion

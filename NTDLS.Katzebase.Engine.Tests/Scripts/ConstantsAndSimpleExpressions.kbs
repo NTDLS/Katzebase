@@ -1,0 +1,9 @@
+SELECT
+	10 as Element1,
+	10 + 10 as Element2,
+	'Text' as Element3,
+	'Hello' + ' ' + 'World' as Element4,
+	'Text' + 10 + 10 as Element5,
+	10 + 10 + 'Text' as Element6
+FROM
+	Single
