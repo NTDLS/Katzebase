@@ -332,6 +332,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
+
+        /// <summary>
+        /// Throws an exception if the current user does not hold the specified permission on the given schema.
+        /// </summary>
         internal void EnforceSchemaPolicy(Transaction transaction, string schemaName, SecurityPolicyPermission requiredPermission)
         {
             var heldPermissions = GetCurrentAccountSchemaPermission(transaction, schemaName);
@@ -341,6 +345,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Throws an exception if the current user is not a member of an administrators role.
+        /// </summary>
         internal void EnforceAdministratorPolicy(Transaction transaction)
         {
             if (!transaction.Session.Roles.Any(o => o.IsAdministrator))
@@ -350,7 +357,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Test schema permission cache.
+        /// Returns the realized security policy on the given schema foe the current account.
+        /// This result is cached.
         /// </summary>
         internal Dictionary<SecurityPolicyPermission, AccountPolicyDescriptor> GetCurrentAccountSchemaPermission(Transaction transaction, string schemaName)
         {
