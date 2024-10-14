@@ -49,13 +49,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateAccount.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         UserName = username,
                         PasswordHash = passwordHash
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -71,12 +74,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropAccount.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropAccount.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         UserName = username
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -96,13 +102,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("CreateRole.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         Name = roleName,
                         IsAdministrator = isAdministrator
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -118,12 +127,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropRole.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("DropRole.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         Name = roleName
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -143,13 +155,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("AddUserToRole.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         RoleName = roleName,
                         Username = username
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -165,13 +180,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
+                var result = _core.Query.ExecuteNonQuery(transaction.Session, EmbeddedScripts.Load("RemoveUserFromRole.kbs"),
                     new
                     {
                         Id = Guid.NewGuid(),
                         RoleName = roleName,
                         Username = username
                     });
+
+                _schemaPolicyCache.Write(o => o.Clear());
+                return result;
             }
             catch (Exception ex)
             {
@@ -225,6 +243,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.IO.PutJson(transaction, physicalSchema.PolicyCatalogFileFilePath(), policyCatalog);
 
+                _schemaPolicyCache.Write(o => o.Clear());
                 return new KbQueryResult();
             }
             catch (Exception ex)
@@ -275,6 +294,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.IO.PutJson(transaction, physicalSchema.PolicyCatalogFileFilePath(), policyCatalog);
 
+                _schemaPolicyCache.Write(o => o.Clear());
                 return new KbQueryResult();
             }
             catch (Exception ex)
@@ -299,6 +319,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.IO.PutJson(transaction, physicalSchema.PolicyCatalogFileFilePath(), policyCatalog);
 
+                _schemaPolicyCache.Write(o => o.Clear());
                 return new KbQueryResult();
             }
             catch (Exception ex)
@@ -323,7 +344,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (readCache.TryGetValue(cacheKey, out var cachedPolicy))
                     {
-                        //return cachedPolicy;
+                        return cachedPolicy;
                     }
 
                     //Nothing cached for this schema, walk the tree and determine the applicable permissions.

@@ -52,10 +52,10 @@ ALTER ROLE TestRole REMOVE TestUser
 DROP ACCOUNT TestUser
 DROP ROLE testRole
 
-CREATE ACCOUNT TestUser WITH (Password = 'abc123!')
+CREATE ACCOUNT TestUser WITH (Password = '')
 CREATE ROLE TestRole WITH (IsAdministrator = false)
 
-ALTER ROLE Administrators ADD admin
+ALTER ROLE Default ADD TestUser
 
 GRANT Read ON PermissionTest to TestRole WITH (Recursive = True) --Select
 --DENY Write ON PermissionTest to TestRole WITH (Recursive = True) --Insert, update, delete
