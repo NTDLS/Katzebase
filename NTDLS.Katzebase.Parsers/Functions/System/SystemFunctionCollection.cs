@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
     public static class SystemFunctionCollection
     {
         internal static string[] PrototypeStrings = {
-                //Prototype Format: "functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
+                //Prototype Format: "functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)|requiresAdmin|description"
                 //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
                 "Cancel(Numeric processId)|true|'Cancels any transaction associated with a given process, leaving the process connected.'",
                 "CheckpointHealthCounters()|true|'Writes the health counters to disk. This can be useful when performance monitoring and you need to get the metrics out of the database engine and into the json file.'",
