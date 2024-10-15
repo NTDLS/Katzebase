@@ -47,6 +47,7 @@
 
         public enum KbTransactionWarning
         {
+            NullValuePropagation,
             ResultDisqualifiedByNullValue,
             AggregateDisqualifiedByNullValue,
             FieldNotFound

@@ -3,17 +3,18 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
 {
+
     internal static class StaticScalarExpressionProcessor
     {
         /// <summary>
@@ -47,7 +48,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 }
 
                 transaction.AddWarning(KbTransactionWarning.FieldNotFound, documentIdentifier.Value);
-
                 return null;
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
@@ -98,8 +98,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// </summary>
         private static string? CollapseScalarFunctionNumericParameter(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+            List<IQueryFieldExpressionFunction> functions, string? expressionString)
         {
+            if (expressionString == null)
+            {
+                return null;
+            }
+
             //Build a cachable numeric expression, interpolate the values and execute the expression.
 
             var tokenizer = new TokenizerSlim(expressionString, TokenizerExtensions.MathematicalCharacters);
@@ -131,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                             expressionString = expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, null);
                             transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
-                            //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                            return null;
                         }
                     }
                     else
@@ -156,17 +161,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 }
                 else if (token.StartsWith("$v_") && token.EndsWith('$'))
                 {
-                    if (query.Batch.Variables.Collection.TryGetValue(token, out var variable))
+                    var resolved = query.Batch.Variables.Resolve(token, out var dataType);
+                    if (dataType == KbBasicDataType.Numeric)
                     {
-                        if (variable.DataType == KbBasicDataType.Numeric)
-                        {
-                            //This is a numeric variable, get the value and append it.
-                            string mathVariable = $"v{variableNumber++}";
-                            expressionString = expressionString.Replace(token, mathVariable);
-                            expressionVariables.Add(mathVariable, variable.Value);
-                        }
+                        //This is a numeric variable, get the value and append it.
+                        string mathVariable = $"v{variableNumber++}";
+                        expressionString = expressionString.Replace(token, mathVariable);
+                        expressionVariables.Add(mathVariable, resolved);
                     }
-                    throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.Variables.Resolve(token)}]");
+                    else
+                    {
+                        throw new KbProcessingException($"Could not perform mathematical operation on [{query.Batch.Variables.Resolve(token)}]");
+                    }
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
@@ -207,21 +213,21 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Takes a string expression string and concatenates all of the values, including those from all
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
-        private static string CollapseScalarFunctionStringParameter(Transaction transaction,
+        private static string? CollapseScalarFunctionStringParameter(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
             string token;
 
-            var stringResult = new StringBuilder();
+            var stringResult = new NullPropagationString(transaction);
 
             //We keep track of potential numeric operations with the mathBuffer and when whenever we encounter a string token
             //  we will compute the previously buffered mathematical expression using ComputeAndClearMathBuffer() and append
             //  the result before processing the string token.
             //
             //  This way we can string compute expressions like "11 ^ 3 + 'ten' + 10 * 10" as "8ten100"
-            var mathBuffer = new StringBuilder();
+            var mathBuffer = new NullPropagationString(transaction);
 
             while (!tokenizer.IsExhausted())
             {
@@ -260,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                         else
                         {
                             transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
-                            //throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                            return null;
                         }
                     }
                     else
@@ -299,19 +305,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 }
                 else if (token.StartsWith("$v_") && token.EndsWith('$'))
                 {
-                    bool isNumeric = false;
-
-                    if (query.Batch.Variables.Collection.TryGetValue(token, out var variable))
+                    var resolved = query.Batch.Variables.Resolve(token, out var dataType);
+                    if (dataType == KbBasicDataType.Numeric)
                     {
-                        if (variable.DataType == KbBasicDataType.Numeric)
-                        {
-                            //This is a numeric variable, get the value and append it.
-                            mathBuffer.Append(variable.Value);
-                            isNumeric = true;
-                        }
+                        //This is a numeric variable, get the value and append it.
+                        mathBuffer.Append(resolved);
                     }
-
-                    if (isNumeric == false)
+                    else
                     {
                         //Variable was not numeric, terminate the match buffer(if any) and build the string.
                         if (mathBuffer.Length > 0)
@@ -363,7 +363,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 mathBuffer.Clear();
             }
 
-            string? ComputeAndClearMathBuffer(StringBuilder mathBuffer)
+            string? ComputeAndClearMathBuffer(NullPropagationString mathBuffer)
             {
                 if (mathBuffer.Length > 0)
                 {
@@ -397,7 +397,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 return string.Empty;
             }
 
-            return stringResult.ToString();
+            return stringResult.RealizedValue();
         }
 
 
