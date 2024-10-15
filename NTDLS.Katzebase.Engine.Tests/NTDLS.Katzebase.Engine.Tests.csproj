@@ -20,6 +20,10 @@
     <None Remove="Scripts\PersonsAndTheirAddresses.kbs" />
     <None Remove="Scripts\PersonsWithoutOrders.kbs" />
     <None Remove="Scripts\PersonWithOrdersDetails.kbs" />
+    <None Remove="Scripts\TestCases\RaggedInsert.kbs" />
+    <None Remove="Scripts\TestCases\RaggedInsertWithExpressions.kbs" />
+    <None Remove="Scripts\TestCases\ValuesInsert.kbs" />
+    <None Remove="Scripts\TestCases\ValuesInsertWithExpressions.kbs" />
     <None Remove="Scripts\TotalAmountSpentByPerson.kbs" />
     <None Remove="Scripts\TotalQuantityOfItemsOrderedPerOrder.kbs" />
   </ItemGroup>
@@ -27,6 +31,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchemaData.kbs" />
     <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\RaggedInsertWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\ValuesInsertWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\ValuesInsert.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\RaggedInsert.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\PersonsAndTheirAddresses.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\OrdersWithPersonDetails.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\PersonWithOrdersDetails.kbs" />

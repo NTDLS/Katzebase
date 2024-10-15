@@ -6,13 +6,12 @@ FROM
 INNER JOIN TestData:Address as A
 	ON p.PersonID = a.PersonID
 
-/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
 {
 PersonID	FirstName	LastName	Street	City	State	ZipCode
 1	John	Doe	123 Elm St	Springfield	IL	62704
 2	Jane	Smith	456 Oak St	Greenville	SC	29601
 3	Emily	Johnson	789 Maple Ave	Seattle	WA	98101
-5	Emma	Davis	654 Birch St	Orlando	FL	32801
 4	Michael	Brown	321 Pine St	Austin	TX	73301
+5	Emma	Davis	654 Birch St	Orlando	FL	32801
 }
-*/

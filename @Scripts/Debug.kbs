@@ -1,3 +1,25 @@
+create schema TestData
+create schema TestData:RaggedInsert
+delete from TestData:RaggedInsert
+
+INSERT INTO TestData:RaggedInsert
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe'),
+--Messy format;
+(FirstName  :   'John1', LastName: 'Doe1'),
+(
+FirstName:
+'Fred1', MiddleName
+:
+'Joe1', LastName: 'Doe1'),
+(FirstName
+:'Jane1', LastName: 'Doe1'
+)
+
+SELECT * FROM TestData:RaggedInsert
+
+
 /*
 CREATE SCHEMA TestData
 
@@ -44,7 +66,7 @@ INSERT INTO TestData:SalesOrderItem (OrderItemID, OrderID, ProductName, Quantity
 (5, 5, 'Chair', 1, 180.40),
 (6, 6, 'Mouse', 1, 25.00),
 (7, 6, 'Keyboard', 1, 50.00)
-*/
+
 
 
 --Get All Persons and Their Addresses (1-to-1 Relationship)
@@ -132,7 +154,7 @@ INNER JOIN TestData:SalesOrderItem as oi
 	ON oi.OrderID = o.OrderID 
 WHERE
 	o.PersonID = 1 -- Change to the desired PersonID
-
+*/
 /*
 exec ShowMySchemaPolicy('PermissionTest:SchemaB:SubSchemaA')
 

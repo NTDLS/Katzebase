@@ -1,0 +1,16 @@
+INSERT INTO TestData:ValuesInsertWithExpressions(Id, FirstName, LastName)
+VALUES(1, 'Jane', 'Doe'),(2, 'John', 'Doe'),(3, 'Test', sha1('Some text') + ' (some expression)')
+
+SELECT * FROM TestData:ValuesInsertWithExpressions
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=3, MaxDuration=100)
+{
+}
+
+#Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=3, MaxDuration=100)
+{
+FirstName	Id	LastName
+Test	3	02d92c580d4ede6c80a878bdd9f3142d8f757be8 (some expression)
+John	2	Doe
+Jane	1	Doe
+}

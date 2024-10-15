@@ -688,9 +688,9 @@ namespace NTDLS.Katzebase.Management.Controls
                             for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
                             {
                                 var fieldValue = row.Values[fieldIndex];
-                                rowValues.Add(fieldValue ?? string.Empty);
+                                rowValues.Add(fieldValue ?? "<null>");
                             }
-                            outputGrid.Rows.Add(row.Values.ToArray());
+                            outputGrid.Rows.Add(rowValues.ToArray());
 
                             maxRowsToLoad--;
                             if (maxRowsToLoad <= 0)

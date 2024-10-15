@@ -8,10 +8,9 @@ INNER JOIN TestData:SalesOrderItem as oi
 WHERE
 	o.PersonID = @PersonId
 
-/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
 {
 OrderID	OrderDate	OrderItemID	ProductName	Quantity	Price
 1	2024-01-01	1	Laptop	1	150.75
 2	2024-01-05	2	Monitor	2	110.05
 }
-*/

@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
                 }
 
-                foreach (var field in distinctFields)
+                foreach (var field in distinctFields.OrderBy(o => o))
                 {
                     query.SelectFields.Add(new QueryField(field, query.SelectFields.Count, new QueryFieldDocumentIdentifier(query.ScriptLine, field)));
                 }

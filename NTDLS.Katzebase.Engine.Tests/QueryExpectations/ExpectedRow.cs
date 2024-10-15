@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Engine.Tests.Helpers
+﻿namespace NTDLS.Katzebase.Engine.Tests.QueryExpectations
 {
     internal class ExpectedRow
     {

@@ -11,3 +11,9 @@ CREATE SCHEMA TestData:SalesOrder
 
 -- Table: SalesOrderItem (1-to-many relationship with SalesOrder)
 CREATE SCHEMA TestData:SalesOrderItem
+
+
+CREATE SCHEMA TestData:ValuesInsert
+CREATE SCHEMA TestData:ValuesInsertWithExpressions
+CREATE SCHEMA TestData:RaggedInsert
+CREATE SCHEMA TestData:RaggedInsertWithExpressions

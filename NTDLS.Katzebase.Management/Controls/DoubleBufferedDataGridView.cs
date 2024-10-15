@@ -118,7 +118,11 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        sb.Append(cell.Value?.ToString()).Append('\t');
+                        if (cell.ColumnIndex > 0)
+                        {
+                            sb.Append('\t');
+                        }
+                        sb.Append(cell.Value?.ToString());
                     }
                     sb.AppendLine();
                 }
@@ -143,7 +147,11 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 foreach (DataGridViewColumn column in Columns)
                 {
-                    sb.Append(column.Name).Append("\t");
+                    if (column.Index > 0)
+                    {
+                        sb.Append('\t');
+                    }
+                    sb.Append(column.Name);
                 }
                 sb.AppendLine();
 
@@ -151,7 +159,11 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        sb.Append(cell.Value?.ToString()).Append("\t");
+                        if (cell.ColumnIndex > 0)
+                        {
+                            sb.Append('\t');
+                        }
+                        sb.Append(cell.Value?.ToString());
                     }
                     sb.AppendLine();
                 }

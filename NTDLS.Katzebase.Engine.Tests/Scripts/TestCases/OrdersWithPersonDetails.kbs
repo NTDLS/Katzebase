@@ -6,7 +6,7 @@ FROM
 INNER JOIN TestData:Person as p
 	ON o.PersonID = p.PersonID
 
-/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
 {
 OrderID	FirstName	LastName	OrderDate	TotalAmount
 1	John	Doe	2024-01-01	150.75
@@ -16,4 +16,4 @@ OrderID	FirstName	LastName	OrderDate	TotalAmount
 5	Michael	Brown	2024-01-12	180.40
 6	Michael	Brown	2024-01-15	75.00
 }
-*/
+

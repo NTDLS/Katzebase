@@ -8,7 +8,7 @@ INNER JOIN TestData:SalesOrderItem as oi
 GROUP BY
 	o.OrderID
 
-/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
 {
 OrderID	TotalItems
 1	1
@@ -18,4 +18,3 @@ OrderID	TotalItems
 5	1
 6	2
 }
-*/

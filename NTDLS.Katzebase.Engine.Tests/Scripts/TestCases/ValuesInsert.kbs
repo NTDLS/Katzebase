@@ -1,0 +1,15 @@
+INSERT INTO TestData:ValuesInsert(FirstName, LastName)
+VALUES('Jane', 'Doe'),('John', 'Doe')
+
+SELECT * FROM TestData:ValuesInsert
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=2, MaxDuration=100)
+{
+}
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=6, MaxDuration=100)
+{
+FirstName	LastName
+Jane	Doe
+John	Doe
+}

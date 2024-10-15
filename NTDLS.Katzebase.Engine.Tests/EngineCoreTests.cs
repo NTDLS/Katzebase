@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Tests
         [Fact(DisplayName = "Simple Selects, Joins, Groups and Order By.")]
         public void TestBasicQueries()
         {
-            QueryExpectation.ValidateScriptResults(_engine, "NumberOfOrdersPlacedByEachPerson.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, "RaggedInsert.kbs");
             QueryExpectation.ValidateScriptResults(_engine, "OrdersAndItemsForSpecificPerson.kbs", new { PersonId = 1 });
             QueryExpectation.ValidateScriptResults(_engine, "OrdersAndTheirItems.kbs");
             QueryExpectation.ValidateScriptResults(_engine, "OrdersWithPersonDetails.kbs");

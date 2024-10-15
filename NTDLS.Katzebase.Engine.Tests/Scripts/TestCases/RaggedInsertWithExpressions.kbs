@@ -1,0 +1,18 @@
+INSERT INTO TestData:RaggedInsertWithExpressions
+(FirstName:'John', LastName:'Doe'),
+(FirstName:'Fred', MiddleName:Sha1('Dean' + ' jr.'), LastName:'Doe'),
+(FirstName:'Jane', LastName:'Doe')
+
+SELECT * FROM TestData:RaggedInsertWithExpressions
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=3, MaxDuration=100)
+{
+}
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=3, MaxDuration=100)
+{
+FirstName	LastName	MiddleName
+Jane	Doe	<null>
+Fred	Doe	507215a9b3fa78a56180708d838aa7fba5787cf7
+John	Doe	<null>
+}

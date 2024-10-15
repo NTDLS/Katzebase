@@ -1,0 +1,31 @@
+INSERT INTO TestData:RaggedInsert
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe'),
+--Messy format;
+(FirstName  :   'John1', LastName: 'Doe1'),
+(
+FirstName:
+'Fred1', MiddleName
+:
+'Joe1', LastName: 'Doe1'),
+(FirstName
+:'Jane1', LastName: 'Doe1'
+)
+
+SELECT * FROM TestData:RaggedInsert
+
+#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=6, MaxDuration=100)
+{
+}
+
+#Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=6, MaxDuration=100)
+{
+FirstName	LastName	MiddleName
+Fred1	Doe1	Joe1
+John1	Doe1	<null>
+Jane1	Doe1	<null>
+John	Doe	<null>
+Jane	Doe	<null>
+Fred	Doe	Joe
+}

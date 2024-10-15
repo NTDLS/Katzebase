@@ -12,7 +12,7 @@ INNER JOIN TestData:SalesOrder as o
 GROUP BY
 	p.PersonID, p.FirstName, p.LastName
 
-/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
 {
 PersonID	FirstName	LastName	OrdersCount	TotalSpent
 1	John	Doe	2	370.85
@@ -20,4 +20,3 @@ PersonID	FirstName	LastName	OrdersCount	TotalSpent
 3	Emily	Johnson	1	305.6
 4	Michael	Brown	2	255.4
 }
-*/
