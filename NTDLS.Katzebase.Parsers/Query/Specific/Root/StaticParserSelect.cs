@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             {
                 if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var selectIntoSchema) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(selectIntoSchema)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.Variables.Resolve(selectIntoSchema)}].");
                 }
 
                 query.AddAttribute(PreparedQuery.Attribute.TargetSchemaName, selectIntoSchema);
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 
             if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.Variables.Resolve(schemaName)}].");
             }
 
             if (tokenizer.TryEatIfNext("as"))

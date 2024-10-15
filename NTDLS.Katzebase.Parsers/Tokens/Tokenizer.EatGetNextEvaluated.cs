@@ -18,26 +18,26 @@
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
         /// </summary>
         public string? EatGetNextResolved()
-            => ResolveLiteral(EatGetNext(_standardTokenDelimiters, out _));
+            => Variables.Resolve(EatGetNext(_standardTokenDelimiters, out _));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
         /// </summary>
         public string? EatGetNextResolved(char[] delimiters)
-            => ResolveLiteral(EatGetNext(delimiters, out _));
+            => Variables.Resolve(EatGetNext(delimiters, out _));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters,
         ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
         /// </summary>
         public string? EatGetNextResolved(out char outStoppedOnDelimiter)
-            => ResolveLiteral(EatGetNext(_standardTokenDelimiters, out outStoppedOnDelimiter));
+            => Variables.Resolve(EatGetNext(_standardTokenDelimiters, out outStoppedOnDelimiter));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters,
         ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
         /// </summary>
         public string? EatGetNextResolved(char[] delimiters, out char outStoppedOnDelimiter)
-            => ResolveLiteral(EatGetNext(delimiters, out outStoppedOnDelimiter));
+            => Variables.Resolve(EatGetNext(delimiters, out outStoppedOnDelimiter));
     }
 }

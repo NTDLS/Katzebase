@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                             {
                                 //Get the next token after the "as".
                                 var fieldAliasTokenizer = new TokenizerSlim(field.Substring(aliasIndex + 4).Trim());
-                                fieldAlias = tokenizer.ResolveLiteral(fieldAliasTokenizer.EatGetNext());
+                                fieldAlias = tokenizer.Variables.Resolve(fieldAliasTokenizer.EatGetNext());
 
                                 //Make sure that the single token was the entire alias, otherwise we have a syntax error.
                                 if (!fieldAliasTokenizer.IsExhausted())

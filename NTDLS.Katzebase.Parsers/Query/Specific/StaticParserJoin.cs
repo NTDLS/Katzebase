@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 string subSchemaAlias;
                 if (!TokenizerHelpers.IsValidIdentifier(subSchemaSchema, ':'))
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(subSchemaSchema)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.Variables.Resolve(subSchemaSchema)}].");
                 }
 
                 if (tokenizer.TryEatIfNext("as"))
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
                 if (tokenizer.TryEatIfNext("on", out var onToken) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(onToken)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.Variables.Resolve(onToken)}].");
                 }
 
                 var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " offset ", " group "]);

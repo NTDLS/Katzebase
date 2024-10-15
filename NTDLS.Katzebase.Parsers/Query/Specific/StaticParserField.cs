@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     //Verify that the next character (if any) is a "connector".
                     if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Connection token is missing, found: [{parentTokenizer.ResolveLiteral(token)}].");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Connection token is missing, found: [{parentTokenizer.Variables.Resolve(token)}].");
                     }
                     else
                     {

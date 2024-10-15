@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             {
                 if (!field.IsIdentifier())
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.ResolveLiteral(field)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.Variables.Resolve(field)}].");
                 }
 
                 query.CreateIndexFields.Add(field);

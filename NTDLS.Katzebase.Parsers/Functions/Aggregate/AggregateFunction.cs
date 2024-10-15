@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Aggregate
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected [=], found: [{paramTokenizer.NextCharacter}].");
                     }
 
-                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
+                    var optionalParameterDefaultValue = tokenizer.Variables.Resolve(paramTokenizer.EatGetNext());
                     if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
                     {
                         optionalParameterDefaultValue = null;

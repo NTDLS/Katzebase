@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 
             if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var updateSchemaNameOrAlias) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name or alias, found: [{tokenizer.ResolveLiteral(updateSchemaNameOrAlias)}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name or alias, found: [{tokenizer.Variables.Resolve(updateSchemaNameOrAlias)}].");
             }
 
             tokenizer.EatIfNext("set");
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             {
                 if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var fieldName) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.ResolveLiteral(fieldName)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.Variables.Resolve(fieldName)}].");
                 }
                 query.UpdateFieldNames.Add(fieldName);
 
@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             {
                 if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.Variables.Resolve(schemaName)}].");
                 }
 
                 if (tokenizer.TryEatIfNext("as"))

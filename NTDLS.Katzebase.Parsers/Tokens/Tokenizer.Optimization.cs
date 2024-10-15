@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using NTDLS.Helpers;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using System.Text;
@@ -11,35 +10,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
     public partial class Tokenizer
     {
         #region Swap in/out literals.
-
-        /// <summary>
-        /// Attempts to resolve a single string or numeric literal, otherwise returns the given value.
-        /// This method is related to <see cref="QueryVariables.Resolve(string?)"/>.
-        /// This method is related to <see cref="QueryVariables.Resolve(string?, out KbBasicDataType)"/>.
-        /// </summary>
-        public string? ResolveLiteral(string token)
-        {
-            if (Variables.Collection.TryGetValue(token, out var literal))
-            {
-                if (literal.DataType == KbBasicDataType.Undefined)
-                {
-                    if (Variables.VariableReverseLookup.TryGetValue(token, out var variableName))
-                    {
-                        if (variableName.Is("null"))
-                        {
-                            return null;
-                        }
-
-                        throw new KbParserException($"Variable is undefined: [{variableName}].");
-                    }
-
-                    throw new KbParserException("Variable is undefined.");
-                }
-
-                return literal.Value;
-            }
-            return token;
-        }
 
         /// <summary>
         /// Replaces text literals with tokens to prepare the query for parsing.
@@ -135,12 +105,19 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             //Null is a special case.
                             //I'm reluctant to DEFINE null as UNDEFINED but we really don't know its type.
 
-                            string key = $"$v_{_literalKey++}$";
-                            Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.Undefined));
-                            query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            if (Variables.VariableForwardLookup.TryGetValue(match.Value, out var existingKey))
+                            {
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, existingKey);
+                            }
+                            else
+                            {
+                                string key = $"$v_{_literalKey++}$";
+                                Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.Undefined));
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
 
-                            Variables.VariableForwardLookup.Add(match.Value, key);
-                            Variables.VariableReverseLookup.Add(key, match.Value);
+                                Variables.VariableForwardLookup.Add(match.Value, key);
+                                Variables.VariableReverseLookup.Add(key, match.Value);
+                            }
                         }
                         else if (constant.DataType == KbBasicDataType.String)
                         {
