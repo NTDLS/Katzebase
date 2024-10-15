@@ -20,12 +20,12 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
         /// <summary>
         /// Tests the actual data-set against the expectations.
         /// </summary>
-        public static void ValidateScriptResults(EngineCore engine, string scriptFileName)
+        public static void ValidateScriptResults(EngineCore engine, string scriptFileName, object? userParameters = null)
         {
             var expectation = Parse(scriptFileName);
 
             using var ephemeral = engine.Sessions.CreateEphemeralSystemSession();
-            var resultsCollection = ephemeral.Transaction.ExecuteQuery(expectation.QueryText);
+            var resultsCollection = ephemeral.Transaction.ExecuteQuery(expectation.QueryText, userParameters);
             ephemeral.Commit();
 
             expectation.Validate(resultsCollection);
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
         {
             var result = new QueryExpectation()
             {
-                QueryText = EmbeddedScripts.Load("NumberOfOrdersPlacedByEachPerson.kbs")
+                QueryText = EmbeddedScripts.Load(scriptName)
             };
 
             var tokenizer = new Tokenizer(result.QueryText, [' ', '(', ')', ',', '='])

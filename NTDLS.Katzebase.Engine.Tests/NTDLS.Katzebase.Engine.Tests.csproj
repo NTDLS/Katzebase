@@ -27,16 +27,16 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchemaData.kbs" />
     <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchema.kbs" />
-    <EmbeddedResource Include="Scripts\PersonsAndTheirAddresses.kbs" />
-    <EmbeddedResource Include="Scripts\OrdersWithPersonDetails.kbs" />
-    <EmbeddedResource Include="Scripts\PersonWithOrdersDetails.kbs" />
-    <EmbeddedResource Include="Scripts\TotalAmountSpentByPerson.kbs" />
-    <EmbeddedResource Include="Scripts\OrdersAndTheirItems.kbs" />
-    <EmbeddedResource Include="Scripts\PersonsWithoutOrders.kbs" />
-    <EmbeddedResource Include="Scripts\OrdersAndItemsForSpecificPerson.kbs" />
-    <EmbeddedResource Include="Scripts\TotalQuantityOfItemsOrderedPerOrder.kbs" />
-    <EmbeddedResource Include="Scripts\NumberOfOrdersPlacedByEachPerson.kbs" />
-    <EmbeddedResource Include="Scripts\ConstantsAndSimpleExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\PersonsAndTheirAddresses.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\OrdersWithPersonDetails.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\PersonWithOrdersDetails.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\TotalAmountSpentByPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\OrdersAndTheirItems.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\PersonsWithoutOrders.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\OrdersAndItemsForSpecificPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\TotalQuantityOfItemsOrderedPerOrder.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\NumberOfOrdersPlacedByEachPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\ConstantsAndSimpleExpressions.kbs" />
   </ItemGroup>
 
   <ItemGroup>
