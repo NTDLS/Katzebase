@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Api.KbConstants;
@@ -22,16 +23,25 @@ namespace NTDLS.Katzebase.Parsers
         /// </summary>
         public KbInsensitiveDictionary<KbVariable> Collection { get; set; } = new();
 
-        public string? Resolve(string? value)
+        /// <summary>
+        /// Resolves a variable or a constant placeholder to its original value.
+        /// This method is related to <see cref="Tokenizer.SwapOutVariables(ref string)"/>.
+        /// </summary>
+        public string? Resolve(string? token)
         {
-            if (value == null) return null;
+            if (token == null) return null;
 
-            if (Collection.TryGetValue(value, out var literal))
+            if (Collection.TryGetValue(token, out var literal))
             {
                 if (literal.DataType == KbBasicDataType.Undefined)
                 {
-                    if (VariableReverseLookup.TryGetValue(value, out var variableName))
+                    if (VariableReverseLookup.TryGetValue(token, out var variableName))
                     {
+                        if (variableName.Is("null"))
+                        {
+                            return null;
+                        }
+
                         throw new KbParserException($"Variable is undefined: [{variableName}].");
                     }
 
@@ -40,19 +50,29 @@ namespace NTDLS.Katzebase.Parsers
 
                 return literal.Value?.AssertUnresolvedExpression();
             }
-            else return value?.AssertUnresolvedExpression();
+            else return token?.AssertUnresolvedExpression();
         }
 
-        public string? Resolve(string? value, out KbBasicDataType outDataType)
+        /// <summary>
+        /// Resolves a variable or a constant placeholder to its original value.
+        /// This method is related to <see cref="Tokenizer.SwapOutVariables(ref string)"/>.
+        /// </summary>
+        public string? Resolve(string? token, out KbBasicDataType outDataType)
         {
-            if (value != null)
+            if (token != null)
             {
-                if (Collection.TryGetValue(value, out var literal))
+                if (Collection.TryGetValue(token, out var literal))
                 {
                     if (literal.DataType == KbBasicDataType.Undefined)
                     {
-                        if (VariableReverseLookup.TryGetValue(value, out var variableName))
+                        if (VariableReverseLookup.TryGetValue(token, out var variableName))
                         {
+                            if (variableName.Is("null"))
+                            {
+                                outDataType = KbBasicDataType.Undefined;
+                                return null;
+                            }
+
                             throw new KbParserException($"Variable is undefined: [{variableName}].");
                         }
 
@@ -64,7 +84,7 @@ namespace NTDLS.Katzebase.Parsers
                 }
             }
             outDataType = KbBasicDataType.Undefined;
-            return value?.AssertUnresolvedExpression();
+            return token?.AssertUnresolvedExpression();
         }
     }
 }

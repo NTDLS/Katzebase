@@ -1,5 +1,8 @@
 select
-	NullIfNumeric(10, IsEqual('Test', 'Test')) + 10/*,
+
+IsNull(null)
+	--NullIfNumeric(7, IsEqual('Test', 'Test')) + 10
+	/*,
 	NullIfNumeric(10, IsEqual('Test', 'Test_new')) + 10,
 	IfNullNumeric(10, 20) + 10,
 	IfNullNumeric(null, 20) + 10,

@@ -1,4 +1,6 @@
-﻿using NTDLS.Katzebase.Api;
+﻿using Newtonsoft.Json.Linq;
+using NTDLS.Helpers;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,16 +14,26 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         /// <summary>
         /// Attempts to resolve a single string or numeric literal, otherwise returns the given value.
+        /// This method is related to <see cref="QueryVariables.Resolve(string?)"/>.
+        /// This method is related to <see cref="QueryVariables.Resolve(string?, out KbBasicDataType)"/>.
         /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
         public string? ResolveLiteral(string token)
         {
             if (Variables.Collection.TryGetValue(token, out var literal))
             {
                 if (literal.DataType == KbBasicDataType.Undefined)
                 {
-                    throw new KbParserException(GetCurrentLineNumber(), $"The variable is not defined: [{token}]");
+                    if (Variables.VariableReverseLookup.TryGetValue(token, out var variableName))
+                    {
+                        if (variableName.Is("null"))
+                        {
+                            return null;
+                        }
+
+                        throw new KbParserException($"Variable is undefined: [{variableName}].");
+                    }
+
+                    throw new KbParserException("Variable is undefined.");
                 }
 
                 return literal.Value;
@@ -34,7 +46,6 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         private void SwapOutStringLiterals(ref string query)
         {
-
             //Literal strings.
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
             while (true)
@@ -54,6 +65,12 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
         }
+
+        /// <summary>
+        /// Replaces variable and constant tokens with placeholders and builds forward and reverse lookups for those values.
+        /// This method is related to <see cref="QueryVariables.Resolve(string?)"/>.
+        /// This method is related to <see cref="QueryVariables.Resolve(string?, out KbBasicDataType)"/>.
+        /// </summary>
         private void SwapOutVariables(ref string query)
         {
             var triedConstants = new Dictionary<string, string>();
@@ -113,7 +130,19 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                     }
                     else if (Variables.Collection.TryGetValue(match.ToString(), out var constant))
                     {
-                        if (constant.DataType == KbBasicDataType.String)
+                        if (match.Value.Is("null"))
+                        {
+                            //Null is a special case.
+                            //I'm reluctant to DEFINE null as UNDEFINED but we really don't know its type.
+
+                            string key = $"$v_{_literalKey++}$";
+                            Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.Undefined));
+                            query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+
+                            Variables.VariableForwardLookup.Add(match.Value, key);
+                            Variables.VariableReverseLookup.Add(key, match.Value);
+                        }
+                        else if (constant.DataType == KbBasicDataType.String)
                         {
                             string key = $"$s_{_literalKey++}$";
                             Variables.Collection.Add(key, new(constant.Value, KbBasicDataType.String));

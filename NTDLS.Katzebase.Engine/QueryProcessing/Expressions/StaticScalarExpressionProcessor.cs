@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
@@ -77,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
             {
                 return null;
             }
-            var expressionString = new NullPropagationString(transaction, givenExpressionString);
+            var expressionString = new StringBuilder(givenExpressionString);
 
             var tokenizer = new TokenizerSlim(expressionString.ToString().EnsureNotNull(), TokenizerExtensions.MathematicalCharacters);
 
@@ -172,8 +173,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                 return expressionVariables.First().Value;
             }
 
-            if (expressionString.ContainsNullValue)
+            if (expressionVariables.Any(o => o.Value == null))
             {
+                if (expressionVariables.Count > 1)
+                {
+                    //We only add NullValuePropagation if we have more than one variable,
+                    //  because its not a null propagation if its only one value.
+                    transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                }
+
                 return null;
             }
 
