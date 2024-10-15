@@ -12,16 +12,7 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
             try
             {
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                    ?? throw new KbGenericException($"Value for [{name}] cannot be null.");
-
-                if (parameter.Value == null)
-                {
-                    if (parameter.Parameter.HasDefault == false)
-                    {
-                        throw new KbGenericException($"Value for [{name}] cannot be null.");
-                    }
-                    return Converters.ConvertToNullable<T?>(parameter.Parameter.DefaultValue);
-                }
+                    ?? throw new KbGenericException($"Value is not defined: [{name}].");
 
                 return Converters.ConvertToNullable<T?>(parameter.Value);
             }

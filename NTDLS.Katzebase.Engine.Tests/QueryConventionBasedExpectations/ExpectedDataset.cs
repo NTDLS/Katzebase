@@ -13,10 +13,10 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 
         #region Get Attributes.
 
-        public bool IsAttributeSet(ExpectationAttribute attribute)
+        public bool IsAttributeSet(DatasetExpectationOption attribute)
             => Options.TryGetValue(attribute.ToString(), out var _);
 
-        public bool TryGetAttribute<T>(ExpectationAttribute attribute, out T outValue, T defaultValue)
+        public bool TryGetAttribute<T>(DatasetExpectationOption attribute, out T outValue, T defaultValue)
         {
             if (Options.TryGetValue(attribute.ToString(), out var option))
             {
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             return false;
         }
 
-        public bool TryGetAttribute<T>(ExpectationAttribute attribute, [NotNullWhen(true)] out T? outValue)
+        public bool TryGetAttribute<T>(DatasetExpectationOption attribute, [NotNullWhen(true)] out T? outValue)
         {
             if (Options.TryGetValue(attribute.ToString(), out var option))
             {
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             return false;
         }
 
-        public T GetAttribute<T>(ExpectationAttribute attribute, T defaultValue)
+        public T GetAttribute<T>(DatasetExpectationOption attribute, T defaultValue)
         {
             if (Options.TryGetValue(attribute.ToString(), out var option))
             {

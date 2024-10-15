@@ -46,12 +46,12 @@ namespace NTDLS.Katzebase.Engine.Scripts
         {
             string cacheKey = scriptName;
 
-            var allScriptNames = _cache.Get($"TranslateSqlScript:SearchAssembly:{assembly.FullName}") as List<string>;
+            var allScriptNames = _cache.Get($"EmbeddedScripts:SearchAssembly:{assembly.FullName}") as List<string>;
             if (allScriptNames == null)
             {
                 allScriptNames = assembly.GetManifestResourceNames().Where(o => o.EndsWith(".kbs", StringComparison.InvariantCultureIgnoreCase))
                     .Select(o => $":{o}".Replace('.', ':')).ToList();
-                _cache.Add("TranslateSqlScript:Names", allScriptNames, new CacheItemPolicy
+                _cache.Add("EmbeddedScripts:Names", allScriptNames, new CacheItemPolicy
                 {
                     SlidingExpiration = new TimeSpan(1, 0, 0)
                 });
@@ -84,6 +84,54 @@ namespace NTDLS.Katzebase.Engine.Scripts
             }
 
             return null;
+        }
+
+        public static List<string> SearchAssemblyNamespace(string namespacePath)
+        {
+            var result = new List<string>();
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (var assembly in assemblies)
+            {
+                result.AddRange(SearchAssemblyNamespace(assembly, namespacePath));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Searches the given assembly for a script file.
+        /// </summary>
+        private static IEnumerable<string> SearchAssemblyNamespace(Assembly assembly, string namespacePath)
+        {
+            var result = new List<string>();
+
+            var allScriptNames = _cache.Get($"EmbeddedScripts:SearchAssembly:{assembly.FullName}") as List<string>;
+            if (allScriptNames == null)
+            {
+                allScriptNames = assembly.GetManifestResourceNames().Where(o => o.EndsWith(".kbs", StringComparison.InvariantCultureIgnoreCase))
+                    .Select(o => o.Replace('.', '\\')[..^4] + ".kbs").ToList();
+                _cache.Add("EmbeddedScripts:SearchAssemblyNamespace", allScriptNames, new CacheItemPolicy
+                {
+                    SlidingExpiration = new TimeSpan(1, 0, 0)
+                });
+            }
+
+            if (allScriptNames.Count > 0)
+            {
+                foreach (var scriptName in allScriptNames)
+                {
+                    var scriptPath = Path.GetDirectoryName(scriptName);
+                    if (scriptPath?.EndsWith(namespacePath) == true)
+                    {
+                        result.Add(scriptName);
+                    }
+                }
+
+            }
+
+            return result.OrderBy(o => o);
         }
     }
 }

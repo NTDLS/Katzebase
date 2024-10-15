@@ -1,0 +1,29 @@
+SELECT
+	Sha1('t'),
+    11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
+    6 * -1 as Negative,
+    10 + 10 + (11 ^ 3) + 10 + '->' + Length(Guid()),
+    10 + 10 + 'ten' + 10 * 10,
+    'ten (' + 10 * 10 + ') : ' + Length(DateTimeUTC('yyyy/MM/dd hh:mm:ss tt'))
+FROM
+	Single
+WHERE
+	1 = 1
+	and 1 != 3
+	and (
+		10 = 10
+		and 5 = 5
+		and (
+			10 = 10
+			and length(guid()) = 36
+			and 5 = 5
+		)
+	)
+ORDER BY
+	10
+
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+Expression0	Expression1	Negative	Expression2	Expression3	Expression4
+8efd86fb78a56a5145ed7739dcb00c78581c5375	8ten102	-6	2810->36	20ten100	ten (100) : 22
+}

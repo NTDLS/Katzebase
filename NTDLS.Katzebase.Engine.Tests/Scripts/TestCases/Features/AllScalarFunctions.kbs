@@ -1,11 +1,3 @@
---TODO: Test optional parameters and their defaults.
-
-SELECT
-	IsNull(true)
-FROM
-	Single
-
-/*
 SELECT
 	IsBetween(50, 10, 100),
 	IsBetween(200, 10, 100),
@@ -47,4 +39,9 @@ SELECT
 	IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False'),
 FROM
 	Single
-*/
+
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+Expression0	Expression1	Expression2	Expression3	Expression4	Expression5	Expression6	Expression7	Expression8	Expression9	Expression10	Expression11	Expression12	Expression13	Expression14	Expression15	Expression16	Expression17	Expression18	Expression19	Expression20	Expression21	Expression22	Expression23	Expression24	Expression25	Expression26	Expression27	Expression28	Expression29	Expression30	Expression31	Expression32	Expression33	Expression34	Expression35	Expression36	Expression37
+True	False	False	True	True	False	False	True	False	True	False	False	False	True	43636	35	11	24	24	<null>	<null>	<null>	36	13	Hello	world	7b502c3a1f48c8609ae212cdfb639dee39673f5e	64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c	b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47	cruel	hello cruel world	Hello Cruel World	HELLO CRUEL WORLD	hello world	hello	o wor	hello world	Is True
+}

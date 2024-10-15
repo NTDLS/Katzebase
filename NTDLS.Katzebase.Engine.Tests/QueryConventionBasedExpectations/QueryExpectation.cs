@@ -1,8 +1,10 @@
 ﻿using NTDLS.Katzebase.Api.Payloads.Response;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 
 namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
@@ -10,6 +12,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
     internal class QueryExpectation
     {
         public List<ExpectedDataset> ExpectedDatasets { get; set; } = new();
+        public KbInsensitiveDictionary<QueryAttribute> BatchOptions { get; set; } = new();
 
         public string QueryText { get; set; } = string.Empty;
 
@@ -24,7 +27,10 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             var resultsCollection = ephemeral.Transaction.ExecuteQuery(expectation.QueryText, userParameters);
             ephemeral.Commit();
 
-            expectation.Validate(resultsCollection);
+            if (expectation.GetOption(BatchExpectationOption.DoNotValidate, false) == false)
+            {
+                expectation.Validate(resultsCollection);
+            }
         }
 
         /// <summary>
@@ -38,20 +44,32 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 
             var queryText = EmbeddedScripts.Load(scriptName);
 
-            int firstExpectedIndex = queryText.IndexOf("#Expected", StringComparison.InvariantCultureIgnoreCase);
-            if (firstExpectedIndex < 0)
+            int indexOfOptions = queryText.IndexOf("#BatchOptions", StringComparison.InvariantCultureIgnoreCase);
+            int indexOfFirstExpectations = queryText.IndexOf("#Expected", StringComparison.InvariantCultureIgnoreCase);
+            int startIndex = GetSmallestPositive(indexOfOptions, indexOfFirstExpectations);
+
+            if (startIndex < 0)
             {
                 result.QueryText = queryText; //We have no expected datasets.
             }
             else
             {
-                result.QueryText = queryText.Substring(0, firstExpectedIndex);
-                string expectedDatasetTextBlock = queryText.Substring(firstExpectedIndex);
+                result.QueryText = queryText.Substring(0, startIndex);
+                string expectedDatasetTextBlock = queryText.Substring(startIndex);
 
                 var tokenizer = new Tokenizer(expectedDatasetTextBlock, [' ', '(', ')', ',', '='])
                 {
                     SkipDelimiter = false
                 };
+
+                if (tokenizer.TryEatIfNext("#BatchOptions"))
+                {
+                    var validBatchOptions = new ExpectedQueryAttributes
+                    {
+                        { BatchExpectationOption.DoNotValidate.ToString(), typeof(bool) }
+                    };
+                    result.BatchOptions = StaticParserAttributes.Parse(tokenizer, validBatchOptions);
+                }
 
                 while (!tokenizer.IsExhausted())
                 {
@@ -63,10 +81,10 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 
                     var validOptions = new ExpectedQueryAttributes
                     {
-                        { ExpectationAttribute.EnforceRowOrder.ToString(), typeof(bool) },
-                        { ExpectationAttribute.HasFieldNames.ToString(), typeof(bool) },
-                        { ExpectationAttribute.AffectedCount.ToString(), typeof(int) },
-                        { ExpectationAttribute.MaxDuration.ToString(), typeof(int) }
+                        { DatasetExpectationOption.EnforceRowOrder.ToString(), typeof(bool) },
+                        { DatasetExpectationOption.HasFieldNames.ToString(), typeof(bool) },
+                        { DatasetExpectationOption.AffectedCount.ToString(), typeof(int) },
+                        { DatasetExpectationOption.MaxDuration.ToString(), typeof(int) }
                     };
                     expectedDataset.Options = StaticParserAttributes.Parse(tokenizer, validOptions);
 
@@ -76,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
                     var expectedRowLines = expectedRowsTextBlock.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                     foreach (var expectedRowLine in expectedRowLines)
                     {
-                        if (expectedDataset.Fields == null && expectedDataset.GetAttribute(ExpectationAttribute.HasFieldNames, false))
+                        if (expectedDataset.Fields == null && expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
                         {
                             expectedDataset.Fields = expectedRowLine.Split('\t').ToList();
                             continue;
@@ -109,24 +127,24 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
                 var expectedDataset = ExpectedDatasets[datasetIndex];
                 var actualDataset = actualDatasets.Collection[datasetIndex];
 
-                if (expectedDataset.TryGetAttribute<int>(ExpectationAttribute.MaxDuration, out var expectedMaxDuration))
+                if (expectedDataset.TryGetAttribute<int>(DatasetExpectationOption.MaxDuration, out var expectedMaxDuration))
                 {
                     //Ensure the query ran in the within expected duration.
                     Assert.InRange(actualDataset.Duration, 0, expectedMaxDuration);
                 }
 
-                if (expectedDataset.TryGetAttribute<int>(ExpectationAttribute.AffectedCount, out var expectedAffectedCount))
+                if (expectedDataset.TryGetAttribute<int>(DatasetExpectationOption.AffectedCount, out var expectedAffectedCount))
                 {
                     //Ensure we have the expected "affected row count".
                     Assert.Equal(expectedAffectedCount, actualDataset.RowCount);
                 }
 
-                if (expectedDataset.GetAttribute(ExpectationAttribute.EnforceRowOrder, false))
+                if (expectedDataset.GetAttribute(DatasetExpectationOption.EnforceRowOrder, false))
                 {
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute(ExpectationAttribute.HasFieldNames, false))
+                    if (expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
                     {
                         //Ensure that the field names, count and ordinals match.
 
@@ -147,7 +165,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute(ExpectationAttribute.HasFieldNames, false))
+                    if (expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
                     {
                         //Ensure that the field names, count and ordinals match.
 
@@ -181,5 +199,63 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             return valuesHash;
             //return Shared.Helpers.GetSHA256Hash(valuesHash);
         }
+
+        private static int GetSmallestPositive(int a, int b)
+        {
+            // Check if both numbers are greater than 0
+            if (a > 0 && b > 0)
+            {
+                return Math.Min(a, b);
+            }
+            // If only one number is positive, return that one
+            else if (a > 0)
+            {
+                return a;
+            }
+            else if (b > 0)
+            {
+                return b;
+            }
+            // If neither is positive, return 0
+            return 0;
+        }
+
+        #region Get Options.
+
+        public bool IsOptionSet(BatchExpectationOption opt)
+            => BatchOptions.TryGetValue(opt.ToString(), out var _);
+
+        public bool TryGetOption<T>(BatchExpectationOption opt, out T outValue, T defaultValue)
+        {
+            if (BatchOptions.TryGetValue(opt.ToString(), out var option))
+            {
+                outValue = (T)option.Value;
+                return true;
+            }
+            outValue = defaultValue;
+            return false;
+        }
+
+        public bool TryGetOption<T>(BatchExpectationOption opt, [NotNullWhen(true)] out T? outValue)
+        {
+            if (BatchOptions.TryGetValue(opt.ToString(), out var option))
+            {
+                outValue = (T)option.Value;
+                return true;
+            }
+            outValue = default;
+            return false;
+        }
+
+        public T GetOption<T>(BatchExpectationOption opt, T defaultValue)
+        {
+            if (BatchOptions.TryGetValue(opt.ToString(), out var option))
+            {
+                return (T)option.Value;
+            }
+            return defaultValue;
+        }
+
+        #endregion
     }
 }

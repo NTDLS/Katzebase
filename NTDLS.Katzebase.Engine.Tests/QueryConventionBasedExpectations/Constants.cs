@@ -2,12 +2,17 @@
 {
     internal class Constants
     {
-        public enum ExpectationAttribute
+        public enum DatasetExpectationOption
         {
             EnforceRowOrder,
             HasFieldNames,
             AffectedCount,
             MaxDuration
+        }
+
+        public enum BatchExpectationOption
+        {
+            DoNotValidate
         }
     }
 }
