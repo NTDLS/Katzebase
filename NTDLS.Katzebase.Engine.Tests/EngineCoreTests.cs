@@ -1,4 +1,4 @@
-using NTDLS.Katzebase.Engine.Tests.Helpers;
+using NTDLS.Katzebase.Engine.Tests.QueryExpectations;
 
 namespace NTDLS.Katzebase.Engine.Tests
 {

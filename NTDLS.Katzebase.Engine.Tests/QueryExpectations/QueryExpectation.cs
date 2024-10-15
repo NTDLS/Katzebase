@@ -3,9 +3,9 @@ using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using static NTDLS.Katzebase.Engine.Tests.Helpers.Constants;
+using static NTDLS.Katzebase.Engine.Tests.QueryExpectations.Constants;
 
-namespace NTDLS.Katzebase.Engine.Tests.Helpers
+namespace NTDLS.Katzebase.Engine.Tests.QueryExpectations
 {
 
     internal class QueryExpectation
@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
+                    if (expectedDataset.GetAttribute(ExpectationAttribute.HasFieldNames, false))
                     {
                         //Ensure that the field names, count and ordinals match.
 
@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
+                    if (expectedDataset.GetAttribute(ExpectationAttribute.HasFieldNames, false))
                     {
                         //Ensure that the field names, count and ordinals match.
 
