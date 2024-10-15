@@ -2,8 +2,8 @@
 SELECT
 	p.PersonID, p.FirstName, p.LastName, a.Street, a.City, a.State, a.ZipCode
 FROM
-	TestData:Person as p
-INNER JOIN TestData:Address as A
+	TestData:MockERP:Person as p
+INNER JOIN TestData:MockERP:Address as A
 	ON p.PersonID = a.PersonID
 
 #Expected(EnforceRowOrder=false, HasFieldNames=true)

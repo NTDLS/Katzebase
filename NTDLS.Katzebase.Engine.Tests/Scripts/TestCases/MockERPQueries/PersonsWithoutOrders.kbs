@@ -3,8 +3,8 @@
 SELECT
 	p.PersonID, p.FirstName, p.LastName
 FROM
-	TestData:Person as p
-OUTER JOIN TestData:SalesOrder as o
+	TestData:MockERP:Person as p
+OUTER JOIN TestData:MockERP:SalesOrder as o
 	ON o.PersonID = p.PersonID
 WHERE
 	o.OrderID IS NULL

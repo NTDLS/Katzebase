@@ -2,8 +2,8 @@
 SELECT
 	p.PersonID, p.FirstName, p.LastName, COUNT(o.OrderID) AS OrderCount
 FROM
-	TestData:Person as p
-INNER JOIN TestData:SalesOrder as o
+	TestData:MockERP:Person as p
+INNER JOIN TestData:MockERP:SalesOrder as o
 	ON o.PersonID = p.PersonID
 GROUP BY
 	p.PersonID, p.FirstName, p.LastName

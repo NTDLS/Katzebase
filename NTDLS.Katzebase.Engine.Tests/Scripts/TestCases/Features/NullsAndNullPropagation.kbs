@@ -29,3 +29,9 @@ SELECT
 	IfNullNumeric(null, 20) + 10,
 FROM
 	Single
+
+#Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+Expression0	Expression1	Expression2	Expression3	Expression4	Expression5	Expression6	Expression7	Expression8	Expression9	Expression10	Expression11	Expression12	Expression13	Expression14	Expression15	Expression16	Expression17	Expression18	Expression19
+20	30	<null>	Value	False	True	<null>	10	10	20	Default Value	First Value	<null>	ValueAppended Text	<null>	Appended TextValue	<null>	20	20	30
+}

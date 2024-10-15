@@ -1,0 +1,13 @@
+CREATE SCHEMA TestData:MockERP
+
+-- Table: Person
+CREATE SCHEMA TestData:MockERP:Person
+
+-- Table: Address (1-to-1 relationship with Person)
+CREATE SCHEMA TestData:MockERP:Address
+
+-- Table: Order (1-to-many relationship with Person)
+CREATE SCHEMA TestData:MockERP:SalesOrder
+
+-- Table: SalesOrderItem (1-to-many relationship with SalesOrder)
+CREATE SCHEMA TestData:MockERP:SalesOrderItem

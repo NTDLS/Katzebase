@@ -13,6 +13,9 @@
     <None Remove="Scripts\ConstantsAndSimpleExpressions.kbs" />
     <None Remove="Scripts\InitializationCreateTestDataSchema.kbs" />
     <None Remove="Scripts\InitializationCreateTestDataSchemaData.kbs" />
+    <None Remove="Scripts\Initialization\CreateInsertTestSchema.kbs" />
+    <None Remove="Scripts\Initialization\CreateTestDataSchema.kbs" />
+    <None Remove="Scripts\Initialization\CreateTestSchema.kbs" />
     <None Remove="Scripts\NumberOfOrdersPlacedByEachPerson.kbs" />
     <None Remove="Scripts\OrdersAndItemsForSpecificPerson.kbs" />
     <None Remove="Scripts\OrdersAndTheirItems.kbs" />
@@ -20,6 +23,7 @@
     <None Remove="Scripts\PersonsAndTheirAddresses.kbs" />
     <None Remove="Scripts\PersonsWithoutOrders.kbs" />
     <None Remove="Scripts\PersonWithOrdersDetails.kbs" />
+    <None Remove="Scripts\TestCases\NullsAndNullPropagation.kbs" />
     <None Remove="Scripts\TestCases\RaggedInsert.kbs" />
     <None Remove="Scripts\TestCases\RaggedInsertWithExpressions.kbs" />
     <None Remove="Scripts\TestCases\ValuesInsert.kbs" />
@@ -29,22 +33,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchemaData.kbs" />
-    <EmbeddedResource Include="Scripts\InitializationCreateTestDataSchema.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\RaggedInsertWithExpressions.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\ValuesInsertWithExpressions.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\ValuesInsert.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\RaggedInsert.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\PersonsAndTheirAddresses.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\OrdersWithPersonDetails.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\PersonWithOrdersDetails.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\TotalAmountSpentByPerson.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\OrdersAndTheirItems.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\PersonsWithoutOrders.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\OrdersAndItemsForSpecificPerson.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\TotalQuantityOfItemsOrderedPerOrder.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\NumberOfOrdersPlacedByEachPerson.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\ConstantsAndSimpleExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateJsonNotationSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateValuesListSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\CreateSchemaData.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\CreateSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\NullsAndNullPropagation.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotationWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesListWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\PersonsAndTheirAddresses.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\OrdersWithPersonDetails.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\PersonWithOrdersDetails.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\TotalAmountSpentByPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\OrdersAndTheirItems.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\PersonsWithoutOrders.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\OrdersAndItemsForSpecificPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\TotalQuantityOfItemsOrderedPerOrder.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\NumberOfOrdersPlacedByEachPerson.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\ConstantsAndSimpleExpressions.kbs" />
   </ItemGroup>
 
   <ItemGroup>

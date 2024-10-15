@@ -3,11 +3,10 @@ using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using static NTDLS.Katzebase.Engine.Tests.QueryExpectations.Constants;
+using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 
-namespace NTDLS.Katzebase.Engine.Tests.QueryExpectations
+namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 {
-
     internal class QueryExpectation
     {
         public List<ExpectedDataset> ExpectedDatasets { get; set; } = new();

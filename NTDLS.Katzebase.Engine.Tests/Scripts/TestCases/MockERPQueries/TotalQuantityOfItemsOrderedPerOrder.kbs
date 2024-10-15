@@ -2,8 +2,8 @@
 SELECT
 	o.OrderID, SUM(oi.Quantity) AS TotalItems
 FROM
-	TestData:SalesOrder as o
-INNER JOIN TestData:SalesOrderItem as oi
+	TestData:MockERP:SalesOrder as o
+INNER JOIN TestData:MockERP:SalesOrderItem as oi
 	ON oi.OrderID = o.OrderID
 GROUP BY
 	o.OrderID

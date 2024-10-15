@@ -2,8 +2,8 @@
 SELECT
 	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
 FROM
-	TestData:SalesOrder as o
-INNER JOIN TestData:SalesOrderItem as oi
+	TestData:MockERP:SalesOrder as o
+INNER JOIN TestData:MockERP:SalesOrderItem as oi
 	ON oi.OrderID = o.OrderID 
 WHERE
 	o.PersonID = @PersonId

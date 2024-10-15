@@ -1,9 +1,9 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
-using static NTDLS.Katzebase.Engine.Tests.QueryExpectations.Constants;
+using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 
-namespace NTDLS.Katzebase.Engine.Tests.QueryExpectations
+namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 {
     internal class ExpectedDataset
     {

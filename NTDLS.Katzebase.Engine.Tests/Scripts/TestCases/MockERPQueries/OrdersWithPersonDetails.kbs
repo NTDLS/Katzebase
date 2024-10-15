@@ -2,8 +2,8 @@
 SELECT
 	o.OrderID, p.FirstName, p.LastName, o.OrderDate, o.TotalAmount
 FROM
-	TestData:SalesOrder as o
-INNER JOIN TestData:Person as p
+	TestData:MockERP:SalesOrder as o
+INNER JOIN TestData:MockERP:Person as p
 	ON o.PersonID = p.PersonID
 
 #Expected(EnforceRowOrder=false, HasFieldNames=true)

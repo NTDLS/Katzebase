@@ -41,8 +41,7 @@ namespace NTDLS.Katzebase.Engine.Tests
                 Start();
 
                 using var ephemeral = Engine.Sessions.CreateEphemeralSystemSession();
-                ephemeral.Transaction.ExecuteNonQuery("InitializationCreateTestDataSchema.kbs");
-                ephemeral.Transaction.ExecuteNonQuery("InitializationCreateTestDataSchemaData.kbs");
+                ephemeral.Transaction.ExecuteNonQuery(@"Initialization\CreateTestDataSchema.kbs");
                 ephemeral.Commit();
             }
             catch (Exception ex)

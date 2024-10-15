@@ -1,4 +1,4 @@
-INSERT INTO TestData:RaggedInsert
+INSERT INTO TestData:InsertTests:JsonNotation
 (FirstName: 'John', LastName: 'Doe'),
 (FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
 (FirstName: 'Jane', LastName: 'Doe'),
@@ -13,7 +13,7 @@ FirstName:
 :'Jane1', LastName: 'Doe1'
 )
 
-SELECT * FROM TestData:RaggedInsert
+SELECT * FROM TestData:InsertTests:JsonNotation
 
 #Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=6, MaxDuration=100)
 {
@@ -22,10 +22,10 @@ SELECT * FROM TestData:RaggedInsert
 #Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=6, MaxDuration=100)
 {
 FirstName	LastName	MiddleName
-Fred1	Doe1	Joe1
-John1	Doe1	<null>
-Jane1	Doe1	<null>
+Fred	Doe	Joe
 John	Doe	<null>
 Jane	Doe	<null>
-Fred	Doe	Joe
+John1	Doe1	<null>
+Fred1	Doe1	Joe1
+Jane1	Doe1	<null>
 }
