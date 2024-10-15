@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Reflection.Metadata.Ecma335;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
@@ -22,12 +23,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
                 return CollapseScalarNumericExpression(transaction, query, fieldCollection, auxiliaryFields,
-                    expressionNumeric.FunctionDependencies, expressionNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                    expressionNumeric.FunctionDependencies, expressionNumeric.Value)?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldExpressionString expressionString)
             {
                 return CollapseScalarStringExpression(transaction, query, fieldCollection, auxiliaryFields,
-                    expressionString.FunctionDependencies, expressionString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
+                    expressionString.FunctionDependencies, expressionString.Value)?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
@@ -70,16 +71,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
         /// </summary>
         internal static string? CollapseScalarNumericExpression(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string? expressionString)
+            List<IQueryFieldExpressionFunction> functions, string? givenExpressionString)
         {
-            if (expressionString == null)
+            if (givenExpressionString == null)
             {
                 return null;
             }
+            var expressionString = new NullPropagationString(transaction, givenExpressionString);
 
-            //Build a cachable numeric expression, interpolate the values and execute the expression.
-
-            var tokenizer = new TokenizerSlim(expressionString, TokenizerExtensions.MathematicalCharacters);
+            var tokenizer = new TokenizerSlim(expressionString.ToString().EnsureNotNull(), TokenizerExtensions.MathematicalCharacters);
 
             int variableNumber = 0;
 
@@ -99,13 +99,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                         {
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
-                            expressionString = expressionString.Replace(token, mathVariable);
+                            expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, query.Batch.Variables.Resolve(textValue));
                         }
                         else
                         {
                             string mathVariable = $"v{variableNumber++}";
-                            expressionString = expressionString.Replace(token, mathVariable);
+                            expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, null);
                             transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
                             return null;
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, functionResult);
-                    expressionString = expressionString.Replace(token, mathVariable);
+                    expressionString.Replace(token, mathVariable);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                     {
                         //This is a numeric variable, get the value and append it.
                         string mathVariable = $"v{variableNumber++}";
-                        expressionString = expressionString.Replace(token, mathVariable);
+                        expressionString.Replace(token, mathVariable);
                         expressionVariables.Add(mathVariable, resolved);
                     }
                     else
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                 {
                     //This is a numeric placeholder, get the literal value and append it.
                     string mathVariable = $"v{variableNumber++}";
-                    expressionString = expressionString.Replace(token, mathVariable);
+                    expressionString.Replace(token, mathVariable);
                     expressionVariables.Add(mathVariable, query.Batch.Variables.Resolve(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
@@ -172,15 +172,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                 return expressionVariables.First().Value;
             }
 
+            if (expressionString.ContainsNullValue)
+            {
+                return null;
+            }
+
             //Perhaps we can pass in a cache object?
-            var expression = new NCalc.Expression(expressionString);
+            var expression = new NCalc.Expression(expressionString.ToString());
 
             foreach (var expressionVariable in expressionVariables)
             {
                 expression.Parameters[expressionVariable.Key] = expressionVariable.Value == null ? null : double.Parse(expressionVariable.Value);
             }
 
-            return expression.Evaluate()?.ToString() ?? string.Empty;
+            return expression.Evaluate()?.ToString();
         }
 
         /// <summary>
@@ -189,9 +194,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
         /// </summary>
         internal static string? CollapseScalarStringExpression(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+            List<IQueryFieldExpressionFunction> functions, string? givenExpressionString)
         {
-            var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
+            if (givenExpressionString == null)
+            {
+                return null;
+            }
+
+            var tokenizer = new TokenizerSlim(givenExpressionString, ['+', '(', ')']);
             string token;
 
             var stringResult = new NullPropagationString(transaction);

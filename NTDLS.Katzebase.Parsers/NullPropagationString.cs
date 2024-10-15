@@ -4,12 +4,12 @@ using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Parsers
 {
-    public class NullPropagationString(ITransaction transaction)
+    public class NullPropagationString
     {
-        private readonly StringBuilder _buffer = new();
+        private readonly StringBuilder _buffer;
+        private readonly ITransaction _transaction;
 
         public bool ContainsNullValue { get; private set; }
-
         public bool HasValueBeenSet { get; private set; }
 
         public int Length
@@ -18,12 +18,31 @@ namespace NTDLS.Katzebase.Parsers
             set => _buffer.Length = value;
         }
 
+        public NullPropagationString(ITransaction transaction)
+        {
+            _transaction = transaction;
+            _buffer = new();
+        }
+
+        public NullPropagationString(ITransaction transaction, string? initialValue)
+        {
+            _transaction = transaction;
+            _buffer = new(initialValue);
+
+            if (initialValue == null)
+            {
+                ContainsNullValue = true;
+            }
+
+            HasValueBeenSet = true;
+        }
+
         public void Append(char? c)
         {
             if (HasValueBeenSet && ContainsNullValue)
             {
                 //If we already have data in the buffer, then add a NullValuePropagation warning.
-                transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
             }
 
             if (c == null)
@@ -36,12 +55,30 @@ namespace NTDLS.Katzebase.Parsers
             _buffer.Append(c);
         }
 
+        public void Replace(string oldValue, string? newValue)
+        {
+            if (HasValueBeenSet && ContainsNullValue)
+            {
+                //If we already have data in the buffer, then add a NullValuePropagation warning.
+                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+            }
+
+            if (newValue == null)
+            {
+                ContainsNullValue = true;
+            }
+
+            HasValueBeenSet = true;
+
+            _buffer.Replace(oldValue, newValue);
+        }
+
         public void Append(string? s)
         {
             if (HasValueBeenSet && ContainsNullValue)
             {
                 //If we already have data in the buffer, then add a NullValuePropagation warning.
-                transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
             }
 
             if (s == null)
