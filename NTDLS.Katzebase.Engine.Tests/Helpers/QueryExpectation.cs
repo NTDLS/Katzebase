@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
 
                     if (GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
                     {
-                        //Ensure that the field names match.
+                        //Ensure that the field names, count and ordinals match.
 
                         Assert.NotNull(ExpectedDatasetFields);
                         var actualDatasetFields = actualDatasets.Collection[datasetOrdinal].Fields.Select(f => f.Name);
@@ -150,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
 
                     if (GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
                     {
-                        //Ensure that the field names match.
+                        //Ensure that the field names, count and ordinals match.
 
                         Assert.NotNull(ExpectedDatasetFields);
                         var actualDatasetFields = actualDatasets.Collection[datasetOrdinal].Fields.Select(f => f.Name);
