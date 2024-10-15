@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
 {
     internal class QueryExpectation
     {
-        public List<string>? FieldNames { get; set; }
+        public List<List<string>>? ExpectedDatasetFields { get; set; }
         public List<List<ExpectedRow>> ExpectedDatasets { get; set; } = new();
         public string QueryText { get; set; } = string.Empty;
 
@@ -59,8 +59,14 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                 };
             result.Options = StaticParserAttributes.Parse(tokenizer, validOptions);
 
+            if (result.GetAttribute(ExpectationAttribute.HasFieldNames, false) == true)
+            {
+                result.ExpectedDatasetFields = new();
+            }
+
             while (tokenizer.TryIsNext('{'))
             {
+                var expectedFields = new List<string>();
                 var expectedDataset = new List<ExpectedRow>();
 
                 bool isFirstRow = true;
@@ -74,7 +80,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                         isFirstRow = false;
                         if (result.GetAttribute(ExpectationAttribute.HasFieldNames, false) == true)
                         {
-                            result.FieldNames = expectedRowLine.Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                            expectedFields = expectedRowLine.Split('\t', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
                             continue;
                         }
                     }
@@ -85,6 +91,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                     });
                 }
 
+                result.ExpectedDatasetFields?.Add(expectedFields);
                 result.ExpectedDatasets.Add(expectedDataset);
             }
 
@@ -110,6 +117,17 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDatasetRows.Count, actualDatasetRows.Count);
 
+                    if (GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
+                    {
+                        //Ensure that the field names match.
+
+                        Assert.NotNull(ExpectedDatasetFields);
+                        var actualDatasetFields = actualDatasets.Collection[datasetOrdinal].Fields.Select(f => f.Name);
+                        var expectedDatasetFields = ExpectedDatasetFields[datasetOrdinal];
+
+                        Assert.Equal(ValuesHash(expectedDatasetFields), ValuesHash(actualDatasetFields));
+                    }
+
                     for (int rowOrdinal = 0; rowOrdinal < actualDatasetRows.Count; rowOrdinal++)
                     {
                         var actualDatasetRow = actualDatasets.Collection[datasetOrdinal].Rows[rowOrdinal];
@@ -129,6 +147,17 @@ namespace NTDLS.Katzebase.Engine.Tests.Helpers
 
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDatasetRows.Count, actualDatasetRows.Count);
+
+                    if (GetAttribute<bool>(ExpectationAttribute.HasFieldNames, false))
+                    {
+                        //Ensure that the field names match.
+
+                        Assert.NotNull(ExpectedDatasetFields);
+                        var actualDatasetFields = actualDatasets.Collection[datasetOrdinal].Fields.Select(f => f.Name);
+                        var expectedDatasetFields = ExpectedDatasetFields[datasetOrdinal];
+
+                        Assert.Equal(ValuesHash(expectedDatasetFields), ValuesHash(actualDatasetFields));
+                    }
 
                     var matchedExpectationRows = new HashSet<ExpectedRow>();
 

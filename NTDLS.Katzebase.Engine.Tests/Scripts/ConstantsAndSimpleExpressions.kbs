@@ -1,9 +1,23 @@
 SELECT
-	10 as Element1,
-	10 + 10 as Element2,
-	'Text' as Element3,
-	'Hello' + ' ' + 'World' as Element4,
-	'Text' + 10 + 10 as Element5,
-	10 + 10 + 'Text' as Element6
+	10,
+	10 + 10,
+	'Text',
+	'Hello' + ' ' + 'World',
+	'Text' + 10 + 10,
+	10 + 10 + 'Text',
+	
+	10 as 10,
+	10 + 10 as 20,
+	'Text' as Text,
+	'Hello' + ' ' + 'World' as 'Hello World',
+	'Text' + 10 + 10 as 'Text 20',
+	10 + 10 + 'Text' as '20 Text',
 FROM
 	Single
+
+/* Expected(EnforceRowOrder=false, HasFieldNames=true)
+{
+Expression0	Expression1	Expression2	Expression3	Expression4	Expression5	10	20	Text	Hello World	Text 20	20 Text	
+10	20	Text	Hello World	Text20	20Text	10	20	Text	Hello World	Text20	20Text	
+}
+*/

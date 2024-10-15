@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Tests
             _engine = fixture.Engine;
         }
 
-        [Fact]
+        [Fact(DisplayName = "Select Single Value.")]
         public void SelectFromSingle()
         {
             using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();
@@ -19,26 +19,13 @@ namespace NTDLS.Katzebase.Engine.Tests
             Assert.Null(actual);
         }
 
-        [Fact]
+        [Fact(DisplayName = "Constants and Simple Expressions.")]
         public void ConstantsAndSimpleExpressions()
         {
-            using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();
-            var resultsCollection = ephemeral.Transaction.ExecuteQuery("ConstantsAndSimpleExpressions.kbs");
-
-            Assert.NotNull(resultsCollection);
-            Assert.NotNull(resultsCollection.Collection);
-
-            var firstResult = resultsCollection.Collection.Single();
-
-            Assert.Equal("10", firstResult.Value(0, "Element1"));
-            Assert.Equal("20", firstResult.Value(0, "Element2"));
-            Assert.Equal("Text", firstResult.Value(0, "Element3"));
-            Assert.Equal("Hello World", firstResult.Value(0, "Element4"));
-            Assert.Equal("Text20", firstResult.Value(0, "Element5"));
-            Assert.Equal("20Text", firstResult.Value(0, "Element6"));
+            QueryExpectation.ValidateScriptResults(_engine, "ConstantsAndSimpleExpressions.kbs");
         }
 
-        [Fact]
+        [Fact(DisplayName = "Simple Selects, Joins, Groups and Order By.")]
         public void TestBasicQueries()
         {
             QueryExpectation.ValidateScriptResults(_engine, "NumberOfOrdersPlacedByEachPerson.kbs");
