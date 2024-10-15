@@ -2,19 +2,15 @@
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Functions.Scalar;
 using NTDLS.Katzebase.Parsers;
-using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
-using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Api.KbConstants;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 {
-
     internal static class StaticScalarExpressionProcessor
     {
         /// <summary>
@@ -25,12 +21,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         {
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields,
+                return CollapseScalarNumericExpression(transaction, query, fieldCollection, auxiliaryFields,
                     expressionNumeric.FunctionDependencies, expressionNumeric.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldExpressionString expressionString)
             {
-                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields,
+                return CollapseScalarStringExpression(transaction, query, fieldCollection, auxiliaryFields,
                     expressionString.FunctionDependencies, expressionString.Value.EnsureNotNull())?.AssertUnresolvedExpression();
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
@@ -69,34 +65,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         }
 
         /// <summary>
-        /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
-        /// </summary>
-        public static string? CollapseScalarExpressionFunctionParameter(this IExpressionFunctionParameter parameter, Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies)
-        {
-            if (parameter is ExpressionFunctionParameterString parameterString)
-            {
-                return CollapseScalarFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, functionDependencies, parameterString.Expression);
-            }
-            else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
-            {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functionDependencies, parameterNumeric.Expression);
-            }
-            else if (parameter is ExpressionFunctionParameterFunction expressionFunctionParameterFunction)
-            {
-                return CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functionDependencies, expressionFunctionParameterFunction.Expression);
-            }
-            else
-            {
-                throw new KbNotImplementedException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
-            }
-        }
-
-        /// <summary>
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
-        private static string? CollapseScalarFunctionNumericParameter(Transaction transaction,
+        internal static string? CollapseScalarNumericExpression(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
             List<IQueryFieldExpressionFunction> functions, string? expressionString)
         {
@@ -146,9 +118,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 }
                 else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
-                    //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
+                    //Search the dependency functions for the one with the expression key, this is the
+                    //  one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalarFunction(transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
+                    var functionResult = StaticScalarFunctionExpressionProcessor.CollapseScalarFunction(
+                        transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, functionResult);
@@ -213,7 +187,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
         /// Takes a string expression string and concatenates all of the values, including those from all
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
-        private static string? CollapseScalarFunctionStringParameter(Transaction transaction,
+        internal static string? CollapseScalarStringExpression(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
@@ -278,7 +252,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalarFunction(transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
+                    var functionResult = StaticScalarFunctionExpressionProcessor.CollapseScalarFunction(
+                        transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
 
                     if (subFunction.ReturnType == KbBasicDataType.Numeric)
                     {
@@ -358,7 +333,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             if (mathBuffer.Length > 0)
             {
                 //We found a string operator and we have math work in the buffer, collapse the math and append the result.
-                var mathResult = CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
+                var mathResult = CollapseScalarNumericExpression(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
                 stringResult.Append(mathResult);
                 mathBuffer.Clear();
             }
@@ -389,7 +364,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
                     }
 
                     //We found a string operator and we have math work in the buffer, collapse the math and append the result.
-                    var mathResult = CollapseScalarFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
+                    var mathResult = CollapseScalarNumericExpression(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
                     mathBuffer.Clear();
                     return mathResult;
                 }
@@ -398,32 +373,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Functions
             }
 
             return stringResult.RealizedValue();
-        }
-
-
-        /// <summary>
-        /// Takes a function and recursively collapses all of the parameters, then recursively
-        ///     executes all dependency functions to collapse the function to a single value.
-        /// </summary>
-        private static string? CollapseScalarFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
-            KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
-        {
-            var collapsedParameters = new List<string?>();
-
-            foreach (var parameter in function.Parameters)
-            {
-                collapsedParameters.Add(parameter.CollapseScalarExpressionFunctionParameter(transaction, query, fieldCollection, auxiliaryFields, functions));
-            }
-
-            if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))
-            {
-                throw new KbProcessingException($"Cannot perform scalar operation on aggregate result of: [{function.FunctionName}].");
-            }
-
-            //Execute function with the parameters from above ↑
-            var methodResult = ScalarFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, auxiliaryFields);
-
-            return methodResult;
         }
     }
 }

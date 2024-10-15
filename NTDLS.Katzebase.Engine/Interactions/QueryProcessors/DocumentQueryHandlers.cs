@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
+using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;

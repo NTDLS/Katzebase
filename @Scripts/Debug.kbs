@@ -1,9 +1,13 @@
 select
-	NullIf('Value', IsEqual('Test', 'Test')) + 'jj'
-	--NullIf('Value', IsEqual('Test', 'Test_new')),
-	--IsNull('test')
+	NullIfNumeric(10, IsEqual('Test', 'Test')) + 10/*,
+	NullIfNumeric(10, IsEqual('Test', 'Test_new')) + 10,
+	IfNullNumeric(10, 20) + 10,
+	IfNullNumeric(null, 20) + 10,
+
+	NullIf('Value', IsEqual('Test', 'Test')),
+	NullIf('Value', IsEqual('Test', 'Test_new')),
+	IsNull('test'),
 	
-	/*
 	IsNull(null),
 
 	NullIfNumeric(10, IsEqual('Test', 'Test')),
@@ -12,8 +16,15 @@ select
 	IfNullNumeric(null, 20),
 
 	IfNull(null, 'Default Value'),
-	IfNull('First Value', 'Default Value')
-	*/
+	IfNull('First Value', 'Default Value'),
+	
+	--Null propagation:
+	NullIf('Value', IsEqual('Test', 'Test')) + 'Appended Text',
+	NullIf('Value', IsEqual('Test', 'Test_new')) + 'Appended Text',
+
+	'Appended Text' + NullIf('Value', IsEqual('Test', 'Test')),
+	'Appended Text' + NullIf('Value', IsEqual('Test', 'Test_new'))
+*/
 from
 	Single
 	

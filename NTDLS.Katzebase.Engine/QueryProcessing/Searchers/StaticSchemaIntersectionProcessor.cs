@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
+using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;

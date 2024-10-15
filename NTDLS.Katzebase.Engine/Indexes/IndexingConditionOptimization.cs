@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.QueryProcessing.Functions;
+using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
 using NTDLS.Katzebase.Parsers.Indexes.Matching;
 using NTDLS.Katzebase.Parsers.Query.Conditions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
