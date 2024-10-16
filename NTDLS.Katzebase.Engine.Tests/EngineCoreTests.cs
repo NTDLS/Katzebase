@@ -47,6 +47,12 @@ namespace NTDLS.Katzebase.Engine.Tests
             QueryExpectation.ValidateScriptResults(_engine, @"MockERPQueries\TotalQuantityOfItemsOrderedPerOrder.kbs");
         }
 
+        [Fact(DisplayName = "Import, indexes and complex queries.")]
+        public void ImportIndexesAndComplexQueries()
+        {
+            DataImporter.ImportTabSeparatedFiles("Data.WordList", "TestData:WordList");
+        }
+
 
         [Fact(DisplayName = "Insert queries")]
         public void TestInsertQueries()

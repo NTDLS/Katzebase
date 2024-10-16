@@ -10,6 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\WordList\FlatSynonyms.txt" />
+    <None Remove="Data\WordList\FlatTranslate.txt" />
+    <None Remove="Data\WordList\Language.txt" />
+    <None Remove="Data\WordList\SoundFunction.txt" />
+    <None Remove="Data\WordList\SoundMap.txt" />
+    <None Remove="Data\WordList\Synonym.txt" />
+    <None Remove="Data\WordList\Translation.txt" />
+    <None Remove="Data\WordList\Word.txt" />
     <None Remove="Scripts\ConstantsAndSimpleExpressions.kbs" />
     <None Remove="Scripts\InitializationCreateTestDataSchema.kbs" />
     <None Remove="Scripts\InitializationCreateTestDataSchemaData.kbs" />
@@ -36,6 +44,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data\WordList\FlatSynonyms.txt" />
+    <EmbeddedResource Include="Data\WordList\FlatTranslate.txt" />
+    <EmbeddedResource Include="Data\WordList\Language.txt" />
+    <EmbeddedResource Include="Data\WordList\SoundFunction.txt" />
+    <EmbeddedResource Include="Data\WordList\SoundMap.txt" />
+    <EmbeddedResource Include="Data\WordList\Synonym.txt" />
+    <EmbeddedResource Include="Data\WordList\Translation.txt" />
+    <EmbeddedResource Include="Data\WordList\Word.txt" />
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Formatting.kbs" />

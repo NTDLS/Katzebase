@@ -1,0 +1,53 @@
+Id	English	German	Spanish	French	Portuguese	Italian	Finnish	Latin	Dutch
+2312	allure	allure	encanto	allure	sedução	allure	allure	allure	allure
+7079	bazaar	basar	bazar	bazar	bazar	bazar	basaari	bazar	bazaar
+7080	bazar	bazar	bazar	bazar	bazar	bazar	bazar	bazar	bazar
+9748	Bridges	Brücken	Puentes	Ponts	Pontes	Ponti	Bridges	Ponti	Bruggen
+9751	bridgework	bridgework	construcción de puentes	des ponts	pontes	ponti	siltarakenteet	ponti	brugwerk
+10715	Caballeros	Caballeros	Caballeros	Caballeros	Caballeros	Caballeros	Caballeros	Caballeros	Caballeros
+10751	caboodle	kram	caboodle	bazar	furgão	caboodle	konkkaronkka	caboodle	caboodle
+11610	captivation	berückung	encanto	captivation	captivation	captivation	captivation	captivation	captivation
+12110	casseroles	casseroles	guisados	casseroles	casseroles	sformati	casseroles	sformati	stoofschotels
+12179	cat	Katze	un gato	cat	gato	gatto	kissa	gatto	cat
+12339	catlike	katzenhaft	gato	féline	gato	felino	kissamainen	felino	katachtige
+13918	chow	chow	chow	chow	chow	chow	chow	chow	chow
+13920	chowder	chowder	chowder	chaudrée	chow	chowder	chowder	chowder	chowder
+19549	deceitfulness	deceitfulness	deceitfulness	deceitfulness	sedução	deceitfulness	deceitfulness	deceitfulness	deceitfulness
+19607	decks	decks	cubiertas	ponts	decks	ponti	decks	ponti	vlonders
+19993	deltoid	deltamuskel	deltoides	le deltoïde	deltóide	deltoide	olkavarteen	deltoide	deltoideus
+19995	deltoides	deltoides	deltoides	deltoides	deltoides	deltoides	deltoides	deltoides	deltoides
+19996	deltoideus	deltoideus	deltoideus	deltoideus	deltóide	deltoideus	deltoideus	deltoideus	deltoideus
+24859	Enticement	Lockung	Enticement	Allèchement	Sedução	Enticement	Enticement	Enticement	Enticement
+25240	eradicating	ausmerzung	eradicating	éradiquais	eradicating	eradicating	eradicating	eradicating	eradicating
+25241	eradication	ausmerzung	erradicacion	éradication	eradication	sradicamento	hävittämistä	sradicamento	uitroei
+27243	Feline	Katze	Felino	Féline	Felino	Felino	Kissapeto	Felino	Katachtige
+35225	Horsemen	Horsemen	Jinetes	Cavaliers	Cavaleiros	Horsemen	Horsemen	Horsemen	Ruitervolk
+35681	hyacinth	hyazinthe	el jacinto	la jacinthe	jacinto	giacinto	hyasintti	giacinto	hyacint
+39028	jacinth	hyazinth	toma jacinto	les jacinthes	jack	giacinto	hyasintti	giacinto	hyacinth
+39029	jack	jack	gato	jack	jack	jack	jack	jack	boer
+39047	jacks	klinkenstecker	jacks	vérine	jacks	jack	jätkät	jack	vijzels
+39699	jumpers	jumper	puentes	cavaliers	saltadores	ponticelli	jumpers	ponticelli	jumpers
+40617	knights	ordensritter	caballeros	adoubai	cavaleiros	cavalieri	ritaria	cavalieri	vliesridder
+44875	maneuvering	maneuvering	maniobras	magouille	maneuvering	maneuvering	maneuvering	maneuvering	maneuvering
+44876	maneuvers	fahrmanöver	maniobras	manoeuvrai	manobras	maneuvers	maneuvers	maneuvers	manoeuvres
+45069	mapped	abgebildet	asignada	pérou	mapearam	mapped	kartoitetaan	mapped	gekarteerd
+51429	objectivity	gegenständlichkeit	objectivity	objectivité	objetividade	oggettivita	objectivity	oggettivita	NULL
+53820	pans	pfannen	cazuelas	casseroles	frigideiras	padelle	panorointeja	padelle	NULL
+55563	Peru	Peru	Perú	Pérou	Peru	Peru	Peru	Peru	NULL
+55569	Peruvian	Peruaner	Perú	Du Pérou	Pervertido	Peruviano	Perun	Peruviano	NULL
+55583	pervert	pervertieren	pervertido	de détourner	pervertido	pervertito	turmella	pervertito	NULL
+59079	profiterole	windbeutel	profiteroles	profiterole	profiterole	profiterole	profiterole	profiterole	NULL
+59972	puffs	windbeutel	soplidos	puffs	baforadas	sbuffi	puffs	sbuffi	NULL
+63909	rooting	verwurzelns	hocican	éradiquais	rooting	rooting	rooting	rooting	NULL
+65276	saucepans	saucepans	cacerolas	casseroles	saucepans	saucepans	saucepans	saucepans	NULL
+66387	seduction	verführung	seducción	séduction	sedução	seduzione	viettely	seduzione	NULL
+68931	smothered	erstickt	cubiertas	étouffée	sufocado	soffocato	peitossa	soffocato	NULL
+68934	smothers	erstickt	smothers	étouffe	smothers	smothers	smothers	smothers	NULL
+71149	stews	stews	guisados	stews	stews	stews	stews	stews	NULL
+71184	stifles	stifles	sofoca	étouffe	abafa	stifles	stifles	stifles	NULL
+74410	Tennis	Tennis	Tenis	Tennis	Tenis	Tennis	Tennis	Tennis	NULL
+77147	tropism	tropism	tropismo	objectivité	tropism	tropism	tropism	tropism	NULL
+78925	uprooting	entwurzelns	desarraigo	déplantage	desenraizamento	sradicamento	irtikiskominen	sradicamento	NULL
+79257	vaccine	impfstoff	vacuna	le vaccin	vacina	vaccino	rokote	vaccino	NULL
+79259	vaccinia	vaccinia	vacuna	vaccine	vaccinia	vaccinia	vaccinia	vaccinia	NULL
+79400	Van	Van	Van	Fourgon	Furgão	Furgone	Pakettiauto	Furgone	NULL

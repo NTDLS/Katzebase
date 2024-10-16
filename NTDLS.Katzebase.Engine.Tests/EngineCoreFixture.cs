@@ -6,8 +6,6 @@ namespace NTDLS.Katzebase.Engine.Tests
 {
     public class EngineCoreFixture : IDisposable
     {
-        const int LISTEN_PORT = 5868;
-        const string ROOT_PATH = @"C:\KatzebaseTests";
 
         private readonly KatzebaseSettings _settings;
 
@@ -18,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Tests
         {
             try
             {
-                Directory.Delete(ROOT_PATH, true);
+                Directory.Delete(Constants.ROOT_PATH, true);
 
                 _settings = LoadSettings();
 
@@ -69,10 +67,10 @@ namespace NTDLS.Katzebase.Engine.Tests
         {
             var settings = new KatzebaseSettings();
 
-            settings.ListenPort = LISTEN_PORT;
-            settings.DataRootPath = @$"{ROOT_PATH}\Root";
-            settings.TransactionDataPath = @$"{ROOT_PATH}\Transaction";
-            settings.LogDirectory = @$"{ROOT_PATH}\Logs";
+            settings.ListenPort = Constants.LISTEN_PORT;
+            settings.DataRootPath = @$"{Constants.ROOT_PATH}\Root";
+            settings.TransactionDataPath = @$"{Constants.ROOT_PATH}\Transaction";
+            settings.LogDirectory = @$"{Constants.ROOT_PATH}\Logs";
 
             return settings;
         }

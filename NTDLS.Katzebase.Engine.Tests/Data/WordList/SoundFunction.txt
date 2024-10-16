@@ -1,0 +1,4 @@
+Id	Name
+1	DoubleMetaphone
+2	Metaphone
+3	SoundEx
