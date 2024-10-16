@@ -1,47 +1,53 @@
 SELECT
-	IsBetween(50, 10, 100),
-	IsBetween(200, 10, 100),
-	IsEqual('string1', 'string2'),
-	IsGreater(10, 5),
-	IsGreaterOrEqual(10, 5),
-	IsLess(10, 5),
-	IsLessOrEqual(10, 5),
-	IsLike('Hello World', '%o w%'),
-	IsNotBetween(10, 5, 100),
-	IsNotEqual('string1', 'string2'),
-	IsNotLike('Hello World', '%o w%'),
-	IsInteger('123456'),
-	IsString('123456'),
-	IsDouble('123456'),
-	Checksum('hello world'),
-	LastIndexOf('text', 'This is some text and this is more text.'),
-	Length('Hello World'),
-	Length(DateTime('yyyy-MM-dd HH:mm:ss.ms')),
-	Length(DateTimeUTC('yyyy-MM-dd HH:mm:ss.ms')),
-	Length(DocumentID('h')),
-	Length(DocumentPage('')),
-	Length(DocumentUID('')),
-	Length(Guid()),
-	IndexOf('text', 'This is some text and this is more text.'),
-	Left('Hello world', 5),
-	Right('Hello world', 5),
-	Sha1('Hello world'),
-	Sha256('Hello world'),
-	Sha512('Hello world'),
-	SubString('Hello cruel world', 6, 5),
-	ToLower('Hello cruel world'),
-	ToProper('Hello cruel world'),
-	ToUpper('Hello cruel world'),
-	Concat('hello', ' ', 'world'),
-	Coalesce(null, null, 'hello', 'world'),
-	Trim('hello world', 'dhle'),
-	Trim('     hello world     '),
-	IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False'),
+	IsBetween(50, 10, 100) as IsBetween1,
+	IsBetween(200, 10, 100) as IsBetween2,
+	IsEqual('string1', 'string2') as IsEqual1,
+	IsGreater(10, 5) as IsGreater1,
+	IsGreaterOrEqual(10, 5) as IsGreaterOrEqual1,
+	IsLess(10, 5) as IsLess,
+	IsLessOrEqual(10, 5) as IsLessOrEqual1,
+	IsLike('Hello World', '%o w%') as IsLike1,
+	IsNotBetween(10, 5, 100) as IsNotBetween1,
+	IsNotEqual('string1', 'string2') as IsNotEqual1,
+	IsNotLike('Hello World', '%o w%') as IsNotLike`,
+	IsInteger('123456') as IsInteger1,
+	IsString('123456') as IsString1,
+	IsDouble('123456') as IsDouble1,
+	Checksum('hello world') as Checksum1,
+	LastIndexOf('text', 'This is some text and this is more text.') as LastIndexOf1,
+	Length('Hello World') as Length1,
+	DateTime('yyyy-MM-dd HH:mm:ss.fff') as DateTime1,
+	DateTimeUTC('yyyy-MM-dd HH:mm:ss.fff') as DateTimeUTC1,
+	DocumentID('h') as DocumentID1,
+	DocumentPage('') as DocumentPage1,
+	DocumentUID('') as DocumentUID1,
+	Guid() as Guid1,
+	IndexOf('text', 'This is some text and this is more text.') as IndexOf1,
+	Left('Hello world', 5) as Left1,
+	Right('Hello world', 5) as Right1,
+	Sha1('Hello world') as Sha1,
+	Sha256('Hello world') as Sha256,
+	Sha512('Hello world') as Sha512,
+	SubString('Hello cruel world', 6, 5) as SubString1,
+	ToLower('Hello cruel world') as ToLower1,
+	ToProper('Hello cruel world') as ToProper1,
+	ToUpper('Hello cruel world') as ToUpper1,
+	Concat('hello', ' ', 'world') as Concat1,
+	Coalesce(null, null, 'hello', 'world') as Coalesce1,
+	Trim('hello world', 'dhle') as Trim1,
+	Trim('     hello world     ') as Trim2,
+	IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False') as IIF1
 FROM
 	Single
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
-Expression0	Expression1	Expression2	Expression3	Expression4	Expression5	Expression6	Expression7	Expression8	Expression9	Expression10	Expression11	Expression12	Expression13	Expression14	Expression15	Expression16	Expression17	Expression18	Expression19	Expression20	Expression21	Expression22	Expression23	Expression24	Expression25	Expression26	Expression27	Expression28	Expression29	Expression30	Expression31	Expression32	Expression33	Expression34	Expression35	Expression36	Expression37
-True	False	False	True	True	False	False	True	False	True	False	False	False	True	43636	35	11	24	24	<null>	<null>	<null>	36	13	Hello	world	7b502c3a1f48c8609ae212cdfb639dee39673f5e	64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c	b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47	cruel	hello cruel world	Hello Cruel World	HELLO CRUEL WORLD	hello world	hello	o wor	hello world	Is True
+	#FieldPatterns
+	{
+		DateTime1=Format(nnnn-nn-nn nn:nn:nn.nnn),
+		DateTimeUTC1=Format(nnnn-nn-nn nn:nn:nn.nnn)
+		Guid1=Guid()
+	}
+IsBetween1	IsBetween2	IsEqual1	IsGreater1	IsGreaterOrEqual1	IsLess	IsLessOrEqual1	IsLike1	IsNotBetween1	IsNotEqual1	IsNotLike`	IsInteger1	IsString1	IsDouble1	Checksum1	LastIndexOf1	Length1	DateTime1	DateTimeUTC1	DocumentID1	DocumentPage1	DocumentUID1	Guid1	IndexOf1	Left1	Right1	Sha1	Sha256	Sha512	SubString1	ToLower1	ToProper1	ToUpper1	Concat1	Coalesce1	Trim1	Trim2	IIF1
+True	False	False	True	True	False	False	True	False	True	False	False	False	True	43636	35	11	2024-10-16 07:34:55.3455	2024-10-16 11:34:55.3455	<null>	<null>	<null>	820cfcac-2c4f-49b9-aa7d-647ff124ea30	13	Hello	world	7b502c3a1f48c8609ae212cdfb639dee39673f5e	64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c	b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47	cruel	hello cruel world	Hello Cruel World	HELLO CRUEL WORLD	hello world	hello	o wor	hello world	Is True
 }

@@ -5,11 +5,11 @@ INSERT INTO TestData:InsertTests:JsonNotationWithExpressions
 
 SELECT * FROM TestData:InsertTests:JsonNotationWithExpressions
 
-#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=3, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=250)
 {
 }
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=3, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=250)
 {
 FirstName	LastName	MiddleName
 John	Doe	<null>

@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Whether the tokenizer should skip a delimiter when it is encountered. Note that whitespace is always skipped.
         /// </summary>
-        public bool SkipDelimiter { get; set; } = true;
+        public bool EatDelimiters { get; set; } = true;
 
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
         public char? NextCharacter => Caret < _length ? _text[Caret] : null;

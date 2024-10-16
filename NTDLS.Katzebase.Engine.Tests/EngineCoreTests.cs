@@ -23,7 +23,6 @@ namespace NTDLS.Katzebase.Engine.Tests
         public void TestBasicQueries()
         {
             QueryExpectation.ValidateScriptResults(_engine, @"Features\ConstantsAndSimpleExpressions.kbs");
-            QueryExpectation.ValidateScriptResults(_engine, @"Features\ConstantsAndSimpleExpressions.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\NullsAndNullPropagation.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\NestedConditions.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\AllScalarFunctions.kbs");

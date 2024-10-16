@@ -2,6 +2,6 @@
 {
     internal class ExpectedRow
     {
-        public List<string> Values { get; set; } = new();
+        public List<string?> Values { get; set; } = new();
     }
 }

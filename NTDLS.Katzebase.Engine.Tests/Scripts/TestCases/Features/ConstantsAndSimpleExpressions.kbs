@@ -15,7 +15,7 @@ SELECT
 FROM
 	Single
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
 Expression0	Expression1	Expression2	Expression3	Expression4	Expression5	10	20	Text	Hello World	Text 20	20 Text
 10	20	Text	Hello World	Text20	20Text	10	20	Text	Hello World	Text20	20Text

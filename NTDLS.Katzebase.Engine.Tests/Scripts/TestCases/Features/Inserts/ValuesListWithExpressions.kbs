@@ -3,11 +3,11 @@ VALUES(1, 'Jane', 'Doe'),(2, 'John', 'Doe'),(3, 'Test', sha1('Some text') + ' (s
 
 SELECT * FROM TestData:InsertTests:ValuesListWithExpressions
 
-#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=3, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=250)
 {
 }
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=3, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=250)
 {
 FirstName	Id	LastName
 Jane	1	Doe

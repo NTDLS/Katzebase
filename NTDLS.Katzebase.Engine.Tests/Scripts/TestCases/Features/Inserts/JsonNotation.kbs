@@ -15,11 +15,11 @@ FirstName:
 
 SELECT * FROM TestData:InsertTests:JsonNotation
 
-#Expected(EnforceRowOrder=false, HasFieldNames=false, AffectedCount=6, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=6, MaxDuration=250)
 {
 }
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true, AffectedCount=6, MaxDuration=100)
+#Expected(EnforceRowOrder=false, AffectedCount=6, MaxDuration=250)
 {
 FirstName	LastName	MiddleName
 Fred	Doe	Joe

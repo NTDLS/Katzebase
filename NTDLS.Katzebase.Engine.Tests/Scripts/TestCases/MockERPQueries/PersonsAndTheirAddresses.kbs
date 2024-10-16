@@ -6,7 +6,7 @@ FROM
 INNER JOIN TestData:MockERP:Address as A
 	ON p.PersonID = a.PersonID
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
 PersonID	FirstName	LastName	Street	City	State	ZipCode
 1	John	Doe	123 Elm St	Springfield	IL	62704

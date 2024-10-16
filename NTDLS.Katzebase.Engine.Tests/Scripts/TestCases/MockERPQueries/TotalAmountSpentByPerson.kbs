@@ -12,7 +12,7 @@ INNER JOIN TestData:MockERP:SalesOrder as o
 GROUP BY
 	p.PersonID, p.FirstName, p.LastName
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
 PersonID	FirstName	LastName	OrdersCount	TotalSpent
 1	John	Doe	2	370.85

@@ -8,7 +8,7 @@ INNER JOIN TestData:MockERP:SalesOrderItem as oi
 GROUP BY
 	o.OrderID
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
 OrderID	TotalItems
 1	1

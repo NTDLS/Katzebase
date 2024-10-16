@@ -6,7 +6,7 @@ FROM
 INNER JOIN TestData:MockERP:SalesOrder as o
 	ON p.PersonID = o.PersonID
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
 OrderID	FirstName	LastName	OrderDate	TotalAmount
 1	John	Doe	2024-01-01	150.75

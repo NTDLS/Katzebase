@@ -2,9 +2,9 @@ SELECT
 	Sha1('t'),
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
     6 * -1 as Negative,
-    10 + 10 + (11 ^ 3) + 10 + '->' + Length(Guid()),
+    10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
     10 + 10 + 'ten' + 10 * 10,
-    'ten (' + 10 * 10 + ') : ' + Length(DateTimeUTC('yyyy/MM/dd hh:mm:ss tt'))
+    'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
 FROM
 	Single
 WHERE
@@ -22,8 +22,16 @@ WHERE
 ORDER BY
 	10
 
-#Expected(EnforceRowOrder=false, HasFieldNames=true)
+#Expected(EnforceRowOrder=false)
 {
+
+	#FieldPatterns
+	{
+		Expression2=Like(2810->________-____-____-____-____________),
+		Expression4=Like(ten (100) : ____/__/__ __:__:__ __)
+		Guid1=Guid()
+	}
+
 Expression0	Expression1	Negative	Expression2	Expression3	Expression4
-8efd86fb78a56a5145ed7739dcb00c78581c5375	8ten102	-6	2810->36	20ten100	ten (100) : 22
+8efd86fb78a56a5145ed7739dcb00c78581c5375	8ten102	-6	2810->ce013be8-2479-4018-8f9b-3f39cb9c80e6	20ten100	ten (100) : 2024/10/16 03:27:53 PM
 }

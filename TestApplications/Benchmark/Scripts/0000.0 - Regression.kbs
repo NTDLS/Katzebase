@@ -477,8 +477,8 @@ SELECT IsDouble('123456') FROM Single
 SELECT Checksum('hello world') FROM Single
 SELECT LastIndexOf('text', 'This is some text and this is more text.') FROM Single
 SELECT Length('Hello World') FROM Single
-SELECT DateTime('yyyy-MM-dd HH:mm:ss.ms') FROM Single
-SELECT DateTimeUTC('yyyy-MM-dd HH:mm:ss.ms') FROM Single
+SELECT DateTime('yyyy-MM-dd HH:mm:ss.fff') FROM Single
+SELECT DateTimeUTC('yyyy-MM-dd HH:mm:ss.fff') FROM Single
 SELECT DocumentID('h') FROM Single
 SELECT DocumentPage('') FROM Single
 SELECT DocumentUID('') FROM Single
@@ -519,7 +519,7 @@ DECLARE @StartDate = DateTimeUTC()
 	
 select
 	DateDiff(@StartDate, DateTime(), 'minute'),
-	FormatDateTime(@StartDate, 'hh:mm:ss.ms tt'),
+	FormatDateTime(@StartDate, 'hh:mm:ss.fff tt'),
 	FormatDateTime(@StartDate, 'yyyy/MM/dd'),
 	FormatNumeric(123456.456789, "n1"),
 	FormatNumeric(123456.456789, "c"),

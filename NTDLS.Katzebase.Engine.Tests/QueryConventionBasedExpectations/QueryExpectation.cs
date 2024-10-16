@@ -1,10 +1,10 @@
-﻿using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Engine.Scripts;
-using NTDLS.Katzebase.Parsers.Query.Specific;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Parsers.Tokens;
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 
 namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
         /// </summary>
         public static void ValidateScriptResults(EngineCore engine, string scriptFileName, object? userParameters = null)
         {
-            var expectation = Parse(scriptFileName);
+            var expectation = StaticQueryExpectationParser.Parse(scriptFileName);
 
             using var ephemeral = engine.Sessions.CreateEphemeralSystemSession();
             var resultsCollection = ephemeral.Transaction.ExecuteQuery(expectation.QueryText, userParameters);
@@ -31,86 +31,6 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             {
                 expectation.Validate(resultsCollection);
             }
-        }
-
-        /// <summary>
-        /// Finds a script in the project and parsed an "expected results" section from it.
-        /// </summary>
-        /// <param name="scriptName"></param>
-        /// <returns></returns>
-        public static QueryExpectation Parse(string scriptName)
-        {
-            var result = new QueryExpectation();
-
-            var queryText = EmbeddedScripts.Load(scriptName);
-
-            int indexOfOptions = queryText.IndexOf("#BatchOptions", StringComparison.InvariantCultureIgnoreCase);
-            int indexOfFirstExpectations = queryText.IndexOf("#Expected", StringComparison.InvariantCultureIgnoreCase);
-            int startIndex = GetSmallestPositive(indexOfOptions, indexOfFirstExpectations);
-
-            if (startIndex < 0)
-            {
-                result.QueryText = queryText; //We have no expected datasets.
-            }
-            else
-            {
-                result.QueryText = queryText.Substring(0, startIndex);
-                string expectedDatasetTextBlock = queryText.Substring(startIndex);
-
-                var tokenizer = new Tokenizer(expectedDatasetTextBlock, [' ', '(', ')', ',', '='])
-                {
-                    SkipDelimiter = false
-                };
-
-                if (tokenizer.TryEatIfNext("#BatchOptions"))
-                {
-                    var validBatchOptions = new ExpectedQueryAttributes
-                    {
-                        { BatchExpectationOption.DoNotValidate.ToString(), typeof(bool) }
-                    };
-                    result.BatchOptions = StaticParserAttributes.Parse(tokenizer, validBatchOptions);
-                }
-
-                while (!tokenizer.IsExhausted())
-                {
-                    var expectedDataset = new ExpectedDataset();
-
-                    //Find the next expected data-set definition.
-                    int expectedIndex = tokenizer.GetNextIndexOf("#Expected");
-                    tokenizer.SetCaret(expectedIndex + "#Expected".Length);
-
-                    var validOptions = new ExpectedQueryAttributes
-                    {
-                        { DatasetExpectationOption.EnforceRowOrder.ToString(), typeof(bool) },
-                        { DatasetExpectationOption.HasFieldNames.ToString(), typeof(bool) },
-                        { DatasetExpectationOption.AffectedCount.ToString(), typeof(int) },
-                        { DatasetExpectationOption.MaxDuration.ToString(), typeof(int) }
-                    };
-                    expectedDataset.Options = StaticParserAttributes.Parse(tokenizer, validOptions);
-
-                    tokenizer.IsNext('{');
-
-                    var expectedRowsTextBlock = tokenizer.EatGetMatchingScope('{', '}').Replace("\r\n", "\n");
-                    var expectedRowLines = expectedRowsTextBlock.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var expectedRowLine in expectedRowLines)
-                    {
-                        if (expectedDataset.Fields == null && expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
-                        {
-                            expectedDataset.Fields = expectedRowLine.Split('\t').ToList();
-                            continue;
-                        }
-
-                        expectedDataset.Rows.Add(new ExpectedRow()
-                        {
-                            Values = expectedRowLine.Split('\t').ToList()
-                        });
-                    }
-
-                    result.ExpectedDatasets.Add(expectedDataset);
-                }
-            }
-
-            return result;
         }
 
         /// <summary>
@@ -125,39 +45,42 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             for (int datasetIndex = 0; datasetIndex < actualDatasets.Collection.Count; datasetIndex++)
             {
                 var expectedDataset = ExpectedDatasets[datasetIndex];
-                var actualDataset = actualDatasets.Collection[datasetIndex];
 
-                if (expectedDataset.TryGetAttribute<int>(DatasetExpectationOption.MaxDuration, out var expectedMaxDuration))
+                if (expectedDataset.GetOption(DatasetExpectationOption.DoNotValidate, false))
+                {
+                    continue;
+                }
+
+                var actualDataset = actualDatasets.Collection[datasetIndex];
+                if (expectedDataset.TryGetOption<int>(DatasetExpectationOption.MaxDuration, out var expectedMaxDuration))
                 {
                     //Ensure the query ran in the within expected duration.
                     Assert.InRange(actualDataset.Duration, 0, expectedMaxDuration);
                 }
 
-                if (expectedDataset.TryGetAttribute<int>(DatasetExpectationOption.AffectedCount, out var expectedAffectedCount))
+                if (expectedDataset.TryGetOption<int>(DatasetExpectationOption.AffectedCount, out var expectedAffectedCount))
                 {
                     //Ensure we have the expected "affected row count".
                     Assert.Equal(expectedAffectedCount, actualDataset.RowCount);
                 }
 
-                if (expectedDataset.GetAttribute(DatasetExpectationOption.EnforceRowOrder, false))
+                //Ensure that the field names, count and ordinals match.
+                Assert.NotNull(expectedDataset.Fields);
+                var actualDatasetFields = actualDataset.Fields.Select(f => f.Name);
+                if (ValuesHash(expectedDataset.Fields) != ValuesHash(actualDatasetFields))
+                {
+                    throw new Exception("Dataset field names do not match.");
+                }
+
+                if (expectedDataset.GetOption(DatasetExpectationOption.EnforceRowOrder, false))
                 {
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
-                    {
-                        //Ensure that the field names, count and ordinals match.
-
-                        Assert.NotNull(expectedDataset.Fields);
-                        var actualDatasetFields = actualDataset.Fields.Select(f => f.Name);
-                        Assert.Equal(ValuesHash(expectedDataset.Fields), ValuesHash(actualDatasetFields));
-                    }
-
                     for (int rowOrdinal = 0; rowOrdinal < actualDataset.Rows.Count; rowOrdinal++)
                     {
-                        //Ensure that the row at the same index matches the row expectation.
-                        Assert.Equal(ValuesHash(expectedDataset.Rows[datasetIndex].Values),
-                            ValuesHash(actualDataset.Rows[rowOrdinal].Values));
+                        IsExpectedRowMatch(expectedDataset, expectedDataset.Rows[datasetIndex],
+                            actualDataset, actualDataset.Rows[rowOrdinal]);
                     }
                 }
                 else
@@ -165,60 +88,144 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
                     //Ensure that this result-set has the expected row count.
                     Assert.Equal(expectedDataset.Rows.Count, actualDataset.Rows.Count);
 
-                    if (expectedDataset.GetAttribute(DatasetExpectationOption.HasFieldNames, false))
-                    {
-                        //Ensure that the field names, count and ordinals match.
-
-                        Assert.NotNull(expectedDataset.Fields);
-                        var actualDatasetFields = actualDataset.Fields.Select(f => f.Name);
-                        Assert.Equal(ValuesHash(expectedDataset.Fields), ValuesHash(actualDatasetFields));
-                    }
-
                     //We keep track of which rows have been matched because there may be duplicates and we only want to match each one once.
                     var matchedExpectationRows = new HashSet<ExpectedRow>();
 
                     for (int rowIndex = 0; rowIndex < actualDataset.Rows.Count; rowIndex++)
                     {
-                        var actualDatasetValuesHash = ValuesHash(actualDataset.Rows[rowIndex].Values);
+                        var foundMatch = FindMatchingExpectedRow(expectedDataset, actualDataset, actualDataset.Rows[rowIndex]);
+                        if (foundMatch == null)
+                        {
+                            throw new Exception($"Expected row not found: [{string.Join("],[", actualDataset.Rows[rowIndex].Values)}]");
+                        }
 
-                        //Find the actual row in the expected dataset, omitting rows we have already matched.
-                        var matchedExpectation = expectedDataset.Rows.FirstOrDefault(o =>
-                            !matchedExpectationRows.Contains(o) && ValuesHash(o.Values) == actualDatasetValuesHash);
-
-                        Assert.NotNull(matchedExpectation);
-                        matchedExpectationRows.Add(matchedExpectation);
+                        matchedExpectationRows.Add(foundMatch);
                     }
                 }
             }
         }
 
+        #region Pattern matching.
+
+        private ExpectedRow? FindMatchingExpectedRow(ExpectedDataset expectedDataset, KbQueryResult actualResultSet, KbQueryRow actualRow)
+        {
+            foreach (var expectedRow in expectedDataset.Rows)
+            {
+                bool matchedAll = true;
+
+                foreach (var field in actualResultSet.Fields)
+                {
+                    if(!IsExpectedRowMatch(expectedDataset, expectedRow, actualResultSet, actualRow))
+                    {
+                        matchedAll = false;
+                        break;
+                    }
+                }
+
+                if (matchedAll)
+                {
+                    return expectedRow;
+                }
+            }
+
+            return null;
+        }
+
+        private bool IsExpectedRowMatch(ExpectedDataset expectedDataset, ExpectedRow expectedRow, KbQueryResult actualResultSet, KbQueryRow actualRow)
+        {
+            bool matchedAll = true;
+
+            foreach (var field in actualResultSet.Fields)
+            {
+                var expectedValue = expectedRow.Values[expectedDataset.FieldIndex(field.Name)];
+                var actualValue = actualResultSet.Value(actualRow, field.Name);
+
+                if (expectedDataset.FieldPatterns.TryGetValue(field.Name, out var fieldPattern))
+                {
+                    if (PatternMatch(expectedValue, actualValue, fieldPattern) == false)
+                    {
+                        matchedAll = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (actualValue != expectedValue)
+                    {
+                        matchedAll = false;
+                        break;
+                    }
+                }
+            }
+
+            return matchedAll;
+        }
+
+        private bool PatternMatch(string? expectedValue, string? actualValue, FieldPattern fieldPattern)
+        {
+            switch (fieldPattern.PatternType)
+            {
+                case FieldPatternType.Null:
+                    return actualValue == null;
+                case FieldPatternType.Exact:
+                    return expectedValue == actualValue;
+                case FieldPatternType.Format:
+                    return IsFormatMatch(actualValue, fieldPattern.Pattern);
+                case FieldPatternType.Like:
+                    return IsLikeMatch(actualValue, fieldPattern.Pattern);
+                case FieldPatternType.NotNull:
+                    return actualValue != null;
+                case FieldPatternType.Numeric:
+                    return double.TryParse(actualValue, out _);
+                case FieldPatternType.Integer:
+                    return int.TryParse(actualValue, out _);
+                case FieldPatternType.DateTime:
+                    return DateTime.TryParse(actualValue, out _);
+                case FieldPatternType.Guid:
+                    return Guid.TryParse(actualValue, out _);
+            }
+
+            return true;
+        }
+
+        public static bool IsLikeMatch(string? value, string pattern)
+        {
+            if (value == null)
+            {
+                return false;
+            }
+            ArgumentNullException.ThrowIfNull(pattern);
+
+            var regex = new Regex("^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            return regex.IsMatch(value);
+        }
+
+
+        public static bool IsFormatMatch(string? value, string customPattern)
+        {
+            if (value == null)
+            {
+                return false;
+            }
+
+            string regex = "^" + customPattern
+                                .Replace("n", @"\d")    // 'n' -> numeric digit (0-9)
+                                .Replace("_", ".")      // '_' -> any single character
+                                .Replace("c", "[^0-9]") // 'c' -> non-numeric character
+                            + "$";
+
+            return Regex.IsMatch(value, regex);
+        }
+
         private static string ValuesHash(IEnumerable<string?> values)
         {
             //We bake the row-count into the hash so that it gets validated too.
-            string valuesHash = $"[{string.Join("],[", values.Select(o => o ?? "<null>"))}]({values.Count()})";
-            return valuesHash;
-            //return Shared.Helpers.GetSHA256Hash(valuesHash);
+            return $"[{string.Join("],[", values.Select(o => o ?? "<null>"))}]({values.Count()})";
         }
 
-        private static int GetSmallestPositive(int a, int b)
-        {
-            // Check if both numbers are greater than 0
-            if (a > 0 && b > 0)
-            {
-                return Math.Min(a, b);
-            }
-            // If only one number is positive, return that one
-            else if (a > 0)
-            {
-                return a;
-            }
-            else if (b > 0)
-            {
-                return b;
-            }
-            // If neither is positive, return 0
-            return 0;
-        }
+        #endregion
 
         #region Get Options.
 

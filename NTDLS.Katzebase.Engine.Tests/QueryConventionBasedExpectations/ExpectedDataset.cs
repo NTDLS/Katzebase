@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Types;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
@@ -7,18 +8,39 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 {
     internal class ExpectedDataset
     {
-        public List<string>? Fields { get; set; }
+        public List<string> Fields { get; set; } = new();
         public List<ExpectedRow> Rows { get; set; } = new();
+        public KbInsensitiveDictionary<FieldPattern> FieldPatterns { get; set; } = new();
         public KbInsensitiveDictionary<QueryAttribute> Options { get; set; } = new();
 
-        #region Get Attributes.
-
-        public bool IsAttributeSet(DatasetExpectationOption attribute)
-            => Options.TryGetValue(attribute.ToString(), out var _);
-
-        public bool TryGetAttribute<T>(DatasetExpectationOption attribute, out T outValue, T defaultValue)
+        /// <summary>
+        /// Returns the integer index of the field name, throws exception if not found.
+        /// </summary>
+        public int FieldIndex(string fieldName)
         {
-            if (Options.TryGetValue(attribute.ToString(), out var option))
+            if (Fields != null)
+            {
+                int index = 0;
+                foreach (var field in Fields)
+                {
+                    if (field.Is(fieldName))
+                    {
+                        return index;
+                    }
+                    index++;
+                }
+            }
+            throw new Exception($"Field {fieldName} was not found in the collection.");
+        }
+
+        #region Get Options.
+
+        public bool IsOptionSet(DatasetExpectationOption ops)
+            => Options.TryGetValue(ops.ToString(), out var _);
+
+        public bool TryGetOption<T>(DatasetExpectationOption opt, out T outValue, T defaultValue)
+        {
+            if (Options.TryGetValue(opt.ToString(), out var option))
             {
                 outValue = (T)option.Value;
                 return true;
@@ -27,9 +49,9 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             return false;
         }
 
-        public bool TryGetAttribute<T>(DatasetExpectationOption attribute, [NotNullWhen(true)] out T? outValue)
+        public bool TryGetOption<T>(DatasetExpectationOption opt, [NotNullWhen(true)] out T? outValue)
         {
-            if (Options.TryGetValue(attribute.ToString(), out var option))
+            if (Options.TryGetValue(opt.ToString(), out var option))
             {
                 outValue = (T)option.Value;
                 return true;
@@ -38,9 +60,9 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
             return false;
         }
 
-        public T GetAttribute<T>(DatasetExpectationOption attribute, T defaultValue)
+        public T GetOption<T>(DatasetExpectationOption opt, T defaultValue)
         {
-            if (Options.TryGetValue(attribute.ToString(), out var option))
+            if (Options.TryGetValue(opt.ToString(), out var option))
             {
                 return (T)option.Value;
             }

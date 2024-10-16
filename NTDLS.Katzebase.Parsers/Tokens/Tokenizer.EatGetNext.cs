@@ -23,7 +23,7 @@
                 if (delimiters.Contains(_text[Caret]) == true)
                 {
                     outStoppedOnDelimiter = _text[Caret];
-                    if (SkipDelimiter)
+                    if (EatDelimiters)
                     {
                         Caret++;
                     }
