@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
@@ -115,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 
                 foreach (var field in actualResultSet.Fields)
                 {
-                    if(!IsExpectedRowMatch(expectedDataset, expectedRow, actualResultSet, actualRow))
+                    if (!IsExpectedRowMatch(expectedDataset, expectedRow, actualResultSet, actualRow))
                     {
                         matchedAll = false;
                         break;

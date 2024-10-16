@@ -53,7 +53,6 @@ namespace NTDLS.Katzebase.Engine.Tests
             DataImporter.ImportTabSeparatedFiles("Data.WordList", "TestData:WordList");
         }
 
-
         [Fact(DisplayName = "Insert queries")]
         public void TestInsertQueries()
         {
