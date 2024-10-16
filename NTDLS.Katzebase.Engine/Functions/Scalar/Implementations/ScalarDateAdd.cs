@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
             var dateTimeString = function.Get<string?>("dateTime");
-            var interval = function.Get<string?>("interval");
+            var interval = function.Get<string?>("interval")?.ToLowerInvariant();
             var offset = function.Get<int?>("offset");
 
             if (dateTimeString == null || interval == null)
@@ -22,7 +22,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 throw new KbProcessingException($"Expected a valid date-time expression, found: [{dateTimeString}].");
             }
-
 
             switch (interval)
             {

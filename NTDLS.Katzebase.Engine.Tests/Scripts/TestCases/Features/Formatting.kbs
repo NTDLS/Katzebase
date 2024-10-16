@@ -1,0 +1,25 @@
+select
+	FormatDateTime(DateAdd(DateTimeUTC(), 'Day', -10), 'yyyy/MM/dd hh:mm:ss.fff tt') as DateAdd1,
+	Round(DateDiff(DateTimeUTC(), DateAdd(DateTimeUTC(), 'Day', -10), 'Minute')) as DateDiff1,
+	FormatDateTime(DateTimeUTC(), 'hh:mm:ss.fff tt') as FormatDateTime1,
+	FormatDateTime(DateTimeUTC(), 'yyyy/MM/dd') as FormatDateTime2,
+	FormatNumeric(123456.456789, "n1") as FormatNumeric1,
+	'Prefix' + 10 + ToString(50) + 10 + 'Suffix' as ToString1,
+	'Prefix' + 10 + ToNumeric(50) + 10 + 'Suffix' as ToNumeric1,
+	Round(123456.456789, 2) as Round1
+from
+	Single
+
+
+#Expected(EnforceRowOrder=false)
+{
+	#FieldPatterns
+	{
+		DateAdd1=Format(____/__/__ __:__:__.___ __)
+		FormatDateTime1=Format(__:__:__.___ __)
+		FormatDateTime2=Format(____/__/__)
+	}
+
+DateAdd1	DateDiff1	FormatDateTime1	FormatDateTime2	FormatNumeric1	ToString1	ToNumeric1	Round1
+2024/10/06 05:10:57.000 PM	-14400	05:10:57.817 PM	2024/10/16	123,456.5	Prefix105010Suffix	Prefix70Suffix	123456.46
+}

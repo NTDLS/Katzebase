@@ -24,6 +24,7 @@
     <None Remove="Scripts\PersonsWithoutOrders.kbs" />
     <None Remove="Scripts\PersonWithOrdersDetails.kbs" />
     <None Remove="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <None Remove="Scripts\TestCases\Features\Formatting.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
     <None Remove="Scripts\TestCases\NullsAndNullPropagation.kbs" />
     <None Remove="Scripts\TestCases\RaggedInsert.kbs" />
@@ -37,6 +38,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Formatting.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\NestedConditions.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateJsonNotationSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateValuesListSchema.kbs" />

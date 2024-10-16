@@ -1,50 +1,12 @@
---TODO: Test optional parameters and their defaults.
-
-SELECT
-	IsNull(true)
-FROM
+select
+	DateAdd(DateTimeUTC(), 'Day', -10) as DateAdd1,
+	Round(DateDiff(DateTimeUTC(), DateAdd(DateTimeUTC(), 'Day', -10), 'Minute')) as DateDiff1,
+	FormatDateTime(DateTimeUTC(), 'hh:mm:ss.fff tt') as FormatDateTime1,
+	FormatDateTime(DateTimeUTC(), 'yyyy/MM/dd') as FormatDateTime2,
+	FormatNumeric(123456.456789, "n1") as FormatNumeric1,
+	FormatNumeric(123456.456789, "c") as FormatNumeric2,
+	'Prefix' + 10 + ToString(50) + 10 + 'Suffix' as ToString1,
+	'Prefix' + 10 + ToNumeric(50) + 10 + 'Suffix' as ToNumeric1,
+	Round(123456.456789, 2) as Round1
+from
 	Single
-
-/*
-SELECT
-	IsBetween(50, 10, 100),
-	IsBetween(200, 10, 100),
-	IsEqual('string1', 'string2'),
-	IsGreater(10, 5),
-	IsGreaterOrEqual(10, 5),
-	IsLess(10, 5),
-	IsLessOrEqual(10, 5),
-	IsLike('Hello World', '%o w%'),
-	IsNotBetween(10, 5, 100),
-	IsNotEqual('string1', 'string2'),
-	IsNotLike('Hello World', '%o w%'),
-	IsInteger('123456'),
-	IsString('123456'),
-	IsDouble('123456'),
-	Checksum('hello world'),
-	LastIndexOf('text', 'This is some text and this is more text.'),
-	Length('Hello World'),
-	Length(DateTime('yyyy-MM-dd HH:mm:ss.ms')),
-	Length(DateTimeUTC('yyyy-MM-dd HH:mm:ss.ms')),
-	Length(DocumentID('h')),
-	Length(DocumentPage('')),
-	Length(DocumentUID('')),
-	Length(Guid()),
-	IndexOf('text', 'This is some text and this is more text.'),
-	Left('Hello world', 5),
-	Right('Hello world', 5),
-	Sha1('Hello world'),
-	Sha256('Hello world'),
-	Sha512('Hello world'),
-	SubString('Hello cruel world', 6, 5),
-	ToLower('Hello cruel world'),
-	ToProper('Hello cruel world'),
-	ToUpper('Hello cruel world'),
-	Concat('hello', ' ', 'world'),
-	Coalesce(null, null, 'hello', 'world'),
-	Trim('hello world', 'dhle'),
-	Trim('     hello world     '),
-	IIF(IsGreater(Length ('Hello World'), 10), 'Is True', 'Is False'),
-FROM
-	Single
-*/

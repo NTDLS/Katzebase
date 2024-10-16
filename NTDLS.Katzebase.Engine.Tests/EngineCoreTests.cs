@@ -26,6 +26,7 @@ namespace NTDLS.Katzebase.Engine.Tests
             QueryExpectation.ValidateScriptResults(_engine, @"Features\NullsAndNullPropagation.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\NestedConditions.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\AllScalarFunctions.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"Features\Formatting.kbs");
         }
 
         [Fact(DisplayName = "Mock ERP queries")]
