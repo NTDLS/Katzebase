@@ -1,0 +1,15 @@
+SELECT
+	ColumnWhichDoesNotExist,
+	Count(0) as CountOf
+FROM
+	TestData:WordList:Language
+WHERE
+	Name = 'French'
+GROUP BY
+	ColumnWhichDoesNotExist
+
+#Expected(EnforceRowOrder=false)
+{
+ColumnWhichDoesNotExist	CountOf
+<null>	1
+}

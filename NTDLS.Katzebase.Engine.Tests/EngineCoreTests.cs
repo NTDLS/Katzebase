@@ -51,6 +51,27 @@ namespace NTDLS.Katzebase.Engine.Tests
         public void ImportIndexesAndComplexQueries()
         {
             DataImporter.ImportTabSeparatedFiles("Data.WordList", "TestData:WordList");
+
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\AggregateWithoutGroupBy.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\FieldWhereEqual.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectColumnWhichDoesNotExist.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStar.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStarWhereEqual.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectTopWithOrderBy.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectTopWithOrderByAndOffset.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectWhereColumnWhichDoesNotExist.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereEqualSchemaPrefix.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereEqualSchemaPrefixStar.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereLikeNOpen.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereLikeOpenN.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereNotLikeNOpen.kbs");
+            QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereNotLikeOpenN.kbs");
         }
 
         [Fact(DisplayName = "Insert queries")]

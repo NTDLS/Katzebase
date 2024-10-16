@@ -1,0 +1,18 @@
+SELECT
+	*
+FROM
+	TestData:WordList:Language
+
+#Expected(EnforceRowOrder=false)
+{
+Id	Name
+3	Spanish
+1	English
+2	German
+4	French
+5	Portuguese
+6	Italian
+7	Finnish
+8	Dutch
+9	Latin
+}

@@ -1,0 +1,18 @@
+SELECT
+	*
+FROM
+	TestData:WordList:Language
+WHERE
+	Name NOT LIKE '%an'
+
+#Expected(EnforceRowOrder=false)
+{
+Id	Name
+1	English
+3	Spanish
+5	Portuguese
+4	French
+7	Finnish
+8	Dutch
+9	Latin
+}

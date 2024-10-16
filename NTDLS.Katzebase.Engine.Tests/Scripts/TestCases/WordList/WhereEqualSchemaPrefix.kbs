@@ -1,0 +1,12 @@
+SELECT
+	*
+FROM
+	TestData:WordList:Language as L
+WHERE
+	L.Name = 'French'
+
+#Expected(EnforceRowOrder=false)
+{
+l.Id	l.Name
+4	French
+}

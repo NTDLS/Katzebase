@@ -1,0 +1,13 @@
+SELECT
+	Name
+FROM
+	TestData:WordList:Language
+WHERE
+	Name = 'French'
+	OR ColumnWhichDoesNotExist = 'French'
+
+#Expected(EnforceRowOrder=false)
+{
+Name
+French
+}

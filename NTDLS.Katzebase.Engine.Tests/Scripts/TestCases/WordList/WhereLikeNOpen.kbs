@@ -1,0 +1,13 @@
+SELECT
+	*
+FROM
+	TestData:WordList:Language
+WHERE
+	Name LIKE 'F%'
+
+#Expected(EnforceRowOrder=false)
+{
+Id	Name
+4	French
+7	Finnish
+}

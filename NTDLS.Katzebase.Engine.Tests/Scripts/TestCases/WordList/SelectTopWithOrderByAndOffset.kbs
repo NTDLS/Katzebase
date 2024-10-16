@@ -1,0 +1,33 @@
+SELECT TOP 10
+	*
+FROM
+	TestData:WordList:Word as sw
+INNER JOIN TestData:WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN TestData:WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN TestData:WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN TestData:WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Cat'
+	OR sw.Text = 'Chow'
+ORDER BY
+	sw.Text
+OFFSET 10
+
+#Expected(EnforceRowOrder=false)
+{
+s.Confidence	s.SourceWordId	s.TargetWordId	sl.Id	sl.Name	sw.Id	sw.LanguageId	sw.SourceId	sw.Text	tl.Id	tl.Name	tw.Id	tw.LanguageId	tw.SourceId	tw.Text
+1	590440	792686	1	English	590440	1	12179	cat	4	French	792686	4	12339	féline
+1	590440	773599	1	English	590440	1	12179	cat	3	Spanish	773599	3	12339	gato
+1	590440	852521	1	English	590440	1	12179	cat	9	Latin	852521	9	12339	kissamainen
+1	590440	604813	1	English	590440	1	12179	cat	1	English	604813	1	27243	Feline
+1	590440	745733	1	English	590440	1	12179	cat	2	German	745733	2	27243	Katze
+1	590440	676176	1	English	590440	1	12179	cat	5	Portuguese	676176	5	27243	Felino
+1	590440	702562	1	English	590440	1	12179	cat	4	French	702562	4	27243	Féline
+1	590440	868836	1	English	590440	1	12179	cat	6	Italian	868836	6	27243	Felino
+1	593016	593017	1	English	593016	1	13918	chow	1	English	593017	1	13920	chowder
+1	593016	724173	1	English	593016	1	13918	chow	5	Portuguese	724173	5	13920	chow
+}

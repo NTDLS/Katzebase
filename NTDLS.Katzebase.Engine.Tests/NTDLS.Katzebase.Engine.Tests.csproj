@@ -34,11 +34,32 @@
     <None Remove="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
     <None Remove="Scripts\TestCases\Features\Formatting.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
+    <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
+    <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
+    <None Remove="Scripts\TestCases\WordList\FieldWhereEqual.kbs" />
+    <None Remove="Scripts\TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExist.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectStar.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectStarWhereEqual.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectTopWithOrderBy.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectTopWithOrderByAndoffset.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectWhereColumnWhichDoesNotExist.kbs" />
     <None Remove="Scripts\TestCases\NullsAndNullPropagation.kbs" />
     <None Remove="Scripts\TestCases\RaggedInsert.kbs" />
     <None Remove="Scripts\TestCases\RaggedInsertWithExpressions.kbs" />
     <None Remove="Scripts\TestCases\ValuesInsert.kbs" />
     <None Remove="Scripts\TestCases\ValuesInsertWithExpressions.kbs" />
+    <None Remove="Scripts\TestCases\WordList\WhereEqualSchemaPrefix.kbs" />
+    <None Remove="Scripts\TestCases\WordList\WhereEqualSchemaPrefixStar.kbs" />
+    <None Remove="Scripts\TestCases\WordList\whereLikeNOpen.kbs" />
+    <None Remove="Scripts\TestCases\WordList\WhereLikeOpenN.kbs" />
+    <None Remove="Scripts\TestCases\WordList\WhereNotLikeNOpen.kbs" />
+    <None Remove="Scripts\TestCases\WordList\whereNotLikeOpenN.kbs" />
     <None Remove="Scripts\TotalAmountSpentByPerson.kbs" />
     <None Remove="Scripts\TotalQuantityOfItemsOrderedPerOrder.kbs" />
   </ItemGroup>
@@ -75,6 +96,27 @@
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\TotalQuantityOfItemsOrderedPerOrder.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\NumberOfOrdersPlacedByEachPerson.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\ConstantsAndSimpleExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectTopWithOrderBy.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectTopWithOrderByAndOffset.kbs" />
+    <EmbeddedResource Include="Scripts\%40Template.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectWhereColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\FieldWhereEqual.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereNotLikeOpenN.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereNotLikeNOpen.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereLikeOpenN.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereLikeNOpen.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereEqualSchemaPrefixStar.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\WhereEqualSchemaPrefix.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectStarWhereEqual.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectStar.kbs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,14 @@
+SELECT
+	Id,
+	ColumnWhichDoesNotExist,
+	Name
+FROM
+	TestData:WordList:Language
+WHERE
+	Name = 'French'
+
+#Expected(EnforceRowOrder=false)
+{
+Id	ColumnWhichDoesNotExist	Name
+4	<null>	French
+}

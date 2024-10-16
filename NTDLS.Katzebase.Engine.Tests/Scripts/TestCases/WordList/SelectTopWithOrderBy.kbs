@@ -1,0 +1,32 @@
+SELECT TOP 10
+	*
+FROM
+	TestData:WordList:Word as sw
+INNER JOIN TestData:WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN TestData:WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN TestData:WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN TestData:WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Cat'
+	OR sw.Text = 'Chow'
+ORDER BY
+	sw.Text
+
+#Expected(EnforceRowOrder=false)
+{
+s.Confidence	s.SourceWordId	s.TargetWordId	sl.Id	sl.Name	sw.Id	sw.LanguageId	sw.SourceId	sw.Text	tl.Id	tl.Name	tw.Id	tw.LanguageId	tw.SourceId	tw.Text
+1	590440	590520	1	English	590440	1	12179	cat	1	English	590520	1	12339	catlike
+1	590440	792686	1	English	590440	1	12179	cat	4	French	792686	4	12339	féline
+1	590440	702562	1	English	590440	1	12179	cat	4	French	702562	4	27243	Féline
+1	590440	704186	1	English	590440	1	12179	cat	2	German	704186	2	12339	katzenhaft
+1	590440	811878	1	English	590440	1	12179	cat	7	Finnish	811878	7	12339	kissamainen
+1	590440	695681	1	English	590440	1	12179	cat	5	Portuguese	695681	5	12339	gato
+1	590440	838089	1	English	590440	1	12179	cat	9	Latin	838089	9	27243	Kissapeto
+1	590440	868836	1	English	590440	1	12179	cat	6	Italian	868836	6	27243	Felino
+1	590440	773599	1	English	590440	1	12179	cat	3	Spanish	773599	3	12339	gato
+1	590440	743138	1	English	590440	1	12179	cat	3	Spanish	743138	3	27243	Felino
+}
