@@ -683,6 +683,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(groupRow.Value.GroupAggregateFunctionParameters);
 
+                        /* This is how we collapse scalars.
+                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction,
+                            query, givenConditions.FieldCollection, leftDocumentContent)?.ToLowerInvariant();
+                        */
+
+
                         //Insert the aggregation result into the proper position in the values list.
                         materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -742,8 +748,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any() == false)
                 {
-                    var collapsedValue = StaticScalarExpressionProcessor.CollapseScalarQueryField(
-                        fieldExpression, transaction, query, query.SelectFields, flattenedSchemaElements);
+                    var collapsedValue = fieldExpression.CollapseScalarQueryField(transaction, query, query.SelectFields, flattenedSchemaElements);
 
                     if (fieldCollapseType == FieldCollapseType.ScalerOrderBy || fieldCollapseType == FieldCollapseType.AggregateOrderBy)
                     {
