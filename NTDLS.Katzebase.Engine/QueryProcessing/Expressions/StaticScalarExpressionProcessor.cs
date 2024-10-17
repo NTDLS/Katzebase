@@ -3,6 +3,8 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Parsers;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -121,8 +123,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                     //Search the dependency functions for the one with the expression key, this is the
                     //  one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = StaticScalarFunctionExpressionProcessor.CollapseScalarFunction(
-                        transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
+                    var functionResult = subFunction.CollapseScalarFunction(transaction, query, fieldCollection, auxiliaryFields, functions);
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, functionResult);
@@ -269,8 +270,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = StaticScalarFunctionExpressionProcessor.CollapseScalarFunction(
-                        transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
+                    var functionResult = subFunction.CollapseScalarFunction(transaction, query, fieldCollection, auxiliaryFields, functions);
 
                     if (subFunction.ReturnType == KbBasicDataType.Numeric)
                     {

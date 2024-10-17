@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
             {
                 //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                 var subFunction = functions.Single(o => o.ExpressionKey == token);
-                return StaticAggregateFunctionExpressionProcessor.CollapseAggregateFunction(aggregateFunctionParameters, subFunction);
+                return subFunction.CollapseAggregateFunction(aggregateFunctionParameters);
             }
 
             //All aggregation parameters are collapsed as scalar expressions at query processing time.
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
             {
                 //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                 var subFunction = functions.Single(o => o.ExpressionKey == token);
-                return StaticAggregateFunctionExpressionProcessor.CollapseAggregateFunction(aggregateFunctionParameters, subFunction);
+                return subFunction.CollapseAggregateFunction(aggregateFunctionParameters);
             }
 
             //All aggregation parameters are collapsed as scalar expressions at query processing time.

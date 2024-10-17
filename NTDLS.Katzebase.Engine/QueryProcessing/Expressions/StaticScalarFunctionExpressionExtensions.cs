@@ -8,10 +8,9 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 
-
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 {
-    internal static class StaticScalarFunctionExpressionProcessor
+    internal static class StaticScalarFunctionExpressionExtensions
     {
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
@@ -41,8 +40,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        internal static string? CollapseScalarFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
-            KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
+        internal static string? CollapseScalarFunction(this IQueryFieldExpressionFunction function, Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
+            KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions)
         {
             var collapsedParameters = new List<string?>();
 

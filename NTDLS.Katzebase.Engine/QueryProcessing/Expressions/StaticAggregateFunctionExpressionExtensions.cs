@@ -6,14 +6,14 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 {
-    internal static class StaticAggregateFunctionExpressionProcessor
+    internal static class StaticAggregateFunctionExpressionExtensions
     {
         /// <summary>
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        public static string? CollapseAggregateFunction(
-            KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, IQueryFieldExpressionFunction function)
+        public static string? CollapseAggregateFunction(this IQueryFieldExpressionFunction function,
+            KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters)
         {
             //The sole parameter for aggregate functions is pre-computed by the query execution engine, just get the values.
             if (aggregateFunctionParameters.TryGetValue(function.ExpressionKey, out var aggregateFunctionParameter) != true)
