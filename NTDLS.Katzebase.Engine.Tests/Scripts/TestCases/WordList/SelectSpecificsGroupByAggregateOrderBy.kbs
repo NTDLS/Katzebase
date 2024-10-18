@@ -27,16 +27,16 @@ ORDER BY
 #Expected(EnforceRowOrder=false)
 {
 SourceWord	TargetWord	Average	CountOf
-cat	Felino	590440	4
-cat	Catlike	590440	1
-cat	Feline	590440	1
-cat	Gato	590440	2
-cat	Féline	590440	2
-cat	Katze	590440	1
-cat	katzenhaft	590440	1
-cat	Kissapeto	590440	3
-cat	kissamainen	590440	3
-chow	Chowder	593016	1
-chow	Chaudrée	593016	1
-chow	Chow	658594.5	2
+Chow	Chow	658594.5	2
+Cat	Kissapeto	590440	3
+Cat	Kissamainen	590440	3
+Cat	Katzenhaft	590440	1
+Cat	Katze	590440	1
+Cat	Gato	590440	2
+Cat	Féline	590440	2
+Cat	Felino	590440	4
+Cat	Feline	590440	1
+Cat	Catlike	590440	1
+Chow	Chowder	593016	1
+Chow	Chaudrée	593016	1
 }

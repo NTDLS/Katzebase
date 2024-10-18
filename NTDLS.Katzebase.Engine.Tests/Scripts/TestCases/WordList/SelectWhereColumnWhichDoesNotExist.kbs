@@ -7,4 +7,5 @@ WHERE
 
 #Expected(EnforceRowOrder=false)
 {
+Name
 }

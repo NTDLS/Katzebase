@@ -1,4 +1,3 @@
---Get Total Amount Spent by Each Person
 SELECT
 	p.PersonID,
 	p.FirstName,

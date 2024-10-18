@@ -10,7 +10,6 @@ select
 from
 	Single
 
-
 #Expected(EnforceRowOrder=false)
 {
 	#FieldPatterns
