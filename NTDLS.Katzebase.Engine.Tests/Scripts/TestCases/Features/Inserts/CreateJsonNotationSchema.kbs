@@ -1,3 +1,6 @@
 CREATE SCHEMA TestData:InsertTests
-CREATE SCHEMA TestData:InsertTests:JsonNotationWithExpressions
+DROP SCHEMA TestData:InsertTests:JsonNotation
+DROP SCHEMA TestData:InsertTests:JsonNotationWithExpressions
+
 CREATE SCHEMA TestData:InsertTests:JsonNotation
+CREATE SCHEMA TestData:InsertTests:JsonNotationWithExpressions

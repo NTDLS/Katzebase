@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api;
 using System.Reflection;
 
-namespace NTDLS.Katzebase.Engine.Tests
+namespace NTDLS.Katzebase.Engine.Tests.Utilities
 {
     internal static class DataImporter
     {
@@ -9,15 +9,13 @@ namespace NTDLS.Katzebase.Engine.Tests
         /// Locates tab-separated-value text files in the currently executing assembly that are within the
         /// namespace denoted by [pathPart], parses them and imports them into the schema denoted by [targetSchema].
         /// </summary>
-        public static void ImportTabSeparatedFiles(string pathPart, string targetSchema)
+        public static void ImportTabSeparatedFiles(KbClient client, string pathPart, string targetSchema)
         {
             var assembly = Assembly.GetExecutingAssembly();
 
             var dataFiles = assembly.GetManifestResourceNames()
                 .Where(o => o.Contains(pathPart, StringComparison.InvariantCultureIgnoreCase)
                 && o.EndsWith(".txt", StringComparison.InvariantCultureIgnoreCase));
-
-            var client = new KbClient(Constants.HOST_NAME, Constants.LISTEN_PORT, Constants.USER_NAME, KbClient.HashPassword(Constants.PASSWORD));
 
             client.Schema.DropIfExists(targetSchema);
             client.Schema.Create(targetSchema);
@@ -43,7 +41,6 @@ namespace NTDLS.Katzebase.Engine.Tests
                 client.Transaction.Begin();
                 try
                 {
-
                     foreach (var rowText in rowTexts)
                     {
                         var rowValues = rowText.Split('\t').ToList();

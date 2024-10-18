@@ -1,3 +1,6 @@
 CREATE SCHEMA TestData:InsertTests
-CREATE SCHEMA TestData:InsertTests:ValuesListWithExpressions
+DROP SCHEMA TestData:InsertTests:ValuesList
+DROP SCHEMA TestData:InsertTests:ValuesListWithExpressions
+
 CREATE SCHEMA TestData:InsertTests:ValuesList
+CREATE SCHEMA TestData:InsertTests:ValuesListWithExpressions

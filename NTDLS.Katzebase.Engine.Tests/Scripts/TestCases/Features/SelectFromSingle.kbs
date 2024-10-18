@@ -1,0 +1,7 @@
+SELECT Value FROM Single
+
+#Expected(EnforceRowOrder=false)
+{
+Value
+<null>
+}

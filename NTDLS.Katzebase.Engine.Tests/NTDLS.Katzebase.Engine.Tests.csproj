@@ -34,6 +34,7 @@
     <None Remove="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
     <None Remove="Scripts\TestCases\Features\Formatting.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
+    <None Remove="Scripts\TestCases\Features\SelectFromSingle.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
     <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
     <None Remove="Scripts\TestCases\WordList\CreateIndexes.kbs" />
@@ -77,6 +78,7 @@
     <EmbeddedResource Include="Data\WordList\Word.txt" />
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\SelectFromSingle.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Formatting.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\NestedConditions.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateJsonNotationSchema.kbs" />
