@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Scalar;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
@@ -68,6 +69,31 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
         }
 
         /// <summary>
+        /// Takes a function and recursively collapses all of the parameters, then recursively
+        ///     executes all dependency functions to collapse the function to a single value.
+        /// </summary>
+        private static string? CollapseScalarFunction(this IQueryFieldExpressionFunction function, Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
+            KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions)
+        {
+            var collapsedParameters = new List<string?>();
+
+            foreach (var parameter in function.Parameters)
+            {
+                collapsedParameters.Add(parameter.CollapseScalarExpression(transaction, query, fieldCollection, auxiliaryFields, functions));
+            }
+
+            if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))
+            {
+                throw new KbProcessingException($"Cannot perform scalar operation on aggregate result of: [{function.FunctionName}].");
+            }
+
+            //Execute function with the parameters from above ↑
+            var methodResult = ScalarFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, auxiliaryFields);
+
+            return methodResult;
+        }
+
+        /// <summary>
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
@@ -123,6 +149,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                     //Search the dependency functions for the one with the expression key, this is the
                     //  one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
+#if DEBUG
+                    if (AggregateFunctionCollection.TryGetFunction(subFunction.FunctionName, out var aggregateFunction))
+                    {
+                    }
+
+                    if (ScalarFunctionCollection.TryGetFunction(subFunction.FunctionName, out var scalarFunction))
+                    {
+                    }
+#endif
+
                     var functionResult = subFunction.CollapseScalarFunction(transaction, query, fieldCollection, auxiliaryFields, functions);
 
                     string mathVariable = $"v{variableNumber++}";

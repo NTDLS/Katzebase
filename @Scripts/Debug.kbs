@@ -1,6 +1,6 @@
 SELECT
-	Round(Avg(sw.Id)) as Average
-	--Avg(sw.Id) as Average,
+	--Round(Avg(sw.Id)) as Average
+	Avg(Round(sw.Id)) as Average
 	--Count(0) as CountOf
 FROM
 	TestData:WordList:Word as sw

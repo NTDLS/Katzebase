@@ -631,7 +631,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
                         //All aggregation parameters are collapsed here at query processing time.
-                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalarExpressionFunctionParameter(transaction,
+                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalarExpression(transaction,
                             query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
 
                         //If the aggregation function parameters do not yey exist for this function then create them.
@@ -645,7 +645,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             //We only do this when we CREATE the group parameters because like the GroupRow, there is only one of these per group, per 
                             foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                             {
-                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalarExpressionFunctionParameter(
+                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalarExpression(
                                     transaction, query, query.SelectFields, flattenedSchemaElements, new());
 
                                 groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
@@ -681,8 +681,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     //Execute aggregate functions for SELECT fields:
                     foreach (var selectAggregateFunctionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
                     {
-                        var experiment = selectAggregateFunctionField.Expression.CollapseScalarQueryField(transaction,
-                            query, query.SelectFields, new KbInsensitiveDictionary<string?>());
+#if DEBUG
+                        //var experiment = selectAggregateFunctionField.Expression.CollapseScalarQueryField(transaction,
+                        //    query, query.SelectFields, new KbInsensitiveDictionary<string?>());
+
+                        /* This is how we collapse scalars.
+                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction,
+                            query, givenConditions.FieldCollection, leftDocumentContent)?.ToLowerInvariant();
+                        */
+#endif
+
+                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(groupRow.Value.GroupAggregateFunctionParameters);
 
                         //Insert the aggregation result into the proper position in the values list.
                         materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
