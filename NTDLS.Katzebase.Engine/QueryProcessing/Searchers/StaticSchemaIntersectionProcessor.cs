@@ -625,6 +625,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     #region Collect and collapse expressions that are to be used for aggregation function execution.
 
+                    #region Select Fields.
+
                     foreach (var aggregationFunction in query.SelectFields.AggregationFunctions)
                     {
                         //The first parameter for an aggregation function is the "values array", get it so we can add values to it.
@@ -635,7 +637,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             query.EnsureNotNull(), query.SelectFields, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
 
                         //If the aggregation function parameters do not yey exist for this function then create them.
-                        if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
+                        if (groupRow.SelectAggregateFunctionParameters.TryGetValue(
                             aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                         {
                             groupAggregateFunctionParameter = new();
@@ -652,7 +654,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
 
                             //Add this parameter collection to the lookup so we can add additional values to it with subsequent rows.
-                            groupRow.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
+                            groupRow.SelectAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
                         }
 
                         //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
@@ -667,6 +669,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
 
+                    #endregion
+
+                    #region Order By.
+
                     foreach (var aggregationFunction in query.OrderBy.AggregationFunctions)
                     {
                         //The first parameter for an aggregation function is the "values array", get it so we can add values to it.
@@ -677,7 +683,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             query.EnsureNotNull(), query.OrderBy, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
 
                         //If the aggregation function parameters do not yey exist for this function then create them.
-                        if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
+                        if (groupRow.SortAggregateFunctionParameters.TryGetValue(
                             aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                         {
                             groupAggregateFunctionParameter = new();
@@ -694,7 +700,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
 
                             //Add this parameter collection to the lookup so we can add additional values to it with subsequent rows.
-                            groupRow.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
+                            groupRow.SortAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
                         }
 
                         //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
@@ -710,6 +716,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
 
                     #endregion
+
+                    #endregion
                 }
 
                 //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
@@ -723,7 +731,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     //Execute aggregate functions for SELECT fields:
                     foreach (var selectAggregateFunctionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
                     {
-                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
+                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.SelectAggregateFunctionParameters);
                         //Insert the aggregation result into the proper position in the values list.
                         materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -731,7 +739,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     //Execute aggregate functions for ORDER BY fields:
                     foreach (var orderByAggregateFunctionField in query.OrderBy.FieldsWithAggregateFunctionCalls)
                     {
-                        var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
+                        var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.SortAggregateFunctionParameters);
 
                         //Save the aggregation result in the ORDER BY collection. 
                         materializedRow.OrderByValues[orderByAggregateFunctionField.Alias] = aggregateExpressionResult;

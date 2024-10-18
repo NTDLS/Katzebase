@@ -14,8 +14,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         public KbInsensitiveDictionary<string?> OrderByValues { get; set; } = new();
 
         /// <summary>
-        /// Parameter values which are required to compute the aggregate functions for the group.
+        /// Parameter values which are required to compute the aggregate functions for the group select fields.
         /// </summary>
-        public KbInsensitiveDictionary<GroupAggregateFunctionParameter> GroupAggregateFunctionParameters { get; set; } = new();
+        public KbInsensitiveDictionary<GroupAggregateFunctionParameter> SelectAggregateFunctionParameters { get; set; } = new();
+
+        /// <summary>
+        /// Parameter values which are required to compute the aggregate functions for the group order by.
+        /// </summary>
+        public KbInsensitiveDictionary<GroupAggregateFunctionParameter> SortAggregateFunctionParameters { get; set; } = new();
     }
 }
