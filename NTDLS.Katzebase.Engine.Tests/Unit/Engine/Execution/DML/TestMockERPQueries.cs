@@ -1,6 +1,6 @@
 using NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations;
 
-namespace NTDLS.Katzebase.Engine.Tests.Tests
+namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
 {
     public class TestMockERPQueries : IClassFixture<EngineCoreFixture>
     {

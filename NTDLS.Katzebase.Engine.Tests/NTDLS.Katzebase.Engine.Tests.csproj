@@ -144,4 +144,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Tests\" />
+    <Folder Include="Unit\Engine\Execution\DDL\" />
+    <Folder Include="Unit\Engine\IO\" />
+    <Folder Include="Unit\Engine\Parser\" />
+  </ItemGroup>
+
 </Project>

@@ -341,7 +341,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var heldPermissions = GetCurrentAccountSchemaPermission(transaction, schemaName);
             if (!heldPermissions.Any(o => o.Value.Permission == requiredPermission && o.Value.Rule == SecurityPolicyRule.Grant))
             {
-                throw new KbPermissionNotHeld($"Permission not held: [{requiredPermission}] on [{schemaName}]");
+                throw new KbPermissionNotHeld($"Permission not held: [{transaction.Session.Username}] for [{requiredPermission}] on [{schemaName}].");
             }
         }
 

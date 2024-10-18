@@ -142,7 +142,7 @@ let _core =
         , Func<string, fstring>(fun s -> fstring(s))
         , Func<fstring, fstring, int> (fun s1 s2 -> String.Compare(s1.Value, s2.Value))
         )
-let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
+let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "admin", "")
 open NTDLS.Katzebase.Engine.Sessions
 let accounts = _core.Query.ExecuteQuery<Account<fstring>>(preLogin, $"SELECT Username, PasswordHash FROM Master:Account")
 printfn "%A" (accounts |> Seq.toArray)
@@ -169,8 +169,8 @@ type QueryFieldConstantString with
 let testSchemaDDL = "testSchDDL"
 let testSchemaDML = "testSchDML"
 
-_core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDDL}")
-_core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDDL}")
+_core.Query.SystemExecuteAndCommitNonQuery($"DROP SCHEMA {testSchemaDDL}")
+_core.Query.SystemExecuteAndCommitNonQuery($"CREATE SCHEMA {testSchemaDDL}")
 
-_core.Query.SystemExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchemaDML}")
-_core.Query.SystemExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchemaDML}")
+_core.Query.SystemExecuteAndCommitNonQuery($"DROP SCHEMA {testSchemaDML}")
+_core.Query.SystemExecuteAndCommitNonQuery($"CREATE SCHEMA {testSchemaDML}")

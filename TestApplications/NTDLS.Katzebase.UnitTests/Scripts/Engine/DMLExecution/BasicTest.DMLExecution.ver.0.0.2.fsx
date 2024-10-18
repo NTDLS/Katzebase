@@ -15,7 +15,7 @@ open System.Collections.Generic
 
 module DMLExecutionBasicTests =
     open NTDLS.Katzebase.Api.Types
-    open NTDLS.Katzebase.Engine.QueryProcessing.Functions
+    open NTDLS.Katzebase.Engine.QueryProcessing.Expressions
     open NTDLS.Katzebase.Parsers.Query.Fields    
     open NTDLS.Katzebase.Parsers.Query
 
@@ -36,7 +36,7 @@ module DMLExecutionBasicTests =
     let plainInsert = $"""INSERT INTO {testSchemaDML} (COL1, COL2) VALUES (1,2), ("A", "B")"""
 
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
-        let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
+        let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "admin", "")
         let userParameters = new KbInsensitiveDictionary<KbVariable>()
         let queries = StaticParserBatch.Parse(plainInsert, userParameters)
         let query = queries.Item 0
@@ -103,7 +103,7 @@ module DMLExecutionBasicTests =
 
         
         let rString = 
-            _core.Query.SystemExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchemaDML} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQueryAndCommit<TwoColumnString>($"SELECT * FROM {testSchemaDML} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 2 rString.Length
@@ -111,14 +111,14 @@ module DMLExecutionBasicTests =
         equals "B" rString[1].COL2
 
         let rInt = 
-            _core.Query.SystemExecuteQuery<TwoColumnInt>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQueryAndCommit<TwoColumnInt>($"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 1 rInt.Length
         equals 1 rInt[0].COL1
 
         let rDouble = 
-            _core.Query.SystemExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.SystemExecuteQueryAndCommit<TwoColumnDouble>($"SELECT * FROM {testSchemaDML} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 1 rDouble.Length
@@ -126,7 +126,7 @@ module DMLExecutionBasicTests =
 
         try
             let rDouble = 
-                _core.Query.SystemExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchemaDML}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                _core.Query.SystemExecuteQueryAndCommit<TwoColumnDouble>($"SELECT * FROM {testSchemaDML}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
                 |> Seq.toArray
 
             ()

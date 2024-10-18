@@ -17,7 +17,6 @@ open Tests
 open Xunit
 open Xunit.Abstractions
 open System
-open System.Collections.Generic
 
 module DDLExecutionBasicTests =
     open NTDLS.Katzebase.Parsers.Query
@@ -32,11 +31,8 @@ module DDLExecutionBasicTests =
             and set(v) = c <- v
 
     let ``Execute "CREATE SCHEMA testSch"`` (outputOpt:ITestOutputHelper option) =
-        
-        let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-        
-        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 123, value: '456'\r\n)") |> ignore
-        _core.Query.SystemExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid: 321, value: '654'\r\n)") |> ignore
+        _core.Query.SystemExecuteAndCommitNonQuery($"insert into {testSchemaDDL} (\r\nid: 123, value: '456'\r\n)") |> ignore
+        _core.Query.SystemExecuteAndCommitNonQuery($"insert into {testSchemaDDL} (\r\nid: 321, value: '654'\r\n)") |> ignore
         _core.Transactions.Commit(preLogin)
         //let cnt = _core.Query.SystemExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count
@@ -56,14 +52,14 @@ module DDLExecutionBasicTests =
                 equals $"{expectedCount}" queryDocList[0].Values[0].me
 
                 let sc =
-                    _core.Query.SystemExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                    _core.Query.SystemExecuteQueryAndCommit<SingleCount>(sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
                     |> Seq.toArray
                     |> Array.item 0
 
                 equals expectedCount sc.Count
             with
             | exn ->
-                testPrint outputOpt "[By design] %s" exn.InnerException.InnerException.Message
+                testPrint outputOpt "[By design] %s" exn.Message
                 equals "Value should not be null. (Parameter 'textValue')" exn.InnerException.InnerException.Message
 
         testPrint outputOpt "count scalar"
