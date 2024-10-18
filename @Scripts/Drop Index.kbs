@@ -1,4 +1,0 @@
-SET TraceWaitTimes ON;
-
-DROP INDEX IX_Address_City_PostalCode
-ON AdventureWorks2012:Person:Address

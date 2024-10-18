@@ -1,7 +1,0 @@
-SET TraceWaitTimes ON;
-
-CREATE uniquekey IX_SalesPerson_BusinessEntityID
-(
-	BusinessEntityID
-)
-ON AdventureWorks2012:Sales:SalesPerson
