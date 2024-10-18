@@ -16,7 +16,10 @@ namespace NTDLS.Katzebase.Engine.Tests
         {
             try
             {
-                Directory.Delete(Constants.ROOT_PATH, true);
+                if (Directory.Exists(Constants.ROOT_PATH))
+                {
+                    Directory.Delete(Constants.ROOT_PATH, true);
+                }
 
                 _settings = LoadSettings();
 

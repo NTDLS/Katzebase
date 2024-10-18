@@ -1,7 +1,6 @@
-
 SELECT
-	sw.Text as SourceWord,
-	tw.Text as TargetWord,
+	ToProper(sw.Text) as SourceWord,
+	ToProper(tw.Text) as TargetWord,
 	Avg(sw.Id) as Average,
 	Count(0) as CountOf
 FROM
@@ -22,21 +21,22 @@ GROUP BY
 	tw.Text
 ORDER BY
 	Avg(sw.Id / 60) asc,
-	sw.Text desc
+	sw.Text desc,
+	tw.Text desc
 
 #Expected(EnforceRowOrder=false)
 {
 SourceWord	TargetWord	Average	CountOf
 cat	Felino	590440	4
-cat	féline	590440	2
-cat	Katze	590440	1
-cat	kissamainen	590440	3
+cat	Catlike	590440	1
 cat	Feline	590440	1
-cat	Kissapeto	590440	3
-cat	gato	590440	2
-cat	catlike	590440	1
+cat	Gato	590440	2
+cat	FÃ©line	590440	2
+cat	Katze	590440	1
 cat	katzenhaft	590440	1
-chow	chowder	593016	1
-chow	chaudrée	593016	1
-chow	chow	658594.5	2
+cat	Kissapeto	590440	3
+cat	kissamainen	590440	3
+chow	Chowder	593016	1
+chow	ChaudrÃ©e	593016	1
+chow	Chow	658594.5	2
 }

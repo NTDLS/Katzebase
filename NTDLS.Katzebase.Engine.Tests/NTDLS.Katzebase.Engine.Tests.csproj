@@ -36,8 +36,10 @@
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
     <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
+    <None Remove="Scripts\TestCases\WordList\CreateIndexes.kbs" />
     <None Remove="Scripts\TestCases\WordList\FieldWhereEqual.kbs" />
     <None Remove="Scripts\TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs" />
+    <None Remove="Scripts\TestCases\WordList\ScalarAggregateCombinations.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExist.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs" />
@@ -96,8 +98,10 @@
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\TotalQuantityOfItemsOrderedPerOrder.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\NumberOfOrdersPlacedByEachPerson.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\ConstantsAndSimpleExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\CreateIndexes.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\ScalarAggregateCombinations.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />

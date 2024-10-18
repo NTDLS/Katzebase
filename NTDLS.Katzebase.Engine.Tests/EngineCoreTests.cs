@@ -1,3 +1,4 @@
+using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations;
 
 namespace NTDLS.Katzebase.Engine.Tests
@@ -51,6 +52,10 @@ namespace NTDLS.Katzebase.Engine.Tests
         public void ImportIndexesAndComplexQueries()
         {
             DataImporter.ImportTabSeparatedFiles("Data.WordList", "TestData:WordList");
+
+            using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();
+            ephemeral.Transaction.ExecuteNonQuery(@"TestCases\WordList\CreateIndexes.kbs");
+            ephemeral.Commit();
 
             QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\AggregateWithoutGroupBy.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\FieldWhereEqual.kbs");
