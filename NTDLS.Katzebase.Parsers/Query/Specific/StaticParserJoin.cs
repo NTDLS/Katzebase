@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     tokenizer.PushSyntheticLimit(endOfJoinCaret);
                     var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
                     result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema,
-                        (joinTypeToken.Is("inner")  ? QuerySchemaUsageType.InnerJoin : QuerySchemaUsageType.OuterJoin),
+                        (joinTypeToken.Is("inner") ? QuerySchemaUsageType.InnerJoin : QuerySchemaUsageType.OuterJoin),
                         subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
                 catch

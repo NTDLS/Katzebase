@@ -1,9 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using System.Runtime.CompilerServices;
-using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Conditions
@@ -60,35 +58,33 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
             return new ConditionEntry(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
         }
 
-        public bool IsMatch(ITransaction transaction, string? collapsedLeft, string? collapsedRight)
+        public bool IsMatch(string? collapsedLeft, string? collapsedRight)
         {
-            return IsMatch(transaction, collapsedLeft, Qualifier, collapsedRight);
+            return IsMatch(collapsedLeft, Qualifier, collapsedRight);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreaterOrEqual(ITransaction transaction, double? left, double? right)
+        public static bool? IsMatchGreaterOrEqual(double? left, double? right)
         {
             if (left != null && right != null)
             {
                 return left >= right;
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesserOrEqual(ITransaction transaction, double? left, double? right)
+        public static bool? IsMatchLesserOrEqual(double? left, double? right)
         {
             if (left != null && right != null)
             {
                 return left <= right;
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreaterOrEqual(ITransaction transaction, string? left, string? right)
+        public static bool? IsMatchGreaterOrEqual(string? left, string? right)
         {
             if (left != null && right != null)
             {
@@ -99,12 +95,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
                 throw new KbProcessingException($"IsMatchGreaterOrEqual expected numeric value, found: [{left}>={right}].");
             }
 
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesserOrEqual(ITransaction transaction, string? left, string? right)
+        public static bool? IsMatchLesserOrEqual(string? left, string? right)
         {
             if (left != null && right != null)
             {
@@ -114,34 +109,31 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
                 }
                 throw new KbProcessingException($"IsMatchLesserOrEqual expected numeric value, found: [{left}<={right}].");
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreater(ITransaction transaction, double? left, double? right)
+        public static bool? IsMatchGreater(double? left, double? right)
         {
             if (left != null && right != null)
             {
                 return left > right;
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesser(ITransaction transaction, double? left, double? right)
+        public static bool? IsMatchLesser(double? left, double? right)
         {
             if (left != null && right != null)
             {
                 return left < right;
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreater(ITransaction transaction, string? left, string? right)
+        public static bool? IsMatchGreater(string? left, string? right)
         {
             if (left != null && right != null)
             {
@@ -151,12 +143,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
                 }
                 throw new KbProcessingException($"IsMatchGreater expected numeric value, found: [{left}>{right}].");
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesser(ITransaction transaction, string? left, string? right)
+        public static bool? IsMatchLesser(string? left, string? right)
         {
             if (left != null && right != null)
             {
@@ -166,38 +157,34 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
                 }
                 throw new KbProcessingException($"IsMatchLesser expected numeric value, found: [{left}<{right}].");
             }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLike(ITransaction transaction, string? input, string? pattern)
+        public static bool? IsMatchLike(string? input, string? pattern)
         {
             if (input == null || pattern == null)
             {
-                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
                 return null;
             }
             return input.IsLike(pattern);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(ITransaction transaction, double? value, double? rangeLow, double? rangeHigh)
+        public static bool? IsMatchBetween(double? value, double? rangeLow, double? rangeHigh)
         {
             if (value == null || rangeLow == null || rangeHigh == null)
             {
-                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             }
 
             return value >= rangeLow && value <= rangeHigh;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(ITransaction transaction, string? input, string? pattern)
+        public static bool? IsMatchBetween(string? input, string? pattern)
         {
             if (input == null || pattern == null)
             {
-                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
                 return null;
             }
 
@@ -212,58 +199,53 @@ namespace NTDLS.Katzebase.Parsers.Query.Conditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchEqual(ITransaction transaction, string? left, string? right)
+        public static bool? IsMatchEqual(string? left, string? right)
         {
-            if (left == null || right == null)
-            {
-                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
-            }
-
             return left == right;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsMatch(ITransaction transaction, string? leftString, LogicalQualifier logicalQualifier, string? rightString)
+        public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString)
         {
             if (logicalQualifier == LogicalQualifier.Equals)
             {
-                return IsMatchEqual(transaction, leftString, rightString) == true;
+                return IsMatchEqual(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.NotEquals)
             {
-                return IsMatchEqual(transaction, leftString, rightString) == false;
+                return IsMatchEqual(leftString, rightString) == false;
             }
             else if (logicalQualifier == LogicalQualifier.GreaterThan)
             {
-                return IsMatchGreater(transaction, leftString, rightString) == true;
+                return IsMatchGreater(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.LessThan)
             {
-                return IsMatchLesser(transaction, leftString, rightString) == true;
+                return IsMatchLesser(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.GreaterThanOrEqual)
             {
-                return IsMatchGreaterOrEqual(transaction, leftString, rightString) == true;
+                return IsMatchGreaterOrEqual(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.LessThanOrEqual)
             {
-                return IsMatchLesserOrEqual(transaction, leftString, rightString) == true;
+                return IsMatchLesserOrEqual(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.Like)
             {
-                return IsMatchLike(transaction, leftString, rightString) == true;
+                return IsMatchLike(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.NotLike)
             {
-                return IsMatchLike(transaction, leftString, rightString) == false;
+                return IsMatchLike(leftString, rightString) == false;
             }
             else if (logicalQualifier == LogicalQualifier.Between)
             {
-                return IsMatchBetween(transaction, leftString, rightString) == true;
+                return IsMatchBetween(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.NotBetween)
             {
-                return IsMatchBetween(transaction, leftString, rightString) == false;
+                return IsMatchBetween(leftString, rightString) == false;
             }
             else
             {

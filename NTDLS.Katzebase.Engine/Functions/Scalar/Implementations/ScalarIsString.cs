@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 return null;
             }
-            return (double.TryParse(value, out _) == false).ToString();
+            return (double.TryParse(value, out _) == false ? 1 : 0).ToString();
         }
     }
 }

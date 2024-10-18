@@ -1,8 +1,8 @@
 SELECT
-	p.PersonID, p.FirstName, p.LastName
+	p.PersonID, p.FirstName, p.LastName, o.OrderId
 FROM
-	TestData:MockERP:Person as p
-OUTER JOIN TestData:MockERP:SalesOrder as o
+	TestData:MockERP:Person as p --5 rows.
+outer JOIN TestData:MockERP:SalesOrder as o --6 rows.
 	ON o.PersonID = p.PersonID
 WHERE
 	IsNull(o.OrderID) = true

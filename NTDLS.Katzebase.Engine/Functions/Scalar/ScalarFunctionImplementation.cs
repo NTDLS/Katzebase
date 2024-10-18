@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar.Implementations;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
@@ -11,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
     /// </summary>
     internal class ScalarFunctionImplementation
     {
-        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowValues)
+        public static string? ExecuteFunction(string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowValues)
         {
             var function = ScalarFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
@@ -37,18 +36,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "ifnullnumeric" => ScalarIfNullNumeric.Execute(function),
                 "iif" => ScalarIIF.Execute(function),
                 "indexof" => ScalarIndexOf.Execute(function),
-                "isbetween" => ScalarIsBetween.Execute(transaction, function),
+                "isbetween" => ScalarIsBetween.Execute(function),
                 "isdouble" => ScalarIsDouble.Execute(function),
-                "isequal" => ScalarIsEqual.Execute(transaction, function),
-                "isgreater" => ScalarIsGreater.Execute(transaction, function),
-                "isgreaterorequal" => ScalarIsGreaterOrEqual.Execute(transaction, function),
+                "isequal" => ScalarIsEqual.Execute(function),
+                "isgreater" => ScalarIsGreater.Execute(function),
+                "isgreaterorequal" => ScalarIsGreaterOrEqual.Execute(function),
                 "isinteger" => ScalarIsInteger.Execute(function),
-                "isless" => ScalarIsLess.Execute(transaction, function),
-                "islessorequal" => ScalarIsLessOrEqual.Execute(transaction, function),
-                "islike" => ScalarIsLike.Execute(transaction, function),
-                "isnotbetween" => ScalarIsNotBetween.Execute(transaction, function),
-                "isnotequal" => ScalarIsNotEqual.Execute(transaction, function),
-                "isnotlike" => ScalarIsNotLike.Execute(transaction, function),
+                "isless" => ScalarIsLess.Execute(function),
+                "islessorequal" => ScalarIsLessOrEqual.Execute(function),
+                "islike" => ScalarIsLike.Execute(function),
+                "isnotbetween" => ScalarIsNotBetween.Execute(function),
+                "isnotequal" => ScalarIsNotEqual.Execute(function),
+                "isnotlike" => ScalarIsNotLike.Execute(function),
                 "isnull" => ScalarIsNull.Execute(function),
                 "isstring" => ScalarIsString.Execute(function),
                 "lastindexof" => ScalarLastIndexOf.Execute(function),
