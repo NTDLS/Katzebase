@@ -14,7 +14,11 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
             /// <summary>
             /// Schema is used to inner-join to another schema in the query and the condition values are located in another schema's rows.
             /// </summary>
-            InnerJoin
+            InnerJoin,
+            /// <summary>
+            /// Schema is used to inner-join to another schema in the query and the condition values are located in another schema's rows.
+            /// </summary>
+            OuterJoin
         }
 
         public string Name { get; set; }

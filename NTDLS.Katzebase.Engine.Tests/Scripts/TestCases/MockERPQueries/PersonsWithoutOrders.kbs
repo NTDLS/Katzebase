@@ -1,10 +1,14 @@
---Get All Persons Without Orders
---Not yet implemented.
 SELECT
-	p.PersonID, p.FirstName, p.LastName
+	p.PersonID, p.FirstName, p.LastName, o.OrderId
 FROM
 	TestData:MockERP:Person as p
 OUTER JOIN TestData:MockERP:SalesOrder as o
 	ON o.PersonID = p.PersonID
 WHERE
-	o.OrderID IS NULL
+	IsNull(o.OrderID) = true
+
+#Expected(EnforceRowOrder=false)
+{
+PersonID	FirstName	LastName	OrderId
+5	Emma	Davis	<null>
+}

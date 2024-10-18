@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
     {
         public static ConditionCollection Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" group ", " order ", " offset ", " inner "]);
+            var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" group ", " order ", " offset ", " inner ", " outer "]);
             string conditionText = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
             if (string.IsNullOrWhiteSpace(conditionText))
             {

@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Models;
-using NTDLS.Katzebase.Shared;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Sessions
 {
@@ -8,11 +8,6 @@ namespace NTDLS.Katzebase.Engine.Sessions
     /// </summary>
     internal class SessionState(ulong processId, Guid connectionId, string username, string clientName, List<KbRole> roles, bool isInternalSystemSession)
     {
-        public enum KbConnectionSetting
-        {
-            TraceWaitTimes
-        }
-
         /// <summary>
         /// List of roles the user was assigned at login.
         /// </summary>
@@ -24,9 +19,9 @@ namespace NTDLS.Katzebase.Engine.Sessions
         public Stack<string> QueryTextStack { get; private set; } = new();
 
         /// <summary>
-        /// Settings associated with the connection.
+        /// Settings associated with the session.
         /// </summary>
-        public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; private set; } = new();
+        public Dictionary<StateSetting, object> Settings { get; private set; } = new();
 
         /// <summary>
         /// The UTC date/time that the session was created.
@@ -63,46 +58,32 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// </summary>
         public bool IsInternalSystemSession { get; private set; } = isInternalSystemSession;
 
-        public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
+        public void UpsertConnectionSetting(StateSetting setting, object value)
         {
-            var result = Variables.FirstOrDefault(o => o.Name == name);
-            if (result != null)
-            {
-                result.Value = value;
-            }
-            else
-            {
-                result = new(name, value);
-                Variables.Add(result);
-            }
-            return result;
+            var result = Settings[setting] = value;
         }
 
-        /// <summary>
-        /// Shortcut to determine if a value is set to 1 (boolean true).
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public bool IsConnectionSettingSet(KbConnectionSetting name)
+        public bool IsConnectionSettingPresent(StateSetting setting)
         {
-            var result = Variables.FirstOrDefault(o => o.Name == name);
-            return result?.Value == 1;
+            return Settings.ContainsKey(setting);
         }
 
-        public bool IsConnectionSettingPresent(KbConnectionSetting name)
+        public T GetConnectionSetting<T>(StateSetting setting, T defaultValue)
         {
-            var result = Variables.FirstOrDefault(o => o.Name == name);
-            return result != null;
-        }
-
-        public double? GetConnectionSetting(KbConnectionSetting name)
-        {
-            var result = Variables.FirstOrDefault(o => o.Name == name);
-            if (result != null)
+            if (Settings.TryGetValue(setting, out var value))
             {
-                return result.Value;
+                return (T)value;
             }
-            return null;
+            return defaultValue;
+        }
+
+        public T? GetConnectionSetting<T>(StateSetting setting)
+        {
+            if (Settings.TryGetValue(setting, out var value))
+            {
+                return (T)value;
+            }
+            return default;
         }
 
         public void PushCurrentQuery(string statement)

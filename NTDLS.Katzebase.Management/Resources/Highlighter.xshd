@@ -96,6 +96,8 @@
       <Word>Terminate</Word>
       <Word>Terminate</Word>			
       <Word>TraceWaitTimes</Word>
+      <Word>WarnNullPropagation</Word>
+      <Word>WarnMissingFields</Word>
     </Keywords>
     
     <Keywords color="KbFunction">
@@ -196,6 +198,7 @@
       <Word>IncludePhysicalPages</Word>
       <Word>index</Word>
       <Word>inner</Word>
+      <Word>outer</Word>
       <Word>insert</Word>
       <Word>into</Word>
       <Word>join</Word>

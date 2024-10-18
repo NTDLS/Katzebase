@@ -23,14 +23,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
     /// </summary>
     internal static class StaticSchemaIntersectionProcessor
     {
-        private enum FieldCollapseType
-        {
-            ScalerSelect,
-            AggregateSelect,
-            ScalerOrderBy,
-            AggregateOrderBy
-        }
-
         /// <summary>
         /// Generates a set of rows and field names using a prepared query.
         /// </summary>
@@ -210,6 +202,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         //If we do not have any documents then indexing was not performed, then get the whole schema.
                         documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
 
+                        int schemaMatchCount = 0;
+
                         foreach (var documentPointer in documentPointers)
                         {
                             var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
@@ -218,6 +212,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                             if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, threadTemplateRowClone))
                             {
+                                schemaMatchCount++;
+
                                 var newRow = threadTemplateRowClone.Clone();
                                 newRow.MatchedSchemas.Add(schemaMap.Key);
 
@@ -227,7 +223,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     newRow.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
                                 }
 
-                                //Found a document that matched the where clause, add row to the results collection.
+                                //Found a document that matched the join clause, add row to the results collection.
                                 lock (schemaIntersectionRowCollection)
                                 {
                                     schemaIntersectionRowCollection.Add(newRow);
@@ -241,9 +237,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                     }
                                 }
                             }
-                            else
+                        }
+
+                        //If this is a left-outer join and we didn't find a match, then add a dummy row for this join.
+                        if (schemaMatchCount == 0 && schemaMap.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.OuterJoin)
+                        {
+                            var newRow = threadTemplateRowClone.Clone();
+                            newRow.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = new KbInsensitiveDictionary<string?>();
+                            newRow.MatchedSchemas.Add(schemaMap.Key);
+
+                            lock (schemaIntersectionRowCollection)
                             {
-                                //TODO: Implement left-outer join.
+                                schemaIntersectionRowCollection.Add(newRow);
                             }
                         }
 
@@ -278,7 +283,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var primarySchema = schemaMappings.First();
 
             var matchChildPool = core.ThreadPool.Intersection.CreateChildPool<SchemaIntersectionRow>(core.Settings.IntersectionChildThreadPoolQueueDepth);
-
 
             foreach (var resultingRow in resultingRowCollection)
             {
@@ -344,7 +348,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var collapsedRight = entry.Right.CollapseScalarQueryField(transaction,
                                 query, givenConditions.FieldCollection, rightDocumentContent)?.ToLowerInvariant();
 
-                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(transaction, collapsedLeft, collapsedRight);
+                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(collapsedLeft, collapsedRight);
                         }
                         else
                         {
@@ -390,7 +394,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
                             var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
 
-                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(transaction, collapsedLeft, collapsedRight);
+                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(collapsedLeft, collapsedRight);
                         }
                         else
                         {
@@ -460,7 +464,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), threadDocumentPointer);
                     }
 
-                    //Found a document that matched the where clause, add row to the results collection.
+                    //Found a document, add row to the results collection.
                     lock (schemaIntersectionRowCollection)
                     {
                         schemaIntersectionRowCollection.Add(schemaIntersectionRow);
@@ -665,7 +669,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                         else
                         {
-                            transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
+                            transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
                         }
                     }
 
@@ -711,7 +715,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                         else
                         {
-                            transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
+                            transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
                         }
                     }
 

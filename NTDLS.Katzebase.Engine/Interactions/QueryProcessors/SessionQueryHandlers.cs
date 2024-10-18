@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
-using static NTDLS.Katzebase.Engine.Sessions.SessionState;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 {
@@ -61,19 +61,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 foreach (var variable in query.VariableValues)
                 {
-                    if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
-                        || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
+                    if (Enum.TryParse(variable.Name, true, out StateSetting setting) == false
+                        || Enum.IsDefined(typeof(StateSetting), setting) == false)
                     {
-                        throw new KbGenericException($"Unknown system variable: [{variable.Name}].");
+                        throw new KbProcessingException($"Unknown session setting: [{variable.Name}].");
                     }
 
-                    switch (connectionSetting)
+                    switch (setting)
                     {
-                        case KbConnectionSetting.TraceWaitTimes:
-                            session.UpsertConnectionSetting(connectionSetting, Helpers.Converters.ConvertTo<bool>(variable.Value) ? 1 : 0);
+                        case StateSetting.TraceWaitTimes:
+                            session.UpsertConnectionSetting(setting, Helpers.Converters.ConvertTo<bool>(variable.Value));
+                            break;
+                        case StateSetting.WarnMissingFields:
+                            session.UpsertConnectionSetting(setting, Helpers.Converters.ConvertTo<bool>(variable.Value));
+                            break;
+                        case StateSetting.WarnNullPropagation:
+                            session.UpsertConnectionSetting(setting, Helpers.Converters.ConvertTo<bool>(variable.Value));
                             break;
                         default:
-                            throw new KbNotImplementedException();
+                            throw new KbNotImplementedException($"Unhandled session setting: [{variable.Name}].");
                     }
                 }
 

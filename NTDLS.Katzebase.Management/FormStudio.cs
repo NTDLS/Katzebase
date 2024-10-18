@@ -174,7 +174,7 @@ namespace NTDLS.Katzebase.Management
             try
             {
                 var tabFilePage = CreateNewTabBasedOnLastSelectedNode();
-                tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
+                tabFilePage.Editor.Text = "set TraceWaitTimes false\r\nset WarnMissingFields false\r\n\r\n";
                 tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
             }
             catch (Exception ex)
@@ -541,7 +541,7 @@ namespace NTDLS.Katzebase.Management
                     if (string.IsNullOrEmpty(_firstLoadFilename))
                     {
                         var tabFilePage = CreateNewTab(explorerConnection);
-                        tabFilePage.Editor.Text = "set TraceWaitTimes false\r\n";
+                        tabFilePage.Editor.Text = "set TraceWaitTimes false\r\nset WarnMissingFields false\r\n\r\n";
                         tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                         tabFilePage.IsSaved = true;
                     }

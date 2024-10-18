@@ -498,43 +498,43 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 LogicalQualifier.Equals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchEqual(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotEquals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchEqual(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry.IsMatchEqual(w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchGreater(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchGreater(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchGreaterOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchGreaterOrEqual(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLesser(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchLesser(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLesserOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchLesserOrEqual(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Like => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLike(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchLike(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotLike => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLike(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry.IsMatchLike(w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Between => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchBetween(w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry.IsMatchBetween(w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
                 _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: [{condition.Qualifier}]"),
             };

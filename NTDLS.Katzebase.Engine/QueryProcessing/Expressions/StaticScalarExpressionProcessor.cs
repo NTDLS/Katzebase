@@ -13,6 +13,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 {
@@ -93,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
             }
 
             //Execute function with the parameters from above ↑
-            var methodResult = ScalarFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, auxiliaryFields);
+            var methodResult = ScalarFunctionImplementation.ExecuteFunction(function.FunctionName, collapsedParameters, auxiliaryFields);
 
             return methodResult;
         }
@@ -140,6 +141,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
                             string mathVariable = $"v{variableNumber++}";
                             expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, null);
+
                             transaction.AddWarning(KbTransactionWarning.FieldNotFound, fieldIdentifier.Value);
                             return null;
                         }

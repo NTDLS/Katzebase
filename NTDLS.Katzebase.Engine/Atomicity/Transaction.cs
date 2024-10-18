@@ -237,6 +237,22 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <param name="message"></param>
         public void AddWarning(KbTransactionWarning warning, string message = "")
         {
+            switch (warning)
+            {
+                case KbTransactionWarning.FieldNotFound:
+                    if (!Session.GetConnectionSetting(StateSetting.WarnMissingFields, false))
+                    {
+                        return;
+                    }
+                    break;
+                case KbTransactionWarning.NullValuePropagation:
+                    if (!Session.GetConnectionSetting(StateSetting.WarnNullPropagation, false))
+                    {
+                        return;
+                    }
+                    break;
+            }
+
             _warnings.Use((warnings) =>
             {
                 if (warnings.ContainsKey(warning) == false)
@@ -484,7 +500,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 var session = core.Sessions.ByProcessId(processId);
 
-                enableInstrumentation = session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) == 1;
+                enableInstrumentation = session.GetConnectionSetting(StateSetting.TraceWaitTimes, false);
 
                 Directory.CreateDirectory(TransactionPath);
 
