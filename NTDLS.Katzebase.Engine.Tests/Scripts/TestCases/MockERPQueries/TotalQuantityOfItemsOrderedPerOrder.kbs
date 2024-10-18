@@ -1,4 +1,3 @@
---Get Total Quantity of Items Ordered per Order
 SELECT
 	o.OrderID, SUM(oi.Quantity) AS TotalItems
 FROM

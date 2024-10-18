@@ -1,4 +1,3 @@
---Get the Number of Orders Placed by Each Person
 SELECT
 	p.PersonID, p.FirstName, p.LastName, COUNT(o.OrderID) AS OrderCount
 FROM

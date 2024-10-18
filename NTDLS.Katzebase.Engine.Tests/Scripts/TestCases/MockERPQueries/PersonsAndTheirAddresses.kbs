@@ -1,4 +1,3 @@
---Get All Persons and Their Addresses (1-to-1 Relationship)
 SELECT
 	p.PersonID, p.FirstName, p.LastName, a.Street, a.City, a.State, a.ZipCode
 FROM

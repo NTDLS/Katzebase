@@ -1,4 +1,3 @@
---Get All Person with Orders Details (Many-to-1 Relationship)
 SELECT
 	o.OrderID, p.FirstName, p.LastName, o.OrderDate, o.TotalAmount
 FROM

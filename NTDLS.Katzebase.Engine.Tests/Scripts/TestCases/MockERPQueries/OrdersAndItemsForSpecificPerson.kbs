@@ -1,4 +1,3 @@
---Get Orders and Items for a Specific Person
 SELECT
 	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
 FROM

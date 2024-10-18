@@ -1,4 +1,3 @@
---Get All Orders and Their Items (1-to-Many Relationship)
 SELECT
 	o.OrderID, o.OrderDate, oi.OrderItemID, oi.ProductName, oi.Quantity, oi.Price
 FROM

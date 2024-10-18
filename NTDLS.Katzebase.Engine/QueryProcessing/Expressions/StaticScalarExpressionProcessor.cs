@@ -13,7 +13,6 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
-using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
 {
