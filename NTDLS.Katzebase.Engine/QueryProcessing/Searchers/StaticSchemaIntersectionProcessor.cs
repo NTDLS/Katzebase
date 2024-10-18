@@ -681,18 +681,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     //Execute aggregate functions for SELECT fields:
                     foreach (var selectAggregateFunctionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
                     {
-#if DEBUG
-                        //var experiment = selectAggregateFunctionField.Expression.CollapseScalarQueryField(transaction,
-                        //    query, query.SelectFields, new KbInsensitiveDictionary<string?>());
-
-                        /* This is how we collapse scalars.
-                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction,
-                            query, givenConditions.FieldCollection, leftDocumentContent)?.ToLowerInvariant();
-                        */
-#endif
-
-                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(groupRow.Value.GroupAggregateFunctionParameters);
-
+                        var aggregateExpressionResult = selectAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
                         //Insert the aggregation result into the proper position in the values list.
                         materializedRow.Values.InsertWithPadding(selectAggregateFunctionField.Alias, selectAggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -700,7 +689,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     //Execute aggregate functions for ORDER BY fields:
                     foreach (var orderByAggregateFunctionField in query.OrderBy.FieldsWithAggregateFunctionCalls)
                     {
-                        var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(groupRow.Value.GroupAggregateFunctionParameters);
+                        var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
                         //Save the aggregation result in the ORDER BY collection. 
                         materializedRow.OrderByValues[orderByAggregateFunctionField.Alias] = aggregateExpressionResult;

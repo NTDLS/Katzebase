@@ -1,7 +1,8 @@
 SELECT
-	--Round(Avg(sw.Id)) as Average
-	Avg(Round(sw.Id)) as Average
-	--Count(0) as CountOf
+	FormatNumeric(Avg(sw.Id), 'n2') as Average,
+	FormatNumeric(Round(Avg(sw.Id)), 'n2') as Average,
+	Avg(Round(sw.Id)) as Average,
+	Count(0) as CountOf
 FROM
 	TestData:WordList:Word as sw
 WHERE
