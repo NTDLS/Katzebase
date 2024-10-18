@@ -1,4 +1,8 @@
 SELECT
-	*
+	p.PersonID, p.FirstName, p.LastName
 FROM
-	TestData:WordList:Word
+	TestData:MockERP:Person as p
+OUTER JOIN TestData:MockERP:SalesOrder as o
+	ON o.PersonID = p.PersonID
+WHERE
+	IsNull(o.OrderID) = true

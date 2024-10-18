@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             query.UpdateFieldValues = new QueryFieldCollection(queryBatch);
 
             /*
-            var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" where ", " inner ", " from "]);
+            var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" where ", " inner "," outer ", " from "]);
             string conditionText = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
             if (string.IsNullOrWhiteSpace(conditionText))
             {
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
 
                 tokenizer.EatIfNext('=');
 
-                bool isTextRemaining = tokenizer.EatGetSingleFieldExpression(["where", "inner", "from"], out var fieldExpression);
+                bool isTextRemaining = tokenizer.EatGetSingleFieldExpression(["where", "inner", "outer", "from"], out var fieldExpression);
 
                 var queryField = StaticParserField.Parse(tokenizer, fieldExpression, query.UpdateFieldValues);
 
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
                 }
 
                 //Parse joins.
-                while (tokenizer.TryIsNext("inner"))
+                while (tokenizer.TryIsNext(["inner", "outer"]))
                 {
                     var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                     query.Schemas.AddRange(joinedSchemas);

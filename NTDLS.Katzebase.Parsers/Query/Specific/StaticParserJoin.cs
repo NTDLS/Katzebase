@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
         {
             var result = new List<QuerySchema>();
 
-            while (tokenizer.TryEatIfNext("inner"))
+            while (tokenizer.TryEatIfNext(["inner", "outer"], out var joinTypeToken))
             {
                 if (tokenizer.TryEatIfNext("join") == false)
                 {
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.Variables.Resolve(onToken)}].");
                 }
 
-                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " offset ", " group "]);
+                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " outer ", " offset ", " group "]);
                 string joinConditionsText = tokenizer.SubStringAbsolute(endOfJoinCaret).Trim();
                 if (string.IsNullOrEmpty(joinConditionsText))
                 {
@@ -53,7 +53,9 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 {
                     tokenizer.PushSyntheticLimit(endOfJoinCaret);
                     var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
-                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema, QuerySchemaUsageType.InnerJoin, subSchemaAlias.ToLowerInvariant(), joinConditions));
+                    result.Add(new QuerySchema(schemaScriptLine, subSchemaSchema,
+                        (joinTypeToken.Is("inner")  ? QuerySchemaUsageType.InnerJoin : QuerySchemaUsageType.OuterJoin),
+                        subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
                 catch
                 {

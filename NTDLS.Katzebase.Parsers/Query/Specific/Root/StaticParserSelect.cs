@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             }
 
             //Parse joins.
-            while (tokenizer.TryIsNext("inner"))
+            while (tokenizer.TryIsNext(["inner", "outer"]))
             {
                 var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                 query.Schemas.AddRange(joinedSchemas);
