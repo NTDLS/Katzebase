@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             _engine = fixture.Engine;
         }
 
-        [Fact(DisplayName = "Insert JsonNotation")]
+        [Fact(DisplayName = "Insert using Json notation")]
         public void InsertJsonNotation()
         {
             using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();
@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\JsonNotationWithExpressions.kbs");
         }
 
-        [Fact(DisplayName = "Insert ValuesList")]
+        [Fact(DisplayName = "Insert using values list")]
         public void InsertValuesList()
         {
             using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();

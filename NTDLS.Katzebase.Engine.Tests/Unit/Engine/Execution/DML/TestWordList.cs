@@ -11,82 +11,78 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             _engine = fixture.Engine;
         }
 
-        [Fact(DisplayName = "AggregateWithoutGroupBy")]
+        [Fact(DisplayName = "Select Aggregate without GroupBY")]
         public void TestAggregateWithoutGroupBy()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\AggregateWithoutGroupBy.kbs");
 
-        [Fact(DisplayName = "FieldWhereEqual")]
+        [Fact(DisplayName = "Select Where field equals")]
         public void TestFieldWhereEqual() => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\FieldWhereEqual.kbs");
 
-        [Fact(DisplayName = "GroupAndORDERColumnWhichDoesNotExist")]
+        [Fact(DisplayName = "Select GroupBy and OrderBy column which does not exist")]
         public void TestGroupAndORDERColumnWhichDoesNotExist()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs");
 
-        [Fact(DisplayName = "SelectColumnWhichDoesNotExist")]
+        [Fact(DisplayName = "Select Where column does not exist")]
         public void TestSelectColumnWhichDoesNotExist()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectColumnWhichDoesNotExist.kbs");
 
-        [Fact(DisplayName = "SelectColumnWhichDoesNotExistOrExists")]
+        [Fact(DisplayName = "Select Where column does not exist or which does exist")]
         public void TestSelectColumnWhichDoesNotExistOrExists()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs");
 
-        [Fact(DisplayName = "SelectGroupByColumnWhichDoesNotExist")]
-        public void TestSelectGroupByColumnWhichDoesNotExist()
-            => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs");
-
-        [Fact(DisplayName = "SelectGroupByColumnWhichDoesNotExistAgg")]
+        [Fact(DisplayName = "Select GroupBy column does not exist")]
         public void TestSelectGroupByColumnWhichDoesNotExistAgg()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs");
 
-        [Fact(DisplayName = "SelectSpecificsGroupByAggregateOrderBy")]
+        [Fact(DisplayName = "Select from Joins with GroupBy and OrderBy")]
         public void TestSelectSpecificsGroupByAggregateOrderBy()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs");
 
-        [Fact(DisplayName = "SelectStar")]
+        [Fact(DisplayName = "Select *")]
         public void TestSelectStar()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStar.kbs");
 
-        [Fact(DisplayName = "SelectStarOrderByColumnWhichDoesNotExist")]
+        [Fact(DisplayName = "Select * where column does not exist")]
         public void TestSelectStarOrderByColumnWhichDoesNotExist()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs");
 
-        [Fact(DisplayName = "SelectStarWhereEqual")]
+        [Fact(DisplayName = "Select * Where equal")]
         public void TestSelectStarWhereEqual()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectStarWhereEqual.kbs");
 
-        [Fact(DisplayName = "SelectTopWithOrderBy")]
+        [Fact(DisplayName = "Select Top with OrderBy")]
         public void TestSelectTopWithOrderBy()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectTopWithOrderBy.kbs");
 
-        [Fact(DisplayName = "SelectTopWithOrderByAndOffset")]
+        [Fact(DisplayName = "Select Top with Order By and Offset")]
         public void TestSelectTopWithOrderByAndOffset()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectTopWithOrderByAndOffset.kbs");
 
-        [Fact(DisplayName = "SelectWhereColumnWhichDoesNotExist")]
+        [Fact(DisplayName = "Select where column does not exist")]
         public void TestSelectWhereColumnWhichDoesNotExist()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectWhereColumnWhichDoesNotExist.kbs");
 
-        [Fact(DisplayName = "WhereEqualSchemaPrefix")]
+        [Fact(DisplayName = "Select * where schema.field")]
         public void TestWhereEqualSchemaPrefix()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereEqualSchemaPrefix.kbs");
 
-        [Fact(DisplayName = "WhereEqualSchemaPrefixStar")]
+        [Fact(DisplayName = "Select schema.* where schema.field")]
         public void TestWhereEqualSchemaPrefixStar()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereEqualSchemaPrefixStar.kbs");
 
-        [Fact(DisplayName = "WhereLikeNOpen")]
+        [Fact(DisplayName = "Where Like ...%")]
         public void TestWhereLikeNOpen()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereLikeNOpen.kbs");
 
-        [Fact(DisplayName = "WhereLikeOpenN")]
+        [Fact(DisplayName = "Where Not Like %...")]
         public void TestWhereLikeOpenN()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereLikeOpenN.kbs");
 
-        [Fact(DisplayName = "WhereNotLikeNOpen")]
+        [Fact(DisplayName = "Where Not Like ...%")]
         public void TestWhereNotLikeNOpen()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereNotLikeNOpen.kbs");
 
-        [Fact(DisplayName = "WhereNotLikeOpenN")]
+        [Fact(DisplayName = "Where Not Like %...")]
         public void TestWhereNotLikeOpenN()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\WhereNotLikeOpenN.kbs");
     }
