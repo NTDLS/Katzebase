@@ -667,6 +667,48 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
 
+                    foreach (var aggregationFunction in query.OrderBy.AggregationFunctions)
+                    {
+                        //The first parameter for an aggregation function is the "values array", get it so we can add values to it.
+                        var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
+
+                        //All aggregation parameters are collapsed here at query processing time.
+                        var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalarExpression(transaction,
+                            query.EnsureNotNull(), query.OrderBy, flattenedSchemaElements, aggregationFunction.FunctionDependencies);
+
+                        //If the aggregation function parameters do not yey exist for this function then create them.
+                        if (groupRow.GroupAggregateFunctionParameters.TryGetValue(
+                            aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
+                        {
+                            groupAggregateFunctionParameter = new();
+
+                            //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
+                            //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
+                            //We only do this when we CREATE the group parameters because like the GroupRow, there is only one of these per group, per 
+                            foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
+                            {
+                                var collapsedSupplementalParamValue = supplementalParam.CollapseScalarExpression(
+                                    transaction, query, query.OrderBy, flattenedSchemaElements, new());
+
+                                groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
+                            }
+
+                            //Add this parameter collection to the lookup so we can add additional values to it with subsequent rows.
+                            groupRow.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
+                        }
+
+                        //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
+                        if (collapsedAggregationParameterValue != null)
+                        {
+                            //Add the collapsed expression to the aggregation values array.
+                            groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
+                        }
+                        else
+                        {
+                            transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
+                        }
+                    }
+
                     #endregion
                 }
 

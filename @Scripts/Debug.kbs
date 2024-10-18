@@ -1,25 +1,10 @@
+--This should return 1 row, not 6.
 SELECT
-	ToProper(sw.Text) as SourceWord,
-	ToProper(tw.Text) as TargetWord,
-	Avg(sw.Id) as Average,
-	Count(0) as CountOf
+	--ToProper(sw.Text),
+	Avg(sw.Id)
 FROM
 	TestData:WordList:Word as sw
-INNER JOIN TestData:WordList:Language as sl
-	ON sl.Id = sw.LanguageId
-INNER JOIN TestData:WordList:Synonym as s
-	ON s.SourceWordId = sw.Id
-INNER JOIN TestData:WordList:Word as tw
-	ON tw.Id = s.TargetWordId
-INNER JOIN TestData:WordList:Language as tl
-	ON tl.Id = tw.LanguageId
 WHERE
-	sw.Text = 'Cat'
-	OR sw.Text = 'Chow'
+	sw.Text = 'bazar'
 GROUP BY
-	sw.Text,
-	tw.Text
-ORDER BY
-	Avg(sw.Id / 60) asc,
-	sw.Text desc,
-	tw.Text desc
+	ToProper(sw.Text)
