@@ -655,7 +655,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 return;
             }
 
-            var results = resultCollection.Collection.Where(o => o.Rows.Count != 0).ToList();
+            var results = resultCollection.Collection.Where(o => o.Rows.Count > 0 || o.Fields.Count > 0).ToList();
 
             var outputGrids = AddDataGridViews(results.Count);
 
@@ -666,11 +666,6 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 try
                 {
-                    if (result == null || result.Rows.Count == 0)
-                    {
-                        continue;
-                    }
-
                     try
                     {
                         outputGrid.SuspendLayout();
