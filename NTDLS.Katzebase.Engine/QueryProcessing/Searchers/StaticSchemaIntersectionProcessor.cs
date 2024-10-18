@@ -589,7 +589,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     foreach (var groupField in query.GroupBy)
                     {
                         var collapsedGroupField = groupField.Expression.CollapseScalarQueryField(
-                            transaction, query, query.SelectFields, flattenedSchemaElements);
+                            transaction, query, query.GroupBy, flattenedSchemaElements);
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
                     }

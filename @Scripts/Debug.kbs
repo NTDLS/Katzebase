@@ -1,6 +1,6 @@
 --This should return 1 row, not 6.
 SELECT
-	--ToProper(sw.Text),
+	ToProper(sw.Text),
 	Avg(sw.Id)
 FROM
 	TestData:WordList:Word as sw
