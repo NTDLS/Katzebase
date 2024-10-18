@@ -664,12 +664,20 @@ namespace NTDLS.Katzebase.Management.Controls
                 var result = results[i];
                 var outputGrid = outputGrids[i];
 
+                var rowNumberColumn = new DataGridViewTextBoxColumn
+                {
+                    Name = UIConstants.ROW_ID_COLUMN_NAME,
+                    HeaderText = "#",
+                    ValueType = typeof(int),
+                    SortMode = DataGridViewColumnSortMode.Automatic
+                };
+                outputGrid.Columns.Add(rowNumberColumn);
+
                 try
                 {
                     try
                     {
                         outputGrid.SuspendLayout();
-
                         foreach (var field in result.Fields)
                         {
                             outputGrid.Columns.Add(field.Name, field.Name);
@@ -678,7 +686,10 @@ namespace NTDLS.Katzebase.Management.Controls
                         int maxRowsToLoad = Program.Settings.QueryMaximumRows;
                         foreach (var row in result.Rows)
                         {
-                            var rowValues = new List<string>();
+                            var rowValues = new List<string>
+                            {
+                                $"{(outputGrid.Rows.Count + 1):n0}"
+                            };
 
                             for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
                             {
@@ -694,17 +705,63 @@ namespace NTDLS.Katzebase.Management.Controls
                             }
                         }
 
-                        outputGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                     }
                     finally
                     {
                         outputGrid.ResumeLayout();
+                        outputGrid.Paint += PaintResizeColumns;
+                        outputGrid.SortCompare += OutputGrid_SortCompare;
                     }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error: {ex.Message}", FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void PaintResizeColumns(object? sender, PaintEventArgs e)
+        {
+            if (sender is not DataGridView outputGrid)
+            {
+                return;
+            }
+
+            outputGrid.Paint -= PaintResizeColumns;
+
+            foreach (DataGridViewTextBoxColumn column in outputGrid.Columns)
+            {
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            }
+
+            foreach (DataGridViewTextBoxColumn column in outputGrid.Columns)
+            {
+                int width = column.Width;
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                column.Width = width;
+            }
+        }
+
+        private void OutputGrid_SortCompare(object? sender, DataGridViewSortCompareEventArgs e)
+        {
+            // Check if the column being sorted is the one that should be treated as an integer.
+            if (e.Column.Name == UIConstants.ROW_ID_COLUMN_NAME)
+            {
+                // Try to parse the cells as integers.
+                if (int.TryParse(e.CellValue1.ToString(), out int int1) &&
+                    int.TryParse(e.CellValue2.ToString(), out int int2))
+                {
+                    // Compare the integer values.
+                    e.SortResult = int1.CompareTo(int2);
+                }
+                else
+                {
+                    // If parsing fails, fall back to string comparison.
+                    e.SortResult = string.Compare(e.CellValue1.ToString(), e.CellValue2.ToString());
+                }
+
+                // Indicate that the comparison has been handled.
+                e.Handled = true;
             }
         }
 

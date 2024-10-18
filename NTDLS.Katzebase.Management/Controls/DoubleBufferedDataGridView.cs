@@ -17,6 +17,7 @@ namespace NTDLS.Katzebase.Management.Controls
             AllowUserToAddRows = false;
             AllowUserToDeleteRows = false;
             AllowUserToResizeRows = false;
+            AllowUserToResizeColumns = true;
             ReadOnly = true;
 
             UpdateStyles();
@@ -94,6 +95,10 @@ namespace NTDLS.Katzebase.Management.Controls
                     var sb = new StringBuilder();
                     foreach (DataGridViewTextBoxCell cell in _selectedRow.Cells)
                     {
+                        if (Columns[cell.ColumnIndex].Name == UIConstants.ROW_ID_COLUMN_NAME)
+                        {
+                            continue;
+                        }
                         sb.Append(cell.Value?.ToString() ?? string.Empty).Append('\t');
                     }
                     Clipboard.SetText(sb.ToString().TrimEnd('\t'));
@@ -118,7 +123,11 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        if (cell.ColumnIndex > 0)
+                        if (Columns[cell.ColumnIndex].Name == UIConstants.ROW_ID_COLUMN_NAME)
+                        {
+                            continue;
+                        }
+                        if (cell.ColumnIndex > 1)
                         {
                             sb.Append('\t');
                         }
@@ -147,7 +156,11 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 foreach (DataGridViewColumn column in Columns)
                 {
-                    if (column.Index > 0)
+                    if (column.Name == UIConstants.ROW_ID_COLUMN_NAME)
+                    {
+                        continue;
+                    }
+                    if (column.Index > 1)
                     {
                         sb.Append('\t');
                     }
@@ -159,7 +172,11 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
-                        if (cell.ColumnIndex > 0)
+                        if (Columns[cell.ColumnIndex].Name == UIConstants.ROW_ID_COLUMN_NAME)
+                        {
+                            continue;
+                        }
+                        if (cell.ColumnIndex > 1)
                         {
                             sb.Append('\t');
                         }
@@ -204,6 +221,10 @@ namespace NTDLS.Katzebase.Management.Controls
                 // Write column headers
                 foreach (DataGridViewColumn column in Columns)
                 {
+                    if (column.Name == UIConstants.ROW_ID_COLUMN_NAME)
+                    {
+                        continue;
+                    }
                     sb.Append(EscapeCsvValue(column.Name)).Append(",");
                 }
                 sb.Length--;  // Remove the last extra comma
@@ -214,6 +235,11 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     foreach (DataGridViewTextBoxCell cell in row.Cells)
                     {
+                        if (Columns[cell.ColumnIndex].Name == UIConstants.ROW_ID_COLUMN_NAME)
+                        {
+                            continue;
+                        }
+
                         sb.Append(EscapeCsvValue(cell.Value?.ToString())).Append(",");
                     }
                     sb.Length--;  // Remove the last extra comma

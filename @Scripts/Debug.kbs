@@ -1,7 +1,4 @@
 SELECT
-	Name
+	*
 FROM
-	TestData:WordList:Language
-WHERE
-	ColumnWhichDoesNotExist = 'French'
-	
+	TestData:WordList:Word
