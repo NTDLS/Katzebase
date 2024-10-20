@@ -1,4 +1,4 @@
- SourceWordId	TargetWordId
+SourceWordId	TargetWordId
 834092	587795
 815001	589172
 674347	590440

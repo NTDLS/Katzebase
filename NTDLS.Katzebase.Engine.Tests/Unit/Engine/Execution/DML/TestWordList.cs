@@ -10,8 +10,13 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
         public void TestAggregateWithoutGroupBy()
             => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\AggregateWithoutGroupBy.kbs");
 
+        [Fact(DisplayName = "Select distinct text")]
+        public void TestSelectDistinct()
+            => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\SelectDistinct.kbs");
+
         [Fact(DisplayName = "Select Where field equals")]
-        public void TestFieldWhereEqual() => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\FieldWhereEqual.kbs");
+        public void TestFieldWhereEqual()
+            => QueryExpectation.ValidateScriptResults(_engine, @"TestCases\WordList\FieldWhereEqual.kbs");
 
         [Fact(DisplayName = "Select GroupBy and OrderBy column which does not exist")]
         public void TestGroupAndORDERColumnWhichDoesNotExist()

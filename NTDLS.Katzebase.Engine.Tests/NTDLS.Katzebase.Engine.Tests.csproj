@@ -64,6 +64,7 @@
     <None Remove="Scripts\TestCases\WordList\ScalarAggregateCombinations.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExist.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectColumnWhichDoesNotExistOrExists.kbs" />
+    <None Remove="Scripts\TestCases\WordList\SelectDistinct.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExist.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs" />
     <None Remove="Scripts\TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs" />
@@ -154,6 +155,7 @@
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectGroupByColumnWhichDoesNotExistAgg.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\GroupAndORDERColumnWhichDoesNotExist.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\ScalarAggregateCombinations.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\WordList\SelectDistinct.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectStarOrderByColumnWhichDoesNotExist.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\SelectSpecificsGroupByAggregateOrderBy.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />

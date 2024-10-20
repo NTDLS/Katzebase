@@ -1,0 +1,89 @@
+select distinct
+	ToProper(Text)
+from
+	TestData:WordList:Word
+where
+	Text LIKE '%al%'
+
+select distinct
+	RootWordId,
+	Confidence
+from
+	TestData:WordList:FlatSynonyms
+	
+#Expected(EnforceRowOrder=false)
+{
+Expression0
+Saltadores
+Cavaleiros
+Allure
+Cavalieri
+Caballeros
+Cavaliers
+Allèchement
+}
+
+#Expected(EnforceRowOrder=false)
+{
+RootWordId	Confidence
+2312	1
+7079	4
+9748	2
+7080	1
+9751	1
+9751	2
+11610	1
+12110	1
+10751	1
+12179	1
+12339	1
+12339	2
+13920	1
+19549	1
+19607	1
+19993	1
+19996	1
+24859	1
+10715	1
+7080	4
+35225	1
+7079	1
+27243	2
+35681	2
+39029	1
+40617	1
+39047	1
+25241	1
+53820	1
+9748	1
+51429	1
+19995	1
+13918	1
+55563	1
+55569	1
+55583	1
+63909	1
+65276	1
+59079	1
+66387	1
+68931	1
+68934	1
+71149	1
+71184	1
+78925	1
+25240	1
+79257	1
+79259	1
+79400	1
+19607	2
+27243	1
+39028	2
+39028	1
+39699	1
+44876	1
+45069	1
+59972	1
+44875	1
+77147	1
+
+}
