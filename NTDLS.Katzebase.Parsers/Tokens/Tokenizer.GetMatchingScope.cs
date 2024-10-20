@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Matches scope using the given open and close values and returns the text between them.
         /// </summary>
-        public string MatchingScope(char open, char close, out int endOfScopeCaret)
+        public string MatchingScope(char open, char close, out int endOfScopeCaret, bool trim = true)
         {
             int scope = 0;
 
@@ -64,7 +64,11 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 if (scope == 0)
                 {
                     endOfScopeCaret = caret;
-                    return _text.Substring(startPosition, caret - startPosition).Trim();
+                    if (trim)
+                    {
+                        return _text.Substring(startPosition, caret - startPosition).Trim();
+                    }
+                    return _text.Substring(startPosition, caret - startPosition);
                 }
             }
 

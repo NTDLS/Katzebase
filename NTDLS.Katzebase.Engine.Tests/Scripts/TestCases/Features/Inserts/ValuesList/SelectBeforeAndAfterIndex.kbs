@@ -1,0 +1,10 @@
+SELECT * FROM TestData:InsertTests:ValuesList
+
+#Expected(EnforceRowOrder=false, MaxDuration=250)
+{
+FirstName	LastName
+Jane	Doe
+John	Doe
+Jane	Doe
+John	Doe
+}

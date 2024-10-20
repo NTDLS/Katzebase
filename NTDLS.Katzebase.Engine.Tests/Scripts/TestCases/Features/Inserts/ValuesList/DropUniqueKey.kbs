@@ -1,0 +1,5 @@
+DROP UniqueKey uk_ValuesList ON TestData:InsertTests:ValuesList
+
+#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=250)
+{
+}

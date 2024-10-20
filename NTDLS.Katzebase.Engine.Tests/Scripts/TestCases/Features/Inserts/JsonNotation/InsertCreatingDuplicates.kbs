@@ -1,0 +1,37 @@
+INSERT INTO TestData:InsertTests:JsonNotation
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe'),
+--Messy format;
+(FirstName  :   'John1', LastName: 'Doe1'),
+(
+FirstName:
+'Fred1', MiddleName
+:
+'Joe1', LastName: 'Doe1'),
+(FirstName
+:'Jane1', LastName: 'Doe1'
+)
+
+SELECT * FROM TestData:InsertTests:JsonNotation
+
+#Expected(EnforceRowOrder=false, AffectedCount=6, MaxDuration=250)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=250)
+{
+FirstName	LastName	MiddleName
+Fred	Doe	Joe
+John	Doe	<null>
+Jane	Doe	<null>
+John1	Doe1	<null>
+Fred1	Doe1	Joe1
+Jane1	Doe1	<null>
+Fred	Doe	Joe
+John	Doe	<null>
+Jane	Doe	<null>
+John1	Doe1	<null>
+Fred1	Doe1	Joe1
+Jane1	Doe1	<null>
+}

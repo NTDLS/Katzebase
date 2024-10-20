@@ -65,12 +65,12 @@ namespace NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations
 
                     tokenizer.IsNext('{');
 
-                    var datasetExpectationTextBlock = tokenizer.EatGetMatchingScope('{', '}').Replace("\r\n", "\n");
+                    var datasetExpectationTextBlock = tokenizer.EatGetMatchingScope('{', '}', false).Replace("\r\n", "\n");
 
                     var expectationBlock = new Tokenizer(datasetExpectationTextBlock);
                     if (expectationBlock.TryEatIfNext("#FieldPatterns"))
                     {
-                        var fieldPatternLines = expectationBlock.EatGetMatchingScope('{', '}').Replace("\r\n", "\n").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        var fieldPatternLines = expectationBlock.EatGetMatchingScope('{', '}').Replace("\r\n", "\n").Split('\n');
                         foreach (var fieldPatternLine in fieldPatternLines)
                         {
                             var fieldLine = new Tokenizer(fieldPatternLine, [' ', '\t', '(', ')', ',', '='])

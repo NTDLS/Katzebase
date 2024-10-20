@@ -1,0 +1,23 @@
+INSERT INTO TestData:InsertTests:ValuesList(FirstName, MiddleName, LastName)
+Values
+('Joan', null, 'Dean'),
+('George', 'Joe', 'Dean'),
+('Greg', '', 'Doe')
+
+SELECT * FROM TestData:InsertTests:ValuesList
+
+#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=250)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=250)
+{
+FirstName	LastName	MiddleName
+Jane	Doe	<null>
+John	Doe	<null>
+Jane	Doe	<null>
+John	Doe	<null>
+Joan	Dean	<null>
+George	Dean	Joe
+Greg	Doe	
+}

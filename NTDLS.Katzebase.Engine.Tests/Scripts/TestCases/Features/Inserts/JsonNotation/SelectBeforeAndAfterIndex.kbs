@@ -1,0 +1,18 @@
+SELECT * FROM TestData:InsertTests:JsonNotation
+
+#Expected(EnforceRowOrder=false, MaxDuration=250)
+{
+FirstName	LastName	MiddleName
+Fred	Doe	Joe
+John	Doe	<null>
+Jane	Doe	<null>
+John1	Doe1	<null>
+Fred1	Doe1	Joe1
+Jane1	Doe1	<null>
+Fred	Doe	Joe
+John	Doe	<null>
+Jane	Doe	<null>
+John1	Doe1	<null>
+Fred1	Doe1	Joe1
+Jane1	Doe1	<null>
+}

@@ -33,6 +33,18 @@
     <None Remove="Scripts\PersonWithOrdersDetails.kbs" />
     <None Remove="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
     <None Remove="Scripts\TestCases\Features\Formatting.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotationCreateUniqueKey.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotationDropUniqueKey.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotationInsertAgain.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotation\CreateIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotation\InsertAfterIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\JsonNotation\SelectBeforeAndAfterIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesListCreateUniqueKey.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesListDropUniqueKey.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesListInsertAgain.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesList\CreateIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesList\InsertAfterIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Inserts\ValuesList\SelectBeforeAndAfterIndex.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
     <None Remove="Scripts\TestCases\Features\SelectFromSingle.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
@@ -78,18 +90,30 @@
     <EmbeddedResource Include="Data\WordList\Word.txt" />
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\CreateIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\DropUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\InsertAfterIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\SelectBeforeAndAfterIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\InsertCreatingDuplicates.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\CreateUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\CreateIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\DropUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\InsertAfterIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\SelectBeforeAndAfterIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\InsertCreatingDuplicates.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\CreateUniqueKey.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\SelectFromSingle.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Formatting.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\NestedConditions.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateJsonNotationSchema.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\CreateValuesListSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\CreateSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\CreateSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\CreateSchemaData.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\CreateSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\NullsAndNullPropagation.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotationWithExpressions.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesListWithExpressions.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList.kbs" />
-    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\InsertWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\InsertWithExpressions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\ValuesList\Insert.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\Insert.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\PersonsAndTheirAddresses.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\OrdersWithPersonDetails.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\MockERPQueries\PersonWithOrdersDetails.kbs" />
@@ -126,10 +150,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="xunit" Version="2.5.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

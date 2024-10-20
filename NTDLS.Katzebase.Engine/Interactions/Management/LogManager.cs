@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using Serilog;
 using System.Diagnostics;
-using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -46,11 +45,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public static void Error(string message, Exception ex) => Exception(message, ex);
         public static void Error(string message) => Log.Error(message);
-        public static void Error(Exception ex) => Log.Error(GetExceptionText(ex));
+        public static void Error(Exception ex) => Log.Error(ex.GetBaseException().Message);
 
-        public static void Fatal(string message, Exception ex) => Log.Fatal($"{message} {GetExceptionText(ex)}");
+        public static void Fatal(string message, Exception ex) => Log.Fatal($"{message} {ex.GetBaseException().Message}");
         public static void Fatal(string message) => Log.Fatal(message);
-        public static void Fatal(Exception ex) => Log.Fatal(GetExceptionText(ex));
+        public static void Fatal(Exception ex) => Log.Fatal(ex.GetBaseException().Message);
 
         public static void Exception(string message, Exception givenException)
         {
@@ -59,28 +58,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 switch (kbException.Severity)
                 {
                     case KbLogSeverity.Verbose:
-                        Log.Verbose($"{message} {GetExceptionText(kbException)}");
+                        Log.Verbose($"{message} {kbException.GetBaseException().Message}");
                         break;
                     case KbLogSeverity.Debug:
-                        Log.Debug($"{message} {GetExceptionText(kbException)}");
+                        Log.Debug($"{message} {kbException.GetBaseException().Message}");
                         break;
                     case KbLogSeverity.Information:
-                        Log.Information($"{message} {GetExceptionText(kbException)}");
+                        Log.Information($"{message} {kbException.GetBaseException().Message}");
                         break;
                     case KbLogSeverity.Warning:
-                        Log.Warning($"{message} {GetExceptionText(kbException)}");
+                        Log.Warning($"{message} {kbException.GetBaseException().Message}");
                         break;
                     case KbLogSeverity.Error:
-                        Log.Error($"{message} {GetExceptionText(kbException)}");
+                        Log.Error($"{message} {kbException.GetBaseException().Message}");
                         break;
                     case KbLogSeverity.Fatal:
-                        Log.Fatal($"{message} {GetExceptionText(kbException)}");
+                        Log.Fatal($"{message} {kbException.GetBaseException().Message}");
                         break;
                 }
             }
             else
             {
-                Log.Error($"{message} {GetExceptionText(givenException)}");
+                Log.Error($"{message} {givenException.GetBaseException().Message}");
             }
         }
 
@@ -91,65 +90,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 switch (kbException.Severity)
                 {
                     case KbLogSeverity.Verbose:
-                        Log.Verbose(GetExceptionText(kbException));
+                        Log.Verbose(kbException.GetBaseException().Message);
                         break;
                     case KbLogSeverity.Debug:
-                        Log.Debug(GetExceptionText(kbException));
+                        Log.Debug(kbException.GetBaseException().Message);
                         break;
                     case KbLogSeverity.Information:
-                        Log.Information(GetExceptionText(kbException));
+                        Log.Information(kbException.GetBaseException().Message);
                         break;
                     case KbLogSeverity.Warning:
-                        Log.Warning(GetExceptionText(kbException));
+                        Log.Warning(kbException.GetBaseException().Message);
                         break;
                     case KbLogSeverity.Error:
-                        Log.Error(GetExceptionText(kbException));
+                        Log.Error(kbException.GetBaseException().Message);
                         break;
                     case KbLogSeverity.Fatal:
-                        Log.Fatal(GetExceptionText(kbException));
+                        Log.Fatal(kbException.GetBaseException().Message);
                         break;
                 }
             }
             else
             {
-                Log.Error(GetExceptionText(givenException));
-            }
-        }
-
-        private static string GetExceptionText(Exception exception)
-        {
-            try
-            {
-                var message = new StringBuilder();
-                return GetExceptionText(exception, 0, ref message);
-            }
-            catch (Exception ex)
-            {
-                Error($"Critical log exception. Failed to get exception text: {ex.Message}.");
-                throw;
-            }
-        }
-
-        private static string GetExceptionText(Exception exception, int level, ref StringBuilder message)
-        {
-            try
-            {
-                if (exception.Message != null && exception.Message != string.Empty)
-                {
-                    message.Append(exception.Message);
-                }
-
-                if (exception.InnerException != null && level < 100)
-                {
-                    return GetExceptionText(exception.InnerException, level + 1, ref message);
-                }
-
-                return message.ToString();
-            }
-            catch (Exception ex)
-            {
-                Error($"Critical log exception. Failed to get exception text: {ex.Message}.");
-                throw;
+                Log.Error(givenException.GetBaseException().Message);
             }
         }
     }

@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Tests
         private static EngineCore CreateNewInstance()
         {
             //Manually Delete the root directory to have the test data generated.
-            bool rootDirectoryFreshlyCreated = !Directory.Exists(Constants.ROOT_PATH);
+            bool rootDirectoryFreshlyCreated = Directory.Exists(Constants.ROOT_PATH);
 
             _settings = new KatzebaseSettings();
             _settings.ListenPort = Constants.LISTEN_PORT;

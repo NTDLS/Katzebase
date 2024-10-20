@@ -1,0 +1,9 @@
+CREATE INDEX ix_JsonNotation
+(
+    FirstName,
+    LastName
+) ON TestData:InsertTests:JsonNotation
+
+#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=250)
+{
+}

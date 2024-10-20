@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// <summary>
         /// Matches scope using the given open and close values and returns the text between them.
         /// </summary>
-        public string EatGetMatchingScope(char open, char close)
+        public string EatGetMatchingScope(char open, char close, bool trim = true)
         {
             RecordBreadcrumb();
 
@@ -46,11 +46,15 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                 if (scope == 0)
                 {
-                    var result = _text.Substring(startPosition, Caret - startPosition).Trim();
+                    var result = _text.Substring(startPosition, Caret - startPosition);
 
                     Caret++;
                     InternalEatWhiteSpace();
 
+                    if (trim)
+                    {
+                        return result.Trim();
+                    }
                     return result;
                 }
             }
