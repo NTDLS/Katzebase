@@ -2,18 +2,13 @@ using NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations;
 
 namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
 {
-    public class TestMockERPQueries : IClassFixture<EngineCoreFixture>
+    public class TestMockERPQueries(EngineCoreFixture fixture) : IClassFixture<EngineCoreFixture>
     {
-        private readonly EngineCore _engine;
-
-        public TestMockERPQueries(EngineCoreFixture fixture)
-        {
-            _engine = fixture.Engine;
-        }
+        private readonly EngineCore _engine = fixture.Engine;
 
         [Fact(DisplayName = "Number of orders placed by each person (1-to-many, group by)")]
         public void NumberOfOrdersPlacedByEachPerson()
-       => QueryExpectation.ValidateScriptResults(_engine, @"MockERPQueries\NumberOfOrdersPlacedByEachPerson.kbs", new { PersonId = 1 });
+            => QueryExpectation.ValidateScriptResults(_engine, @"MockERPQueries\NumberOfOrdersPlacedByEachPerson.kbs", new { PersonId = 1 });
 
         [Fact(DisplayName = "Persons without orders (left-outer-join)")]
         public void PersonsWithoutOrders()

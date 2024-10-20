@@ -2,14 +2,9 @@ using NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations;
 
 namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
 {
-    public class TestInserts : IClassFixture<EngineCoreFixture>
+    public class TestInserts(EngineCoreFixture fixture) : IClassFixture<EngineCoreFixture>
     {
-        private readonly EngineCore _engine;
-
-        public TestInserts(EngineCoreFixture fixture)
-        {
-            _engine = fixture.Engine;
-        }
+        private readonly EngineCore _engine = fixture.Engine;
 
         [Fact(DisplayName = "Insert using Json notation")]
         public void InsertJsonNotation()

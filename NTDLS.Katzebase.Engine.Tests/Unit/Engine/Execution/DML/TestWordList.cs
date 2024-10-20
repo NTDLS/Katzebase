@@ -2,14 +2,9 @@ using NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations;
 
 namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
 {
-    public class TestWordList : IClassFixture<EngineCoreFixture>
+    public class TestWordList(EngineCoreFixture fixture) : IClassFixture<EngineCoreFixture>
     {
-        private readonly EngineCore _engine;
-
-        public TestWordList(EngineCoreFixture fixture)
-        {
-            _engine = fixture.Engine;
-        }
+        private readonly EngineCore _engine = fixture.Engine;
 
         [Fact(DisplayName = "Select Aggregate without GroupBY")]
         public void TestAggregateWithoutGroupBy()
