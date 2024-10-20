@@ -23,11 +23,6 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
             query.AddAttribute(PreparedQuery.Attribute.IndexName, indexName);
             query.AddAttribute(PreparedQuery.Attribute.IsUnique, true);
 
-            tokenizer.IsNext('(');
-
-            var indexFields = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
-            query.CreateIndexFields.AddRange(indexFields);
-
             tokenizer.EatIfNext("on");
 
             if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)

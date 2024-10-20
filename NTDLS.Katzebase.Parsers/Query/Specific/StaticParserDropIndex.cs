@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
                 SubQueryType = SubQueryType.Index
             };
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var indexName) == false)
+            if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var indexName) == false)
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected index name, found: [{indexName}].");
             }
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific
 
             tokenizer.EatIfNext("on");
 
-            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            if (tokenizer.TryEatValidateNext((o) => o.IsIdentifier(), out var schemaName) == false)
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
