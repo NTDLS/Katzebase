@@ -1,13 +1,4 @@
-
-SELECT * FROM TestData:Deletes
-
-SELECT * INTO TestData:ToBeDeleted FROM TestData:Deletes
-WHERE LastName LIKE '%p%'
-
-DELETE
-	D
-FROM
-	TestData:ToBeDeleted as TBD
-INNER JOIN TestData:Deletes as D
-	ON D.FirstName = TBD.FirstName
-	AND D.LastName = TBD.LastName
+select distinct
+	Text
+from
+	TestData:WordList:Word

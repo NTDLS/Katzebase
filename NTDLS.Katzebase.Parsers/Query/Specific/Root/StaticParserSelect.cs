@@ -12,10 +12,27 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
         {
             var query = new PreparedQuery(queryBatch, QueryType.Select, tokenizer.GetCurrentLineNumber());
 
+            //Parse "pre-TOP distinct".
+            if (tokenizer.TryEatIfNext("distinct"))
+            {
+                query.PreTopDistinct = true;
+            }
+
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
             {
                 query.RowLimit = tokenizer.EatGetNextResolved<int>();
+            }
+
+            //Parse "post-TOP distinct".
+            if (tokenizer.TryEatIfNext("distinct"))
+            {
+                if (query.PreTopDistinct)
+                {
+                    throw new KbParserException("Expected field list, found: [distinct].");
+                }
+
+                query.PostTopDistinct = true;
             }
 
             //Parse field list.

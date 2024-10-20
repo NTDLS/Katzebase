@@ -70,6 +70,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             transaction.EnsureActive();
 
+            if (query.PreTopDistinct)
+            {
+                materializedRowCollection.RemoveDuplicateRows();
+            }
+
             #region Sorting (perform the final sort).
 
             if (query.OrderBy.Any() && materializedRowCollection.Rows.Count != 0)
@@ -128,6 +133,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             #endregion
+
+            if (query.PostTopDistinct)
+            {
+                materializedRowCollection.RemoveDuplicateRows();
+            }
 
             transaction.EnsureActive();
 

@@ -68,6 +68,8 @@ namespace NTDLS.Katzebase.Parsers.Query.SupportingTypes
         public List<string>? DynamicSchemaFieldFilter { get; set; } = null;
         public int RowLimit { get; set; }
         public int RowOffset { get; set; }
+        public bool PreTopDistinct { get; set; }
+        public bool PostTopDistinct { get; set; }
         public ConditionCollection Conditions { get; set; } = new(queryBatch);
 
         #endregion
