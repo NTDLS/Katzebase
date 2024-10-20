@@ -2,7 +2,7 @@ CREATE INDEX ix_ValuesList
 (
     FirstName,
     LastName
-) ON TestData:InsertTests:ValuesList
+) ON TestData:UpdateTests
 
 #Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=1000)
 {

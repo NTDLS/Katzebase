@@ -1,0 +1,20 @@
+UPDATE
+	TestData:UpdateTests
+SET
+	MiddleName = 'Pompus'
+WHERE
+	FirstName = 'John'
+
+SELECT * FROM TestData:UpdateTests
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName	MiddleName
+John	Doe	Pompus
+John	Doe	Pompus
+Grace	Dean	<null>
+}

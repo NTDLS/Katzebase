@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
     {
         private readonly EngineCore _engine = fixture.Engine;
 
-        [Fact(DisplayName = "Insert using Json notation")]
+        [Fact(DisplayName = "Insert using Json notation with and without indexes")]
         public void InsertJsonNotation()
         {
             using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\JsonNotation\InsertAfterIndex.kbs");
         }
 
-        [Fact(DisplayName = "Insert using values list")]
+        [Fact(DisplayName = "Insert using values list with and without indexes")]
         public void InsertValuesList()
         {
             using var ephemeral = _engine.Sessions.CreateEphemeralSystemSession();

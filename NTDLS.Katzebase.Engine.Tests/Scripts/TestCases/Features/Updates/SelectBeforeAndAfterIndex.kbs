@@ -1,10 +1,9 @@
-SELECT * FROM TestData:InsertTests:ValuesList
+SELECT * FROM TestData:UpdateTests
 
 #Expected(EnforceRowOrder=false, MaxDuration=1000)
 {
 FirstName	LastName
-Jane	Doe
 John	Doe
-Jane	Doe
 John	Doe
+Grace	Doe
 }

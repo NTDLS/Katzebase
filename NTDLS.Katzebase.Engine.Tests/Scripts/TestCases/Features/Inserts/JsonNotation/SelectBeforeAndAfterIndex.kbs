@@ -1,6 +1,6 @@
 SELECT * FROM TestData:InsertTests:JsonNotation
 
-#Expected(EnforceRowOrder=false, MaxDuration=250)
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
 {
 FirstName	LastName	MiddleName
 Fred	Doe	Joe

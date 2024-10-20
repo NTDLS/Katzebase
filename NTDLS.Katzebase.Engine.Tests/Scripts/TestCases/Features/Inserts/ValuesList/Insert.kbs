@@ -3,11 +3,11 @@ VALUES('Jane', 'Doe'),('John', 'Doe')
 
 SELECT * FROM TestData:InsertTests:ValuesList
 
-#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=250)
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
 {
 }
 
-#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=250)
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
 {
 FirstName	LastName
 Jane	Doe

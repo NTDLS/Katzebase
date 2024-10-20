@@ -1,8 +1,8 @@
-CREATE INDEX ix_ValuesList
+CREATE UniqueKey uk_ValuesList
 (
     FirstName,
     LastName
-) ON TestData:InsertTests:ValuesList
+) ON TestData:UpdateTests
 
 #Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=1000)
 {

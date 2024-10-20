@@ -47,6 +47,7 @@
     <None Remove="Scripts\TestCases\Features\Inserts\ValuesList\SelectBeforeAndAfterIndex.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
     <None Remove="Scripts\TestCases\Features\SelectFromSingle.kbs" />
+    <None Remove="Scripts\TestCases\Features\Updates\UpdateAfterIndexCreatingNewField.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
     <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
     <None Remove="Scripts\TestCases\WordList\CreateIndexes.kbs" />
@@ -90,6 +91,15 @@
     <EmbeddedResource Include="Data\WordList\Word.txt" />
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\DropUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\Insert.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateAfterIndexCreatingNewField.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateAfterIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateCreatingDuplicates.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\SelectBeforeAndAfterIndex.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\CreateIndex.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\DropUniqueKey.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Inserts\JsonNotation\InsertAfterIndex.kbs" />

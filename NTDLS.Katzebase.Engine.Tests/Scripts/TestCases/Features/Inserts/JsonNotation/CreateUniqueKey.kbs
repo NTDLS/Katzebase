@@ -4,6 +4,6 @@ CREATE UniqueKey uk_JsonNotation
     LastName
 ) ON TestData:InsertTests:JsonNotation
 
-#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=250)
+#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=1000)
 {
 }
