@@ -32,6 +32,10 @@
     <None Remove="Scripts\PersonsWithoutOrders.kbs" />
     <None Remove="Scripts\PersonWithOrdersDetails.kbs" />
     <None Remove="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\DeleteDuplicates.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\DeleteWhereLastNameBrown.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\DeleteWhereLastNameDoe.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\DeleteWithJoin.kbs" />
     <None Remove="Scripts\TestCases\Features\Formatting.kbs" />
     <None Remove="Scripts\TestCases\Features\Inserts\JsonNotationCreateUniqueKey.kbs" />
     <None Remove="Scripts\TestCases\Features\Inserts\JsonNotationDropUniqueKey.kbs" />
@@ -47,6 +51,10 @@
     <None Remove="Scripts\TestCases\Features\Inserts\ValuesList\SelectBeforeAndAfterIndex.kbs" />
     <None Remove="Scripts\TestCases\Features\NestedConditions.kbs" />
     <None Remove="Scripts\TestCases\Features\SelectFromSingle.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\CreateIndex.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\CreateSchema.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\CreateUniqueKey.kbs" />
+    <None Remove="Scripts\TestCases\Features\Deletes\Insert.kbs" />
     <None Remove="Scripts\TestCases\Features\Updates\UpdateAfterIndexCreatingNewField.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
     <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
@@ -91,6 +99,14 @@
     <EmbeddedResource Include="Data\WordList\Word.txt" />
     <EmbeddedResource Include="Scripts\Initialization\CreateTestDataSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\AllScalarFunctions.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\CreateIndex.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\CreateSchema.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\CreateUniqueKey.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\DeleteDuplicates.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\DeleteWithJoin.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\DeleteWhereLastNameDoe.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\Insert.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Deletes\DeleteWhereLastNameBrown.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateIndex.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateSchema.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateUniqueKey.kbs" />

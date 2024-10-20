@@ -1,0 +1,2 @@
+DROP SCHEMA TestData:Deletes
+CREATE SCHEMA TestData:Deletes

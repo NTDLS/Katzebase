@@ -1,0 +1,33 @@
+DELETE FROM TestData:Deletes WHERE LastName = 'Brown'
+
+SELECT * FROM TestData:Deletes
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName
+John	Doe
+Emily	Smith
+Olivia	Martinez
+Grace	Doe
+Sarah	Johnson
+David	Williams
+Emily	Smith
+Jane	Doe
+Daniel	Garcia
+Sophia	Rodriguez
+Chloe	Perez
+Emma	Lopez
+John	Doe
+Mia	Davis
+Matthew	Young
+Alexander	Gonzalez
+Lucas	Hernandez
+James	Anderson
+Ella	Walker
+Ava	Lewis
+Ava	Lewis
+}

@@ -1,0 +1,59 @@
+INSERT INTO TestData:Deletes (FirstName, LastName)
+VALUES
+('Jane', 'Doe'),
+('John', 'Doe'),
+('Grace', 'Doe'),
+('Emily', 'Smith'),
+('Michael', 'Brown'),
+('Sarah', 'Johnson'),
+('John', 'Doe'),         -- Duplicate
+('David', 'Williams'),
+('Olivia', 'Martinez'),
+('Emily', 'Smith'),      -- Duplicate
+('Daniel', 'Garcia'),
+('Sophia', 'Rodriguez'),
+('James', 'Anderson'),
+('Mia', 'Davis'),
+('Michael', 'Brown'),    -- Duplicate
+('Lucas', 'Hernandez'),
+('Emma', 'Lopez'),
+('Alexander', 'Gonzalez'),
+('Chloe', 'Perez'),
+('Ava', 'Lewis'),
+('Matthew', 'Young'),
+('Ella', 'Walker'),
+('Ava', 'Lewis')        -- Duplicate
+
+SELECT * FROM TestData:Deletes
+
+#Expected(EnforceRowOrder=false, AffectedCount=23, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName
+David	Williams
+Emily	Smith
+Jane	Doe
+Michael	Brown
+John	Doe
+Grace	Doe
+James	Anderson
+Sophia	Rodriguez
+John	Doe
+Sarah	Johnson
+Mia	Davis
+Emily	Smith
+Lucas	Hernandez
+Emma	Lopez
+Daniel	Garcia
+Michael	Brown
+Ava	Lewis
+Alexander	Gonzalez
+Chloe	Perez
+Matthew	Young
+Ella	Walker
+Ava	Lewis
+Olivia	Martinez
+}

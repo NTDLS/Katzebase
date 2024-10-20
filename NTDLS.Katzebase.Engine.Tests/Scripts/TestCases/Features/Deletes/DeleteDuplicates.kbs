@@ -1,0 +1,37 @@
+DELETE
+	D
+FROM
+	TestData:Deletes as D
+WHERE
+	(	
+		D.FirstName = 'Emily'
+		AND D.LastName = 'Smith'
+	)
+	OR (	
+		D.FirstName = 'Ava'
+		AND D.LastName = 'Lewis'
+	)
+
+SELECT * FROM TestData:Deletes
+
+#Expected(EnforceRowOrder=false, AffectedCount=4, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName
+David	Williams
+Sarah	Johnson
+Olivia	Martinez
+Daniel	Garcia
+Sophia	Rodriguez
+James	Anderson
+Mia	Davis
+Lucas	Hernandez
+Emma	Lopez
+Chloe	Perez
+Alexander	Gonzalez
+Matthew	Young
+Ella	Walker
+}

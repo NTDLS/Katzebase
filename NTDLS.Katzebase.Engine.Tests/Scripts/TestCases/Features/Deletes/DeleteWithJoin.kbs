@@ -1,0 +1,42 @@
+DROP SCHEMA TestData:ToBeDeleted
+
+SELECT * INTO TestData:ToBeDeleted FROM TestData:Deletes
+WHERE LastName LIKE '%p%'
+
+DELETE
+	D
+FROM
+	TestData:ToBeDeleted as TBD
+INNER JOIN TestData:Deletes as D
+	ON D.FirstName = TBD.FirstName
+	AND D.LastName = TBD.LastName
+
+SELECT * FROM TestData:Deletes
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName
+David	Williams
+Olivia	Martinez
+Sarah	Johnson
+Daniel	Garcia
+James	Anderson
+Sophia	Rodriguez
+Mia	Davis
+Alexander	Gonzalez
+Lucas	Hernandez
+Matthew	Young
+Ella	Walker
+}

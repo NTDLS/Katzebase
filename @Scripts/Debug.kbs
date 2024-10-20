@@ -1,8 +1,13 @@
-SELECT
-	p.PersonID, p.FirstName, p.LastName, o.OrderId
+
+SELECT * FROM TestData:Deletes
+
+SELECT * INTO TestData:ToBeDeleted FROM TestData:Deletes
+WHERE LastName LIKE '%p%'
+
+DELETE
+	D
 FROM
-	TestData:MockERP:Person as p --5 rows.
-outer JOIN TestData:MockERP:SalesOrder as o --6 rows.
-	ON o.PersonID = p.PersonID
-WHERE
-	IsNull(o.OrderID) = true
+	TestData:ToBeDeleted as TBD
+INNER JOIN TestData:Deletes as D
+	ON D.FirstName = TBD.FirstName
+	AND D.LastName = TBD.LastName
