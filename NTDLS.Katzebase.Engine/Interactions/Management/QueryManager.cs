@@ -4,11 +4,10 @@ using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Functions.System;
-using NTDLS.Katzebase.Parsers.Query;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -172,7 +171,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticParserBatch.Parse(statement.ToString(), _core.GlobalConstants);
+            var batch = StaticBatchParser.Parse(statement.ToString(), _core.GlobalConstants);
             if (batch.Count > 1)
             {
                 throw new KbProcessingException("Expected only one procedure call per batch.");
@@ -190,37 +189,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return KbQueryResult.FromActionResponse(nonQueryResult).ToCollection();
                 }
 
-                switch (query.QueryType)
+                return query.QueryType switch
                 {
-                    case QueryType.Select:
-                        return _core.Documents.QueryHandlers.ExecuteSelect(session, query).ToCollection();
-                    case QueryType.Sample:
-                        return _core.Documents.QueryHandlers.ExecuteSample(session, query).ToCollection();
-                    case QueryType.Exec:
-                        return _core.Procedures.QueryHandlers.ExecuteExec(session, query);
-                    case QueryType.List:
-                        switch (query.SubQueryType)
-                        {
-                            case SubQueryType.Documents:
-                                return _core.Documents.QueryHandlers.ExecuteList(session, query).ToCollection();
-                            case SubQueryType.Schemas:
-                                return _core.Schemas.QueryHandlers.ExecuteList(session, query).ToCollection();
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
-                    case QueryType.Analyze:
-                        switch (query.SubQueryType)
-                        {
-                            case SubQueryType.Index:
-                                return _core.Indexes.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
-                            case SubQueryType.Schema:
-                                return _core.Schemas.QueryHandlers.ExecuteAnalyze(session, query).ToCollection();
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
-                    default:
-                        throw new KbEngineException("Invalid query type.");
-                }
+                    QueryType.Select => _core.Documents.QueryHandlers.ExecuteSelect(session, query).ToCollection(),
+                    QueryType.Sample => _core.Documents.QueryHandlers.ExecuteSample(session, query).ToCollection(),
+                    QueryType.Exec => _core.Procedures.QueryHandlers.ExecuteExec(session, query),
+                    QueryType.List => query.SubQueryType switch
+                    {
+                        SubQueryType.Documents => _core.Documents.QueryHandlers.ExecuteList(session, query).ToCollection(),
+                        SubQueryType.Schemas => _core.Schemas.QueryHandlers.ExecuteList(session, query).ToCollection(),
+                        _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                    },
+                    QueryType.Analyze => query.SubQueryType switch
+                    {
+                        SubQueryType.Index => _core.Indexes.QueryHandlers.ExecuteAnalyze(session, query).ToCollection(),
+                        SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteAnalyze(session, query).ToCollection(),
+                        _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                    },
+                    _ => throw new KbEngineException("Invalid query type."),
+                };
             }
             catch (Exception ex)
             {
@@ -256,60 +243,39 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     case QueryType.Revoke:
                         return _core.Policy.QueryHandlers.ExecuteRevoke(session, query);
                     case QueryType.Rebuild:
-                        switch (query.SubQueryType)
+                        return query.SubQueryType switch
                         {
-                            case SubQueryType.Index:
-                            case SubQueryType.UniqueKey:
-                                return _core.Indexes.QueryHandlers.ExecuteRebuild(session, query);
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
+                            SubQueryType.Index or SubQueryType.UniqueKey => _core.Indexes.QueryHandlers.ExecuteRebuild(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
                     case QueryType.Create:
-                        switch (query.SubQueryType)
+                        return query.SubQueryType switch
                         {
-                            case SubQueryType.Index:
-                            case SubQueryType.UniqueKey:
-                                return _core.Indexes.QueryHandlers.ExecuteCreate(session, query);
-                            case SubQueryType.Procedure:
-                                return _core.Procedures.QueryHandlers.ExecuteCreate(session, query);
-                            case SubQueryType.Schema:
-                                return _core.Schemas.QueryHandlers.ExecuteCreate(session, query);
-                            case SubQueryType.Account:
-                                return _core.Policy.QueryHandlers.ExecuteCreateAccount(session, query);
-                            case SubQueryType.Role:
-                                return _core.Policy.QueryHandlers.ExecuteCreateRole(session, query);
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
+                            SubQueryType.Index or SubQueryType.UniqueKey => _core.Indexes.QueryHandlers.ExecuteCreate(session, query),
+                            SubQueryType.Procedure => _core.Procedures.QueryHandlers.ExecuteCreate(session, query),
+                            SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteCreate(session, query),
+                            SubQueryType.Account => _core.Policy.QueryHandlers.ExecuteCreateAccount(session, query),
+                            SubQueryType.Role => _core.Policy.QueryHandlers.ExecuteCreateRole(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
                     case QueryType.Alter:
-                        switch (query.SubQueryType)
+                        return query.SubQueryType switch
                         {
-                            case SubQueryType.Schema:
-                                return _core.Schemas.QueryHandlers.ExecuteAlter(session, query);
-                            case SubQueryType.Configuration:
-                                return _core.Environment.QueryHandlers.ExecuteAlter(session, query);
-                            case SubQueryType.AddUserToRole:
-                                return _core.Policy.QueryHandlers.ExecuteAddAccountToRole(session, query);
-                            case SubQueryType.RemoveUserFromRole:
-                                return _core.Policy.QueryHandlers.ExecuteRemoveAccountFromRole(session, query);
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
+                            SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteAlter(session, query),
+                            SubQueryType.Configuration => _core.Environment.QueryHandlers.ExecuteAlter(session, query),
+                            SubQueryType.AddUserToRole => _core.Policy.QueryHandlers.ExecuteAddAccountToRole(session, query),
+                            SubQueryType.RemoveUserFromRole => _core.Policy.QueryHandlers.ExecuteRemoveAccountFromRole(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
                     case QueryType.Drop:
-                        switch (query.SubQueryType)
+                        return query.SubQueryType switch
                         {
-                            case SubQueryType.Index:
-                            case SubQueryType.UniqueKey:
-                                return _core.Indexes.QueryHandlers.ExecuteDrop(session, query);
-                            case SubQueryType.Schema:
-                                return _core.Schemas.QueryHandlers.ExecuteDrop(session, query);
-                            case SubQueryType.Role:
-                                return _core.Policy.QueryHandlers.ExecuteDropRole(session, query);
-                            case SubQueryType.Account:
-                                return _core.Policy.QueryHandlers.ExecuteDropAccount(session, query);
-                            default:
-                                throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}].");
-                        }
+                            SubQueryType.Index or SubQueryType.UniqueKey => _core.Indexes.QueryHandlers.ExecuteDrop(session, query),
+                            SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteDrop(session, query),
+                            SubQueryType.Role => _core.Policy.QueryHandlers.ExecuteDropRole(session, query),
+                            SubQueryType.Account => _core.Policy.QueryHandlers.ExecuteDropAccount(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
                     case QueryType.Begin:
                         if (query.SubQueryType == SubQueryType.Transaction)
                         {

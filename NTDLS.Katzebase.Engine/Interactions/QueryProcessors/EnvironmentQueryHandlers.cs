@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers;
 using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors

@@ -12,7 +12,7 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
 using NTDLS.Katzebase.Management.StaticAnalysis;
-using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -166,7 +166,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
                         codeText = KbTextUtility.RemoveNonCode(codeText);
 
-                        var queryBatch = StaticParserBatch.Parse(codeText, MockEngineCore.Instance.GlobalTokenizerConstants);
+                        var queryBatch = StaticBatchParser.Parse(codeText, MockEngineCore.Instance.GlobalTokenizerConstants);
 
                         CodeTabPage?.StudioForm.Invoke(() =>
                         {

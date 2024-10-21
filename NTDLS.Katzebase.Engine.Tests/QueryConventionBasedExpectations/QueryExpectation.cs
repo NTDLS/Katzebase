@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;

@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management

@@ -1,13 +1,13 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Engine.Expressions;
 using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers;
+using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Functions.System;
-using NTDLS.Katzebase.Parsers.Query.Fields;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Api.KbConstants;

@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Parsers.Functions.Scalar;
-using NTDLS.Katzebase.Parsers.Query.Conditions;
+﻿using NTDLS.Katzebase.Parsers.Conditions;
+using NTDLS.Katzebase.Parsers.Functions.Scalar;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 {

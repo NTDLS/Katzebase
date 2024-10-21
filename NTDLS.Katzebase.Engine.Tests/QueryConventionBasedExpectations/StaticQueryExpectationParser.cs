@@ -1,7 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Scripts;
-using NTDLS.Katzebase.Parsers.Query.Specific;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Parsing;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 

@@ -1,7 +1,7 @@
 ﻿using ICSharpCode.AvalonEdit.Document;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Management.Classes.Editor;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers;
 using System.Windows.Media;
 
 namespace NTDLS.Katzebase.Management.StaticAnalysis

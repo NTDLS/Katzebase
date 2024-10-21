@@ -133,7 +133,7 @@
         ELSE 0 
     END AS AvgRowSizeBytes,                                               -- Avg row size in bytes
 
- IsNull(NullIf(Cast(ROUND(@TargetPageSizeBytes / ((SUM(p.reserved_page_count) * 8 * 1024) / SUM(p.row_count)) / 100.0, 0) * 100 as int), 0), 1000) as TargetPageSize
+ IsNull(NullIf(Cast(ROUND(@TargetPageSizeBytes / ((SUM(p.reserved_page_count) * 8 * 1024) / NullIf(SUM(p.row_count), 0)) / 100.0, 0) * 100 as int), 0), 1000) as TargetPageSize
 FROM 
     sys.tables AS SysT
 LEFT JOIN 

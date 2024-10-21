@@ -17,8 +17,8 @@ WHERE
 	sw.Text = 'Cat'
 	OR sw.Text = 'Chow'
 GROUP BY
-	sw.Text,
-	tw.Text
+	ToProper(sw.Text),
+	ToProper(tw.Text)
 ORDER BY
 	Avg(sw.Id / 60) asc,
 	sw.Text desc,
