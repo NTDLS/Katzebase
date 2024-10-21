@@ -44,6 +44,7 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateAfterIndex.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateAfterIndexCreatingNewField.kbs");
 
+            //Update rows using inner join.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateWithJoin.kbs");
         }
     }
