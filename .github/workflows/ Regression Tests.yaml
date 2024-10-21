@@ -1,4 +1,4 @@
-name: Run All NetCore
+name: Regression Tests
 
 on:
   push:
