@@ -1,9 +1,25 @@
-SELECT * FROM TestData:UpdateTests
+SELECT * FROM TestData:Updates
 
 #Expected(EnforceRowOrder=false, MaxDuration=1000)
 {
 FirstName	LastName
-John	Doe
+Emily	Smith
 John	Doe
 Grace	Doe
+John	Doe
+Michael	Brown
+Olivia	Martinez
+Daniel	Garcia
+Sophia	Rodriguez
+Sarah	Johnson
+David	Williams
+James	Anderson
+Lucas	Hernandez
+Emma	Lopez
+Chloe	Perez
+Ava	Lewis
+Mia	Davis
+Matthew	Young
+Alexander	Gonzalez
+Ella	Walker
 }

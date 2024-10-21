@@ -1,2 +1,2 @@
-DROP SCHEMA TestData:UpdateTests
-CREATE SCHEMA TestData:UpdateTests
+DROP SCHEMA TestData:Updates
+CREATE SCHEMA TestData:Updates

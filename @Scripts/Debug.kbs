@@ -1,4 +1,45 @@
-select distinct
-	Text
-from
-	TestData:WordList:Word
+DELETE FROM TestData:Updates
+
+INSERT INTO TestData:Updates (FirstName, LastName)
+VALUES
+('Jane', 'Doe'),
+('John', 'Doe'),
+('Grace', 'Doe'),
+('Emily', 'Smith'),
+('Michael', 'Brown'),
+('Sarah', 'Johnson'),
+('John', 'Doe'),         -- Duplicate
+('David', 'Williams'),
+('Olivia', 'Martinez'),
+('Emily', 'Smith'),      -- Duplicate
+('Daniel', 'Garcia'),
+('Sophia', 'Rodriguez'),
+('James', 'Anderson'),
+('Mia', 'Davis'),
+('Michael', 'Brown'),    -- Duplicate
+('Lucas', 'Hernandez'),
+('Emma', 'Lopez'),
+('Alexander', 'Gonzalez'),
+('Chloe', 'Perez'),
+('Ava', 'Lewis'),
+('Matthew', 'Young'),
+('Ella', 'Walker'),
+('Ava', 'Lewis')        -- Duplicate
+
+DROP SCHEMA TestData:ToBeUpdated
+
+SELECT * INTO TestData:ToBeUpdated FROM TestData:Updates
+WHERE LastName LIKE '%p%'
+
+UPDATE
+	U
+SET
+	FirstName = '1',
+	WasUpdated = 1
+FROM
+	TestData:ToBeUpdated as TBU
+INNER JOIN TestData:Updates as U
+	ON U.FirstName = TBU.FirstName
+	AND U.LastName = TBU.LastName
+
+SELECT * FROM TestData:Updates

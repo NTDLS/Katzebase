@@ -56,6 +56,7 @@
     <None Remove="Scripts\TestCases\Features\Deletes\CreateUniqueKey.kbs" />
     <None Remove="Scripts\TestCases\Features\Deletes\Insert.kbs" />
     <None Remove="Scripts\TestCases\Features\Updates\UpdateAfterIndexCreatingNewField.kbs" />
+    <None Remove="Scripts\TestCases\Features\Updates\UpdateWithJoin.kbs" />
     <None Remove="Scripts\TestCases\WordList\@Template.kbs" />
     <None Remove="Scripts\TestCases\WordList\AggregateWithoutGroupBy.kbs" />
     <None Remove="Scripts\TestCases\WordList\CreateIndexes.kbs" />
@@ -113,6 +114,7 @@
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\CreateUniqueKey.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\DropUniqueKey.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\Insert.kbs" />
+    <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateWithJoin.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateAfterIndexCreatingNewField.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateAfterIndex.kbs" />
     <EmbeddedResource Include="Scripts\TestCases\Features\Updates\UpdateCreatingDuplicates.kbs" />

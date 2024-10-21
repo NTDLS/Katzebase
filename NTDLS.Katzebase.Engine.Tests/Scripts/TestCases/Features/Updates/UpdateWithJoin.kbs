@@ -1,0 +1,53 @@
+DROP SCHEMA TestData:ToBeUpdated
+
+SELECT * INTO TestData:ToBeUpdated FROM TestData:Updates
+WHERE LastName LIKE '%p%'
+
+UPDATE
+	U
+SET
+	FirstName = '1',
+	WasUpdated = 1
+FROM
+	TestData:ToBeUpdated as TBU
+INNER JOIN TestData:Updates as U
+	ON U.FirstName = TBU.FirstName
+	AND U.LastName = TBU.LastName
+
+SELECT * FROM TestData:Updates
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+{
+}
+
+#Expected(EnforceRowOrder=false, MaxDuration=1000)
+{
+FirstName	LastName	MiddleName	WasUpdated
+John	Doe	Pompus	<null>
+John	Doe	Pompus	<null>
+Grace	Dean	<null>	<null>
+Sarah	Johnson	<null>	<null>
+Michael	Brown	<null>	<null>
+Emily	Smith	<null>	<null>
+David	Williams	<null>	<null>
+Olivia	Martinez	<null>	<null>
+Daniel	Garcia	<null>	<null>
+James	Anderson	<null>	<null>
+Mia	Davis	<null>	<null>
+Sophia	Rodriguez	<null>	<null>
+Lucas	Hernandez	<null>	<null>
+1	Lopez	<null>	1
+Ava	Lewis	<null>	<null>
+Alexander	Gonzalez	<null>	<null>
+1	Perez	<null>	1
+Matthew	Young	<null>	<null>
+Ella	Walker	<null>	<null>
+}

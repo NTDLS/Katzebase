@@ -1,11 +1,11 @@
 UPDATE
-	TestData:UpdateTests
+	TestData:Updates
 SET
 	FirstName = 'John'
 WHERE
 	FirstName = 'Jane'
 
-SELECT * FROM TestData:UpdateTests
+SELECT * FROM TestData:Updates
 
 #Expected(EnforceRowOrder=false, AffectedCount=1, MaxDuration=1000)
 {
@@ -14,7 +14,23 @@ SELECT * FROM TestData:UpdateTests
 #Expected(EnforceRowOrder=false, MaxDuration=1000)
 {
 FirstName	LastName
-Jane	Doe
 John	Doe
+Emily	Smith
 Grace	Doe
+John	Doe
+Sarah	Johnson
+David	Williams
+Michael	Brown
+Olivia	Martinez
+Daniel	Garcia
+Mia	Davis
+James	Anderson
+Lucas	Hernandez
+Emma	Lopez
+Sophia	Rodriguez
+Chloe	Perez
+Ava	Lewis
+Matthew	Young
+Ella	Walker
+Alexander	Gonzalez
 }

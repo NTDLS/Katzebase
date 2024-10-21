@@ -30,7 +30,6 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             //Ensure we can insert duplicates.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateCreatingDuplicates.kbs");
 
-
             //Ensure the unique key creation causes a failure.
             var exception = Assert.Throws<AggregateException>(()
                 => QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\CreateUniqueKey.kbs"));
@@ -44,6 +43,8 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             //Insert rows into new index and validate result.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateAfterIndex.kbs");
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateAfterIndexCreatingNewField.kbs");
+
+            QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateWithJoin.kbs");
         }
     }
 }

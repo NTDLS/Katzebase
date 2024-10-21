@@ -1,11 +1,11 @@
 UPDATE
-	TestData:UpdateTests
+	TestData:Updates
 SET
 	MiddleName = 'Pompus'
 WHERE
 	FirstName = 'John'
 
-SELECT * FROM TestData:UpdateTests
+SELECT * FROM TestData:Updates
 
 #Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
 {
@@ -16,5 +16,21 @@ SELECT * FROM TestData:UpdateTests
 FirstName	LastName	MiddleName
 John	Doe	Pompus
 John	Doe	Pompus
+Daniel	Garcia	<null>
+James	Anderson	<null>
+Michael	Brown	<null>
+Olivia	Martinez	<null>
+Mia	Davis	<null>
 Grace	Dean	<null>
+David	Williams	<null>
+Lucas	Hernandez	<null>
+Sophia	Rodriguez	<null>
+Emma	Lopez	<null>
+Alexander	Gonzalez	<null>
+Chloe	Perez	<null>
+Ella	Walker	<null>
+Matthew	Young	<null>
+Emily	Smith	<null>
+Ava	Lewis	<null>
+Sarah	Johnson	<null>
 }

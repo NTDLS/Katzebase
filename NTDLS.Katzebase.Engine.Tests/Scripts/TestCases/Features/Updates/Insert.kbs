@@ -1,16 +1,51 @@
-INSERT INTO TestData:UpdateTests(FirstName, LastName)
-VALUES('Jane', 'Doe'),('John', 'Doe'),('Grace', 'Doe')
+INSERT INTO TestData:Updates (FirstName, LastName)
+VALUES
+('Jane', 'Doe'),
+('John', 'Doe'),
+('Grace', 'Doe'),
+('Emily', 'Smith'),
+('Michael', 'Brown'),
+('Sarah', 'Johnson'),
+('David', 'Williams'),
+('Olivia', 'Martinez'),
+('Daniel', 'Garcia'),
+('Sophia', 'Rodriguez'),
+('James', 'Anderson'),
+('Mia', 'Davis'),
+('Lucas', 'Hernandez'),
+('Emma', 'Lopez'),
+('Alexander', 'Gonzalez'),
+('Chloe', 'Perez'),
+('Ava', 'Lewis'),
+('Matthew', 'Young'),
+('Ella', 'Walker')
 
-SELECT * FROM TestData:UpdateTests
+SELECT * FROM TestData:Updates
 
-#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=19, MaxDuration=1000)
 {
 }
 
 #Expected(EnforceRowOrder=false, MaxDuration=1000)
 {
 FirstName	LastName
+Grace	Doe
+Emily	Smith
+Michael	Brown
 Jane	Doe
 John	Doe
-Grace	Doe
+Sarah	Johnson
+David	Williams
+Sophia	Rodriguez
+Lucas	Hernandez
+Daniel	Garcia
+Olivia	Martinez
+Chloe	Perez
+Mia	Davis
+Emma	Lopez
+Ava	Lewis
+Alexander	Gonzalez
+James	Anderson
+Matthew	Young
+Ella	Walker
 }
