@@ -1,4 +1,8 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
+using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -128,6 +132,42 @@ namespace NTDLS.Katzebase.Parsers.Query.Specific.Root
             if (tokenizer.TryEatIfNext("offset"))
             {
                 query.RowOffset = tokenizer.EatGetNextResolved<int>();
+            }
+
+            if (query.GroupBy.Count > 0)
+            {
+                var fieldsToValidate = new List<QueryField>();
+
+                foreach (var field in query.GroupBy)
+                {
+                    var testText = field.Expression.SimplifyScalarQueryField(query, query.GroupBy);
+                }
+
+
+                foreach (var field in query.SelectFields)
+                {
+
+                    var testText = field.Expression.SimplifyScalarQueryField(query, query.SelectFields);
+
+                    if (field.Expression is IQueryFieldExpression expressionField)
+                    {
+
+
+
+                        var isAggregate = expressionField.FunctionDependencies.Any(o => AggregateFunctionCollection.TryGetFunction(o.FunctionName, out _));
+                        if (isAggregate == false)
+                        {
+                            fieldsToValidate.Add(field);
+                        }
+
+                    }
+                    else if (field.Expression is QueryFieldDocumentIdentifier identifierField)
+                    {
+                        fieldsToValidate.Add(field);
+                    }
+                }
+
+
             }
 
             return query;

@@ -12,7 +12,7 @@ using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
+namespace NTDLS.Katzebase.Engine.Expressions
 {
     internal static class StaticAggregateExpressionProcessor
     {

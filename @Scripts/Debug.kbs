@@ -1,45 +1,27 @@
-DELETE FROM TestData:Updates
-
-INSERT INTO TestData:Updates (FirstName, LastName)
-VALUES
-('Jane', 'Doe'),
-('John', 'Doe'),
-('Grace', 'Doe'),
-('Emily', 'Smith'),
-('Michael', 'Brown'),
-('Sarah', 'Johnson'),
-('John', 'Doe'),         -- Duplicate
-('David', 'Williams'),
-('Olivia', 'Martinez'),
-('Emily', 'Smith'),      -- Duplicate
-('Daniel', 'Garcia'),
-('Sophia', 'Rodriguez'),
-('James', 'Anderson'),
-('Mia', 'Davis'),
-('Michael', 'Brown'),    -- Duplicate
-('Lucas', 'Hernandez'),
-('Emma', 'Lopez'),
-('Alexander', 'Gonzalez'),
-('Chloe', 'Perez'),
-('Ava', 'Lewis'),
-('Matthew', 'Young'),
-('Ella', 'Walker'),
-('Ava', 'Lewis')        -- Duplicate
-
-DROP SCHEMA TestData:ToBeUpdated
-
-SELECT * INTO TestData:ToBeUpdated FROM TestData:Updates
-WHERE LastName LIKE '%p%'
-
-UPDATE
-	U
-SET
-	FirstName = '1',
-	WasUpdated = 1
+SELECT
+    --soh.SalesOrderID,
+    --FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
+    --Count(sod.SalesOrderDetailID) AS TotalItems,
+    --Round(SUM(sod.OrderQty), 2) AS TotalQuantity,
+    --FormatNumeric(Sum(sod.LineTotal), 'c2') AS TotalSalesAmount,
+    --FormatNumeric(Avg(sod.UnitPrice), 'c2') AS AverageUnitPrice,
+    --FormatNumeric(Min(sod.UnitPrice), 'c2') AS MinUnitPrice,
+    --FormatNumeric(Max(sod.UnitPrice), 'c2') AS MaxUnitPrice,
+    
+    FormatNumeric(sod.ProductId, 'n1') --This is invalid.
+    
+    --max(sod.ProductId)
+    --min(sod.ProductId), --This is invalid.
+    --FormatNumeric(Sum(IIF(IsEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as CompletedSalesAmount,
+    --FormatNumeric(Sum(IIF(IsNotEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as PendingSalesAmount
 FROM
-	TestData:ToBeUpdated as TBU
-INNER JOIN TestData:Updates as U
-	ON U.FirstName = TBU.FirstName
-	AND U.LastName = TBU.LastName
-
-SELECT * FROM TestData:Updates
+    AWSales:SalesOrderHeader as soh
+INNER JOIN AWSales:SalesOrderDetail as sod
+	ON soh.SalesOrderID = sod.SalesOrderID
+GROUP BY 
+	FormatNumeric(sod.ProductId, 'n1')
+    --soh.SalesOrderID,
+    --soh.OrderDate
+ORDER BY 
+    soh.OrderDate DESC
+ 

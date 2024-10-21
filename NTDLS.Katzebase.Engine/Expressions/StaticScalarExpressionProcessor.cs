@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scalar;
+using NTDLS.Katzebase.Engine.QueryProcessing.Expressions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
@@ -14,12 +15,13 @@ using NTDLS.Katzebase.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
+namespace NTDLS.Katzebase.Engine.Expressions
 {
     internal static class StaticScalarExpressionProcessor
     {
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
+        /// <seealso cref="StaticScalarExpressionSimplification.SimplifyScalarQueryField(IQueryField, PreparedQuery, QueryFieldCollection)" />
         /// </summary>
         public static string? CollapseScalarQueryField(this IQueryField queryField, Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields)

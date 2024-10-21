@@ -7,7 +7,7 @@ using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Query.Functions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Expressions
+namespace NTDLS.Katzebase.Engine.Expressions
 {
     internal static class StaticScalarExpressionExtensions
     {

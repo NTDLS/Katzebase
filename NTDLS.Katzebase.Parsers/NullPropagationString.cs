@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers
     public class NullPropagationString
     {
         private readonly StringBuilder _buffer;
-        private readonly ITransaction _transaction;
+        private readonly ITransaction? _transaction;
 
         public bool ContainsNullValue { get; private set; }
         public bool HasValueBeenSet { get; private set; }
@@ -18,13 +18,30 @@ namespace NTDLS.Katzebase.Parsers
             set => _buffer.Length = value;
         }
 
-        public NullPropagationString(ITransaction transaction)
+        public NullPropagationString()
+        {
+            _buffer = new();
+        }
+
+        public NullPropagationString(ITransaction? transaction)
         {
             _transaction = transaction;
             _buffer = new();
         }
 
-        public NullPropagationString(ITransaction transaction, string? initialValue)
+        public NullPropagationString(string? initialValue)
+        {
+            _buffer = new(initialValue);
+
+            if (initialValue == null)
+            {
+                ContainsNullValue = true;
+            }
+
+            HasValueBeenSet = true;
+        }
+
+        public NullPropagationString(ITransaction? transaction, string? initialValue)
         {
             _transaction = transaction;
             _buffer = new(initialValue);
@@ -42,7 +59,7 @@ namespace NTDLS.Katzebase.Parsers
             if (HasValueBeenSet && ContainsNullValue)
             {
                 //If we already have data in the buffer, then add a NullValuePropagation warning.
-                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                _transaction?.AddWarning(KbTransactionWarning.NullValuePropagation);
             }
 
             if (c == null)
@@ -60,7 +77,7 @@ namespace NTDLS.Katzebase.Parsers
             if (HasValueBeenSet && ContainsNullValue)
             {
                 //If we already have data in the buffer, then add a NullValuePropagation warning.
-                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                _transaction?.AddWarning(KbTransactionWarning.NullValuePropagation);
             }
 
             if (newValue == null)
@@ -78,7 +95,7 @@ namespace NTDLS.Katzebase.Parsers
             if (HasValueBeenSet && ContainsNullValue)
             {
                 //If we already have data in the buffer, then add a NullValuePropagation warning.
-                _transaction.AddWarning(KbTransactionWarning.NullValuePropagation);
+                _transaction?.AddWarning(KbTransactionWarning.NullValuePropagation);
             }
 
             if (s == null)
