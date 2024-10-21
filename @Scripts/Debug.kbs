@@ -1,27 +1,28 @@
 SELECT
-    --soh.SalesOrderID,
-    --FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
-    --Count(sod.SalesOrderDetailID) AS TotalItems,
-    --Round(SUM(sod.OrderQty), 2) AS TotalQuantity,
-    --FormatNumeric(Sum(sod.LineTotal), 'c2') AS TotalSalesAmount,
-    --FormatNumeric(Avg(sod.UnitPrice), 'c2') AS AverageUnitPrice,
-    --FormatNumeric(Min(sod.UnitPrice), 'c2') AS MinUnitPrice,
-    --FormatNumeric(Max(sod.UnitPrice), 'c2') AS MaxUnitPrice,
+    soh.SalesOrderID,
+    FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
+    Count(sod.SalesOrderDetailID) AS TotalItems,
+    Round(SUM(sod.OrderQty), 2) AS TotalQuantity,
+    FormatNumeric(Sum(sod.LineTotal), 'c2') AS TotalSalesAmount,
+    FormatNumeric(Avg(sod.UnitPrice), 'c2') AS AverageUnitPrice,
+    FormatNumeric(Min(sod.UnitPrice), 'c2') AS MinUnitPrice,
+    FormatNumeric(Max(sod.UnitPrice), 'c2') AS MaxUnitPrice,
     
-    FormatNumeric(sod.ProductId, 'n1') --This is invalid.
+    --sod.ProductId --This is invalid.
     
     --max(sod.ProductId)
     --min(sod.ProductId), --This is invalid.
-    --FormatNumeric(Sum(IIF(IsEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as CompletedSalesAmount,
-    --FormatNumeric(Sum(IIF(IsNotEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as PendingSalesAmount
+    FormatNumeric(Sum(IIF(IsEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as CompletedSalesAmount,
+    FormatNumeric(Sum(IIF(IsNotEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as PendingSalesAmount
 FROM
     AWSales:SalesOrderHeader as soh
 INNER JOIN AWSales:SalesOrderDetail as sod
 	ON soh.SalesOrderID = sod.SalesOrderID
 GROUP BY 
-	FormatNumeric(sod.ProductId, 'n1')
-    --soh.SalesOrderID,
-    --soh.OrderDate
+	sod.ProductId,
+	--FormatNumeric(sod.ProductId, 'n1')
+    soh.SalesOrderID,
+    FormatDateTime(soh.OrderDate, 'mm/dd/yyyy')
 ORDER BY 
     soh.OrderDate DESC
  

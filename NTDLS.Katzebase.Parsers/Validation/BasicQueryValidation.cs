@@ -108,37 +108,44 @@ namespace NTDLS.Katzebase.Parsers.Validation
             //Validate group by:
             if (query.GroupBy.Count > 0)
             {
-                var fieldsToValidate = new List<QueryField>();
+                //This must be case-sensitive because things like date time formatting with "MM" vs "mm" result in different values.
+                var groupBySimplifications = new HashSet<string?>();
 
                 foreach (var field in query.GroupBy)
                 {
-                    var testText = field.Expression.SimplifyScalarQueryField(query, query.GroupBy);
+                    var simplifiedText = field.Expression.SimplifyScalarQueryField(query, query.GroupBy);
+                    groupBySimplifications.Add(simplifiedText);
                 }
 
                 foreach (var field in query.SelectFields)
                 {
-
                     var testText = field.Expression.SimplifyScalarQueryField(query, query.SelectFields);
 
                     if (field.Expression is IQueryFieldExpression expressionField)
                     {
-
-
-
                         var isAggregate = expressionField.FunctionDependencies.Any(o => AggregateFunctionCollection.TryGetFunction(o.FunctionName, out _));
                         if (isAggregate == false)
                         {
-                            fieldsToValidate.Add(field);
-                        }
+                            var simplifiedText = field.Expression.SimplifyScalarQueryField(query, query.SelectFields);
 
+                            if (!groupBySimplifications.Contains(simplifiedText))
+                            {
+                                exceptions.Add(new KbParserException(field.Expression.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                                    $"Expression must be aggregated or included in grouping: [{simplifiedText}]"));
+                            }
+                        }
                     }
                     else if (field.Expression is QueryFieldDocumentIdentifier identifierField)
                     {
-                        fieldsToValidate.Add(field);
+                        var simplifiedText = field.Expression.SimplifyScalarQueryField(query, query.SelectFields);
+
+                        if (!groupBySimplifications.Contains(simplifiedText))
+                        {
+                            exceptions.Add(new KbParserException(field.Expression.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                                $"Expression must be aggregated or included in grouping: [{simplifiedText}]"));
+                        }
                     }
                 }
-
-
             }
 
             if (exceptions.Count > 0)

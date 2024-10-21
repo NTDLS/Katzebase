@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Root;
+using NTDLS.Katzebase.Parsers.Parsing.Root;
 using NTDLS.Katzebase.Parsers.Tokens;
 using NTDLS.Katzebase.Parsers.Validation;
 using static NTDLS.Katzebase.Parsers.Constants;

@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Expressions;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
-using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers.Parsing;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
