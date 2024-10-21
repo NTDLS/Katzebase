@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
 using static NTDLS.Katzebase.Engine.Tests.QueryConventionBasedExpectations.Constants;
 

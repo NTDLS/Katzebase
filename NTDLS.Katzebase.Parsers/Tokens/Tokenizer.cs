@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {

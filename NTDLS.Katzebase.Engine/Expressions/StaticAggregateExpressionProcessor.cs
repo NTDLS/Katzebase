@@ -4,11 +4,11 @@ using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+using NTDLS.Katzebase.Parsers;
+using NTDLS.Katzebase.Parsers.Fields;
+using NTDLS.Katzebase.Parsers.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
-using NTDLS.Katzebase.Parsers.Query.Fields;
-using NTDLS.Katzebase.Parsers.Query.Fields.Expressions;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
 

@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
-using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 

@@ -10,8 +10,8 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Scripts;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Interfaces;
-using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Api.KbConstants;
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
 
-            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            var queries = StaticBatchParser.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (queries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             var results = new KbQueryResultCollection();
             Session.PushCurrentQuery(queryText);
 
-            foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
+            foreach (var query in StaticBatchParser.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
             {
                 results.Add(_core.Query.ExecuteQuery(Session, query));
             }
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             var results = new KbQueryResultCollection();
             Session.PushCurrentQuery(queryText);
 
-            foreach (var query in StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
+            foreach (var query in StaticBatchParser.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary()))
             {
                 results.Add(_core.Query.ExecuteQuery(Session, query));
             }
@@ -174,7 +174,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             queryText = EmbeddedScripts.GetScriptOrLoadFile(queryText);
 
-            var queries = StaticParserBatch.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
+            var queries = StaticBatchParser.Parse(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (queries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");

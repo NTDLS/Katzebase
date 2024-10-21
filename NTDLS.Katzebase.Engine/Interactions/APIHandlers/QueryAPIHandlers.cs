@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
 
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 session.PushCurrentQuery(param.Statement);
 
-                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                var queries = StaticBatchParser.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
                     var apiResult = _core.Query.ExplainPlan(session, query);
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 session.PushCurrentQuery(param.Statement);
 
-                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                var queries = StaticBatchParser.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
                     var apiResult = _core.Query.ExplainOperations(session, query);
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 session.PushCurrentQuery(param.Statement);
 
-                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                var queries = StaticBatchParser.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
                     var apiResult = _core.Query.ExecuteQuery(session, query);
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 session.PushCurrentQuery(param.Statement);
 
-                var queries = StaticParserBatch.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
+                var queries = StaticBatchParser.Parse(param.Statement, _core.GlobalConstants, param.UserParameters);
                 foreach (var query in queries)
                 {
                     var apiResult = _core.Query.ExecuteNonQuery(session, query);

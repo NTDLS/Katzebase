@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Text;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Api.KbConstants;
