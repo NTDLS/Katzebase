@@ -482,6 +482,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 #endregion
 
+                if (_isCancelPending)
+                {
+                    return;
+                }
+
                 #region Import Inexes.
 
                 if (item.ImportIndexes)
@@ -493,6 +498,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                     foreach (var sourceIndex in sourceIndexes)
                     {
+                        if (_isCancelPending)
+                        {
+                            return;
+                        }
+
                         if (client.Schema.Indexes.Exists(item.TargetServerSchema, sourceIndex.Key.EnsureNotNull()) == false)
                         {
                             var targetIndex = new KbIndex(sourceIndex.Key.EnsureNotNull())

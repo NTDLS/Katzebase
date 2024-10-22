@@ -3,6 +3,7 @@
     public static class KbConstants
     {
         public static string FriendlyName = "Katzebase";
+        public const int HeartbeatSeconds = 15;
 
         public enum KbLogSeverity
         {

@@ -124,6 +124,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
+        public void Heartbeat(RmContext context, KbNotifySessionHeartbeat param)
+        {
+            //The call to GetSession() will update the LastCheckInTime.
+            _core.Sessions.GetSession(context.ConnectionId);
+        }
+
         public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);

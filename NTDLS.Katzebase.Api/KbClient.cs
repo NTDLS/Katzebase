@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Management;
 using NTDLS.Katzebase.Api.Models;
+using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -20,6 +21,7 @@ namespace NTDLS.Katzebase.Api
         public event CommunicationExceptionEvent? OnCommunicationException;
 
         private TimeSpan _queryTimeout = TimeSpan.FromSeconds(30);
+        private Thread? _heartbeatThread;
 
         public TimeSpan QueryTimeout
         {
@@ -157,6 +159,9 @@ namespace NTDLS.Katzebase.Api
                 ServerConnectionId = reply.ConnectionId;
                 ProcessId = reply.ProcessId;
 
+                _heartbeatThread = new Thread(HeartbeatThread);
+                _heartbeatThread.Start();
+
                 var sessionInfo = new KbSessionInfo
                 {
                     ConnectionId = ServerConnectionId,
@@ -172,8 +177,24 @@ namespace NTDLS.Katzebase.Api
             }
         }
 
+        private void HeartbeatThread()
+        {
+            var lastCheckInTime = DateTime.UtcNow;
+
+            while (IsConnected)
+            {
+                if ((DateTime.UtcNow - lastCheckInTime).TotalSeconds >= KbConstants.HeartbeatSeconds)
+                {
+                    Connection?.Notify(new KbNotifySessionHeartbeat());
+                    lastCheckInTime = DateTime.UtcNow;
+                }
+                Thread.Sleep(100);
+            }
+        }
+
         void Disconnect()
         {
+            _heartbeatThread = null;
             try
             {
                 try
@@ -227,7 +248,6 @@ namespace NTDLS.Katzebase.Api
             }
 
             disposed = true;
-
         }
 
         #endregion

@@ -141,24 +141,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
                     // automatically retried by the HeartbeatManager.
                     var wasLockObtained = _collection.TryWrite(100, (obj) =>
-                    {
-                        var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
-                        if (session != null)
                         {
-                            obj.Remove(session.ConnectionId);
-                        }
-                    });
+                            var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
+                            if (session != null)
+                            {
+                                obj.Remove(session.ConnectionId);
+                            }
+                        });
 
-                    if (wasLockObtained == false)
+                    if (wasLockObtained)
                     {
-                        LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
+                        return true;
                     }
-
-                    return wasLockObtained;
                 }
-                else
-                {
-                    _collection.TryWrite(100, (obj) =>
+
+                LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
+
+                //We can TryRead here (instead of TryWrite) because we are not modifying the collection, just a value within it.
+                _collection.TryRead(100, (obj) =>
                     {
                         var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                         if (session != null)
@@ -168,7 +168,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             session.IsExpired = true;
                         }
                     });
-                }
+
                 return false;
             }
             catch (Exception ex)
