@@ -109,7 +109,7 @@
             buttonImport.Name = "buttonImport";
             buttonImport.Size = new Size(90, 90);
             buttonImport.TabIndex = 3;
-            buttonImport.Text = "Start Import";
+            buttonImport.Text = "Start";
             buttonImport.UseVisualStyleBackColor = false;
             buttonImport.Click += buttonImport_Click;
             // 
@@ -284,10 +284,10 @@
             Controls.Add(menuStripBody);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripBody;
-            MaximizeBox = false;
             Name = "FormMain";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Katzebase MSSQL Migration";
+            FormClosing += FormMain_FormClosing;
             Load += FormMain_Load;
             Resize += FormMain_Resize;
             menuStripBody.ResumeLayout(false);

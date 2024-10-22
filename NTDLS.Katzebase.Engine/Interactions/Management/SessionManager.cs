@@ -124,6 +124,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="processId"></param>
         public void CloseByProcessId(ulong processId)
         {
+            Console.WriteLine($"Closed: {processId}");
+
             try
             {
                 _core.Transactions.CloseByProcessID(processId);
@@ -131,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Once the transaction for the process has been closed, removing the process is a non-critical task.
                 // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
                 // automatically retried by the HeartbeatManager.
-                _collection.TryWrite(out bool wasLockObtained, 1000, (obj) =>
+                _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
                 {
                     var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                     if (session != null)

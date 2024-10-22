@@ -80,47 +80,58 @@ namespace NTDLS.Katzebase.Management.Classes
 
         private void SchemaCache_OnCacheItemAdded(CachedSchema schemaItem)
         {
-            ServerExplorerManager.ServerExplorerTree.Invoke(() =>
+            if (ServerExplorerManager.ServerExplorerTree.IsDisposed)
             {
-                try
-                {
-                    ServerExplorerManager.ServerExplorerTree.SuspendLayout();
+                return;
+            }
 
-                    var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
-                    if (parentSchemaNode != null && parentSchemaNode.Schema != null)
+            try
+            {
+                ServerExplorerManager.ServerExplorerTree.Invoke(() =>
+                {
+                    try
                     {
-                        var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
-                        if (existingNode != null)
+                        ServerExplorerManager.ServerExplorerTree.SuspendLayout();
+
+                        var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
+                        if (parentSchemaNode != null && parentSchemaNode.Schema != null)
                         {
-                            return;
+                            var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                            if (existingNode != null)
+                            {
+                                return;
+                            }
+
+                            var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
+                            parentSchemaNode.Nodes.Add(newSchemaNode);
+
+                            var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
+                            newSchemaNode.Nodes.Add(schemaIndexFolderNode);
+
+                            foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
+                            {
+                                var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
+                                schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                            }
+
+                            if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
+                            {
+                                //Expand the root schema node when we add the first node.
+                                parentSchemaNode.Parent.Expand();
+                                parentSchemaNode.Expand();
+                            }
+                            ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
                         }
-
-                        var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
-                        parentSchemaNode.Nodes.Add(newSchemaNode);
-
-                        var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
-                        newSchemaNode.Nodes.Add(schemaIndexFolderNode);
-
-                        foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
-                        {
-                            var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
-                            schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
-                        }
-
-                        if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
-                        {
-                            //Expand the root schema node when we add the first node.
-                            parentSchemaNode.Parent.Expand();
-                            parentSchemaNode.Expand();
-                        }
-                        ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
                     }
-                }
-                finally
-                {
-                    ServerExplorerManager.ServerExplorerTree.ResumeLayout();
-                }
-            });
+                    finally
+                    {
+                        ServerExplorerManager.ServerExplorerTree.ResumeLayout();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         private void SchemaCache_OnCacheItemRefreshed(CachedSchema schemaItem)
