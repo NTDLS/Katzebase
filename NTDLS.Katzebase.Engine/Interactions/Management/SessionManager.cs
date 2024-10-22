@@ -158,7 +158,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    _collection.TryWrite(100, (obj) =>
+                    //We can TryRead here (instead of TryWrite) because we are not modifying the collection, just a value within it.
+                    _collection.TryRead(100, (obj) =>
                     {
                         var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                         if (session != null)

@@ -105,7 +105,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (transaction != null)
                     {
                         transaction.Rollback();
-
                         obj.Remove(transaction);
                     }
                 });
