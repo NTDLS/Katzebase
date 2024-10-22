@@ -103,11 +103,11 @@ namespace NTDLS.Katzebase.Management.Properties {
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot;?&gt;
         ///&lt;SyntaxDefinition name=&quot;KBSQL&quot; extensions=&quot;.kbs&quot; xmlns=&quot;http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008&quot;&gt;
-        ///	&lt;Color name=&quot;Punctuation&quot; foreground=&quot;Green&quot; exampleText=&quot;a(b.c);&quot; /&gt;
-        ///	&lt;Color name=&quot;NumberLiteral&quot; foreground=&quot;Blue&quot; exampleText=&quot;3.1415f&quot;/&gt;
-        ///	&lt;Color name=&quot;KbMarkup&quot; foreground=&quot;Brown&quot; fontWeight=&quot;bold&quot; exampleText=&quot;{$INT 10000:30000}&quot; /&gt;
-        ///	&lt;Color name=&quot;KbConfig&quot; fontWeight=&quot;bold&quot; foreground=&quot;DarkCyan&quot; exampleText=&quot;TraceWaitTimes&quot;/&gt;
-        ///	&lt;Color name=&quot;KbFunction&quot; fontWeig [rest of string was truncated]&quot;;.
+        ///  &lt;Color name=&quot;Punctuation&quot; foreground=&quot;Green&quot; exampleText=&quot;a(b.c);&quot; /&gt;
+        ///  &lt;Color name=&quot;NumberLiteral&quot; foreground=&quot;Blue&quot; exampleText=&quot;3.1415f&quot;/&gt;
+        ///  &lt;Color name=&quot;KbMarkup&quot; foreground=&quot;Brown&quot; fontWeight=&quot;bold&quot; exampleText=&quot;{$INT 10000:30000}&quot; /&gt;
+        ///  &lt;Color name=&quot;KbConfig&quot; fontWeight=&quot;bold&quot; foreground=&quot;DarkCyan&quot; exampleText=&quot;TraceWaitTimes&quot;/&gt;
+        ///  &lt;Color name=&quot;KbFunction&quot; fon [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Highlighter {
             get {

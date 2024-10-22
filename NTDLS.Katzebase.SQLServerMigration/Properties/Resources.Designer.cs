@@ -82,8 +82,7 @@ namespace NTDLS.Katzebase.SQLServerMigration.Properties {
         ///    INNER JOIN sys.tables t ON i.object_id = t.object_id
         ///WHERE 
         ///    i.is_disabled = 0  -- Exclude disabled indexes
-        /// AND ic.is_included_column = 0
-        /// AND &apos;[&apos; + [rest of string was truncated]&quot;;.
+        /// AND ic.is_included_column = 0 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SqlGetObjectIndexes {
             get {
@@ -99,7 +98,7 @@ namespace NTDLS.Katzebase.SQLServerMigration.Properties {
         ///    ISNULL(SUM(p.reserved_page_count) * 8 * 1024, 0) AS TotalSizeBytes,  -- Total size in bytes
         ///    ISNULL(SUM(p.row_count), 0) AS TotalRows,                            -- Total rows
         ///    CASE 
-        ///        WHEN SUM(p.row_count) &gt; 0 THEN (SUM(p.reserved_page_count) * 8 * 1024) / SUM(p.row [rest of string was truncated]&quot;;.
+        ///        WHEN SUM(p.row_count) &gt; 0 THEN (SUM(p.reserved_page_count) * 8 * 1024) / SU [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string SqlGetObjectsAndSizes {
             get {
