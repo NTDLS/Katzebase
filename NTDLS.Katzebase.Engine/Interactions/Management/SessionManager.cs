@@ -46,6 +46,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
+        internal List<SessionState> GetExpiredSessions()
+        {
+            return _collection.Read((obj) =>
+            {
+                return obj.Where(o => o.Value.IsExpired == true || (DateTime.UtcNow - o.Value.LastCheckInTime)
+                    .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
+            });
+        }
+
         internal InternalSystemSessionTransaction CreateEphemeralSystemSession()
         {
             var session = _core.Sessions.CreateSession(Guid.NewGuid(), BuiltInSystemUserName, "system", true);
@@ -124,27 +133,39 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="processId"></param>
         public void CloseByProcessId(ulong processId)
         {
-            Console.WriteLine($"Closed: {processId}");
-
             try
             {
-                _core.Transactions.CloseByProcessID(processId);
-
-                //Once the transaction for the process has been closed, removing the process is a non-critical task.
-                // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
-                // automatically retried by the HeartbeatManager.
-                _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
+                if (_core.Transactions.TryCloseByProcessID(processId))
                 {
-                    var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
-                    if (session != null)
+                    //Once the transaction for the process has been closed, removing the process is a non-critical task.
+                    // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
+                    // automatically retried by the HeartbeatManager.
+                    _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
                     {
-                        obj.Remove(session.ConnectionId);
-                    }
-                });
+                        var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
+                        if (session != null)
+                        {
+                            obj.Remove(session.ConnectionId);
+                        }
+                    });
 
-                if (wasLockObtained == false)
+                    if (wasLockObtained == false)
+                    {
+                        LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
+                    }
+                }
+                else
                 {
-                    LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
+                    _collection.TryWrite(100, (obj) =>
+                    {
+                        var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
+                        if (session != null)
+                        {
+                            //If we are unable to get here, then the heartbeat thread will clean
+                            //  up the connection once the connection idle timeout is reached.
+                            session.IsExpired = true;
+                        }
+                    });
                 }
             }
             catch (Exception ex)

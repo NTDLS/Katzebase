@@ -752,9 +752,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public void Rollback()
         {
-            _core.EnsureNotNull();
 
-            TransactionSemaphore.Write(() =>
+            TransactionSemaphore.WriteAll([_core.EnsureNotNull().Transactions.CriticalSection], () =>
             {
                 if (IsCommittedOrRolledBack)
                 {

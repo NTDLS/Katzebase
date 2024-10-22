@@ -450,7 +450,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                                 client.Transaction.Begin();
                                                 continue;
                                             }
-                                            Console.WriteLine(ex.Message);
                                         }
                                         break;
                                     }

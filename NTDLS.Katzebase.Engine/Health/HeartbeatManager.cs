@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NTDLS.Katzebase.Engine.Health
+﻿namespace NTDLS.Katzebase.Engine.Health
 {
     internal class HeartbeatManager
     {
@@ -33,9 +27,8 @@ namespace NTDLS.Katzebase.Engine.Health
         {
             while (_continueRunning)
             {
-                /*
                 var expiredSessions = _core.Sessions.GetExpiredSessions();
-                if (expiredSessions.Any())
+                if (expiredSessions.Count != 0)
                 {
                     var processIds = expiredSessions.Select(o => o.ProcessId).ToList();
                     foreach (var processId in processIds)
@@ -45,9 +38,7 @@ namespace NTDLS.Katzebase.Engine.Health
                 }
 
                 Thread.Sleep(100);
-                */
             }
         }
     }
-
 }
