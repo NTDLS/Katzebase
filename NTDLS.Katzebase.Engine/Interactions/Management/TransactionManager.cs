@@ -21,6 +21,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly EngineCore _core;
         private readonly OptimisticCriticalResource<List<Transaction>> _collection = new();
 
+        public ICriticalSection CriticalSection => _collection.CriticalSection;
+
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactionAPIHandlers APIHandlers { get; private set; }
 
@@ -93,11 +95,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// This is typically called from the session manager and probably should not be called otherwise.
         /// </summary>
         /// <param name="processIDs"></param>
-        internal void CloseByProcessID(ulong processId)
+        internal bool TryCloseByProcessID(ulong processId)
         {
             try
             {
-                _collection.Write((obj) =>
+                _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)
@@ -108,6 +110,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 });
 
+                return wasLockObtained;
             }
             catch (Exception ex)
             {

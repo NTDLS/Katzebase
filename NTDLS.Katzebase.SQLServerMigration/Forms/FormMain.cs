@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.SQLServerMigration.Classes;
 using NTDLS.Katzebase.SQLServerMigration.Properties;
+using NTDLS.WinFormsHelpers;
 using System.Data.SqlClient;
 using System.Dynamic;
 
@@ -18,6 +19,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         private readonly int _maxTableWorkers = Environment.ProcessorCount;
         private readonly int _widthToRight;
         private readonly int _heightToBottom;
+        private bool _isCancelPending = false;
 
         public FormMain()
         {
@@ -93,6 +95,21 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void buttonImport_Click(object sender, EventArgs e)
         {
+            if (buttonImport.Text.Is("Cancel"))
+            {
+                if (MessageBox.Show($"Cancel the import process?", "SQLServer Migration", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    _isCancelPending = true;
+                }
+
+                return;
+            }
+
+            _isCancelPending = false;
+
+            buttonImport.BackColor = Color.FromArgb(255, 192, 192);
+            buttonImport.Text = "Cancel";
+
             if (string.IsNullOrWhiteSpace(textBoxServerHost.Text))
             {
                 return;
@@ -124,34 +141,15 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     param.Items.Add(new SelectedImportObject(item,
                                 (item.Cells[ColumnSourceTable.Index].Value?.ToString()).EnsureNotNull(),
                                 (textBoxServerSchema.Text + ":" + (item.Cells[ColumnTargetSchema.Index].Value?.ToString()).EnsureNotNull()).Trim(':'),
-                                int.Parse((item.Cells[ColumnPageSize.Index].Value?.ToString()).EnsureNotNull())
-                            )
+                                int.Parse((item.Cells[ColumnPageSize.Index].Value?.ToString()).EnsureNotNull()))
                     {
                         ImportData = (importData.Value != null && (bool)importData.Value),
                         ImportIndexes = (importIndexes.Value != null && (bool)importIndexes.Value)
-                    }
-                        );
+                    });
                 }
             }
 
             (new Thread(WorkloadThreadProc)).Start(param);
-
-            var result = FormProgress.Singleton.ShowNew("Please wait...");
-            if (result == DialogResult.OK)
-            {
-                MessageBox.Show("Complete!", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                var message = "An error occurred while exporting data.";
-
-                if (FormProgress.Singleton.Form.UserData != null)
-                {
-                    message += $"\r\n{FormProgress.Singleton.Form.UserData}";
-                }
-
-                MessageBox.Show(message, "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
 
         public void WorkloadThreadProc(object? p)
@@ -162,13 +160,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 var param = (OuterWorkloadThreadParam)p;
 
                 _totalRowCount = 0;
-
-                FormProgress.Singleton.WaitForVisible();
-                FormProgress.Singleton.Form.SetCanCancel(true);
-
-                //FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
-                //FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
-                FormProgress.Singleton.Form.SetProgressMaximum(param.Items.Count);
 
                 #region Create Schemas.
 
@@ -233,7 +224,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         Thread.Sleep(100);
                     }
 
-                    if (FormProgress.Singleton.Form.IsCancelPending)
+                    if (_isCancelPending)
                     {
                         break;
                     }
@@ -247,8 +238,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                         (new Thread(TableWorkerThreadProc)).Start(tableWorkerParam);
                     }
-
-                    FormProgress.Singleton.Form.IncrementProgressValue();
                 }
 
                 #endregion
@@ -258,12 +247,19 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     Thread.Sleep(100);
                 }
 
-                FormProgress.Singleton.Close(DialogResult.OK);
+                this.MessageBox($"Complete.", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                FormProgress.Singleton.Form.UserData = ex.Message;
-                FormProgress.Singleton.Close(DialogResult.Cancel);
+                this.MessageBox($"Complete with errors: {ex.GetBaseException().Message}", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+            finally
+            {
+                Invoke(new Action(() =>
+                {
+                    buttonImport.BackColor = Color.FromArgb(192, 255, 192);
+                    buttonImport.Text = "Start";
+                }));
             }
         }
 
@@ -299,6 +295,36 @@ namespace NTDLS.Katzebase.SQLServerMigration
             item.Cells[ColumnStatus.Index].Value = text;
         }
 
+        private void MoveRowToBottom(DataGridViewRow item)
+        {
+            if (dataGridViewSqlServer.InvokeRequired)
+            {
+                dataGridViewSqlServer.Invoke(new Action(() => MoveRowToBottom(item)));
+                return;
+            }
+
+            int bottomIndex = dataGridViewSqlServer.Rows.Count - 1;
+            DataGridViewRow row = dataGridViewSqlServer.Rows[item.Index];
+            dataGridViewSqlServer.Rows.RemoveAt(item.Index);
+            dataGridViewSqlServer.Rows.Insert(bottomIndex, row);
+            dataGridViewSqlServer.ClearSelection();
+        }
+
+        private void MoveRowToTop(DataGridViewRow item)
+        {
+            if (dataGridViewSqlServer.InvokeRequired)
+            {
+                dataGridViewSqlServer.Invoke(new Action(() => MoveRowToTop(item)));
+                return;
+            }
+
+            DataGridViewRow row = dataGridViewSqlServer.Rows[item.Index];
+            dataGridViewSqlServer.Rows.RemoveAt(item.Index);
+            dataGridViewSqlServer.Rows.Insert(0, row);
+            dataGridViewSqlServer.ClearSelection();
+            dataGridViewSqlServer.FirstDisplayedScrollingRowIndex = 0;
+        }
+
         private void TableWorkerThreadProc(object? p)
         {
             if (p == null) return;
@@ -310,13 +336,21 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 MoveDataGridViewRowFirst(param.Item.RowItem);
                 UpdateDataGridViewText(param.Item.RowItem, "Starting");
+
+                MoveRowToTop(param.Item.RowItem);
+
                 ExportSQLServerTableToKatzebase(param.Item, param.TargetServerHost, param.TargetServerPort, param.Username, param.Password, param.TargetServerSchema);
 
-                if (FormProgress.Singleton.Form.IsCancelPending)
+                if (_isCancelPending)
                 {
                     UpdateDataGridViewText(param.Item.RowItem, "Cancelled");
                 }
-                else UpdateDataGridViewText(param.Item.RowItem, "Complete");
+                else
+                {
+                    UpdateDataGridViewText(param.Item.RowItem, "Complete");
+                }
+
+                MoveRowToBottom(param.Item.RowItem);
             }
             catch
             {
@@ -347,7 +381,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 QueryTimeout = TimeSpan.FromDays(7)
             };
 
-            if (FormProgress.Singleton.Form.IsCancelPending)
+            if (_isCancelPending)
             {
                 return;
             }
@@ -374,7 +408,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                                 while (dataReader.Read())
                                 {
-                                    if (FormProgress.Singleton.Form.IsCancelPending)
+                                    if (_isCancelPending)
                                     {
                                         dataReader.Close();
                                         break;
@@ -399,7 +433,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                                     while (true)
                                     {
-                                        if (FormProgress.Singleton.Form.IsCancelPending)
+                                        if (_isCancelPending)
                                         {
                                             break;
                                         }
@@ -416,17 +450,16 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                                 client.Transaction.Begin();
                                                 continue;
                                             }
-                                            Console.WriteLine(ex.Message);
                                         }
                                         break;
                                     }
 
                                     lock (_totalRowCountLock)
                                     {
-                                        if (_totalRowCount % 100 == 0)
-                                        {
-                                            FormProgress.Singleton.Form.SetBodyText($"Total rows processed: {_totalRowCount:n0}...");
-                                        }
+                                        //if (_totalRowCount % 100 == 0)
+                                        //{
+                                        //FormProgress.Singleton.Form.SetBodyText($"Total rows processed: {_totalRowCount:n0}...");
+                                        //}
 
                                         _totalRowCount++;
                                     }
@@ -553,6 +586,20 @@ namespace NTDLS.Katzebase.SQLServerMigration
             dataGridViewSqlServer.Width = Width - _widthToRight;
             dataGridViewSqlServer.Height = Height - _heightToBottom;
             buttonImport.Left = dataGridViewSqlServer.Right - buttonImport.Width;
+        }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (buttonImport.Text.Is("Cancel"))
+            {
+                if (MessageBox.Show($"Cancel the import process?", "SQLServer Migration", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    _isCancelPending = true;
+                }
+
+                e.Cancel = true;
+                return;
+            }
         }
     }
 }

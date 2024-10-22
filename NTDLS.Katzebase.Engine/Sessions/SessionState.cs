@@ -54,6 +54,12 @@ namespace NTDLS.Katzebase.Engine.Sessions
         public string Username { get; private set; } = username;
 
         /// <summary>
+        /// The connection has been disconnected and needs to be cleaned up. We do this because it can be dangerous to perform the locking required to
+        /// terminate a connection when it is disconnected so we "try" to terminate the connection then defer to the heartbeat thread usung this flag.
+        /// </summary>
+        public bool IsExpired { get; set; } = false;
+
+        /// <summary>
         /// Whether this session is a pre-login session. These are used by the engine to access data (like user accounts) to facilitate the login process.
         /// </summary>
         public bool IsInternalSystemSession { get; private set; } = isInternalSystemSession;

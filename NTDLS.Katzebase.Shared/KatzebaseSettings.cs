@@ -23,6 +23,11 @@
         public int CacheScavengeInterval { get; set; } = 10;
 
         /// <summary>
+        /// The number of seconds that a connection must be idle before its transactions are rolled back and connection is closed.
+        /// </summary>
+        public int MaxIdleConnectionSeconds { get; set; } = 60;
+
+        /// <summary>
         /// The number of seconds to keep an item in cache (sliding expiration).
         /// </summary>
         public int CacheSeconds { get; set; } = 3600;

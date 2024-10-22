@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using NTDLS.WinFormsHelpers;
+using System.ComponentModel;
 using System.Data.SqlClient;
 
 namespace NTDLS.Katzebase.SQLServerMigration
@@ -30,6 +31,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         public SQLConnectionDetails ConnectionDetails { get; set; } = new();
         public CheckConnectivity_Result ConnectivityResult { get; set; } = new();
 
+        ProgressForm checkConnectivityProgress = new();
 
         #region Constructors / Destructors.
 
@@ -72,7 +74,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         #region CheckConnectivity().
 
         AbortableBackgroundWorker? checkConnectivity_Worker = null;
-        FormProgress? checkConnectivityProgress = null;
+
 
         private CheckConnectivity_Result CheckConnectivity(string alternateDatabase)
         {
@@ -80,38 +82,38 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 Success = false
             };
-            using (checkConnectivityProgress = new FormProgress())
+
+
+            //checkConnectivityProgress.OnCancel += CheckConnectivityProgress_OnCancel;
+            //checkConnectivityProgress.SetCanCancel(true);
+            checkConnectivityProgress.SetBodyText("Checking connectivity...");
+
+            checkConnectivity_Worker = new AbortableBackgroundWorker();
+            checkConnectivity_Worker.RunWorkerCompleted += CheckConnectivity_Worker_RunWorkerCompleted;
+            checkConnectivity_Worker.DoWork += CheckConnectivity_Worker_DoWork;
+            checkConnectivity_Worker.WorkerReportsProgress = false;
+            checkConnectivity_Worker.WorkerSupportsCancellation = true;
+            checkConnectivity_Worker.RunWorkerAsync("master");
+
+            checkConnectivityProgress.ShowDialog();
+
+            var workerResult = checkConnectivityProgress.UserData as CheckConnectivity_Result;
+
+            if (workerResult != null)
             {
-                checkConnectivityProgress.OnCancel += CheckConnectivityProgress_OnCancel;
-                checkConnectivityProgress.SetCanCancel(true);
-                checkConnectivityProgress.SetBodyText("Checking connectivity...");
-
-                checkConnectivity_Worker = new AbortableBackgroundWorker();
-                checkConnectivity_Worker.RunWorkerCompleted += CheckConnectivity_Worker_RunWorkerCompleted;
-                checkConnectivity_Worker.DoWork += CheckConnectivity_Worker_DoWork;
-                checkConnectivity_Worker.WorkerReportsProgress = false;
-                checkConnectivity_Worker.WorkerSupportsCancellation = true;
-                checkConnectivity_Worker.RunWorkerAsync("master");
-
-                checkConnectivityProgress.ShowDialog();
-
-                var workerResult = checkConnectivityProgress.UserData as CheckConnectivity_Result;
-
-                if (workerResult != null)
+                result = workerResult;
+                //This is so we don't show a message box on cancellation.
+                if (string.IsNullOrEmpty(result.ExceptionMessage) == false && result.ExceptionMessage.ToLower().Contains(/*the */"thread was"/* being terminated*/))
                 {
-                    result = workerResult;
-                    //This is so we dont show a message box on cancellation.
-                    if (string.IsNullOrEmpty(result.ExceptionMessage) == false && result.ExceptionMessage.ToLower().Contains(/*the */"thread was"/* being terminated*/))
-                    {
-                        result.ExceptionMessage = string.Empty;
-                    }
+                    result.ExceptionMessage = string.Empty;
                 }
             }
+
 
             return result;
         }
 
-        private void CheckConnectivityProgress_OnCancel(object sender, FormProgress.OnCancelInfo e)
+        private void CheckConnectivityProgress_OnCancel(object sender, ProgressForm.OnCancelInfo e)
         {
             if (checkConnectivityProgress != null)
                 checkConnectivityProgress.SetBodyText("Cancelling...");

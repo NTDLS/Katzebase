@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading;
 using NTDLS.Katzebase.Shared;
@@ -15,6 +16,7 @@ namespace NTDLS.Katzebase.Engine
         internal IOManager IO;
         internal LockManager Locking;
         internal CacheManager Cache;
+        internal HeartbeatManager Heartbeat;
         internal KatzebaseSettings Settings;
 
         public PolicyManager Policy;
@@ -99,6 +101,9 @@ namespace NTDLS.Katzebase.Engine
             LogManager.Information("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
 
+            LogManager.Information("Initializing heartbeat manager.");
+            Heartbeat = new HeartbeatManager(this);
+
             Schemas.PostInitialization();
         }
 
@@ -109,10 +114,15 @@ namespace NTDLS.Katzebase.Engine
             LogManager.Information("Starting recovery.");
             Transactions.Recover();
             LogManager.Information("Recovery complete.");
+
+            Heartbeat.Start();
         }
 
         public void Stop()
         {
+            LogManager.Information("Stopping heartbeat pool.");
+            Heartbeat.Stop();
+
             LogManager.Information("Stopping thread pool.");
             ThreadPool.Stop();
 

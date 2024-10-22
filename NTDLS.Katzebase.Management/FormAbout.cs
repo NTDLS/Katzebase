@@ -86,9 +86,8 @@ namespace NTDLS.Katzebase.Management
                     UseShellExecute = true
                 });
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
     }
