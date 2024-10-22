@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Management
                 LocalUserApplicationData.SaveToDisk($"{Api.KbConstants.FriendlyName}\\Management", settings);
                 Program.Settings = settings;
 
-                this.Close(DialogResult.OK);
+                this.InvokeClose(DialogResult.OK);
             }
             catch (Exception ex)
             {
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Management
 
         private void ButtonCancel_Click(object sender, EventArgs e)
         {
-            this.Close(DialogResult.Cancel);
+            this.InvokeClose(DialogResult.Cancel);
         }
     }
 }

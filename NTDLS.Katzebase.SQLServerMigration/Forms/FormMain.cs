@@ -80,20 +80,18 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private bool ChangeConnection()
         {
-            using (var form = new FormSQLConnect())
+            using var form = new FormSQLConnect();
+            if (form.ShowDialog() == DialogResult.OK)
             {
-                if (form.ShowDialog() == DialogResult.OK)
-                {
-                    _connectionDetails = form.ConnectionDetails;
-                    textBoxServerSchema.Text = _connectionDetails.DatabaseName;
-                    PopulateTables();
-                    return true;
-                }
+                _connectionDetails = form.ConnectionDetails;
+                textBoxServerSchema.Text = _connectionDetails.DatabaseName;
+                PopulateTables();
+                return true;
             }
             return false;
         }
 
-        private void buttonImport_Click(object sender, EventArgs e)
+        private void ButtonImport_Click(object sender, EventArgs e)
         {
             if (buttonImport.Text.Is("Cancel"))
             {
@@ -247,11 +245,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     Thread.Sleep(100);
                 }
 
-                this.MessageBox($"Complete.", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.InvokeMessageBox($"Complete.", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                this.MessageBox($"Complete with errors: {ex.GetBaseException().Message}", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                this.InvokeMessageBox($"Complete with errors: {ex.GetBaseException().Message}", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
             finally
             {

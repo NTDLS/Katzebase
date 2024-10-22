@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Server
             if (_core.Sessions.TryGetProcessByConnection(context.ConnectionId, out var processId))
             {
                 LogManager.Debug($"Terminated PID: {processId}");
-                _core.Sessions.CloseByProcessId(processId);
+                _core.Sessions.TryCloseByProcessID(processId);
             }
         }
 

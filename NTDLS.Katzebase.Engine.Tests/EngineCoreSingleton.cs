@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Tests
             if (_engine.Sessions.TryGetProcessByConnection(context.ConnectionId, out var processId))
             {
                 LogManager.Debug($"Terminated PID: {processId}");
-                _engine.Sessions.CloseByProcessId(processId);
+                _engine.Sessions.TryCloseByProcessID(processId);
             }
         }
 

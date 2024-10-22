@@ -40,9 +40,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public bool IsUserCreated { get; set; }
 
+        private StreamWriter? _transactionLogHandle;
         private readonly EngineCore _core;
-        private TransactionManager? _transactionManager;
-        private StreamWriter? _transactionLogHandle = null;
+        private readonly TransactionManager _transactionManager;
         private readonly PessimisticCriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
         public bool IsCommittedOrRolledBack { get; private set; } = false;
@@ -460,11 +460,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #endregion
 
-        public void SetManager(TransactionManager transactionManager)
-        {
-            _transactionManager = transactionManager;
-        }
-
         public string TransactionPath
         {
             get
@@ -507,9 +502,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 _transactionLogHandle = new StreamWriter(TransactionLogFilePath)
                 {
                     AutoFlush = true
-                };
-
-                _transactionLogHandle.EnsureNotNull();
+                }.EnsureNotNull();
             }
 
             Instrumentation = new InstrumentationTracker(enableInstrumentation);
@@ -752,8 +745,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public void Rollback()
         {
+            _core.EnsureNotNull();
 
-            TransactionSemaphore.WriteAll([_core.EnsureNotNull().Transactions.CriticalSection], () =>
+            TransactionSemaphore.WriteAll([_transactionManager.CriticalSection], () =>
             {
                 if (IsCommittedOrRolledBack)
                 {
@@ -830,7 +824,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 //Discard.
                             }
 
-                            _transactionManager?.RemoveByProcessId(ProcessId);
+                            _transactionManager.RemoveByProcessId(ProcessId);
                             DeleteTemporarySchemas();
                         });
                     }
@@ -889,7 +883,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         {
                             DeferredIOs.Write((obj) => obj.CommitDeferredDiskIO());
                             CleanupTransaction();
-                            _transactionManager?.RemoveByProcessId(ProcessId);
+                            _transactionManager.RemoveByProcessId(ProcessId);
                             DeleteTemporarySchemas();
                         }
                         catch

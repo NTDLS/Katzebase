@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             if (processId != null)
             {
-                core.Sessions.CloseByProcessId(processId.EnsureNotNull());
+                core.Sessions.TryCloseByProcessID(processId.EnsureNotNull());
             }
 
             return new KbQueryResultCollection();

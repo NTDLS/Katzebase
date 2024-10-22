@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
+                var wasLockObtained = _collection.TryWrite(100, (obj) =>
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)

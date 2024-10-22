@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                _core.Sessions.CloseByProcessId(session.ProcessId);
+                _core.Sessions.TryCloseByProcessID(session.ProcessId);
 
                 var apiResults = new KbQueryServerCloseSessionReply();
 
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                _core.Sessions.CloseByProcessId(param.ReferencedProcessId);
+                _core.Sessions.TryCloseByProcessID(param.ReferencedProcessId);
 
                 var apiResult = new KbQueryServerTerminateProcessReply();
 

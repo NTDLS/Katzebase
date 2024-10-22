@@ -111,7 +111,7 @@
             buttonImport.TabIndex = 3;
             buttonImport.Text = "Start";
             buttonImport.UseVisualStyleBackColor = false;
-            buttonImport.Click += buttonImport_Click;
+            buttonImport.Click += ButtonImport_Click;
             // 
             // menuStripBody
             // 

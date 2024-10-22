@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 var referencedProcessId = query.GetAttribute<ulong>(PreparedQuery.Attribute.ProcessId);
 
-                _core.Sessions.CloseByProcessId(referencedProcessId);
+                _core.Sessions.TryCloseByProcessID(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)

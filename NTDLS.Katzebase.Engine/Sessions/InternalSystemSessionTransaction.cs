@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         {
             //Rollback the transaction if it is still open.
             TransactionReference.Transaction.Rollback();
-            Core.Sessions.CloseByProcessId(Session.ProcessId);
+            Core.Sessions.TryCloseByProcessID(Session.ProcessId);
         }
     }
 }

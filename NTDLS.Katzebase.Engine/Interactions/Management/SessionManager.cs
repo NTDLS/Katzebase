@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Kills a session and any associated transaction. This is how we kill a process.
         /// </summary>
         /// <param name="processId"></param>
-        public void CloseByProcessId(ulong processId)
+        public bool TryCloseByProcessID(ulong processId)
         {
             try
             {
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //Once the transaction for the process has been closed, removing the process is a non-critical task.
                     // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
                     // automatically retried by the HeartbeatManager.
-                    _collection.TryWrite(out bool wasLockObtained, 100, (obj) =>
+                    var wasLockObtained = _collection.TryWrite(100, (obj) =>
                     {
                         var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                         if (session != null)
@@ -153,6 +153,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
                     }
+
+                    return wasLockObtained;
                 }
                 else
                 {
@@ -167,6 +169,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                     });
                 }
+                return false;
             }
             catch (Exception ex)
             {
