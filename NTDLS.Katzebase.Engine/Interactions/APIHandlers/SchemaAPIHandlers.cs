@@ -100,8 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
                 }
 
-                var result = StaticSearcherProcessor.SampleSchemaDocuments(
-                    _core, transactionReference.Transaction, param.Schema, 1);
+                var result = StaticSearcherProcessor.SampleSchemaFields(_core, transactionReference.Transaction, param.Schema);
 
                 foreach (var field in result.Fields)
                 {

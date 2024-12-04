@@ -14,6 +14,60 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
+        internal static KbQueryResult SampleSchemaFields(
+            EngineCore core, Transaction transaction, string schemaName)
+        {
+            var result = new KbQueryResult();
+
+            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+
+            if (physicalDocumentPageCatalog.Catalog.Count > 0)
+            {
+                var random = new Random(Environment.TickCount);
+
+                int unsuccessfulAttempts = 0;
+
+                while (unsuccessfulAttempts < 10)
+                {
+                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
+                    var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+
+                    if (pageCatalog.DocumentCount == 0)
+                    {
+                        //Page was empty.
+                        unsuccessfulAttempts++;
+                        continue;
+                    }
+
+                    int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
+
+                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(
+                        transaction, physicalSchema, pageNumber, LockOperation.Read);
+
+                    var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
+
+                    var physicalDocument = core.Documents.AcquireDocument(
+                        transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
+
+                    if (result.Fields.Count == 0)
+                    {
+                        foreach (var documentValue in physicalDocument.Elements)
+                        {
+                            result.Fields.Add(new KbQueryField(documentValue.Key));
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a random sample of all document fields from a schema.
+        /// </summary>
         internal static KbQueryResult SampleSchemaDocuments(
             EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
