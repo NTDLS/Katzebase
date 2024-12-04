@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.SQLServerMigration.Classes;
 using NTDLS.Katzebase.SQLServerMigration.Properties;
 using NTDLS.WinFormsHelpers;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Dynamic;
 
 namespace NTDLS.Katzebase.SQLServerMigration

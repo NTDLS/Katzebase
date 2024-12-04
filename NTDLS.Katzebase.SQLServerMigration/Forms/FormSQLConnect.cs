@@ -1,6 +1,6 @@
 ﻿using NTDLS.WinFormsHelpers;
 using System.ComponentModel;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace NTDLS.Katzebase.SQLServerMigration
 {
