@@ -105,9 +105,18 @@ namespace NTDLS.Katzebase.Management.Classes
                             var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
                             parentSchemaNode.Nodes.Add(newSchemaNode);
 
+                            //Add field folder and any fields which were supplied.
+                            var schemaFieldsFolderNode = ServerExplorerNode.CreateSchemaFieldsFolderNode();
+                            newSchemaNode.Nodes.Add(schemaFieldsFolderNode);
+                            foreach (var fieldName in schemaItem.Fields.OrderBy(o => o))
+                            {
+                                var schemaFieldNode = ServerExplorerNode.CreateSchemaFieldNode(fieldName);
+                                schemaFieldsFolderNode.Nodes.Add(schemaFieldNode);
+                            }
+
+                            //Add index folder and any indexes which were supplied.
                             var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
                             newSchemaNode.Nodes.Add(schemaIndexFolderNode);
-
                             foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
                             {
                                 var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
@@ -155,6 +164,48 @@ namespace NTDLS.Katzebase.Management.Classes
                             ServerExplorerManager.SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
                         }
 
+                        #region Upsert fields.
+
+                        var schemaFieldsFolderNode = ServerExplorerManager.GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaFieldsFolder);
+                        if (schemaFieldsFolderNode != null)
+                        {
+                            var existingSchemaFieldNodes = ServerExplorerManager.GetSingleLevelChildNodesOfType(schemaFieldsFolderNode, ServerNodeType.SchemaField);
+
+                            bool fieldNameChanged = false;
+                            bool fieldAdded = false;
+
+                            //Add/update fields to the tree.
+                            foreach (var serverSchemaField in schemaItem.Fields)
+                            {
+                                var existingSchemaFieldNode = existingSchemaFieldNodes.FirstOrDefault(o => o.Text == serverSchemaField);
+                                if (existingSchemaFieldNode == null)
+                                {
+                                    //Add newly discovered schema field to the tree.
+                                    var schemaFieldNode = ServerExplorerNode.CreateSchemaFieldNode(serverSchemaField);
+                                    schemaFieldsFolderNode.Nodes.Add(schemaFieldNode);
+                                    fieldAdded = true;
+                                }
+                            }
+
+                            //Remove fields from the tree which are no longer present on the server.
+                            foreach (var existingSchemaFieldNode in existingSchemaFieldNodes)
+                            {
+                                if (schemaItem.Fields.Any(o => o == existingSchemaFieldNode.Text) == false)
+                                {
+                                    schemaFieldsFolderNode.Nodes.Remove(existingSchemaFieldNode);
+                                }
+                            }
+
+                            if (fieldNameChanged || fieldAdded)
+                            {
+                                ServerExplorerManager.SortChildNodes(schemaFieldsFolderNode);
+                            }
+                        }
+
+                        #endregion
+
+                        #region Upsert indexes.
+
                         var schemaIndexFolderNode = ServerExplorerManager.GetFirstChildNodeOfType(existingSchemaNode, ServerNodeType.SchemaIndexFolder);
                         if (schemaIndexFolderNode != null)
                         {
@@ -201,6 +252,8 @@ namespace NTDLS.Katzebase.Management.Classes
                                 ServerExplorerManager.SortChildNodes(schemaIndexFolderNode);
                             }
                         }
+
+                        #endregion
                     }
                 }
                 finally

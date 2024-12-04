@@ -30,6 +30,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
                     var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+                    if (pageCatalog.DocumentCount == 0)
+                    {
+                        continue;
+                    }
+
                     int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
 
                     var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(

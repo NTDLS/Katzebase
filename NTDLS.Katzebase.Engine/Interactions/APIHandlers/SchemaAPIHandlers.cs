@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
@@ -47,7 +48,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
-
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var apiResults = new KbQuerySchemaListReply();
@@ -63,6 +63,49 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 foreach (var item in schemaCatalog.Collection)
                 {
                     apiResults.Collection.Add(item.ToClientPayload(physicalSchema.Id, param.Schema));
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        public KbQuerySchemaFieldSampleReply SchemaFieldSample(RmContext context, KbQuerySchemaFieldSample param)
+        {
+            var session = _core.Sessions.GetSession(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+            LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Read);
+
+                #endregion
+
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
+
+                var apiResults = new KbQuerySchemaFieldSampleReply();
+
+                if (physicalSchema.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
+                }
+
+                var result = StaticSearcherProcessor.SampleSchemaDocuments(
+                    _core, transactionReference.Transaction, param.Schema, 1);
+
+                foreach (var field in result.Fields)
+                {
+                    apiResults.Collection.Add(new Api.Models.KbResponseFieldSampleItem(field.Name));
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);

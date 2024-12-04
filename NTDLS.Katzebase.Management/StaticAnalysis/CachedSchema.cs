@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         public DateTime CachedDateTime { get; set; } = DateTime.UtcNow;
         public KbSchema Schema { get; set; }
 
-        public List<string>? Fields => throw new NotImplementedException();
+        public List<string> Fields { get; set; } = new();
         public List<KbIndex> Indexes { get; set; } = new();
 
         public CachedSchema(KbSchema schema)

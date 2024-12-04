@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Management.Classes
         public static void SortChildNodes(TreeNode parentNode)
         {
             ServerNodeType[] sortFirst = {
-                ServerNodeType.SchemaFieldFolder,
+                ServerNodeType.SchemaFieldsFolder,
                 ServerNodeType.Folder,
                 ServerNodeType.SchemaIndexFolder
             };

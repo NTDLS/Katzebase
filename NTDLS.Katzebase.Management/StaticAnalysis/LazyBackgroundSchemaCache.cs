@@ -253,6 +253,9 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                             {
                                 var indexes = ServerExplorerConnection.Client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
                                 newlyAddedOrUpdatedSchemaCacheItem.Indexes = indexes.Collection;
+
+                                var fields = ServerExplorerConnection.Client.Schema.FieldSample(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
+                                newlyAddedOrUpdatedSchemaCacheItem.Fields = fields.Collection.Select(o => o.Name).ToList();
                             }
                             catch
                             {

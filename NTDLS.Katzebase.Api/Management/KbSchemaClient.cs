@@ -113,13 +113,31 @@ namespace NTDLS.Katzebase.Api.Management
         /// <param name="schema"></param>
         public KbQuerySchemaListReply List(TimeSpan? queryTimeout = null)
         {
+            return List(":", queryTimeout);
+        }
+
+        /// <summary>
+        /// Returns a sample of fields of an existing schema within a given schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        public KbQuerySchemaFieldSampleReply FieldSample(string schema, TimeSpan? queryTimeout = null)
+        {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQuerySchemaList(_client.ServerConnectionId, ":"), (TimeSpan)queryTimeout)
+                new KbQuerySchemaFieldSample(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
                 .ContinueWith(t => t.ValidateTaskResult()).Result;
+        }
+
+        /// <summary>
+        /// Returns a sample of fields of the root schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        public KbQuerySchemaFieldSampleReply FieldSample(TimeSpan? queryTimeout = null)
+        {
+            return FieldSample(":", queryTimeout);
         }
     }
 }

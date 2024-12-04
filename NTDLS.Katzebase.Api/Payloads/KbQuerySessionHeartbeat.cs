@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Payloads.Response;
-using NTDLS.ReliableMessaging;
+﻿using NTDLS.ReliableMessaging;
 
 namespace NTDLS.Katzebase.Api.Payloads
 {

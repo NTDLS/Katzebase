@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Management.Classes
                 ServerNodeType.None => "TreeNotLoaded",
                 ServerNodeType.Schema => "Schema",
                 ServerNodeType.SchemaField => "SchemaField",
-                ServerNodeType.SchemaFieldFolder => "SchemaFieldFolder",
+                ServerNodeType.SchemaFieldsFolder => "SchemaFieldFolder",
                 ServerNodeType.SchemaIndex => "SchemaIndex",
                 ServerNodeType.SchemaIndexFolder => "SchemaIndexFolder",
                 ServerNodeType.Server => "Server",
@@ -65,5 +65,11 @@ namespace NTDLS.Katzebase.Management.Classes
             {
                 SchemaIndex = schemaIndex
             };
+
+        public static ServerExplorerNode CreateSchemaFieldsFolderNode()
+            => new(ServerNodeType.SchemaFieldsFolder, "Fields");
+
+        public static ServerExplorerNode CreateSchemaFieldNode(string name)
+            => new(ServerNodeType.SchemaField, name);
     }
 }

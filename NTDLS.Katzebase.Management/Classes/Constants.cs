@@ -6,7 +6,7 @@
         {
             None,
             SchemaField,
-            SchemaFieldFolder,
+            SchemaFieldsFolder,
             Folder,
             SchemaIndex,
             SchemaIndexFolder,

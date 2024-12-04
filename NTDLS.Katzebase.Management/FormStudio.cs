@@ -609,7 +609,7 @@ namespace NTDLS.Katzebase.Management
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Constants.ServerNodeType.SchemaFieldFolder)
+            else if (node.NodeType == Constants.ServerNodeType.SchemaFieldsFolder)
             {
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
