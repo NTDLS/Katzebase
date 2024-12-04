@@ -1,3 +1,10 @@
+insert into Temporary(FirstGGName, LastGGName)
+Values('a', 'b')
+
+
+delete from Temporary
+
+/*
 SELECT
     soh.SalesOrderID,
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
@@ -25,4 +32,4 @@ GROUP BY
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy')
 ORDER BY 
     soh.OrderDate DESC
- 
+ */

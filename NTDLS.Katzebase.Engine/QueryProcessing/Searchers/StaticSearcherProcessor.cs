@@ -26,12 +26,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 var random = new Random(Environment.TickCount);
 
-                for (int i = 0; i < rowLimit; i++)
+                int unsuccessfulAttempts = 0;
+
+                while(result.Rows.Count < rowLimit && unsuccessfulAttempts < 10)
                 {
                     int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
                     var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+
                     if (pageCatalog.DocumentCount == 0)
                     {
+                        //Page was empty.
+                        unsuccessfulAttempts++;
                         continue;
                     }
 
@@ -45,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var physicalDocument = core.Documents.AcquireDocument(
                         transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
-                    if (i == 0)
+                    if (result.Fields.Count == 0)
                     {
                         foreach (var documentValue in physicalDocument.Elements)
                         {
