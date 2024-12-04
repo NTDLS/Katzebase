@@ -22,7 +22,7 @@ GROUP BY
 	sod.ProductId,
 	--FormatNumeric(sod.ProductId, 'n1')
     soh.SalesOrderID,
-    FormatDateTime(soh.OrderDate, 'mm/dd/yyyy')
+    FormatDateTime(soh.OrderDate, 'MM/dd/yyyy')
 ORDER BY 
     soh.OrderDate DESC
  
