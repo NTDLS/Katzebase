@@ -5,6 +5,8 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
+using NTDLS.Katzebase.Management.StaticAnalysis;
+using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Management.Classes.Editor.AutoCompleteFunction;
@@ -662,45 +664,42 @@ namespace NTDLS.Katzebase.Management
                             var rootSchema = ServerExplorerManager.GetFirstChildNodeOfType(node, Constants.ServerNodeType.Schema);
                             if (rootSchema != null)
                             {
-                                rootSchema.Nodes.Clear();
-                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(string.Empty);
+                                //rootSchema.Nodes.Clear();
+                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(EngineConstants.RootSchemaGUID);
                             }
                         }
                     }
-                    /*
                     else if (node.NodeType == Constants.ServerNodeType.Schema && schema?.Path != null)
                     {
-                        if (schema?.Id == EngineConstants.RootSchemaGUID)
-                        {
-                            node.Nodes.Clear();
-                        }
-                        else
-                        {
-                            node.Remove();
-                        }
+                        var serverNode = ServerExplorerManager.GetServerNodeFor(node);
 
-                        LazySchemaCache.Refresh(schema?.Path);
+                        if (serverNode != null && serverNode.ExplorerConnection != null)
+                        {
+                            if (schema?.Id == EngineConstants.RootSchemaGUID)
+                            {
+                                //node.Nodes.Clear();
+                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(EngineConstants.RootSchemaGUID);
+                            }
+                            else if (node.Schema != null)
+                            {
+                                //node.Remove();
+                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(node.Schema.Id);
+                            }
+                        }
                     }
-                    else if (node.NodeType == Constants.ServerNodeType.SchemaFieldFolder || node.NodeType == Constants.ServerNodeType.SchemaIndexFolder)
+                    else if (node.NodeType == Constants.ServerNodeType.SchemaFieldsFolder || node.NodeType == Constants.ServerNodeType.SchemaIndexFolder)
                     {
-                        //Fake field/index refresh, just refresh the parent node.
+                        var serverNode = ServerExplorerManager.GetServerNodeFor(node);
 
-                        var parentNode = (ServerExplorerNode)node.Parent;
-                        if (parentNode.NodeType == Constants.ServerNodeType.Schema && parentSchema?.Path != null)
+                        if (serverNode != null && serverNode.ExplorerConnection != null)
                         {
-                            if (parentSchema?.Id == EngineConstants.RootSchemaGUID)
+                            if (node.Parent is ServerExplorerNode parentNode && parentNode?.Schema != null)
                             {
-                                parentNode.Nodes.Clear();
+                                //node.Nodes.Clear();
+                                serverNode.ExplorerConnection.LazySchemaCache.Refresh(parentNode.Schema.Id);
                             }
-                            else
-                            {
-                                parentNode.Remove();
-                            }
-
-                            LazySchemaCache.Refresh(parentSchema?.Path);
                         }
                     }
-                    */
                 }
                 else if (e.ClickedItem?.Text?.Is("Select top n...") == true && schema != null)
                 {

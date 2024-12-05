@@ -46,9 +46,9 @@ namespace NTDLS.Katzebase.Parsers.Parsing.Root
             int firstParenthesesCaret = tokenizer.Caret;
 
             tokenizer.EatIfNext('(');
-            tokenizer.EatGetNext([':', ','], out var outStoppedOnDelimiter); //Skip the fieldName.
+            tokenizer.EatGetNext([':', ',', ')'], out var outStoppedOnDelimiter); //Skip the fieldName.
 
-            if (outStoppedOnDelimiter == ',')
+            if (outStoppedOnDelimiter == ',' || outStoppedOnDelimiter == ')')
             {
                 fieldParserType = FieldParserType.ValueListPossibleSelectFrom;
             }
@@ -130,6 +130,11 @@ namespace NTDLS.Katzebase.Parsers.Parsing.Root
                             bool isTextRemaining = tokenizer.EatGetSingleFieldExpression([")"], out var fieldExpression);
 
                             var queryField = StaticParserField.Parse(tokenizer, fieldExpression, queryFieldCollection);
+
+                            if (queryFieldCollection.Count >= query.InsertFieldNames.Count)
+                            {
+                                throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Values list contains more values than field list.");
+                            }
 
                             queryFieldCollection.Add(new QueryField(query.InsertFieldNames[queryFieldCollection.Count], queryFieldCollection.Count, queryField));
 
