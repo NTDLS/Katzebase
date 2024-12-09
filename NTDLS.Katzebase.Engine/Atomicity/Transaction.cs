@@ -339,7 +339,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-
         #region IDisposable.
 
         private bool disposed = false;
@@ -381,11 +380,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
+                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.File, lockOperation);
+
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"File:{lockOperation}");
-
-                diskPath = diskPath.ToLowerInvariant();
-
-                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.File, lockOperation);
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -411,11 +408,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
+                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.Directory, lockOperation);
+
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
-
-                diskPath = diskPath.ToLowerInvariant();
-
-                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.Directory, lockOperation);
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -441,11 +436,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
+                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.RecursiveDirectory, lockOperation);
+
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
-
-                diskPath = diskPath.ToLowerInvariant();
-
-                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.RecursiveDirectory, lockOperation);
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -530,7 +523,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 Atoms.Write((obj) =>
                 {
@@ -566,7 +559,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
                 Atoms.Write((obj) =>
                 {
                     if (IsFileAlreadyRecorded(path))
@@ -600,7 +593,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 DeferredIOs.Write((obj) => obj.RemoveItemsWithPrefix(diskPath));
 
@@ -642,7 +635,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 DeferredIOs.Write((obj) => obj.Remove(filePath));
 
@@ -683,7 +676,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 FilesReadForCache.WriteNullable((obj) => obj.Add(filePath));
 
@@ -704,7 +697,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 Atoms.Write((obj) =>
                 {

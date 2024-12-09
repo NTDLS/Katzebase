@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 int unsuccessfulAttempts = 0;
 
-                while(result.Rows.Count < rowLimit && unsuccessfulAttempts < 10)
+                while (result.Rows.Count < rowLimit && unsuccessfulAttempts < 10)
                 {
                     int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
                     var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];

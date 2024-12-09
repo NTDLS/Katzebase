@@ -499,21 +499,21 @@ namespace NTDLS.Katzebase.Management.Controls
 
             var metricsTextItems = new List<MetricsTextItem>();
 
-            foreach (var wt in metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
+            foreach (var wt in metrics.Where(o => o.Value >= 0.009).OrderBy(o => o.Value))
             {
                 if (wt.MetricType == KbMetricType.Cumulative)
                 {
                     metricsTextItems.Add(new MetricsTextItem()
                     {
                         Name = wt.Name,
-                        Value = $"Value: {wt.Value:n0}",
-                        Average = $"Average: {wt.Value / wt.Count:n2}",
+                        Average = $"Average: {wt.Value / wt.Count:n2}ms",
+                        Value = $"Total: {wt.Value:n2}ms",
                         Count = $"Count: {wt.Count:n0}"
                     });
                 }
-                else
+                else //Discrete.
                 {
-                    metricsTextItems.Add(new MetricsTextItem() { Name = wt.Name, Value = $"Value: {wt.Value:n0}", });
+                    metricsTextItems.Add(new MetricsTextItem() { Name = wt.Name, Value = $"Value: {wt.Value:n2}ms", });
                 }
             }
 

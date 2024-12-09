@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -112,9 +113,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
-            => _pendingGrants.Read((obj) =>
-                obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
-            );
+        {
+            return _pendingGrants.Read((pendingGrants) =>
+                pendingGrants.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention));
+        }
 
         internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
@@ -138,7 +140,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 //Record that we are waiting on the grant. This is used for deadlock detection.
-                _pendingGrants.Write((o) => o.Add(pendingGrantKey, new(transaction, intention)));
+                var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
+                _pendingGrants.Write((pendingGrants) =>
+                {
+                    ptPendingGrantLock?.StopAndAccumulate();
+                    pendingGrants.Add(pendingGrantKey, new(transaction, intention));
+                });
             }
 
             try
@@ -147,12 +154,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 while (true)
                 {
                     //Lock the individual object semaphore, because we only allow an attempt for a lock on a single distinct file at a time.
+                    var ptLockConcurrencyWait = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.LockConcurrencyWait);
                     if (concurrencyLock.Semaphore.Wait(1))
                     {
+                        ptLockConcurrencyWait?.StopAndAccumulate();
                         try
                         {
+                            var ptGrantedLockCache = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Read");
                             if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
                             {
+                                ptGrantedLockCache?.StopAndAccumulate();
                                 //This transaction owns the lock, but it was created with a previous call to Acquire().
                                 //  This means that the transaction has the key, but the caller will not be be provided
                                 //  with it since modification by a non-creator caller would be dangerous.
@@ -160,12 +171,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
                                 return null;
                             }
+                            ptGrantedLockCache?.StopAndAccumulate();
 
+                            var ptAttemptLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AttemptLock);
                             var lockKey = AttemptLock(transaction, intention);
+                            ptAttemptLock?.StopAndAccumulate();
+
                             if (lockKey != null)
                             {
                                 //We got a lock, record it and return the key to the caller.
+                                var ptGrantedLockCacheWrite = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Read");
                                 transaction.GrantedLockCache.Write((obj) => obj.Add(intention.Key));
+                                ptGrantedLockCacheWrite?.StopAndAccumulate();
                                 return lockKey;
                             }
                         }
@@ -174,6 +191,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             //Allow other threads to now attempt a lock on this file.
                             concurrencyLock.Semaphore.Release();
                         }
+                    }
+                    else
+                    {
+                        ptLockConcurrencyWait?.StopAndAccumulate();
                     }
                 }
             }
@@ -189,7 +210,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     //Let other transactions know that we are no longer waiting on this lock.
-                    _pendingGrants.Write((obj) => obj.Remove(pendingGrantKey));
+                    var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Read");
+                    _pendingGrants.Write((pendingGrants) =>
+                    {
+                        ptPendingGrantLock?.StopAndAccumulate();
+                        pendingGrants.Remove(pendingGrantKey);
+                    });
                 }
             }
         }
@@ -235,7 +261,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return lockKey;
                     }
 
-                    #region Stability.
+                    #region Stability Lock.
+
                     if (intention.Operation == LockOperation.Stability)
                     {
                         //This operation is blocked by: Delete.
@@ -270,13 +297,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            transaction.BlockedByKeys.Write((obj) =>
+                            {
+                                obj.AddRange(blockers.Distinct());
+                                obj.Clear();
+                            });
                         }
                     }
+
                     #endregion
 
-                    #region Read.
+                    #region Read Lock.
+
                     else if (intention.Operation == LockOperation.Read)
                     {
                         //This operation is blocked by: Read and Write.
@@ -312,13 +344,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            transaction.BlockedByKeys.Write((obj) =>
+                            {
+                                obj.Clear();
+                                obj.AddRange(blockers.Distinct());
+                            });
                         }
                     }
+
                     #endregion
 
-                    #region Write.
+                    #region Write Lock.
+
                     else if (intention.Operation == LockOperation.Write)
                     {
                         //This operation is blocked by: Read, Write, Delete.
@@ -353,13 +390,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            transaction.BlockedByKeys.Write((obj) =>
+                            {
+                                obj.Clear();
+                                obj.AddRange(blockers.Distinct());
+                            });
                         }
                     }
+
                     #endregion
 
-                    #region Delete.
+                    #region Delete Lock.
+
                     else if (intention.Operation == LockOperation.Delete)
                     {
                         //This operation is blocked by: Everything
@@ -395,21 +437,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            transaction.BlockedByKeys.Write((obj) =>
+                            {
+                                obj.Clear();
+                                obj.AddRange(blockers.Distinct());
+                            });
                         }
                     }
+
                     #endregion
 
-                    #region Deadlock detection.
+                    #region Deadlock Detection.
 
+                    var ptDeadlockDetection = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.DeadlockDetection);
                     transaction.BlockedByKeys.Read((obj) =>
                     {
                         if (obj.Count != 0)
                         {
-                            _pendingGrants.Read((waitingLocks) =>
+                            var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
+                            _pendingGrants.Read((pendingGrants) =>
                             {
-                                var waitingTransactions = waitingLocks
+                                ptPendingGrantLock?.StopAndAccumulate();
+
+                                var waitingTransactions = pendingGrants
                                     .Where(o => o.Value.Transaction.IsDeadlocked == false)
                                     .Select(o => o.Value.Transaction).ToList();
 
@@ -425,9 +475,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                                     if (obj.Any(o => o.ProcessId == blocked.ProcessId))
                                     {
-                                        var explanation = GetDeadlockExplanation(transaction, waitingLocks, intention, blockedByMe);
+                                        var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, blockedByMe);
 
                                         transaction.SetDeadlocked();
+
+                                        ptDeadlockDetection?.StopAndAccumulate();
 
                                         throw new KbDeadlockException($"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.", explanation.ToString());
                                     }
@@ -435,6 +487,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             });
                         }
                     });
+                    ptDeadlockDetection?.StopAndAccumulate();
 
                     #endregion
 

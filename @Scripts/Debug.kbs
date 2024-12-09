@@ -1,3 +1,5 @@
+set TraceWaitTimes true
+
 SELECT
     soh.SalesOrderID,
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,

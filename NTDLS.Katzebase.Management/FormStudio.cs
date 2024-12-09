@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
-using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Text;

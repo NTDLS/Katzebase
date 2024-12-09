@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
+using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Parsers.SupportingTypes.QuerySchema;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
@@ -30,7 +31,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 
             if (conditions != null)
             {
+                var ptOptimization = transaction.Instrumentation.CreateToken(PerformanceCounter.Optimization);
                 Optimization = IndexingConditionOptimization.BuildTree(core, transaction, schemaMap.Query, physicalSchema, conditions, prefix);
+                ptOptimization?.StopAndAccumulate();
             }
         }
     }
