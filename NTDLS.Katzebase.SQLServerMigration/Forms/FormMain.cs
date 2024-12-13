@@ -555,14 +555,17 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     dataGridViewSqlServer.Rows.Add(true, true, sourceObject.SourceSchemaObject, analysis, targetSchemaObject, sourceObject.TargetPageSize, string.Empty);
                 }
 
-                // Auto-size all columns based on content (but only once)
-                dataGridViewSqlServer.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                if (dataGridViewSqlServer.Columns.Count > 0)
+                {
+                    // Auto-size all columns based on content (but only once)
+                    dataGridViewSqlServer.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
 
-                // Set the last column to fill the remaining space
-                dataGridViewSqlServer.Columns[dataGridViewSqlServer.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    // Set the last column to fill the remaining space
+                    dataGridViewSqlServer.Columns[dataGridViewSqlServer.Columns.Count - 1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
-                // Allow user to resize the columns manually after the initial auto-resizing
-                dataGridViewSqlServer.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                    // Allow user to resize the columns manually after the initial auto-resizing
+                    dataGridViewSqlServer.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                }
             }
             catch
             {
