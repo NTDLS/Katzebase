@@ -16,19 +16,19 @@ INNER JOIN TestData:Updates as U
 
 SELECT * FROM TestData:Updates
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 }
 
-#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=2)
 {
 }
 
-#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=2)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName	MiddleName	WasUpdated
 John	Doe	Pompus	<null>

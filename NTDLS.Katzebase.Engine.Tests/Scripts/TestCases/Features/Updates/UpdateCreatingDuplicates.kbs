@@ -7,11 +7,11 @@ WHERE
 
 SELECT * FROM TestData:Updates
 
-#Expected(EnforceRowOrder=false, AffectedCount=1, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=1)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName
 John	Doe

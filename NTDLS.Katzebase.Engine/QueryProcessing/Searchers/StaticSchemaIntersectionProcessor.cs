@@ -203,7 +203,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                             //We are going to create a limited document catalog using the indexes.
                             var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                                schemaMap.Value.PhysicalSchema, schemaMap.Value.Optimization, query, schemaMap.Value.Prefix, keyValues);
+                                schemaMap.Value.PhysicalSchema, schemaMap.Value.Optimization, query, schemaMap.Value.SchemaPrefix, keyValues);
 
                             documentPointers = indexMatchedDocuments.Select(o => o.Value);
                         }
@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
 
-                            threadTemplateRowClone.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = physicalDocument.Elements;
+                            threadTemplateRowClone.SchemaElements[schemaMap.Value.SchemaPrefix.ToLowerInvariant()] = physicalDocument.Elements;
 
                             if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, threadTemplateRowClone))
                             {
@@ -228,10 +228,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 var newRow = threadTemplateRowClone.Clone();
                                 newRow.MatchedSchemas.Add(schemaMap.Key);
 
-                                if (gatherDocumentPointersForSchemaAliases?.Contains(schemaMap.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                                if (gatherDocumentPointersForSchemaAliases?.Contains(schemaMap.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
                                 {
                                     //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
-                                    newRow.DocumentPointers.Add(schemaMap.Value.Prefix.ToLowerInvariant(), documentPointer);
+                                    newRow.DocumentPointers.Add(schemaMap.Value.SchemaPrefix.ToLowerInvariant(), documentPointer);
                                 }
 
                                 //Found a document that matched the join clause, add row to the results collection.
@@ -254,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         if (schemaMatchCount == 0 && schemaMap.Value.SchemaUsageType == QuerySchema.QuerySchemaUsageType.OuterJoin)
                         {
                             var newRow = threadTemplateRowClone.Clone();
-                            newRow.SchemaElements[schemaMap.Value.Prefix.ToLowerInvariant()] = new KbInsensitiveDictionary<string?>();
+                            newRow.SchemaElements[schemaMap.Value.SchemaPrefix.ToLowerInvariant()] = new KbInsensitiveDictionary<string?>();
                             newRow.MatchedSchemas.Add(schemaMap.Key);
 
                             lock (schemaIntersectionRowCollection)
@@ -433,7 +433,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //We are going to create a limited document catalog using the indexes.
                 var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                    primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.Prefix);
+                    primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.SchemaPrefix);
 
                 documentPointers = indexMatchedDocuments.Select(o => o.Value);
             }
@@ -467,12 +467,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var schemaIntersectionRow = new SchemaIntersectionRow();
                     schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
 
-                    schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.Prefix.ToLowerInvariant(), physicalDocument.Elements);
+                    schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
 
-                    if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.Prefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                    if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
                     {
                         //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
-                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.Prefix.ToLowerInvariant(), threadDocumentPointer);
+                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), threadDocumentPointer);
                     }
 
                     //Found a document, add row to the results collection.

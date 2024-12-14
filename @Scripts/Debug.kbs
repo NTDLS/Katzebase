@@ -1,3 +1,8 @@
+select * from WordList:Word
+where Text = 'Test'
+or SourceId = 74605
+
+/*
 set TraceWaitTimes true
 
 SELECT
@@ -27,3 +32,4 @@ GROUP BY
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy')
 ORDER BY 
     soh.OrderDate DESC
+*/

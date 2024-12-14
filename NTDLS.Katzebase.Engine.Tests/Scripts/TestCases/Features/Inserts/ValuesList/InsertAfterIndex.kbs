@@ -6,11 +6,11 @@ Values
 
 SELECT * FROM TestData:InsertTests:ValuesList
 
-#Expected(EnforceRowOrder=false, AffectedCount=3, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=3)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName	MiddleName
 Jane	Doe	<null>

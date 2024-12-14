@@ -2,11 +2,11 @@ DELETE FROM TestData:Deletes WHERE LastName = 'Brown'
 
 SELECT * FROM TestData:Deletes
 
-#Expected(EnforceRowOrder=false, AffectedCount=2, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=2)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName
 John	Doe

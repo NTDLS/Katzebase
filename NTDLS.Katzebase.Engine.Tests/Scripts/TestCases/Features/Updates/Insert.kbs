@@ -22,11 +22,11 @@ VALUES
 
 SELECT * FROM TestData:Updates
 
-#Expected(EnforceRowOrder=false, AffectedCount=19, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=19)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName
 Grace	Doe

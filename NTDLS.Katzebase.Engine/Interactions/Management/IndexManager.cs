@@ -232,7 +232,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(physicalSchema, optimization, group, query, keyValues);
 
-                if (group.Connector == LogicalConnector.Or)
+                if (group.LogicalConnector == LogicalConnector.Or)
                 {
                     accumulatedResults ??= new(); //Really though, we should never start with an OR connector...
 
@@ -265,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var childGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
                      physicalSchema, optimization, group, query, keyValues);
 
-                if (group.Connector == LogicalConnector.Or)
+                if (group.LogicalConnector == LogicalConnector.Or)
                 {
                     var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                     thisGroupResults.UnionWith(childGroupResults);

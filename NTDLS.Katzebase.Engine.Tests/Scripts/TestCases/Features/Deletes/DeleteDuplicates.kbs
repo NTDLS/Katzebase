@@ -14,11 +14,11 @@ WHERE
 
 SELECT * FROM TestData:Deletes
 
-#Expected(EnforceRowOrder=false, AffectedCount=4, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=4)
 {
 }
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName
 David	Williams

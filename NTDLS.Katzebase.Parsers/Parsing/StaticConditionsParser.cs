@@ -4,6 +4,8 @@ using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Security.Cryptography;
+using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Parsing
@@ -24,10 +26,17 @@ namespace NTDLS.Katzebase.Parsers.Parsing
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-            ParseRecursive(queryBatch, tokenizer, conditionCollection, conditionCollection, endOfWhereCaret);
+            using (var incrementalSha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
+            {
+                conditionCollection.IncrementalSha256 = incrementalSha256;
 
-            conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
-            conditionCollection.Hash = StaticParserUtility.ComputeSHA256(conditionCollection.MathematicalExpression);
+                ParseRecursive(queryBatch, tokenizer, conditionCollection, conditionCollection, endOfWhereCaret);
+                conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
+
+                incrementalSha256.AppendData(Encoding.UTF8.GetBytes(conditionCollection.MathematicalExpression));
+                incrementalSha256.AppendData(Encoding.UTF8.GetBytes(leftHandAliasOfJoin));
+                conditionCollection.Hash = BitConverter.ToString(incrementalSha256.GetHashAndReset()).Replace("-", "").ToLowerInvariant();
+            }
 
             return conditionCollection;
         }
@@ -198,6 +207,8 @@ namespace NTDLS.Katzebase.Parsers.Parsing
             {
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Missing right expression.");
             }
+
+            conditionCollection.IncrementalSha256?.AppendData(Encoding.UTF8.GetBytes($"{leftExpressionString}:{rightExpressionString}"));
 
             var left = StaticParserField.Parse(tokenizer, leftExpressionString, conditionCollection.FieldCollection);
             var right = StaticParserField.Parse(tokenizer, rightExpressionString, conditionCollection.FieldCollection);

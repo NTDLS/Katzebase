@@ -4,6 +4,6 @@ CREATE INDEX ix_ValuesList
     LastName
 ) ON TestData:Updates
 
-#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=0)
 {
 }

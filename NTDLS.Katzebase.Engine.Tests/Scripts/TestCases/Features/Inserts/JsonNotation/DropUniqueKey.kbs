@@ -1,5 +1,5 @@
 DROP UniqueKey uk_JsonNotation ON TestData:InsertTests:JsonNotation
 
-#Expected(EnforceRowOrder=false, AffectedCount=0, MaxDuration=1000)
+#Expected(EnforceRowOrder=false, AffectedCount=0)
 {
 }

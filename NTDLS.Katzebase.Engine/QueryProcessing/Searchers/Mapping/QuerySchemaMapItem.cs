@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// </summary>
     internal class QuerySchemaMapItem
     {
-        public string Prefix { get; private set; }
+        public string SchemaPrefix { get; private set; }
         public PhysicalSchema PhysicalSchema { get; private set; }
         public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
         public ConditionCollection? Conditions { get; private set; }
@@ -21,9 +21,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         public QuerySchemaUsageType SchemaUsageType { get; private set; }
 
         public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
-            QuerySchemaUsageType schemaUsageType, PhysicalDocumentPageCatalog documentPageCatalog, ConditionCollection? conditions, string prefix)
+            QuerySchemaUsageType schemaUsageType, PhysicalDocumentPageCatalog documentPageCatalog, ConditionCollection? conditions, string schemaPrefix)
         {
-            Prefix = prefix;
+            SchemaPrefix = schemaPrefix;
             PhysicalSchema = physicalSchema;
             SchemaUsageType = schemaUsageType;
             DocumentPageCatalog = documentPageCatalog;
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
             if (conditions != null)
             {
                 var ptOptimization = transaction.Instrumentation.CreateToken(PerformanceCounter.Optimization);
-                Optimization = IndexingConditionOptimization.BuildTree(core, transaction, schemaMap.Query, physicalSchema, conditions, prefix);
+                Optimization = IndexingConditionOptimization.SelectUsableIndexes(core, transaction, schemaMap.Query, physicalSchema, conditions, schemaPrefix);
                 ptOptimization?.StopAndAccumulate();
             }
         }

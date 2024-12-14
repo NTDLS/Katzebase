@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
     /// </summary>
     public class ConditionGroup : ICondition
     {
-        public LogicalConnector Connector { get; set; }
+        public LogicalConnector LogicalConnector { get; set; }
 
         public HashSet<IndexSelection> UsableIndexes { get; set; } = new();
 
@@ -17,12 +17,12 @@ namespace NTDLS.Katzebase.Parsers.Conditions
 
         public ConditionGroup(LogicalConnector logicalConnector)
         {
-            Connector = logicalConnector;
+            LogicalConnector = logicalConnector;
         }
 
         public ICondition Clone()
         {
-            var clone = new ConditionGroup(Connector);
+            var clone = new ConditionGroup(LogicalConnector);
 
             foreach (var entry in Collection)
             {

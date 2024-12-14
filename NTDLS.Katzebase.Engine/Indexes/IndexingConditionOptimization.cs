@@ -33,29 +33,28 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
+        public static IndexingConditionOptimization SelectUsableIndexes(EngineCore core, Transaction transaction, PreparedQuery query,
             PhysicalSchema physicalSchema, ConditionCollection conditions, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization(transaction, conditions);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-            if (!BuildTree(optimization, query, transaction, indexCatalog, workingSchemaPrefix, optimization.IndexingConditionGroup))
+            if (WalkConditionTree(optimization, query, transaction, indexCatalog, workingSchemaPrefix))
             {
-                //Invalidate indexing optimization.
-                return new IndexingConditionOptimization(transaction, conditions);
+                return optimization;
             }
 
-            return optimization;
+            //Invalidate indexing optimization.
+            return new IndexingConditionOptimization(transaction, conditions);
         }
 
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query,
-            Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix,
-            List<IndexingConditionGroup> indexingConditionGroups)
+        private static bool WalkConditionTree(IndexingConditionOptimization optimization, PreparedQuery query,
+            Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix)
         {
             //We only flatten the condition groups because its easer to work with them this way,
             //    these are references to the optimizers copy of the nested groups, so changes
@@ -72,8 +71,16 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     //  this is because we need to be able to create a full list of all possible documents for this schema,
                     //  and if we have an "OR" group that does not further limit these documents by the given schema then
                     //  we will have to do a full namespace scan anyway.
-                    if (flattenedGroup.Connector == LogicalConnector.Or)
+                    if (flattenedGroup.LogicalConnector == LogicalConnector.Or)
                     {
+                        //Invalidate indexing optimization.
+                        foreach (var invalidateFlattenedGroup in flattenedGroups)
+                        {
+                            optimization.IndexingConditionGroup.Clear();
+                            invalidateFlattenedGroup.UsableIndexes.Clear();
+                            invalidateFlattenedGroup.IndexLookup = null;
+                        }
+
                         return false; //Invalidate indexing optimization.
                     }
                     else
@@ -150,7 +157,8 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     if (indexSelection.CoveredConditions.Count > 0)
                     {
                         //We either have a full or a partial index match.
-                        indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Select(o => o.Left.Value).Distinct().Count() == indexSelection.PhysicalIndex.Attributes.Count;
+                        indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions
+                            .Select(o => o.Left.Value).Distinct().Count() == indexSelection.PhysicalIndex.Attributes.Count;
 
                         flattenedGroup.UsableIndexes.Add(indexSelection);
                     }
@@ -169,7 +177,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
                 if (flattenedGroup.UsableIndexes.Count > 0)
                 {
-                    IndexingConditionGroup indexingConditionGroup = new(flattenedGroup.Connector);
+                    var indexingConditionGroup = new IndexingConditionGroup(flattenedGroup.LogicalConnector);
 
                     var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelWithLeftDocumentIdentifiers();
 
@@ -235,7 +243,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
                     if (indexingConditionGroup.Lookups.Count > 0)
                     {
-                        indexingConditionGroups.Add(indexingConditionGroup);
+                        optimization.IndexingConditionGroup.Add(indexingConditionGroup);
                     }
                 }
 
@@ -298,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     result.AppendLine($"Index scan [{givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Name}].");
                 }
 
-                if (givenConditionGroup.Connector == LogicalConnector.Or)
+                if (givenConditionGroup.LogicalConnector == LogicalConnector.Or)
                 {
                     result.AppendLine("Indexing union operation.");
                 }

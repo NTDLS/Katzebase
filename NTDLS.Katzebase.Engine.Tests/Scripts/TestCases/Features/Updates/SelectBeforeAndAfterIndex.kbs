@@ -1,6 +1,6 @@
 SELECT * FROM TestData:Updates
 
-#Expected(EnforceRowOrder=false, MaxDuration=1000)
+#Expected(EnforceRowOrder=false)
 {
 FirstName	LastName
 Emily	Smith

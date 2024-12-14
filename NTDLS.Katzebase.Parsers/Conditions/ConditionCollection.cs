@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
+using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
@@ -27,6 +28,8 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         /// </summary>
         public string? Hash { get; set; }
 
+        internal IncrementalHash? IncrementalSha256;
+
         public QueryFieldCollection FieldCollection { get; set; }
 
         private int _nextExpressionVariable = 0;
@@ -51,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         {
             var clone = new ConditionCollection(FieldCollection.QueryBatch)
             {
-                Connector = Connector,
+                LogicalConnector = LogicalConnector,
                 SchemaAlias = SchemaAlias,
                 FieldCollection = FieldCollection,
                 MathematicalExpression = MathematicalExpression,
@@ -89,7 +92,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             {
                 if (item is ConditionGroup group)
                 {
-                    result.AppendLine("• " + Pad(0) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
+                    result.AppendLine("• " + Pad(0) + $"{(group.LogicalConnector != LogicalConnector.None ? $"{group.LogicalConnector} " : string.Empty)}(");
 
                     ExplainOperationsRecursive(group, result);
 
@@ -116,7 +119,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             {
                 if (item is ConditionGroup group)
                 {
-                    result.AppendLine("• " + Pad(1 + depth) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
+                    result.AppendLine("• " + Pad(1 + depth) + $"{(group.LogicalConnector != LogicalConnector.None ? $"{group.LogicalConnector} " : string.Empty)}(");
 
                     ExplainOperationsRecursive(group, result, depth + 1);
 
