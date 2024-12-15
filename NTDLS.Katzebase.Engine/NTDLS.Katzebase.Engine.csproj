@@ -69,6 +69,9 @@
     <EmbeddedResource Include="Scripts\CreateAccount.kbs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Trace\TraceTracker.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />
     <PackageReference Include="NTDLS.DelegateThreadPooling" Version="1.5.8" />
     <PackageReference Include="NTDLS.FastMemoryCache" Version="1.7.10" />

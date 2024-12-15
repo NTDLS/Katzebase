@@ -31,7 +31,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
+            using var trace = _core.Trace.CreateTracker(TraceType.DocumentSample, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
+            trace.SetSession(session);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -70,9 +73,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaName"></param>
         /// <param name="rowLimit"></param>
         /// <returns></returns>
-        public KbQueryDocumentListReply ListDocuments(RmContext context, KbQueryDocumentList param)
+        public KbQueryDocumentListReply DocumentList(RmContext context, KbQueryDocumentList param)
         {
+            using var trace = _core.Trace.CreateTracker(TraceType.DocumentList, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
+            trace.SetSession(session);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -113,9 +119,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbQueryDocumentStoreReply StoreDocument(RmContext context, KbQueryDocumentStore param)
+        public KbQueryDocumentStoreReply DocumentStore(RmContext context, KbQueryDocumentStore param)
         {
+            using var trace = _core.Trace.CreateTracker(TraceType.DocumentStore, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
+            trace.SetSession(session);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);

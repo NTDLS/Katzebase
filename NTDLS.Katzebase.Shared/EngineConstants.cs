@@ -16,6 +16,41 @@
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
 
+        public enum TraceType
+        {
+            CreateSchema,
+            DocumentList,
+            DocumentSample,
+            DocumentStore,
+            DoesSchemaExist,
+            DropSchema,
+            ExecuteExplainOperation,
+            ExecuteExplainPlan,
+            ExecuteStatementNonQuery,
+            ExecuteStatementProcedure,
+            ExecuteStatementQuery,
+            IndexCreate,
+            IndexDrop,
+            IndexExist,
+            IndexGet,
+            IndexList,
+            IndexRebuild,
+            ListSchemas,
+            SchemaFieldSample,
+            SessionClose,
+            SessionStart,
+            SessionTerminate,
+            TransactionBegin,
+            TransactionCommit,
+            TransactionRollback,
+        }
+
+        public enum TraceResult
+        {
+            Failure,
+            Success
+        }
+
         public enum StateSetting
         {
             TraceWaitTimes,

@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Scripts.Models;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -32,6 +33,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             SessionState? session = null;
 
+            using var trace = _core.Trace.CreateTracker(TraceType.SessionStart, context.ConnectionId);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -52,16 +55,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     LogManager.Debug($"Logged in mock user [{param.Username}].");
 
                     session = _core.Sessions.CreateSession(context.ConnectionId, SessionManager.BuiltInSystemUserName, param.ClientName);
-#if DEBUG
                     Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
                     LogManager.Debug(Thread.CurrentThread.Name);
-#endif
+
                     var apiResults = new KbQueryServerStartSessionReply
                     {
                         ProcessId = session.ProcessId,
                         ConnectionId = context.ConnectionId,
                         ServerTimeUTC = DateTime.UtcNow
                     };
+
+                    trace.SetSession(session);
+                    trace.Result = TraceResult.Success;
+
                     return apiResults;
                 }
 #endif
@@ -79,17 +85,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     LogManager.Debug($"Logged in user [{param.Username}].");
 
                     session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+                    trace.SetSession(session);
 #if DEBUG
                     Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
                     LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-
                     var apiResults = new KbQueryServerStartSessionReply
                     {
                         ProcessId = session.ProcessId,
                         ConnectionId = context.ConnectionId,
                         ServerTimeUTC = DateTime.UtcNow
                     };
+
+                    trace.Result = TraceResult.Success;
+
                     return apiResults;
                 }
 
@@ -104,7 +113,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryServerCloseSessionReply CloseSession(RmContext context, KbQueryServerCloseSession param)
         {
+            using var trace = _core.Trace.CreateTracker(TraceType.SessionClose, context.ConnectionId);
+
             var session = _core.Sessions.GetSession(context.ConnectionId);
+            trace.SetSession(session);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -114,6 +127,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 _core.Sessions.TryCloseByProcessID(session.ProcessId);
 
                 var apiResults = new KbQueryServerCloseSessionReply();
+
+                trace.Result = TraceResult.Success;
 
                 return apiResults;
             }
@@ -132,7 +147,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
+            using var trace = _core.Trace.CreateTracker(TraceType.SessionTerminate, context.ConnectionId);
+
             var session = _core.Sessions.GetSession(context.ConnectionId);
+            trace.SetSession(session);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
@@ -142,6 +160,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 _core.Sessions.TryCloseByProcessID(param.ReferencedProcessId);
 
                 var apiResult = new KbQueryServerTerminateProcessReply();
+
+                trace.Result = TraceResult.Success;
 
                 return apiResult;
             }
