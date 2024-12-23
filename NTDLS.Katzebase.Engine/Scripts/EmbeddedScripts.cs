@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Scripts
                 using var reader = new StreamReader(stream);
                 var scriptText = reader.ReadToEnd();
 
-                _cache.Add(cacheKey, allScriptNames, new CacheItemPolicy
+                _cache.Add(cacheKey, scriptText, new CacheItemPolicy
                 {
                     SlidingExpiration = new TimeSpan(1, 0, 0)
                 });
