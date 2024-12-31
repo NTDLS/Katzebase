@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Management.Classes
                             if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
                             {
                                 //Expand the root schema node when we add the first node.
-                                parentSchemaNode.Parent.Expand();
+                                parentSchemaNode.Parent?.Expand();
                                 parentSchemaNode.Expand();
                             }
                             ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Management.Classes
                     }
                 });
             }
-            catch (Exception ex)
+            catch
             {
             }
         }
@@ -161,7 +161,10 @@ namespace NTDLS.Katzebase.Management.Classes
                         if (schemaNameChanged)
                         {
                             existingSchemaNode.Text = schemaItem.Schema.Name;
-                            ServerExplorerManager.SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
+                            if (existingSchemaNode.Parent != null)
+                            {
+                                ServerExplorerManager.SortChildNodes(existingSchemaNode.Parent); //Sort the schemas.
+                            }
                         }
 
                         #region Upsert fields.

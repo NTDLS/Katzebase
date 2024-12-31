@@ -1,19 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
-    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
-    <Version>0.30.0</Version>
+    <Copyright>Copyright © 2025 NetworkDLS</Copyright>
+    <Version>0.31.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
+    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net9.0\NTDLS.Katzebase.ico" />
   </ItemGroup>
 
   <ItemGroup>

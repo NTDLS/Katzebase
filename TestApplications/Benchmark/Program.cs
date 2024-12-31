@@ -13,7 +13,7 @@ namespace Benchmark
         const int _iterationsPerTest = 10;
         const string _ScriptsPath = @"..\..\..\Scripts";
         const string _DataPath = @"..\..\..\Data";
-        const string _ServicePath = @"..\..\..\..\..\NTDLS.Katzebase.Server\bin\Release\net8.0\NTDLS.Katzebase.Server.exe";
+        const string _ServicePath = @"..\..\..\..\..\NTDLS.Katzebase.Server\bin\Release\net9.0\NTDLS.Katzebase.Server.exe";
         const string _serverHost = "127.0.0.1";
         const int _serverPort = 6858;
 

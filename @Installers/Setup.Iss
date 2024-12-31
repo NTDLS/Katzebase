@@ -1,8 +1,8 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Server
- AppVerName                       = Katzebase Server 0.30.0
- AppCopyright                     = Copyright © 2024 NetworkDLS.
+ AppVerName                       = Katzebase Server 0.31.0
+ AppCopyright                     = Copyright © 2025 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase
  DefaultGroupName                 = Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.Server.exe
@@ -17,7 +17,7 @@
  AppPublisher                     = NetworkDLS
  AppPublisherURL                  = http://www.NetworkDLS.com/
  AppUpdatesURL                    = http://www.NetworkDLS.com/
- AppVersion                       = 0.30.0
+ AppVersion                       = 0.31.0
 
 [Components]
  Name: "Server";       Description: "Server";                     Types: Full Compact Custom;
@@ -27,15 +27,15 @@
  
 [Files]
 ;Server component.
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\runtimes\*.*"; DestDir: "{app}\Server\runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Server;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.exe"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.dll"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.json"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net9.0\runtimes\*.*"; DestDir: "{app}\Server\runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net9.0\*.exe"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net9.0\*.dll"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net9.0\*.json"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
  Source: "Settings\*.*"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
 ;Management component.
- Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
- Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
- Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net9.0-windows\*.exe"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net9.0-windows\*.dll"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net9.0-windows\*.json"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Bold"; Flags: onlyifdoesntexist uninsneveruninstall
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeExtraLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Extra-Light"; Flags: onlyifdoesntexist uninsneveruninstall
  Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Light"; Flags: onlyifdoesntexist uninsneveruninstall
@@ -45,10 +45,10 @@
  Source: "..\@Art\Script.ico"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
  
 ;Migration component.
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\Migration\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net9.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net9.0-windows\*.dll"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net9.0-windows\*.json"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net9.0-windows\Runtimes\*.*"; DestDir: "{app}\Migration\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Migration;
  
 [Icons]
 ;Management component.

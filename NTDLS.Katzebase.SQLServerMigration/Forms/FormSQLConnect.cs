@@ -28,7 +28,12 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         #endregion
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SQLConnectionDetails ConnectionDetails { get; set; } = new();
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CheckConnectivity_Result ConnectivityResult { get; set; } = new();
 
         ProgressForm checkConnectivityProgress = new();
@@ -46,6 +51,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         #region Public Mehtods.
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Caption
         {
             get { return this.Text.Trim(); }

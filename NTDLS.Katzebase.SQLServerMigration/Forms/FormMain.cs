@@ -543,16 +543,19 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 foreach (var sourceObject in sourceObjects)
                 {
-                    string analysis = $"Rows: {sourceObject.TotalRows:n0}, Avg. Size: {Formatters.FileSize(sourceObject.AvgRowSizeBytes)}";
-
-                    var targetSchemaObject = sourceObject.TargetSchemaObject.EnsureNotNull();
-
-                    if (targetSchemaObject.StartsWith("dbo:", StringComparison.InvariantCultureIgnoreCase) == true)
+                    if (sourceObject != null)
                     {
-                        targetSchemaObject = sourceObject.TargetObject;
-                    }
+                        string analysis = $"Rows: {sourceObject.TotalRows:n0}, Avg. Size: {Formatters.FileSize(sourceObject.AvgRowSizeBytes)}";
 
-                    dataGridViewSqlServer.Rows.Add(true, true, sourceObject.SourceSchemaObject, analysis, targetSchemaObject, sourceObject.TargetPageSize, string.Empty);
+                        var targetSchemaObject = sourceObject.TargetSchemaObject.EnsureNotNull();
+
+                        if (targetSchemaObject.StartsWith("dbo:", StringComparison.InvariantCultureIgnoreCase) == true)
+                        {
+                            targetSchemaObject = sourceObject.TargetObject;
+                        }
+
+                        dataGridViewSqlServer.Rows.Add(true, true, sourceObject.SourceSchemaObject ?? string.Empty, analysis, targetSchemaObject ?? string.Empty, sourceObject.TargetPageSize, string.Empty);
+                    }
                 }
 
                 if (dataGridViewSqlServer.Columns.Count > 0)

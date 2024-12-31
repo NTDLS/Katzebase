@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Management.Classes;
+using System.ComponentModel;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
@@ -17,13 +18,27 @@ namespace NTDLS.Katzebase.Management.Controls
     {
         #region Properties.
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public FormStudio StudioForm { get; set; }
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TabControl TabControlParent { get; private set; }
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ExecutionExceptionCount { get; private set; } = 0;
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsScriptExecuting { get; private set; } = false;
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ServerExplorerConnection? ExplorerConnection { get; private set; }
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public KbClient? Client { get; private set; }
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsFileOpen { get; private set; } = false;
 
         /// <summary>
@@ -32,6 +47,8 @@ namespace NTDLS.Katzebase.Management.Controls
         public bool IsSelected => TabControlParent.SelectedTab == this;
 
         private bool _isSaved = false;
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsSaved
         {
             get => _isSaved;
@@ -54,6 +71,8 @@ namespace NTDLS.Katzebase.Management.Controls
             SplitterWidth = 10
         };
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool CollapseSplitter
         {
             get => TabSplitContainer.Panel2Collapsed;
@@ -116,6 +135,8 @@ namespace NTDLS.Katzebase.Management.Controls
         #endregion
 
         private string _filePath = string.Empty;
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string FilePath
         {
             get => _filePath;
@@ -130,14 +151,22 @@ namespace NTDLS.Katzebase.Management.Controls
 
         #region Controls.
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TabPage OutputTab { get; private set; } = new("Output");
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TabPage ResultsTab { get; private set; } = new("Results");
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Panel ResultsPanel { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
             AutoScroll = true,
         };
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public RichTextBox OutputTextbox { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
@@ -145,7 +174,11 @@ namespace NTDLS.Katzebase.Management.Controls
             WordWrap = false,
         };
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public FullyFeaturedCodeEditor Editor { get; private set; }
 
         #endregion
@@ -748,8 +781,8 @@ namespace NTDLS.Katzebase.Management.Controls
             if (e.Column.Name == UIConstants.ROW_ID_COLUMN_NAME)
             {
                 // Try to parse the cells as integers.
-                if (int.TryParse(e.CellValue1.ToString(), out int int1) &&
-                    int.TryParse(e.CellValue2.ToString(), out int int2))
+                if (int.TryParse(e.CellValue1?.ToString(), out int int1) &&
+                    int.TryParse(e.CellValue2?.ToString(), out int int2))
                 {
                     // Compare the integer values.
                     e.SortResult = int1.CompareTo(int2);
@@ -757,7 +790,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 else
                 {
                     // If parsing fails, fall back to string comparison.
-                    e.SortResult = string.Compare(e.CellValue1.ToString(), e.CellValue2.ToString());
+                    e.SortResult = string.Compare(e.CellValue1?.ToString(), e.CellValue2?.ToString());
                 }
 
                 // Indicate that the comparison has been handled.

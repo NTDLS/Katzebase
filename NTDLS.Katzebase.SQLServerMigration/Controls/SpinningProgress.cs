@@ -1,4 +1,5 @@
-﻿using System.Drawing.Drawing2D;
+﻿using System.ComponentModel;
+using System.Drawing.Drawing2D;
 
 namespace NTDLS.Katzebase.SQLServerMigration.Controls
 {
@@ -124,6 +125,8 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
             }
         }
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public double AutoIncrementFrequency
         {
             get

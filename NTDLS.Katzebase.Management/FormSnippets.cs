@@ -3,6 +3,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Controls;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml;
 
@@ -16,6 +17,8 @@ namespace NTDLS.Katzebase.Management
         private static string _snippetsPath => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Snippets");
 #endif
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedSnippetText { get; set; } = string.Empty;
 
         private readonly TextEditor _editor = new TextEditor();
