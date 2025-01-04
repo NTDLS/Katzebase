@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Trace;
-using static NTDLS.Katzebase.Shared.EngineConstants;
+﻿using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Trace
 {
