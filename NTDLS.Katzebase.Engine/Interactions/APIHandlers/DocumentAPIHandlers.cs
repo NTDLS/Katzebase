@@ -31,9 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.DocumentSample, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -75,9 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <returns></returns>
         public KbQueryDocumentListReply DocumentList(RmContext context, KbQueryDocumentList param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.DocumentList, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -121,9 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbQueryDocumentStoreReply DocumentStore(RmContext context, KbQueryDocumentStore param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.DocumentStore, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";

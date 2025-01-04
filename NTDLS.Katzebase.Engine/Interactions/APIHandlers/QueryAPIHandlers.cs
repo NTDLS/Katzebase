@@ -30,9 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainPlanReply ExecuteExplainPlan(RmContext context, KbQueryQueryExplainPlan param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ExecuteExplainPlan, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -65,9 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainOperationReply ExecuteExplainOperation(RmContext context, KbQueryQueryExplainOperation param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ExecuteExplainOperation, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -99,9 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ExecuteStatementProcedure, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -124,9 +118,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ExecuteStatementQuery, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -158,9 +150,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(RmContext context, KbQueryQueryExecuteNonQuery param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ExecuteStatementNonQuery, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";

@@ -33,9 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQuerySchemaListReply ListSchemas(RmContext context, KbQuerySchemaList param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.ListSchemas, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -79,9 +77,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQuerySchemaFieldSampleReply SchemaFieldSample(RmContext context, KbQuerySchemaFieldSample param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.SchemaFieldSample, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -128,9 +124,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaPath"></param>
         public KbQuerySchemaCreateReply CreateSchema(RmContext context, KbQuerySchemaCreate param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.CreateSchema, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -173,9 +167,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaPath"></param>
         public KbQuerySchemaExistsReply DoesSchemaExist(RmContext context, KbQuerySchemaExists param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.DoesSchemaExist, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -226,9 +218,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schema"></param>
         public KbQuerySchemaDropReply DropSchema(RmContext context, KbQuerySchemaDrop param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.DropSchema, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";

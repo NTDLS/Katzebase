@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading;
-using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -19,7 +18,6 @@ namespace NTDLS.Katzebase.Engine
         internal CacheManager Cache;
         internal HeartbeatManager Heartbeat;
         internal KatzebaseSettings Settings;
-        internal TraceManager Trace;
 
         public PolicyManager Policy;
         public SchemaManager Schemas;
@@ -105,9 +103,6 @@ namespace NTDLS.Katzebase.Engine
 
             LogManager.Information("Initializing heartbeat manager.");
             Heartbeat = new HeartbeatManager(this);
-
-            LogManager.Information("Initializing trace manager.");
-            Trace = new TraceManager(this);
 
             Schemas.PostInitialization();
         }

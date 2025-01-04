@@ -30,9 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexGetReply IndexGet(RmContext context, KbQueryIndexGet param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexGet, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -68,9 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexListReply IndexList(RmContext context, KbQueryIndexList param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexList, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -109,9 +105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexExistsReply IndexExist(RmContext context, KbQueryIndexExists param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexExist, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -144,9 +138,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexCreateReply IndexCreate(RmContext context, KbQueryIndexCreate param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexCreate, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -177,9 +169,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexRebuildReply IndexRebuild(RmContext context, KbQueryIndexRebuild param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexRebuild, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
@@ -208,9 +198,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexDropReply IndexDrop(RmContext context, KbQueryIndexDrop param)
         {
-            using var trace = _core.Trace.CreateTracker(TraceType.IndexDrop, context.ConnectionId);
             var session = _core.Sessions.GetSession(context.ConnectionId);
-            trace.SetSession(session);
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
