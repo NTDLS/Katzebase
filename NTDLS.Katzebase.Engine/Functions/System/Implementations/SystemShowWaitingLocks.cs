@@ -14,6 +14,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("ProcessId");
             result.AddField("Granularity");
             result.AddField("Operation");
+            result.AddField("Wait Time (ms)");
             result.AddField("Object Name");
 
             var waitingTxSnapshots = core.Locking.SnapshotWaitingTransactions().ToList();
@@ -31,7 +32,8 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     waitingForLock.Key.ProcessId.ToString(),
                     waitingForLock.Value.Granularity.ToString(),
                     waitingForLock.Value.Operation.ToString(),
-                    waitingForLock.Value.ObjectName.ToString(),
+                    Convert.ToInt64((DateTime.UtcNow - waitingForLock.Value.CreationTime).TotalMilliseconds).ToString(),
+                    waitingForLock.Value.ObjectName.ToString()
                 };
                 result.AddRow(values);
             }
