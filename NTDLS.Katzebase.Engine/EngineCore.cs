@@ -13,6 +13,7 @@ namespace NTDLS.Katzebase.Engine
 {
     public class EngineCore
     {
+        public bool IsRunning { get; private set; }
         internal IOManager IO;
         internal LockManager Locking;
         internal CacheManager Cache;
@@ -116,10 +117,14 @@ namespace NTDLS.Katzebase.Engine
             LogManager.Information("Recovery complete.");
 
             Heartbeat.Start();
+
+            IsRunning = true;
         }
 
         public void Stop()
         {
+            IsRunning = false;
+
             LogManager.Information("Stopping heartbeat pool.");
             Heartbeat.Stop();
 
