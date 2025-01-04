@@ -1,7 +1,7 @@
 # Katzebase
 ![Logo128](https://github.com/NTDLS/NTDLS.Katzebase.Server/assets/11428567/fa827156-4d19-4803-860f-aa0ef3a5151d)
 
-Katzebase is an ACID compliant document-based database written in C# using .NET 8 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessageing](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs , a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
+Katzebase is an ACID compliant document-based database written in C# using .NET 9 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessageing](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs , a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
 
 ## Testing Status
 [![Regression Tests](https://github.com/NTDLS/Katzebase/actions/workflows/%20Regression%20Tests.yaml/badge.svg)](https://github.com/NTDLS/Katzebase/actions/workflows/%20Regression%20Tests.yaml)
@@ -39,7 +39,7 @@ If you are feeling more ambitious, you can grab the larger [Katzebase with Stack
 ## SQL Server Migration Tool
 We even included a tool to import your schema, data and indexes from SQL Server into Katzebase.
 
-![image](https://github.com/user-attachments/assets/8bbbc47a-78b1-47f0-8fbb-c44962482d22)
+![image](https://github.com/user-attachments/assets/88f99e45-adc1-40e2-a6b2-2cd1776f8716)
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
