@@ -1,5 +1,4 @@
 ﻿using NTDLS.FastMemoryCache;
-using NTDLS.FastMemoryCache.Metrics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime;
@@ -24,10 +23,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var config = new PartitionedCacheConfiguration
                 {
-                    MaxMemoryBytes = core.Settings.CacheMaxMemoryMegabytes * 1024L * 1024L,
+                    SizeLimitBytes = core.Settings.CacheMaxMemoryMegabytes * 1024L * 1024L,
                     IsCaseSensitive = false,
                     PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount,
-                    ScavengeIntervalSeconds = core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30
+                    ExpirationScanFrequency = TimeSpan.FromSeconds(core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30)
                 };
 
                 _cache = new PartitionedMemoryCache(config);
@@ -84,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Upsert(string key, object value, int approximateSizeInBytes = 0)
+        internal void Set(string key, object value, int approximateSizeInBytes = 0)
         {
             try
             {
@@ -110,52 +109,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal CachePartitionAllocationStats GetPartitionAllocationStatistics()
-        {
-            try
-            {
-                return _cache.GetPartitionAllocationStatistics(); ;
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error("Failed to clear cache.", ex);
-                throw;
-            }
-        }
-
-        internal CachePartitionAllocationDetails GetPartitionAllocationDetails()
-        {
-            try
-            {
-                return _cache.GetPartitionAllocationDetails();
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error("Failed to clear cache.", ex);
-                throw;
-            }
-        }
-
-        internal object? TryGet(string key)
-        {
-            try
-            {
-                return _cache.TryGet(key);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error("Failed to get cache object.", ex);
-                throw;
-            }
-        }
-
         internal bool TryGet(string key, [NotNullWhen(true)] out object? value)
         {
             try
             {
                 if (_cache.TryGet(key, out value))
                 {
-                    return true;
+                    return value != null;
                 }
                 value = default;
                 return false;
@@ -173,9 +133,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 if (_cache.TryGet(key, out value))
                 {
-                    return true;
+                    return value != null;
                 }
-                value = default;
                 return false;
             }
             catch (Exception ex)
@@ -185,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal object Get(string key)
+        internal object? Get(string key)
         {
             try
             {
@@ -198,11 +157,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal bool Remove(string key)
+        internal void Remove(string key)
         {
             try
             {
-                return _cache.Remove(key);
+                _cache.Remove(key);
             }
             catch (Exception ex)
             {

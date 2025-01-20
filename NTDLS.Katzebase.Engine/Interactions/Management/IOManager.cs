@@ -145,7 +145,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled && deserializedObject != null)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                        _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes));
+                        _core.Cache.Set(filePath, deserializedObject, approximateSizeInBytes));
 
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadAdditions);
                 }
@@ -175,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.Settings.CacheEnabled)
                 {
-                    _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
+                    _core.Cache.Set(filePath, deserializedObject, approximateSizeInBytes);
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
@@ -226,7 +226,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.Settings.CacheEnabled)
                 {
-                    _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
+                    _core.Cache.Set(filePath, deserializedObject, approximateSizeInBytes);
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
@@ -329,7 +329,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                        _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes));
+                        _core.Cache.Set(filePath, deserializedObject, approximateSizeInBytes));
 
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }

@@ -1,8 +1,10 @@
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using Serilog;
+#if WINDOWS
 using Topshelf;
 using Topshelf.Logging;
 using Topshelf.ServiceConfigurators;
+#endif
 
 namespace NTDLS.Katzebase.Server
 {
@@ -13,7 +15,7 @@ namespace NTDLS.Katzebase.Server
             private readonly SemaphoreSlim _semaphoreToRequestStop;
             private readonly Thread _thread;
 
-            public KatzebaseService(ServiceConfigurator<KatzebaseService> s)
+            public KatzebaseService()
             {
                 _semaphoreToRequestStop = new SemaphoreSlim(0);
                 _thread = new Thread(DoWork);
@@ -63,6 +65,7 @@ namespace NTDLS.Katzebase.Server
                  .MinimumLevel.Information()
                  .CreateLogger();
 
+#if WINDOWS
             HostLogger.UseLogger(new NullLogWriterFactory()); //Prevent top-shelf from polluting the console.
 
             HostFactory.Run(x =>
@@ -76,7 +79,7 @@ namespace NTDLS.Katzebase.Server
 
                 x.Service<KatzebaseService>(s =>
                 {
-                    s.ConstructUsing(hostSettings => new KatzebaseService(s));
+                    s.ConstructUsing(hostSettings => new KatzebaseService());
                     s.WhenStarted(tc => tc.Start());
                     s.WhenStopped(tc => tc.Stop());
                 });
@@ -86,6 +89,26 @@ namespace NTDLS.Katzebase.Server
                 x.SetDisplayName("Katzebase Service");
                 x.SetServiceName("Katzebase");
             });
+#else
+            var _shutdownEvent = new ManualResetEvent(false);
+
+            var apiService = new APIService();
+            apiService.Start();
+
+            Console.WriteLine("Service started. Press Ctrl+C to exit.");
+
+            // Capture Ctrl+C (SIGINT) or other shutdown signals
+            Console.CancelKeyPress += (sender, eventArgs) =>
+            {
+                Console.WriteLine("Shutdown signal received.");
+                _shutdownEvent.Set();
+                eventArgs.Cancel = true; // Prevent the process from terminating immediately
+            };
+
+
+            _shutdownEvent.WaitOne();
+            apiService.Stop();
+#endif
         }
     }
 }

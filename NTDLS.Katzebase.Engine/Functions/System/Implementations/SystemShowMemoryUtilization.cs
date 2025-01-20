@@ -10,13 +10,6 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
-            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
-            long totalCacheSize = 0;
-            foreach (var partition in cachePartitions.Items)
-            {
-                totalCacheSize += partition.ApproximateSizeInBytes;
-            }
-
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
             result.AddField("Working Set");
@@ -29,10 +22,8 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("Peak Virtual Memory");
             result.AddField("Virtual Memory");
             result.AddField("Private Memory");
-            result.AddField("Cache Size");
 
             var process = Process.GetCurrentProcess();
-
             var values = new List<string?>
             {
                 $"{Formatters.FileSize(process.WorkingSet64)}",
@@ -45,7 +36,6 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 $"{Formatters.FileSize(process.PeakVirtualMemorySize64)}",
                 $"{Formatters.FileSize(process.VirtualMemorySize64)}",
                 $"{Formatters.FileSize(process.PrivateMemorySize64)}",
-                $"{Formatters.FileSize(totalCacheSize)}",
             };
 
             result.AddRow(values);

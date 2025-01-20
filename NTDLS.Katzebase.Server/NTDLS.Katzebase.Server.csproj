@@ -12,6 +12,10 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <DefineConstants>WINDOWS</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net9.0\NTDLS.Katzebase.ico" />
   </ItemGroup>
