@@ -43,6 +43,8 @@ namespace NTDLS.Katzebase.Server
 
         private static KatzebaseSettings LoadSettings(string fileName)
         {
+            fileName = Path.Combine(AppContext.BaseDirectory, fileName);
+
             var defaultSettings = new KatzebaseSettings();
 
             //File doesn't exist? Create it and return the default configuration.
@@ -56,6 +58,7 @@ namespace NTDLS.Katzebase.Server
                 {
                     LogManager.Error($"Failed to create default settings file: [{fileName}], Error: {ex.Message}.");
                 }
+
                 return defaultSettings;
             }
 

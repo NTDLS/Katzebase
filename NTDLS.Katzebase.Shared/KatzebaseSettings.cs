@@ -155,11 +155,11 @@
                 dataRootPath = value.TrimEnd(['/', '\\']).Trim();
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
-                    dataRootPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dataRootPath));
+                    dataRootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, dataRootPath));
                 }
             }
         }
-        private string dataRootPath = string.Empty;
+        private string dataRootPath = ".\\data\\root";
 
         /// <summary>
         /// The directory where transaction logs are stored.
@@ -173,12 +173,12 @@
 
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
-                    transactionDataPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, transactionDataPath));
+                    transactionDataPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, transactionDataPath));
                 }
             }
         }
 
-        private string transactionDataPath = string.Empty;
+        private string transactionDataPath = ".\\data\\transaction";
 
         /// <summary>
         /// The directory where text and performance logs are stores.
@@ -191,11 +191,11 @@
                 logDirectory = value.TrimEnd(['/', '\\']).Trim();
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
-                    logDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logDirectory));
+                    logDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, logDirectory));
                 }
             }
         }
-        private string logDirectory = string.Empty;
+        private string logDirectory = ".\\data\\log";
 
         /// <summary>
         /// If true, text logs will be flushed at every write. This ensures that the log file is always up-to-date on disk.

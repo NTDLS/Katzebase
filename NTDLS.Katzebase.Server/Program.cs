@@ -105,7 +105,6 @@ namespace NTDLS.Katzebase.Server
                 eventArgs.Cancel = true; // Prevent the process from terminating immediately
             };
 
-
             _shutdownEvent.WaitOne();
             apiService.Stop();
 #endif

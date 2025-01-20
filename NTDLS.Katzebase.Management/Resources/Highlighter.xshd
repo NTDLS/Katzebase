@@ -77,9 +77,6 @@
       <Word>ShowAggregateFunctions</Word>
       <Word>ShowBlocks</Word>
       <Word>ShowBlockTree</Word>
-      <Word>ShowCacheAllocations</Word>
-      <Word>ShowCachePages</Word>
-      <Word>ShowCachePartitions</Word>
       <Word>ShowHealthCounters</Word>
       <Word>ShowLocks</Word>
       <Word>ShowMemoryUtilization</Word>
