@@ -7,9 +7,9 @@ namespace NTDLS.Katzebase.Api.Models
         public KbMessageType MessageType { get; set; }
         public string Text { get; set; }
 
-        public KbQueryResultMessage(string text, KbMessageType type)
+        public KbQueryResultMessage(string text, KbMessageType messageType)
         {
-            MessageType = type;
+            MessageType = messageType;
             Text = text;
         }
     }
