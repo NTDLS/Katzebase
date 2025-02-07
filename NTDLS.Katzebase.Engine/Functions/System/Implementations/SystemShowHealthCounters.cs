@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 var values = new List<string?>
                 {
-                    Text.SeperateCamelCase(counter.Key),
+                    Text.SeparateCamelCase(counter.Key),
                     counter.Value.Value.ToString("n0")
                 };
 

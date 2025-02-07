@@ -567,7 +567,7 @@ namespace NTDLS.Katzebase.Management.Controls
                     diff = (maxAverageLength - metricsTextItem.Average.Length) + 1;
                     metricText += $"{metricsTextItem.Average}{new string(' ', diff)}";
 
-                    metricText += Helpers.Text.SeperateCamelCase(metricsTextItem.Name).Replace(":", " : ");
+                    metricText += Helpers.Text.SeparateCamelCase(metricsTextItem.Name).Replace(":", " : ");
 
                     stringBuilder.AppendLine($"  {metricText}");
                 }

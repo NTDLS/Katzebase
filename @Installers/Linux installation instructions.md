@@ -48,7 +48,7 @@ sudo apt-get install -y aspnetcore-runtime-9.0
     - >sudo add-apt-repository ppa:dotnet/backports
     - > sudo apt update
     - > sudo apt-get install -y aspnetcore-runtime-9.0
-    - > (NOT NEEDED BUR DOCUMENTING HERE) sudo apt-get install -y dotnet-runtime-9.0 (THIS IS NT
+    - > (NOT NEEDED BUR DOCUMENTING HERE) sudo apt-get install -y dotnet-runtime-9.0
 
 - Linux
   - Install unzip

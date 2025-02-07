@@ -450,9 +450,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     #region Deadlock Detection.
 
                     var ptDeadlockDetection = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.DeadlockDetection);
-                    transaction.BlockedByKeys.Read((obj) =>
+                    transaction.BlockedByKeys.Read((currentBlockedByKeys) =>
                     {
-                        if (obj.Count != 0)
+                        if (currentBlockedByKeys.Count != 0)
                         {
                             var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
                             _pendingGrants.Read((pendingGrants) =>
@@ -472,8 +472,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 {
                                     //Check to see if the current transaction is waiting
                                     //  on any of those blocked transaction (circular reference).
-
-                                    if (obj.Any(o => o.ProcessId == blocked.ProcessId))
+                                    if (currentBlockedByKeys.Any(o => o.ProcessId == blocked.ProcessId))
                                     {
                                         var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, blockedByMe);
 
