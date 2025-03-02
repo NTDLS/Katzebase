@@ -474,6 +474,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     //  on any of those blocked transaction (circular reference).
                                     if (currentBlockedByKeys.Any(o => o.ProcessId == blocked.ProcessId))
                                     {
+
+                                        //TODO: Need to make sure we are not capturing non-deadlocks.
+
                                         var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, blockedByMe);
 
                                         transaction.SetDeadlocked();
