@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2025 NetworkDLS</Copyright>
-    <Version>0.32.0</Version>
+    <Version>0.32.1</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <StartupObject>NTDLS.Katzebase.SQLServerMigration.Program</StartupObject>
@@ -24,8 +24,8 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
-    <PackageReference Include="NTDLS.WinFormsHelpers" Version="1.3.8" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+    <PackageReference Include="NTDLS.WinFormsHelpers" Version="1.3.9" />
   </ItemGroup>
 
   <ItemGroup>
