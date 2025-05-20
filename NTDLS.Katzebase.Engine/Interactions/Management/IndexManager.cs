@@ -52,6 +52,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
+                if (index.Attributes.Count == 0)
+                {
+                    throw new KbInvalidArgumentException($"Index [{index.Name}] on [{schemaName}] has no attributes.");
+                }
+
                 var physicalIndex = PhysicalIndex.FromClientPayload(index);
 
                 physicalIndex.Id = Guid.NewGuid();
@@ -1091,6 +1096,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
+                if (physicalIndex.Attributes.Count == 0)
+                {
+                    throw new KbInvalidArgumentException($"Index [{physicalIndex.Name}] on [{physicalSchema.Name}] has no attributes.");
+                }
+
                 var physicalDocumentPageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 //Clear out the existing index pages.

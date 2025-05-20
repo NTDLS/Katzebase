@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
-using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {

@@ -2,7 +2,7 @@
 {
     public class KbIndex
     {
-        public List<KbIndexAttribute> Attributes { get; private set; } = new();
+        public List<KbIndexAttribute> Attributes { get; set; } = new();
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }

@@ -514,9 +514,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                 targetIndex.AddAttribute(column.ColumnName.EnsureNotNull());
                             }
 
-                            UpdateDataGridViewText(item.RowItem, $"Index: {sourceIndex.Key}");
-
-                            client.Schema.Indexes.Create(item.TargetServerSchema, targetIndex);
+                            if (targetIndex.Attributes.Count > 0)
+                            {
+                                UpdateDataGridViewText(item.RowItem, $"Index: {sourceIndex.Key}");
+                                client.Schema.Indexes.Create(item.TargetServerSchema, targetIndex);
+                            }
                         }
                     }
                 }

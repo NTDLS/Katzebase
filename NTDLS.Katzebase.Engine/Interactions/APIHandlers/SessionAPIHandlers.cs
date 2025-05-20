@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Engine.Scripts.Models;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
 using System.Diagnostics;
-using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {

@@ -127,6 +127,8 @@ namespace NTDLS.Katzebase.Api
                     QueryTimeout = _queryTimeout
                 });
 
+                Connection.SetCompressionProvider(new RmDeflateCompressionProvider());
+
                 Connection.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
                 {
                     var sessionInfo = new KbSessionInfo
