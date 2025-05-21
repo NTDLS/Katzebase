@@ -1,4 +1,9 @@
-select FromNumber, ToNumber, SIC from TravelMatrix:Metrics where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
+select FromNumber, ToNumber, SIC from TravelMatrix:Metrics
+where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
+--where ToNumber = 2 and FromNumber = 106 and SIC = 'lfa'
+--where FromNumber = 106 and ToNumber = 2
+--where SIC = 'lfa' and FromNumber = 106  --should be ix_sic_from_to
+--where SIC = 'lfa' and ToNumber = 2 --Should be ix_sic_to_from
 
 --TOP n causes the query to return no rows:
 --select TOP 100 FromNumber, ToNumber, SIC from TravelMatrix:Metrics where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'

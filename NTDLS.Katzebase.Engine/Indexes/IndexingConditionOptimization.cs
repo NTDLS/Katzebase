@@ -123,24 +123,11 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
                         foreach (var condition in applicableConditions)
                         {
-                            if (condition.Left is QueryFieldDocumentIdentifier leftValue)
+                            if (condition.Left is QueryFieldDocumentIdentifier leftValue && leftValue.FieldName?.Is(attribute.Field) == true)
                             {
-                                if (leftValue.FieldName?.Is(attribute.Field) == true)
-                                {
-                                    if (StaticParserField.IsConstantExpression(condition.Right.Value))
-                                    {
-                                        //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                        var constantValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
-
-                                        //TODO: Think about the nullability of constantValue.
-                                        condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue);
-                                    }
-
-                                    indexSelection.CoveredConditions.Add(condition);
-                                    //Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
-                                    locatedIndexAttribute = true;
-                                    locatedGroupIndex = true;
-                                }
+                                indexSelection.CoveredConditions.Add(condition);
+                                locatedIndexAttribute = true;
+                                locatedGroupIndex = true;
                             }
                         }
 
@@ -170,6 +157,28 @@ namespace NTDLS.Katzebase.Engine.Indexes
                     return false; //Invalidate indexing optimization.
                 }
 
+                foreach (var condition in flattenedGroup.Collection.OfType<ConditionEntry>())
+                {
+                    if (condition.Left is QueryFieldDocumentIdentifier && StaticParserField.IsConstantExpression(condition.Right.Value))
+                    {
+                        //To save time while indexing, we are going to collapse the value here if the expression is a constant.
+                        var constantValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                        //TODO: Think about the nullability of constantValue.
+                        condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue);
+                    }
+
+                    //This Works to collapse the value, but we only index on right hand values... so its commented out.
+                    /*
+                    if (condition.Right is QueryFieldDocumentIdentifier && StaticParserField.IsConstantExpression(condition.Left.Value))
+                    {
+                        //To save time while indexing, we are going to collapse the value here if the expression is a constant.
+                        var constantValue = condition.Left.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                        //TODO: Think about the nullability of constantValue.
+                        condition.Left = new QueryFieldCollapsedValue(condition.Left.ScriptLine, constantValue);
+                    }
+                    */
+                }
+
                 #endregion
 
                 #region Select the best indexes from the usable indexes.
@@ -196,7 +205,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
                     var partialMatches = flattenedGroup.UsableIndexes
                         .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Any(c => c.IsIndexOptimized == false))
-                        .OrderBy(o => o.CoveredConditions.Count).ToList();
+                        .OrderByDescending(o => o.CoveredConditions.Count).ToList();
                     preferenceOrderedIndexSelections.AddRange(partialMatches);
 
                     foreach (var indexSelection in preferenceOrderedIndexSelections)
