@@ -320,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
                     if (IOManager.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
                     {
-                        throw new KbObjectNotFoundException($"Schema path not found: [{schemaName}].");
+                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
@@ -359,6 +359,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Opens a schema for a desired access even if it does not exist. Takes a virtual 
         ///     schema path (schema:schema2:schema3) and converts to to a physical location.
         /// </summary>
+        /// <param name="transaction">Current transaction.</param>
+        /// <param name="schemaName">Schema name to a acquire a lock on.</param>
+        /// <param name="intendedOperation">Intended operation on the schema.</param>
+        /// <param name="parentIntendedOperation">Intended operation on the parent schema.</param>
+        /// <returns></returns>
         internal VirtualSchema AcquireVirtual(Transaction transaction, string schemaName,
             LockOperation intendedOperation, LockOperation parentIntendedOperation)
         {

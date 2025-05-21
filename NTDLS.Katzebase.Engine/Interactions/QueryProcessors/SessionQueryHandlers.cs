@@ -78,6 +78,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                         case StateSetting.WarnNullPropagation:
                             session.UpsertConnectionSetting(setting, Helpers.Converters.ConvertTo<bool>(variable.Value));
                             break;
+                        case StateSetting.ReadUncommitted:
+                            session.UpsertConnectionSetting(setting, Helpers.Converters.ConvertTo<bool>(variable.Value));
+                            break;
                         default:
                             throw new KbNotImplementedException($"Unhandled session setting: [{variable.Name}].");
                     }

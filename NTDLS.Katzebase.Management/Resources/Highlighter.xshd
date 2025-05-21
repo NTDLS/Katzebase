@@ -95,6 +95,7 @@
       <Word>TraceWaitTimes</Word>
       <Word>WarnNullPropagation</Word>
       <Word>WarnMissingFields</Word>
+      <Word>ReadUncommitted</Word>
     </Keywords>
     
     <Keywords color="KbFunction">

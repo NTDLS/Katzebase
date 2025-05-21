@@ -433,9 +433,9 @@ exec ShowBlocks()
 exec ShowBlocks(1)
 exec ShowBlocks(null)
 exec ShowBlockTree()
-exec ShowCacheAllocations()
-exec ShowCachePages()
-exec ShowCachePartitions()
+--exec ShowCacheAllocations() --Removed
+--exec ShowCachePages() --Removed
+--exec ShowCachePartitions() --Removed
 exec ShowHealthCounters()
 exec ShowLocks()
 exec ShowLocks(1)

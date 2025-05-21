@@ -190,7 +190,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read, LockOperation.Stability);
+                    var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Stability, LockOperation.Stability);
 
                     doesSchemaExists = schema != null && schema.Exists;
                     if (doesSchemaExists == false)
@@ -238,14 +238,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var parentSchemaName = segments[^1];
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
-                var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Write);
+                var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Delete);
 
                 if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                     throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
 
                 var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
-                    transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                    transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Delete);
 
                 var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
                 if (nsItem != null)

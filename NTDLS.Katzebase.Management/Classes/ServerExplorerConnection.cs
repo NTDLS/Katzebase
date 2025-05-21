@@ -42,6 +42,8 @@ namespace NTDLS.Katzebase.Management.Classes
                 LazySchemaCache?.Stop();
             };
 
+            Client.Query.ExecuteNonQuery("SET ReadUncommitted TRUE");
+
             LazySchemaCache = new LazyBackgroundSchemaCache(this);
             LazySchemaCache.OnCacheUpdated += (List<CachedSchema> schemaCache) =>
             {

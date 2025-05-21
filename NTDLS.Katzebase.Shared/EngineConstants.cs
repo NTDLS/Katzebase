@@ -55,7 +55,11 @@
         {
             TraceWaitTimes,
             WarnMissingFields,
-            WarnNullPropagation
+            WarnNullPropagation,
+            /// <summary>
+            /// Causes the transaction to place Stability locks in place of Read locks.
+            /// </summary>
+            ReadUncommitted
         }
 
         public enum FieldCollapseType
@@ -75,9 +79,18 @@
         public enum SecurityPolicyPermission
         {
             All,
-            Read, //Select.
-            Write, //Update/Insert/Delete.
-            Manage //Drop/Create objects within the schema (such as sub-schemas, indexes, etc).
+            /// <summary>
+            /// Select.
+            /// </summary>
+            Read,
+            /// <summary>
+            /// Update/Insert/Delete.
+            /// </summary>
+            Write,
+            /// <summary>
+            /// Drop/Create objects within the schema (such as sub-schemas, indexes, etc).
+            /// </summary>
+            Manage
         }
 
         public enum IndexMatchType
@@ -120,17 +133,38 @@
 
         public enum LockGranularity
         {
-            Directory = 1,         //All files in a directory.
-            File = 2,              //A single file.
-            RecursiveDirectory = 3 //All files in a directory and all directories below it.
+            /// <summary>
+            /// All files in a directory.
+            /// </summary>
+            Directory = 1,
+            /// <summary>
+            /// A single file.
+            /// </summary>
+            File = 2,
+            /// <summary>
+            /// All files in a directory and all directories below it.
+            /// </summary>
+            RecursiveDirectory = 3
         }
 
         public enum LockOperation
         {
-            Stability, //Do not allow deletes.
-            Read,    //Do not allow writes or deletes.
-            Write,   //Do not allow other reads, writes or deletes.
-            Delete   //Do not allow read, write, delete or observe.
+            /// <summary>
+            /// Do not allow deletes.
+            /// </summary>
+            Stability,
+            /// <summary>
+            /// Do not allow writes or deletes.
+            /// </summary>
+            Read,
+            /// <summary>
+            /// Do not allow other reads, writes or deletes.
+            /// </summary>
+            Write,
+            /// <summary>
+            /// Do not allow read, write, delete or stability.
+            /// </summary>
+            Delete
         }
     }
 }

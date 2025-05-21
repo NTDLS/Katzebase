@@ -1,4 +1,5 @@
-﻿using static NTDLS.Katzebase.Shared.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
@@ -11,8 +12,13 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public string Key => $"{Granularity}:{Operation}:{DiskPath}";
 
-        public ObjectLockIntention(string diskPath, LockGranularity lockGranularity, LockOperation operation)
+        public ObjectLockIntention(Transaction transaction, string diskPath, LockGranularity lockGranularity, LockOperation operation)
         {
+            if (operation == LockOperation.Read && transaction.Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
+            {
+                operation = LockOperation.Stability;
+            }
+
             CreationTime = DateTime.UtcNow;
             DiskPath = diskPath;
             Granularity = lockGranularity;

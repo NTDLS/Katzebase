@@ -374,15 +374,20 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public ObjectLockKey? LockFile(LockOperation lockOperation, string diskPath)
         {
+            if (lockOperation == LockOperation.Read && Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
+            {
+                lockOperation = LockOperation.Stability;
+            }
+
             _core.EnsureNotNull();
 
             try
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.File, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, diskPath.ToLowerInvariant(), LockGranularity.File, lockOperation);
 
-                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"File:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"File:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -408,9 +413,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.Directory, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, diskPath.ToLowerInvariant(), LockGranularity.Directory, lockOperation);
 
-                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -436,9 +441,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(diskPath.ToLowerInvariant(), LockGranularity.RecursiveDirectory, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, diskPath.ToLowerInvariant(), LockGranularity.RecursiveDirectory, lockOperation);
 
-                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
