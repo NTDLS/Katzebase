@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
     /// </summary>
-    internal class QuerySchemaMapItem
+    internal class QuerySchemaOptimizationMapItem
     {
         public string SchemaPrefix { get; private set; }
         public PhysicalSchema PhysicalSchema { get; private set; }
@@ -20,7 +20,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         public IndexingConditionOptimization? Optimization { get; private set; }
         public QuerySchemaUsageType SchemaUsageType { get; private set; }
 
-        public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="key">The alias of the schema</param>
+        /// <param name="physicalSchema">The associated schema meta-data.</param>
+        /// <param name="documentCatalog">The document catalog contained in the associated schema.</param>
+        /// <param name="conditions">The conditions used to join this schema mapping to the one before it.</param>
+        public QuerySchemaOptimizationMapItem(EngineCore core, Transaction transaction, QuerySchemaOptimizationMap schemaMap, PhysicalSchema physicalSchema,
             QuerySchemaUsageType schemaUsageType, PhysicalDocumentPageCatalog documentPageCatalog, ConditionCollection? conditions, string schemaPrefix)
         {
             SchemaPrefix = schemaPrefix;

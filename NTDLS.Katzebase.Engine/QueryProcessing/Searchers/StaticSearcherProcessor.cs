@@ -170,14 +170,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// </summary>
         internal static KbQueryResult FindDocumentsByQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
-            var schemaMap = new QuerySchemaMap(core, transaction, query);
+            var schemaMap = new QuerySchemaOptimizationMap(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
+                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions, querySchema.Alias);
+                schemaMap.Add(querySchema.Alias, querySchemaMapItem);
             }
 
             var lookupResults = StaticSchemaIntersectionProcessor.GetDocumentsByConditions(core, transaction, schemaMap, query);
@@ -210,14 +211,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static SchemaIntersectionRowDocumentIdentifierCollection FindDocumentPointersByQuery(
             EngineCore core, Transaction transaction, PreparedQuery query, List<string> gatherDocumentPointersForSchemaAliases)
         {
-            var schemaMap = new QuerySchemaMap(core, transaction, query);
+            var schemaMap = new QuerySchemaOptimizationMap(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
                 var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                schemaMap.Add(querySchema.Alias, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions);
+                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions, querySchema.Alias);
+                schemaMap.Add(querySchema.Alias, querySchemaMapItem);
             }
 
             var schemaIntersectionRowCollection = StaticSchemaIntersectionProcessor.GatherIntersectedRows(

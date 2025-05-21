@@ -1,6 +1,14 @@
-select * from WordList:Word
-where Text = 'Test'
-or SourceId = 74605
+select FromNumber, ToNumber, SIC from TravelMatrix:Metrics where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
+
+--TOP n causes the query to return no rows:
+--select TOP 100 FromNumber, ToNumber, SIC from TravelMatrix:Metrics where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
+
+
+--order by SIC
+
+--select * from WordList:Word
+--where Text = 'Test'
+--or SourceId = 74605
 
 
 /*

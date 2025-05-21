@@ -51,7 +51,6 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
-        /// Called reclusively by BuildTree().
         /// </summary>
         private static bool WalkConditionTree(IndexingConditionOptimization optimization, PreparedQuery query,
             Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix)

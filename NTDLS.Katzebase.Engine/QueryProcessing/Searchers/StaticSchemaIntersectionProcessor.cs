@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// obtaining a list of DocumentPointers instead of fields/rows. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
         internal static DocumentLookupRowCollection GetDocumentsByConditions(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query)
+            QuerySchemaOptimizationMap schemaMap, PreparedQuery query)
         {
             var intersectedRowCollection = GatherIntersectedRows(core, transaction, schemaMap, query);
 
@@ -150,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// joined schemas (also using indexing). Expands rowset for one-to-many, many-to-many and many-to-one joins.
         /// </summary>
         public static SchemaIntersectionRowCollection GatherIntersectedRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases = null)
+            QuerySchemaOptimizationMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases = null)
         {
             var resultingRowCollection = GatherPrimarySchemaRows(core, transaction, schemaMappings, query, gatherDocumentPointersForSchemaAliases);
 
@@ -424,7 +424,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
         /// </summary>
         private static SchemaIntersectionRowCollection GatherPrimarySchemaRows(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases)
+            QuerySchemaOptimizationMap schemaMappings, PreparedQuery query, List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
             IEnumerable<DocumentPointer>? documentPointers = null;
