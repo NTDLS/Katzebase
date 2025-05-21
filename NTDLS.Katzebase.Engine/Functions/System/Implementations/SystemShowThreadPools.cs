@@ -19,24 +19,21 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("PrivilegedProcessorTime");
             result.AddField("BasePriority");
             result.AddField("CurrentPriority");
-            result.AddField("ThreadState");
-            result.AddField("WaitReason");
+            result.AddField("State");
 
             foreach (var thread in core.ThreadPool.Indexing.Threads)
             {
                 var values = new List<string?>
                 {
                     "Indexing",
-                    $"{thread.ManagedThread.ManagedThreadId}",
+                    $"{thread.NativeThread?.Id}",
                     $"{thread.NativeThread?.TotalProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.UserProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.PrivilegedProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.BasePriority:n0}",
                     $"{thread.NativeThread?.CurrentPriority:n0}",
-                    $"{thread.NativeThread?.ThreadState}",
-                    thread.NativeThread?.ThreadState == global::System.Diagnostics.ThreadState.Wait ? thread.NativeThread?.WaitReason.ToString() : string.Empty
+                    $"{thread.State}"
                 };
-
                 result.AddRow(values);
             }
 
@@ -45,14 +42,13 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var values = new List<string?>
                 {
                     "Intersection",
-                    $"{thread.ManagedThread.ManagedThreadId}",
+                    $"{thread.NativeThread?.Id}",
                     $"{thread.NativeThread?.TotalProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.UserProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.PrivilegedProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.BasePriority:n0}",
                     $"{thread.NativeThread?.CurrentPriority:n0}",
-                    $"{thread.NativeThread?.ThreadState}",
-                    thread.NativeThread?.ThreadState == global::System.Diagnostics.ThreadState.Wait ? thread.NativeThread?.WaitReason.ToString() : string.Empty
+                    $"{thread.State}"
                 };
                 result.AddRow(values);
             }
@@ -62,14 +58,13 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var values = new List<string?>
                 {
                     "Lookup",
-                    $"{thread.ManagedThread.ManagedThreadId}",
+                    $"{thread.NativeThread?.Id}",
                     $"{thread.NativeThread?.TotalProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.UserProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.PrivilegedProcessorTime.TotalMilliseconds:n0}",
                     $"{thread.NativeThread?.BasePriority:n0}",
                     $"{thread.NativeThread?.CurrentPriority:n0}",
-                    $"{thread.NativeThread?.ThreadState}",
-                    thread.NativeThread?.ThreadState == global::System.Diagnostics.ThreadState.Wait ? thread.NativeThread?.WaitReason.ToString() : string.Empty
+                    $"{thread.State}"
                 };
                 result.AddRow(values);
             }

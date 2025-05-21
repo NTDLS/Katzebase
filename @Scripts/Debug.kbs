@@ -6,7 +6,7 @@ or SourceId = 74605
 /*
 set TraceWaitTimes true
 
-SELECT
+SELECT TOP 1000
     soh.SalesOrderID,
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
     Count(sod.SalesOrderDetailID) AS TotalItems,
@@ -15,22 +15,18 @@ SELECT
     FormatNumeric(Avg(sod.UnitPrice), 'c2') AS AverageUnitPrice,
     FormatNumeric(Min(sod.UnitPrice), 'c2') AS MinUnitPrice,
     FormatNumeric(Max(sod.UnitPrice), 'c2') AS MaxUnitPrice,
-    
-    --sod.ProductId --This is invalid.
-    
-    --max(sod.ProductId)
-    --min(sod.ProductId), --This is invalid.
     FormatNumeric(Sum(IIF(IsEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as CompletedSalesAmount,
     FormatNumeric(Sum(IIF(IsNotEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as PendingSalesAmount
 FROM
-    AWSales:SalesOrderHeader as soh
-INNER JOIN AWSales:SalesOrderDetail as sod
-	ON soh.SalesOrderID = sod.SalesOrderID
+    AdventureWorks:Sales:SalesOrderHeader as soh
+INNER JOIN AdventureWorks:Sales:SalesOrderDetail as sod
+	--ON soh.SalesOrderID = sod.SalesOrderID --Does not use index and should!
+	ON sod.SalesOrderID = soh.SalesOrderID
 GROUP BY 
 	sod.ProductId,
 	--FormatNumeric(sod.ProductId, 'n1')
     soh.SalesOrderID,
     FormatDateTime(soh.OrderDate, 'MM/dd/yyyy')
-ORDER BY 
-    soh.OrderDate DESC
+--ORDER BY
+--    soh.OrderDate DESC
 */
