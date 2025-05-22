@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2025 NetworkDLS</Copyright>
-    <Version>0.33.0</Version>
+    <Version>0.33.1</Version>
     <Authors>NetworkDLS</Authors>
   </PropertyGroup>
 
