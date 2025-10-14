@@ -1,7 +1,7 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Server
- AppVerName                       = Katzebase Server 0.33.1
+ AppVerName                       = Katzebase Server 0.34.0
  AppCopyright                     = Copyright © 2025 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase
  DefaultGroupName                 = Katzebase

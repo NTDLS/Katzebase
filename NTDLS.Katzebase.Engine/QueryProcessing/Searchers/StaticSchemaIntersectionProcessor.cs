@@ -336,7 +336,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 SetJoinExpressionParametersRecursive(givenConditions.Collection);
 
                 var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                bool evaluation = (bool)matchExpression.Evaluate();
+                bool evaluation = (bool?)matchExpression.Evaluate() == true;
                 ptEvaluate?.StopAndAccumulate();
 
                 return evaluation;
@@ -387,7 +387,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 SetExpressionParametersRecursive(givenConditions.Collection);
 
                 var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                bool evaluation = (bool)matchExpression.Evaluate();
+                bool evaluation = (bool?)matchExpression.Evaluate() == true;
                 ptEvaluate?.StopAndAccumulate();
 
                 return evaluation;
