@@ -30,12 +30,12 @@
  Source: "publish\win-x64\Server\*.*"; DestDir: "{app}\Server"; Flags: IgnoreVersion recursesubdirs; Components: Server;
  ;Management component.
  Source: "publish\win-x64\Management\*.*"; DestDir: "{app}\Management"; Flags: IgnoreVersion  recursesubdirs; Components: Management;
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Bold"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeExtraLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Extra-Light"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Light"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeRegulat.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Regulat"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Bold"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeBold.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Bold"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeExtraLight.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Extra-Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeLight.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeRegulat.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Regulat"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiBold.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Semi-Bold"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiLight.ttf"; DestDir: "{commonfonts}"; FontInstall: "CascadiaCode Semi-Light"; Flags: onlyifdoesntexist uninsneveruninstall
  Source: "..\@Art\Script.ico"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
  
 ;Migration component.
