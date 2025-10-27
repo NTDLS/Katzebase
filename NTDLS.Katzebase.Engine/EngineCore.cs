@@ -13,7 +13,8 @@ namespace NTDLS.Katzebase.Engine
 {
     public class EngineCore
     {
-        internal CancellationTokenSource CancellationToken = new();
+        private CancellationTokenSource _cancellationToken = new();
+        public CancellationToken CancellationToken => _cancellationToken.Token;
 
         public bool IsRunning { get; private set; }
         internal IOManager IO;
@@ -122,12 +123,12 @@ namespace NTDLS.Katzebase.Engine
 
             IsRunning = true;
 
-            CancellationToken = new();
+            _cancellationToken = new();
         }
 
         public void Stop()
         {
-            CancellationToken.Cancel();
+            _cancellationToken.Cancel();
 
             IsRunning = false;
 
