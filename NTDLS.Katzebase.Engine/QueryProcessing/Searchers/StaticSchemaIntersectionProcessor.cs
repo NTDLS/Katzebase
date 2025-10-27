@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using NTDLS.ExpressionParser;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -331,12 +332,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     return true;
                 }
 
-                var matchExpression = new NCalc.Expression(givenConditions.MathematicalExpression);
+                var matchExpression = new Expression(givenConditions.MathematicalExpression);
 
                 SetJoinExpressionParametersRecursive(givenConditions.Collection);
 
                 var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                bool evaluation = (bool?)matchExpression.Evaluate() == true;
+                bool evaluation = (matchExpression.Evaluate() ?? 0) != 0;
                 ptEvaluate?.StopAndAccumulate();
 
                 return evaluation;
@@ -359,7 +360,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var collapsedRight = entry.Right.CollapseScalarQueryField(transaction,
                                 query, givenConditions.FieldCollection, rightDocumentContent)?.ToLowerInvariant();
 
-                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(collapsedLeft, collapsedRight);
+                            matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
                         }
                         else
                         {
@@ -382,12 +383,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     return true;
                 }
 
-                var matchExpression = new NCalc.Expression(givenConditions.MathematicalExpression);
+                var matchExpression = new Expression(givenConditions.MathematicalExpression);
 
                 SetExpressionParametersRecursive(givenConditions.Collection);
 
                 var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                bool evaluation = (bool?)matchExpression.Evaluate() == true;
+                bool evaluation = (matchExpression.Evaluate() ?? 0) != 0;
                 ptEvaluate?.StopAndAccumulate();
 
                 return evaluation;
@@ -405,7 +406,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
                             var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
 
-                            matchExpression.Parameters[entry.ExpressionVariable] = entry.IsMatch(collapsedLeft, collapsedRight);
+                            matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
                         }
                         else
                         {
