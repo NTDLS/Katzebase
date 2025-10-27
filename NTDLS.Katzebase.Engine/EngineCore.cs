@@ -13,6 +13,8 @@ namespace NTDLS.Katzebase.Engine
 {
     public class EngineCore
     {
+        internal CancellationTokenSource CancellationToken = new();
+
         public bool IsRunning { get; private set; }
         internal IOManager IO;
         internal LockManager Locking;
@@ -119,10 +121,14 @@ namespace NTDLS.Katzebase.Engine
             Heartbeat.Start();
 
             IsRunning = true;
+
+            CancellationToken = new();
         }
 
         public void Stop()
         {
+            CancellationToken.Cancel();
+
             IsRunning = false;
 
             LogManager.Information("Stopping heartbeat pool.");
