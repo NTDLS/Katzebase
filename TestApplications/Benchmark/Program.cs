@@ -19,6 +19,8 @@ namespace Benchmark
 
         static void Main()
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(OutputFileName)!);
+
             File.AppendAllText(OutputFileName, "StartDate\tTest\tIteration\tDurationMs\tPeakMemory\tCpuTime\r\n");
 
             Console.WriteLine("Creating payloads:");
