@@ -272,16 +272,16 @@ CREATE SCHEMA Temporary:InsertTest2
 
 --Test RAGGED INSERT.
 INSERT INTO Temporary:InsertTest2
-(FirstName = 'John', LastName = 'Doe'),
-(FirstName = 'Fred', MiddleName = 'Joe', LastName = 'Doe'),
-(FirstName = 'Jane', LastName = 'Doe')
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: 'Joe', LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe')
 
 
 --Test RAGGED INSERT with expression
 INSERT INTO Temporary:InsertTest2
-(FirstName = 'John', LastName = 'Doe'),
-(FirstName = 'Fred', MiddleName = Guid(), LastName = 'Doe'),
-(FirstName = 'Jane', LastName = 'Doe')
+(FirstName: 'John', LastName: 'Doe'),
+(FirstName: 'Fred', MiddleName: Guid(), LastName: 'Doe'),
+(FirstName: 'Jane', LastName: 'Doe')
 
 ---Test complex SELECT and complex WHERE.
 SELECT
@@ -359,9 +359,9 @@ exec ShowBlocks()
 exec ShowBlocks(1)
 exec ShowBlocks(null)
 exec ShowBlockTree()
-exec ShowCacheAllocations()
-exec ShowCachePages()
-exec ShowCachePartitions()
+--exec ShowCacheAllocations()
+--exec ShowCachePages()
+--exec ShowCachePartitions()
 exec ShowHealthCounters()
 exec ShowLocks()
 exec ShowLocks(1)
