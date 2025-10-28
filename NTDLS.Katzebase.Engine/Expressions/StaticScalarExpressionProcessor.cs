@@ -133,7 +133,6 @@ namespace NTDLS.Katzebase.Engine.Expressions
                         //Resolve the field identifier to a value.
                         if (auxiliaryFields.TryGetValue(fieldIdentifier.Value.EnsureNotNull(), out var textValue))
                         {
-                            textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
                             expressionString.Replace(token, mathVariable);
                             expressionVariables.Add(mathVariable, query.Batch.Variables.Resolve(textValue));
