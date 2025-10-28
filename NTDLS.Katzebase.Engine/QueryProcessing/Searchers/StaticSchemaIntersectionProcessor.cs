@@ -216,13 +216,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         int schemaMatchCount = 0;
 
+                        var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression);
+
                         foreach (var documentPointer in documentPointers)
                         {
                             var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
 
                             threadTemplateRowClone.SchemaElements[schemaMap.Value.SchemaPrefix.ToLowerInvariant()] = physicalDocument.Elements;
 
-                            if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, threadTemplateRowClone))
+                            if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, matchExpression, threadTemplateRowClone))
                             {
                                 schemaMatchCount++;
 
@@ -324,15 +326,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
             /// </summary>
             static bool IsJoinExpressionMatch(Transaction transaction,
-            PreparedQuery query, ConditionCollection? givenConditions, SchemaIntersectionRow schemaIntersectionRow)
+                PreparedQuery query, ConditionCollection? givenConditions, Expression matchExpression, SchemaIntersectionRow schemaIntersectionRow)
             {
                 if (givenConditions == null)
                 {
                     //There are no conditions, so this is a match.
                     return true;
                 }
-
-                var matchExpression = new Expression(givenConditions.MathematicalExpression);
 
                 SetJoinExpressionParametersRecursive(givenConditions.Collection);
 
