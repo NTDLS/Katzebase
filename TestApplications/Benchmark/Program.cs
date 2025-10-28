@@ -54,6 +54,8 @@ namespace Benchmark
                 var process = StartService();
                 using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
+                    client.QueryTimeout = TimeSpan.FromHours(24);
+
                     Console.WriteLine("Extracting payload.");
                     var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
                     Console.WriteLine("Deserializing payload.");
@@ -132,6 +134,8 @@ namespace Benchmark
                 var process = StartService();
                 using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
+                    client.QueryTimeout = TimeSpan.FromHours(24);
+
                     client.Schema.DropIfExists(schemaName);
                     client.Schema.Create(schemaName);
 
@@ -197,6 +201,8 @@ namespace Benchmark
                 var process = StartService();
                 using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
                 {
+                    client.QueryTimeout = TimeSpan.FromHours(24);
+
                     var queryText = File.ReadAllText(scriptFile);
 
                     double previousTotalProcessorTime = 0;
@@ -223,6 +229,8 @@ namespace Benchmark
             var process = StartService();
             using (var client = new KbClient(_serverHost, _serverPort, "admin", KbClient.HashPassword("")))
             {
+                client.QueryTimeout = TimeSpan.FromHours(24);
+
                 Console.WriteLine("Dropping benchmarking schema.");
                 client.Schema.DropIfExists("Benchmarking");
 
