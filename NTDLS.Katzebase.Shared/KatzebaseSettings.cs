@@ -49,9 +49,14 @@
         public uint DefaultIndexPartitions { get; set; } = 100;
 
         /// <summary>
-        /// The number of threads to allocate to the indexing thread pool.
+        /// The maximum number of threads to allocate to the indexing thread pool.
         /// </summary>
-        public int IndexingThreadPoolSize { get; set; } = 0;
+        public int IndexingThreadPoolMaximumSize { get; set; } = 0;
+
+        /// <summary>
+        /// The initial number of threads to allocate to the indexing thread pool.
+        /// </summary>
+        public int IndexingThreadPoolInitialSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
@@ -65,9 +70,14 @@
         public int IndexingChildThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
-        /// The number of threads to allocate to the thread pool.
+        /// The maximum number of threads to allocate to the thread pool.
         /// </summary>
-        public int LookupThreadPoolSize { get; set; } = 0;
+        public int LookupThreadPoolMaximumSize { get; set; } = 0;
+
+        /// <summary>
+        /// The initial number of threads to allocate to the thread pool.
+        /// </summary>
+        public int LookupThreadPoolInitialSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
@@ -81,9 +91,14 @@
         public int LookupChildThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
-        /// The number of threads to allocate to the thread pool.
+        /// The maximum number of threads to allocate to the thread pool.
         /// </summary>
-        public int IntersectionThreadPoolSize { get; set; } = 0;
+        public int IntersectionThreadPoolMaximumSize { get; set; } = 0;
+
+        /// <summary>
+        /// The initial number of threads to allocate to the thread pool.
+        /// </summary>
+        public int IntersectionThreadPoolInitialSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
@@ -96,11 +111,15 @@
         /// </summary>
         public int IntersectionChildThreadPoolQueueDepth { get; set; } = 100;
 
+        /// <summary>
+        /// The maximum number of threads to allocate to the thread pool.
+        /// </summary>
+        public int MaterializationThreadPoolMaximumSize { get; set; } = 0;
 
         /// <summary>
-        /// The number of threads to allocate to the thread pool.
+        /// The initial number of threads to allocate to the thread pool.
         /// </summary>
-        public int MaterializationThreadPoolSize { get; set; } = 0;
+        public int MaterializationThreadPoolInitialSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
