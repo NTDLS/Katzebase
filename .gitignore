@@ -163,3 +163,5 @@ NTDLS.Katzebase.Engine.Tests/obj/
 NTDLS.Katzebase.Engine.Tests/bin/
 
 \@Installers/publish/
+
+TestApplications/Benchmark/Output/

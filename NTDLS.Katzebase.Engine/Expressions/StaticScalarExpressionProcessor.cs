@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using NTDLS.ExpressionParser;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -234,11 +235,11 @@ namespace NTDLS.Katzebase.Engine.Expressions
             }
 
             //Perhaps we can pass in a cache object?
-            var expression = new NCalc.Expression(expressionString.ToString());
+            var expression = new Expression(expressionString.ToString());
 
             foreach (var expressionVariable in expressionVariables)
             {
-                expression.Parameters[expressionVariable.Key] = expressionVariable.Value == null ? null : double.Parse(expressionVariable.Value);
+                expression.SetParameter(expressionVariable.Key, expressionVariable.Value == null ? null : double.Parse(expressionVariable.Value));
             }
 
             return expression.Evaluate()?.ToString();

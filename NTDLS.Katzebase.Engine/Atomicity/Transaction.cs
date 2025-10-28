@@ -218,13 +218,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsCancelled = IsCancelled
             };
 
-            GrantedLockCache.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
-            BlockedByKeys.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            HeldLockKeys.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            TemporarySchemas.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
-            FilesReadForCache.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
-            DeferredIOs.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
-            Atoms.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
+            GrantedLockCache.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
+            BlockedByKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            HeldLockKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            TemporarySchemas.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
+            FilesReadForCache.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
+            DeferredIOs.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
+            Atoms.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
 
             return snapshot;
         }
@@ -302,9 +302,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
-            GrantedLockCache.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.Clear());
+            GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
 
-            HeldLockKeys.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+            HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
                 foreach (var key in obj)
                 {
@@ -315,9 +315,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         internal void ReleaseLock(ObjectLockKey objectLock)
         {
-            GrantedLockCache.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.Remove(objectLock.Key));
+            GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(objectLock.Key));
 
-            HeldLockKeys.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+            HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
                 obj.Remove(objectLock);
             });
@@ -484,7 +484,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
 
-            DeferredIOs.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+            DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
                 obj.SetCore(core);
             });
@@ -512,7 +512,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             bool result = false;
 
-            Atoms.DeadlockAvoidanceTryRead(10, () => _core.IsRunning, (obj) =>
+            Atoms.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) =>
             {
                 result = obj.Exists(o => o.Key.Is(filePath));
             });
@@ -530,7 +530,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -565,7 +565,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 EnsureActive();
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(path))
                     {
@@ -600,9 +600,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                DeferredIOs.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.RemoveItemsWithPrefix(diskPath));
+                DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.RemoveItemsWithPrefix(diskPath));
 
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(diskPath))
                     {
@@ -642,9 +642,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                DeferredIOs.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.Remove(filePath));
+                DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(filePath));
 
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -683,7 +683,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                FilesReadForCache.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.Add(filePath));
+                FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(filePath));
 
                 ptRecording?.StopAndAccumulate();
             }
@@ -704,7 +704,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -760,7 +760,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptRollback = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Rollback);
                     try
                     {
-                        Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                        Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                         {
                             var rollbackActions = obj.OrderByDescending(o => o.Sequence);
 
@@ -804,7 +804,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 }
                             }
 
-                            FilesReadForCache.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                            FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                             {
                                 foreach (var file in obj)
                                 {
@@ -879,7 +879,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         try
                         {
-                            DeferredIOs.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) => obj.CommitDeferredDiskIO());
+                            DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.CommitDeferredDiskIO());
                             CleanupTransaction();
                             _transactionManager.RemoveByProcessId(ProcessId);
                             DeleteTemporarySchemas();
@@ -914,7 +914,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             _core.EnsureNotNull();
 
-            TemporarySchemas.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+            TemporarySchemas.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
                 if (obj.Count != 0)
                 {
@@ -941,7 +941,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     _transactionLogHandle = null;
                 }
 
-                Atoms.DeadlockAvoidanceTryWrite(10, () => _core.IsRunning, (obj) =>
+                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                 {
                     foreach (var record in obj)
                     {
