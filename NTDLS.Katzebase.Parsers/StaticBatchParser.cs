@@ -1,6 +1,8 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace NTDLS.Katzebase.Parsers
 {
@@ -39,7 +41,7 @@ namespace NTDLS.Katzebase.Parsers
                     var query = StaticQueryParser.Parse(queryBatch, tokenizer);
 
                     var singleQueryText = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
-                    query.Hash = StaticParserUtility.ComputeSHA256(singleQueryText);
+                    query.Hash = SHA256.HashData(Encoding.UTF8.GetBytes(singleQueryText));
                     queryBatch.Add(query);
                 }
                 catch (Exception ex)

@@ -13,6 +13,7 @@ using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -216,7 +217,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         int schemaMatchCount = 0;
 
-                        var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression);
+                        //using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                        ///hasher.AppendData(query.Hash ?? throw new KbEngineException("Query hash is null when computing where clause hash."));
+                        //hasher.AppendData(schemaMap.Value.Conditions.EnsureNotNull().Hash ?? throw new KbEngineException("Conditions hash is null when computing where clause hash."));
+                        var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression,
+                            new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.EnsureNotNull().Hash /*hasher.GetCurrentHash()*/ });
 
                         foreach (var documentPointer in documentPointers)
                         {
@@ -383,7 +388,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     return true;
                 }
 
-                var matchExpression = new Expression(givenConditions.MathematicalExpression);
+                //using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+                //hasher.AppendData(query.Hash ?? throw new KbEngineException("Query hash is null when computing where clause hash."));
+                //hasher.AppendData(givenConditions.Hash ?? throw new KbEngineException("Conditions hash is null when computing where clause hash."));
+                var matchExpression = new Expression(givenConditions.MathematicalExpression,
+                    new ExpressionOptions() { CustomHash = givenConditions.Hash /*hasher.GetCurrentHash()*/ });
 
                 SetExpressionParametersRecursive(givenConditions.Collection);
 

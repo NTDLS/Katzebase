@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Parsers
         /// <summary>
         /// Contains the hash of the whole query text with all constants and variables removed.
         /// </summary>
-        public string? Hash { get; set; }
+        public byte[]? Hash { get; set; }
         public PreparedQueryBatch Batch { get; private set; } = queryBatch;
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; } = queryType;

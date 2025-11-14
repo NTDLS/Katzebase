@@ -13,6 +13,7 @@ using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 
@@ -233,7 +234,9 @@ namespace NTDLS.Katzebase.Engine.Expressions
                 return null;
             }
 
-            //Perhaps we can pass in a cache object?
+            //using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            //hasher.AppendData(query.Hash ?? throw new KbEngineException("Query hash is null when computing where clause hash."));
+            //hasher.AppendData(Encoding.UTF8.GetBytes(expressionString.ToString()));
             var expression = new Expression(expressionString.ToString());
 
             foreach (var expressionVariable in expressionVariables)

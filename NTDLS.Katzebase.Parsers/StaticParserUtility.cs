@@ -14,14 +14,14 @@ namespace NTDLS.Katzebase.Parsers
         public static bool IsStartOfQuery(string token, out QueryType type)
         {
             return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && Enum.IsDefined(type) //Is enum value über lenient.
                 && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
 
         public static bool IsStartOfQuery(string token)
         {
             return Enum.TryParse(token.ToLowerInvariant(), true, out QueryType type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && Enum.IsDefined(type) //Is enum value über lenient.
                 && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
 

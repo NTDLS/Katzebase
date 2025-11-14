@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.5.2\contentFiles\any\net9.0\%40Art\IconFull.ico" />
+    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.5.2\contentFiles\any\net10.0\%40Art\IconFull.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,9 +69,9 @@
     <EmbeddedResource Include="Scripts\CreateAccount.kbs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NTDLS.DelegateThreadPooling" Version="2.0.3" />
-    <PackageReference Include="NTDLS.ExpressionParser" Version="1.5.1" />
-    <PackageReference Include="NTDLS.FastMemoryCache" Version="1.9.2" />
+    <PackageReference Include="NTDLS.DelegateThreadPooling" Version="2.0.4" />
+    <PackageReference Include="NTDLS.ExpressionParser" Version="1.5.4" />
+    <PackageReference Include="NTDLS.FastMemoryCache" Version="1.9.3" />
     <PackageReference Include="Serilog" Version="4.3.0" />
   </ItemGroup>
 

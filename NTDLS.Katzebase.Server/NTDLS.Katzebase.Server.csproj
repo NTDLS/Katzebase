@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net9.0\NTDLS.Katzebase.ico" />
+    <Content Remove="C:\Users\ntdls\.nuget\packages\NTDLS.Katzebase.Api\1.1.1\contentFiles\any\net10.0\NTDLS.Katzebase.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Topshelf.Serilog" Version="4.3.0" />
   </ItemGroup>
 

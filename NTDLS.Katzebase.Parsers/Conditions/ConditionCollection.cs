@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         /// <summary>
         /// Hash of the MathematicalExpression.
         /// </summary>
-        public string? Hash { get; set; }
+        public byte[]? Hash { get; set; }
 
         internal IncrementalHash? IncrementalSha256;
 
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
             if (!string.IsNullOrEmpty(SchemaAlias)) result.AppendLine($"• " + $"Schema: {SchemaAlias}");
             result.AppendLine($"• " + $"Expression: {MathematicalExpression}");
-            result.AppendLine($"• " + $"Hash: {Hash}");
+            result.AppendLine($"• " + $"Hash: {BitConverter.ToString(Hash ?? Array.Empty<byte>()).Replace("-", string.Empty).ToLower()}");
             result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
 
             foreach (var item in Collection)

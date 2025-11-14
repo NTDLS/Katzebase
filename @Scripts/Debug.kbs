@@ -1,45 +1,91 @@
-select FromNumber, ToNumber, SIC from TravelMatrix:Metrics
-where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
---where ToNumber = 2 and FromNumber = 106 and SIC = 'lfa'
---where FromNumber = 106 and ToNumber = 2
---where SIC = 'lfa' and FromNumber = 106  --should be ix_sic_from_to
---where SIC = 'lfa' and ToNumber = 2 --Should be ix_sic_to_from
-
---TOP n causes the query to return no rows:
---select TOP 100 FromNumber, ToNumber, SIC from TravelMatrix:Metrics where FromNumber = 106 and ToNumber = 2 and SIC = 'lfa'
-
-
---order by SIC
-
---select * from WordList:Word
---where Text = 'Test'
---or SourceId = 74605
-
-
-/*
-set TraceWaitTimes true
-
-SELECT TOP 1000
-    soh.SalesOrderID,
-    FormatDateTime(soh.OrderDate, 'MM/dd/yyyy') as OrderDate,
-    Count(sod.SalesOrderDetailID) AS TotalItems,
-    Round(SUM(sod.OrderQty), 2) AS TotalQuantity,
-    FormatNumeric(Sum(sod.LineTotal), 'c2') AS TotalSalesAmount,
-    FormatNumeric(Avg(sod.UnitPrice), 'c2') AS AverageUnitPrice,
-    FormatNumeric(Min(sod.UnitPrice), 'c2') AS MinUnitPrice,
-    FormatNumeric(Max(sod.UnitPrice), 'c2') AS MaxUnitPrice,
-    FormatNumeric(Sum(IIF(IsEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as CompletedSalesAmount,
-    FormatNumeric(Sum(IIF(IsNotEqual(soh.Status, 5), sod.LineTotal, 0)), 'c2') as PendingSalesAmount
+--2ms
+SELECT
+	S.Value,
+	Sha1('t'),
+    11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
+    6 * -1 as Negative,
+    10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
+    10 + 10 + 'ten' + 10 * 10,
+    'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
 FROM
-    AdventureWorks:Sales:SalesOrderHeader as soh
-INNER JOIN AdventureWorks:Sales:SalesOrderDetail as sod
-	--ON soh.SalesOrderID = sod.SalesOrderID --Does not use index and should!
-	ON sod.SalesOrderID = soh.SalesOrderID
-GROUP BY 
-	sod.ProductId,
-	--FormatNumeric(sod.ProductId, 'n1')
-    soh.SalesOrderID,
-    FormatDateTime(soh.OrderDate, 'MM/dd/yyyy')
---ORDER BY
---    soh.OrderDate DESC
-*/
+	Single as S
+WHERE
+	1 = 1
+	and 1 != 3
+	and (
+		10 = 10
+		and 5 = 5
+		and (
+			10 = 10
+			and length(guid()) = 36
+			and (5 = 3 OR 1 > 0.9999999999999999)
+		)
+		and IfNull(S.Value, 'Text')  = 'Text'
+	)
+ORDER BY
+	10
+
+--4ms
+select
+	p.body
+from
+	StackOverflow:Users as U
+inner join Stackoverflow:Posts as P
+	ON P.OwnerUserId = U.Id
+where
+	U.DisplayName = 'ntdls'
+order by
+	P.CreationDate
+
+--48ms
+SELECT
+	sw.Text as SourceWord,
+	tw.Text as TargetWord,
+	Avg(sw.Id) as Average,
+	Count(0) as CountOf
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
+GROUP BY
+	sw.Text,
+	tw.Text
+ORDER BY
+	Avg(sw.Id / 60) asc,
+	sw.Text desc
+
+--22 ms
+SELECT
+	sw.Text as SourceWord,
+	tw.Text as TargetWord,
+	Avg(sw.Id) as Average,
+	Count(0) as CountOf
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as s
+	ON s.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = s.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+WHERE
+	sw.Text = 'Car'
+	OR sw.Text = 'Gym'
+GROUP BY
+	sw.Text,
+	tw.Text
+ORDER BY
+	Avg(sw.Id / 60) asc,
+	sw.Text desc
+	

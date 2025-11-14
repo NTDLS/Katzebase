@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
 
                 incrementalSha256.AppendData(Encoding.UTF8.GetBytes(conditionCollection.MathematicalExpression));
                 incrementalSha256.AppendData(Encoding.UTF8.GetBytes(leftHandAliasOfJoin));
-                conditionCollection.Hash = BitConverter.ToString(incrementalSha256.GetHashAndReset()).Replace("-", "").ToLowerInvariant();
+                conditionCollection.Hash = incrementalSha256.GetCurrentHash();
             }
 
             return conditionCollection;
