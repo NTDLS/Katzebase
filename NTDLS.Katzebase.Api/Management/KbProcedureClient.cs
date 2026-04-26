@@ -41,8 +41,7 @@ namespace NTDLS.Katzebase.Api.Management
             var procedure = new KbProcedure(fullyQualifiedProcedureName, userParameters);
 
             return _client.Connection.Query(
-                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -69,8 +68,7 @@ namespace NTDLS.Katzebase.Api.Management
             var procedure = new KbProcedure(schemaName, procedureName, userParameters);
 
             return _client.Connection.Query(
-                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -97,8 +95,7 @@ namespace NTDLS.Katzebase.Api.Management
             var procedure = new KbProcedure(schemaName, procedureName, userParameters?.ToUserParametersInsensitiveDictionary());
 
             var resultCollection = _client.Connection.Query(
-                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout);
 
             if (resultCollection.Collection.Count > 1)
             {
@@ -137,8 +134,7 @@ namespace NTDLS.Katzebase.Api.Management
             var procedure = new KbProcedure(fullyQualifiedProcedureName, userParameters);
 
             var resultCollection = _client.Connection.Query(
-                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryProcedureExecute(_client.ServerConnectionId, procedure), (TimeSpan)queryTimeout);
 
             if (resultCollection.Collection.Count > 1)
             {

@@ -25,8 +25,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQuerySchemaCreate(_client.ServerConnectionId, schema, pageSize), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQuerySchemaCreate(_client.ServerConnectionId, schema, pageSize), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -59,8 +58,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQuerySchemaExists(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result.Value;
+                new KbQuerySchemaExists(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout).Value;
         }
 
         /// <summary>
@@ -74,8 +72,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQuerySchemaDrop(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQuerySchemaDrop(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -103,8 +100,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQuerySchemaList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQuerySchemaList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -127,8 +123,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQuerySchemaFieldSample(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQuerySchemaFieldSample(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
         }
 
         /// <summary>

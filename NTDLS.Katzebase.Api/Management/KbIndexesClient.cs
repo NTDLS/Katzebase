@@ -28,8 +28,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -44,8 +43,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result.Value;
+                new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout).Value;
         }
 
         /// <summary>
@@ -60,8 +58,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -79,8 +76,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName, newPartitionCount), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName, newPartitionCount), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -95,8 +91,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -110,8 +105,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryIndexList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryIndexList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
         }
     }
 }

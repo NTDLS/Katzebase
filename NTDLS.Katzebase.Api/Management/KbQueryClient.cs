@@ -38,8 +38,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
         }
 
         #endregion
@@ -68,8 +67,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
         }
 
         #endregion
@@ -104,8 +102,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
         }
 
         #endregion
@@ -141,8 +138,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             var resultCollection = _client.Connection.Query(
-                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
 
             if (resultCollection.Collection.Count > 1)
             {
@@ -345,8 +341,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
         }
 
         #endregion

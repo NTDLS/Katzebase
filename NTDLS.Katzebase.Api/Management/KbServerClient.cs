@@ -24,8 +24,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             return _client.Connection.Query(
-                new KbQueryServerStartSession(username, passwordHash, clientName), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryServerStartSession(username, passwordHash, clientName), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -40,8 +39,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryServerCloseSession(_client.ServerConnectionId), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryServerCloseSession(_client.ServerConnectionId), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
@@ -56,8 +54,7 @@ namespace NTDLS.Katzebase.Api.Management
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryServerTerminateProcess(_client.ServerConnectionId, processId), (TimeSpan)queryTimeout)
-                .ContinueWith(t => t.ValidateTaskResult()).Result;
+                new KbQueryServerTerminateProcess(_client.ServerConnectionId, processId), (TimeSpan)queryTimeout);
         }
     }
 }
