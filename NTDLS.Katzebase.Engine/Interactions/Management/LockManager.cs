@@ -462,36 +462,72 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (currentBlockedByKeys.Count != 0)
                         {
-                            var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
+                            var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Read");
                             _pendingGrants.Read((pendingGrants) =>
                             {
                                 ptPendingGrantLock?.StopAndAccumulate();
 
+                                // Build a lookup of all non-deadlocked waiting transactions.
                                 var waitingTransactions = pendingGrants
                                     .Where(o => o.Value.Transaction.IsDeadlocked == false)
-                                    .Select(o => o.Value.Transaction).ToList();
+                                    .Select(o => o.Value.Transaction)
+                                    .Distinct()
+                                    .ToDictionary(o => o.ProcessId);
 
-                                //Get a list of transactions that are blocked by the current transaction.
-                                var blockedByMe = waitingTransactions.Where(
-                                    o => o.BlockedByKeys.Read((obj) => obj.Where(
-                                        k => k.ProcessId == transaction.ProcessId).Any())).ToList();
+                                // DFS through the waits-for graph to detect cycles of any length.
+                                // An edge A→B exists when A's BlockedByKeys contains B's ProcessId,
+                                // meaning A is waiting on a lock held by B.
+                                // A deadlock is a cycle: if following edges from the current transaction's
+                                // blockers we ever reach the current transaction again, there is a cycle.
+                                var visited = new HashSet<ulong>();
+                                var toVisit = new Stack<ulong>();
 
-                                foreach (var blocked in blockedByMe)
+                                foreach (var blockerKey in currentBlockedByKeys)
                                 {
-                                    //Check to see if the current transaction is waiting
-                                    //  on any of those blocked transaction (circular reference).
-                                    if (currentBlockedByKeys.Any(o => o.ProcessId == blocked.ProcessId))
+                                    if (waitingTransactions.ContainsKey(blockerKey.ProcessId))
                                     {
+                                        toVisit.Push(blockerKey.ProcessId);
+                                    }
+                                }
 
-                                        //TODO: Need to make sure we are not capturing non-deadlocks.
+                                while (toVisit.Count > 0)
+                                {
+                                    var pid = toVisit.Pop();
+
+                                    if (pid == transaction.ProcessId)
+                                    {
+                                        // We followed waits-for edges back to the current transaction — deadlock.
+                                        var blockedByMe = waitingTransactions.Values
+                                            .Where(o => o.BlockedByKeys.Read((obj) =>
+                                                obj.Any(k => k.ProcessId == transaction.ProcessId)))
+                                            .ToList();
 
                                         var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, blockedByMe);
 
                                         transaction.SetDeadlocked();
-
                                         ptDeadlockDetection?.StopAndAccumulate();
 
-                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.", explanation.ToString());
+                                        throw new KbDeadlockException(
+                                            $"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.",
+                                            explanation.ToString());
+                                    }
+
+                                    if (!visited.Add(pid))
+                                        continue;
+
+                                    // Push this transaction's blockers to continue traversal.
+                                    if (waitingTransactions.TryGetValue(pid, out var nextTx))
+                                    {
+                                        nextTx.BlockedByKeys.Read((blockedBy) =>
+                                        {
+                                            foreach (var key in blockedBy)
+                                            {
+                                                if (!visited.Contains(key.ProcessId))
+                                                {
+                                                    toVisit.Push(key.ProcessId);
+                                                }
+                                            }
+                                        });
                                     }
                                 }
                             });
