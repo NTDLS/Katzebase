@@ -299,8 +299,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                             {
-                                obj.AddRange(blockers.Distinct());
                                 obj.Clear();
+                                obj.AddRange(blockers.Distinct());
                             });
                         }
                     }
