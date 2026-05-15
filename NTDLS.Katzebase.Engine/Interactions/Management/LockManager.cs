@@ -232,7 +232,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                     _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                     _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-                    transaction.Rollback();
+
+                    try
+                    {
+                        transaction.Rollback();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogManager.Error($"Failed to rollback transaction for process [{transaction.ProcessId}] after lock wait timeout.", ex);
+                    }
+
                     throw new KbTimeoutException($"Timeout exceeded while waiting on lock: [{intention.ToString()}]");
                 }
 
