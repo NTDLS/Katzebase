@@ -49,10 +49,10 @@ namespace NTDLS.Katzebase.Engine.Threading
 
         public void Stop()
         {
-            Indexing.Stop();
-            Lookup.Stop();
-            Intersection.Stop();
-            Materialization.Stop();
+            Indexing.Dispose();
+            Lookup.Dispose();
+            Intersection.Dispose();
+            Materialization.Dispose();
         }
     }
 }
