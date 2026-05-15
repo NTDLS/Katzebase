@@ -194,6 +194,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else
                     {
                         ptLockConcurrencyWait?.StopAndAccumulate();
+                        transaction.EnsureActive(); // catch cancellation/deadlock even when the concurrency lock is contended
+                        Thread.Sleep(0);            // yield to the scheduler rather than spinning
                     }
                 }
             }
