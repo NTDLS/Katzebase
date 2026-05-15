@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// This does not block the the same transaction or other transactions from locking other files.
         /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
         /// </summary>
-        private static readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks = new();
+        private readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks = new();
 
         /// <summary>
         //We keep track of all files/transactions that are waiting on locks for a few reasons:
@@ -46,7 +46,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                _core = core;
                 _collection = new(core.LockManagementSemaphore);
                 _pendingGrants = new(core.LockManagementSemaphore);
             }
@@ -180,7 +179,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (lockKey != null)
                             {
                                 //We got a lock, record it and return the key to the caller.
-                                var ptGrantedLockCacheWrite = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Read");
+                                var ptGrantedLockCacheWrite = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Write");
                                 transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
                                 ptGrantedLockCacheWrite?.StopAndAccumulate();
                                 return lockKey;
@@ -320,7 +319,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     else if (intention.Operation == LockOperation.Read)
                     {
-                        //This operation is blocked by: Read and Write.
+                        //This operation is blocked by: Write and Delete.
                         var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                             .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
                             && o.ProcessId != transaction.ProcessId).ToList();
