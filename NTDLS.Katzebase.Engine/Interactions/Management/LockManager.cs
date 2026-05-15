@@ -474,14 +474,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     .Distinct()
                                     .ToDictionary(o => o.ProcessId);
 
-                                // DFS through the waits-for graph to detect cycles of any length.
-                                // An edge A→B exists when A's BlockedByKeys contains B's ProcessId,
-                                // meaning A is waiting on a lock held by B.
-                                // A deadlock is a cycle: if following edges from the current transaction's
-                                // blockers we ever reach the current transaction again, there is a cycle.
+                                // Deadlock detection using Depth-First Search (DFS) over the waits-for graph.
+                                //
+                                // The waits-for graph has one node per transaction and a directed edge A→B
+                                // whenever transaction A is waiting on a lock held by transaction B.
+                                // A deadlock is a cycle in this graph — every transaction in the cycle is
+                                // permanently stuck waiting on the next one.
+                                //
+                                // We detect a cycle by starting at the current transaction's blockers and
+                                // following edges as deep as possible before backtracking (DFS). If we ever
+                                // arrive back at the current transaction's ProcessId, a cycle exists.
+                                //
+                                // Example — 3-party deadlock (A→B→C→A):
+                                //   seed → push B
+                                //   pop B  (B≠A)  →  push C          (B is blocked by C)
+                                //   pop C  (C≠A)  →  push A          (C is blocked by A)
+                                //   pop A  (A==A) →  deadlock!
+                                //
+                                // The visited set prevents infinite loops when the graph contains a cycle
+                                // that does not involve the current transaction: once a node is fully
+                                // explored there is no value in visiting it again.
                                 var visited = new HashSet<ulong>();
                                 var toVisit = new Stack<ulong>();
 
+                                // Seed the search with every transaction that is currently blocking us.
                                 foreach (var blockerKey in currentBlockedByKeys)
                                 {
                                     if (waitingTransactions.ContainsKey(blockerKey.ProcessId))
@@ -496,7 +512,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                                     if (pid == transaction.ProcessId)
                                     {
-                                        // We followed waits-for edges back to the current transaction — deadlock.
+                                        // We followed waits-for edges back to the current transaction —
+                                        // every transaction along the path is stuck waiting on the next,
+                                        // forming a cycle. That is a deadlock; terminate this transaction.
                                         var blockedByMe = waitingTransactions.Values
                                             .Where(o => o.BlockedByKeys.Read((obj) =>
                                                 obj.Any(k => k.ProcessId == transaction.ProcessId)))
@@ -513,9 +531,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     }
 
                                     if (!visited.Add(pid))
-                                        continue;
+                                        continue; // Already explored every edge from this node.
 
-                                    // Push this transaction's blockers to continue traversal.
+                                    // Follow this transaction's own blockers to go one level deeper.
                                     if (waitingTransactions.TryGetValue(pid, out var nextTx))
                                     {
                                         nextTx.BlockedByKeys.Read((blockedBy) =>
