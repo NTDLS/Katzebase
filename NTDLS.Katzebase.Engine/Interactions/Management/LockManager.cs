@@ -303,6 +303,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
+                            if (lockKey == null)
+                            {
+                                // Every overlapping lock is already owned by this transaction with the same
+                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
+                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
+                                // rather than spinning forever on a null return.
+                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
+                            }
                             return lockKey;
                         }
                         else
@@ -350,6 +358,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
+                            if (lockKey == null)
+                            {
+                                // Every overlapping lock is already owned by this transaction with the same
+                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
+                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
+                                // rather than spinning forever on a null return.
+                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
+                            }
                             return lockKey;
                         }
                         else
@@ -396,6 +412,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
+                            if (lockKey == null)
+                            {
+                                // Every overlapping lock is already owned by this transaction with the same
+                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
+                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
+                                // rather than spinning forever on a null return.
+                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
+                            }
                             return lockKey;
                         }
                         else
@@ -443,6 +467,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                             _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
+                            if (lockKey == null)
+                            {
+                                // Every overlapping lock is already owned by this transaction with the same
+                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
+                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
+                                // rather than spinning forever on a null return.
+                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
+                            }
                             return lockKey;
                         }
                         else
