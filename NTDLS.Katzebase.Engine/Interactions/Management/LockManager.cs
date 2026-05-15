@@ -80,7 +80,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var result = new HashSet<ObjectLock>();
 
-                var intentionDirectory = Path.GetDirectoryName(intention.DiskPath) ?? string.Empty;
+                var intentionDirectory = (Path.GetDirectoryName(intention.DiskPath) ?? string.Empty) + Path.DirectorySeparatorChar;
 
                 //If we are locking a file, then look for all other locks for the exact path.
                 if (intention.Granularity == LockGranularity.File)
