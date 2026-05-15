@@ -880,17 +880,20 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         try
                         {
                             DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.CommitDeferredDiskIO());
-                            CleanupTransaction();
-                            _transactionManager.RemoveByProcessId(ProcessId);
-                            DeleteTemporarySchemas();
-                        }
-                        catch
-                        {
-                            throw;
                         }
                         finally
                         {
-                            ReleaseLocks();
+                            Exceptions.OnError(() => CleanupTransaction(),
+                                (ex) => LogManager.Error($"Failed to cleanup transaction for process {ProcessId} during commit.", ex));
+
+                            Exceptions.OnError(() => _transactionManager.RemoveByProcessId(ProcessId),
+                                (ex) => LogManager.Error($"Failed to remove transaction from manager for process {ProcessId} during commit.", ex));
+
+                            Exceptions.OnError(() => DeleteTemporarySchemas(),
+                                (ex) => LogManager.Error($"Failed to delete temporary schemas for process {ProcessId} during commit.", ex));
+
+                            Exceptions.OnError(() => ReleaseLocks(),
+                                (ex) => LogManager.Error($"Failed to release locks for process {ProcessId} during commit.", ex));
                         }
                         ptCommit?.StopAndAccumulate();
                         Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
