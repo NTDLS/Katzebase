@@ -486,23 +486,32 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 // arrive back at the current transaction's ProcessId, a cycle exists.
                                 //
                                 // Example — 3-party deadlock (A→B→C→A):
-                                //   seed → push B
-                                //   pop B  (B≠A)  →  push C          (B is blocked by C)
-                                //   pop C  (C≠A)  →  push A          (C is blocked by A)
-                                //   pop A  (A==A) →  deadlock!
+                                //   seed → push B            parent[B] = A
+                                //   pop B  (B≠A)  →  push C  parent[C] = B
+                                //   pop C  (C≠A)  →  push A  parent[A] = C
+                                //   pop A  (A==A) →  deadlock! walk parent map: A←C←B←A → reverse → A→B→C→A
                                 //
                                 // The visited set prevents infinite loops when the graph contains a cycle
                                 // that does not involve the current transaction: once a node is fully
                                 // explored there is no value in visiting it again.
+                                //
+                                // The parent map records who pushed each node, enabling reconstruction of
+                                // the full ordered cycle chain for the deadlock explanation.
                                 var visited = new HashSet<ulong>();
                                 var toVisit = new Stack<ulong>();
+
+                                // parent[X] = Y means Y pushed X during traversal — used to reconstruct
+                                // the cycle chain by walking backwards when a deadlock is detected.
+                                var parent = new Dictionary<ulong, ulong>();
 
                                 // Seed the search with every transaction that is currently blocking us.
                                 foreach (var blockerKey in currentBlockedByKeys)
                                 {
-                                    if (waitingTransactions.ContainsKey(blockerKey.ProcessId))
+                                    var blockerPid = blockerKey.ProcessId;
+                                    if (waitingTransactions.ContainsKey(blockerPid) && !parent.ContainsKey(blockerPid))
                                     {
-                                        toVisit.Push(blockerKey.ProcessId);
+                                        parent[blockerPid] = transaction.ProcessId;
+                                        toVisit.Push(blockerPid);
                                     }
                                 }
 
@@ -512,15 +521,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                                     if (pid == transaction.ProcessId)
                                     {
-                                        // We followed waits-for edges back to the current transaction —
-                                        // every transaction along the path is stuck waiting on the next,
-                                        // forming a cycle. That is a deadlock; terminate this transaction.
-                                        var blockedByMe = waitingTransactions.Values
-                                            .Where(o => o.BlockedByKeys.Read((obj) =>
-                                                obj.Any(k => k.ProcessId == transaction.ProcessId)))
-                                            .ToList();
+                                        // Cycle detected. Walk the parent map backwards from the current
+                                        // transaction to reconstruct the full ordered cycle chain, then reverse.
+                                        // e.g. for A→B→C→A with parent={B:A, C:B, A:C}:
+                                        //   walk: A → C → B → A  →  reversed: A → B → C → A
+                                        var cycleChain = new List<ulong>();
+                                        var cur = transaction.ProcessId;
+                                        do
+                                        {
+                                            cycleChain.Add(cur);
+                                            cur = parent[cur];
+                                        } while (cur != transaction.ProcessId);
+                                        cycleChain.Add(transaction.ProcessId); // close the loop
+                                        cycleChain.Reverse();
 
-                                        var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, blockedByMe);
+                                        var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, cycleChain, waitingTransactions);
 
                                         transaction.SetDeadlocked();
                                         ptDeadlockDetection?.StopAndAccumulate();
@@ -540,8 +555,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         {
                                             foreach (var key in blockedBy)
                                             {
-                                                if (!visited.Contains(key.ProcessId))
+                                                if (!visited.Contains(key.ProcessId) && !parent.ContainsKey(key.ProcessId))
                                                 {
+                                                    parent[key.ProcessId] = pid;
                                                     toVisit.Push(key.ProcessId);
                                                 }
                                             }
@@ -565,79 +581,78 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static string GetDeadlockExplanation(Transaction transaction,
+        private static string GetDeadlockExplanation(
+            Transaction transaction,
             Dictionary<Guid, ObjectPendingLockIntention> txWaitingForLocks,
-            ObjectLockIntention intention, List<Transaction> blockedByMe)
+            ObjectLockIntention intention,
+            List<ulong> cycleChain,
+            Dictionary<ulong, Transaction> waitingTransactions)
         {
-            var deadLockId = Guid.NewGuid().ToString();
-
             var explanation = new StringBuilder();
 
             explanation.AppendLine("Deadlock {");
-            explanation.AppendLine($"    Id: {deadLockId}");
-            explanation.AppendLine("    Blocking Transactions {");
+            explanation.AppendLine($"    Id: {Guid.NewGuid()}");
+            explanation.AppendLine($"    Cycle: {string.Join(" → ", cycleChain)}");
+
+            // Full details for the transaction being terminated.
+            explanation.AppendLine("    Victim {");
             explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
             explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
             explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
             explanation.AppendLine($"        StartTime: {transaction.StartTime}");
-
             explanation.AppendLine("        Lock Intention {");
-            explanation.AppendLine($"            ProcessId: {transaction.ProcessId}");
             explanation.AppendLine($"            Granularity: {intention.Granularity}");
             explanation.AppendLine($"            Operation: {intention.Operation}");
             explanation.AppendLine($"            Object: {intention.DiskPath}");
             explanation.AppendLine("        }");
-
             explanation.AppendLine("        Held Locks {");
             transaction.HeldLockKeys.Read((obj) =>
             {
                 foreach (var key in obj)
-                {
                     explanation.AppendLine($"            {key.ToString()}");
-                }
             });
             explanation.AppendLine("        }");
-
             explanation.AppendLine("        Awaiting Locks {");
             foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == transaction))
-            {
                 explanation.AppendLine($"            {waitingFor.Value.Intention.ToString()}");
-            }
             explanation.AppendLine("        }");
-
-            explanation.AppendLine("}");
-
-            explanation.AppendLine("Blocked Transaction(s) {");
-            foreach (var waiter in blockedByMe)
-            {
-                explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
-                explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
-                explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
-                explanation.AppendLine($"        StartTime: {waiter.StartTime}");
-
-                explanation.AppendLine("        Held Locks {");
-
-                waiter.HeldLockKeys.Read((obj) =>
-                {
-                    foreach (var key in obj)
-                    {
-                        explanation.AppendLine($"            {key.ToString()}");
-                    }
-                });
-                explanation.AppendLine("        }");
-
-                explanation.AppendLine("        Awaiting Locks {");
-                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == waiter))
-                {
-                    explanation.AppendLine($"            {waitingFor.Value.Intention.ToString()}");
-                }
-                explanation.AppendLine("        }");
-            }
             explanation.AppendLine("    }");
-            if (string.IsNullOrEmpty(transaction.Session.CurrentQueryText()) == false)
+
+            // All other transactions in the cycle in order, excluding the victim (first entry)
+            // and the closing duplicate (last entry) from the chain.
+            var participants = cycleChain.Skip(1).SkipLast(1).ToList();
+            if (participants.Count > 0)
             {
-                explanation.AppendLine($"    Query: {transaction.Session.QueryTextStack}");
+                explanation.AppendLine("    Cycle Participants {");
+                foreach (var participantPid in participants)
+                {
+                    if (!waitingTransactions.TryGetValue(participantPid, out var participant))
+                        continue;
+
+                    explanation.AppendLine("        Transaction {");
+                    explanation.AppendLine($"            ProcessId: {participant.ProcessId}");
+                    explanation.AppendLine($"            Operation: {participant.TopLevelOperation}");
+                    explanation.AppendLine($"            ReferenceCount: {participant.ReferenceCount}");
+                    explanation.AppendLine($"            StartTime: {participant.StartTime}");
+                    explanation.AppendLine("            Held Locks {");
+                    participant.HeldLockKeys.Read((obj) =>
+                    {
+                        foreach (var key in obj)
+                            explanation.AppendLine($"                {key.ToString()}");
+                    });
+                    explanation.AppendLine("            }");
+                    explanation.AppendLine("            Awaiting Locks {");
+                    foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == participant))
+                        explanation.AppendLine($"                {waitingFor.Value.Intention.ToString()}");
+                    explanation.AppendLine("            }");
+                    explanation.AppendLine("        }");
+                }
+                explanation.AppendLine("    }");
             }
+
+            if (!string.IsNullOrEmpty(transaction.Session.CurrentQueryText()))
+                explanation.AppendLine($"    Query: {transaction.Session.QueryTextStack}");
+
             explanation.AppendLine("}");
 
             transaction.AddMessage(explanation.ToString(), KbMessageType.Deadlock);
