@@ -12,7 +12,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         private readonly EngineCore _core;
         private readonly PartitionedMemoryCache _cache;
-        private bool _keepRunning = false;
+        private volatile bool _keepRunning = false;
+        private readonly Thread _cacheMonitorThread;
 
         internal int PartitionCount { get; private set; }
 
@@ -33,7 +34,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _keepRunning = true;
 
-                new Thread(() => CacheMonitorThreadProc()).Start();
+                _cacheMonitorThread = new Thread(() => CacheMonitorThreadProc()) { IsBackground = true };
+                _cacheMonitorThread.Start();
             }
             catch (Exception ex)
             {
@@ -45,6 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal void Stop()
         {
             _keepRunning = false;
+            _cacheMonitorThread.Join();
             _cache.Dispose();
         }
 

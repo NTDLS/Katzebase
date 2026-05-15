@@ -9,7 +9,7 @@
         public HeartbeatManager(EngineCore core)
         {
             _core = core;
-            _threadHandle = new Thread(HeartbeatThreadProc);
+            _threadHandle = new Thread(HeartbeatThreadProc) { IsBackground = true };
         }
 
         public void Start()

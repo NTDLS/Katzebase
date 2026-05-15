@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Server
             public KatzebaseService()
             {
                 _semaphoreToRequestStop = new SemaphoreSlim(0);
-                _thread = new Thread(DoWork);
+                _thread = new Thread(DoWork) { IsBackground = true };
             }
 
             public void Start()

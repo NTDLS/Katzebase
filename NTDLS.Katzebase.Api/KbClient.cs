@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Api
                 ServerConnectionId = reply.ConnectionId;
                 ProcessId = reply.ProcessId;
 
-                _heartbeatThread = new Thread(HeartbeatThread);
+                _heartbeatThread = new Thread(HeartbeatThread) { IsBackground = true };
                 _heartbeatThread.Start();
 
                 var sessionInfo = new KbSessionInfo

@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 }
             }
 
-            (new Thread(WorkloadThreadProc)).Start(param);
+            (new Thread(WorkloadThreadProc) { IsBackground = true }).Start(param);
         }
 
         public void WorkloadThreadProc(object? p)
@@ -234,7 +234,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         var tableWorkerParam = new TableWorkerThreadParam(param.TargetServerHost,
                             param.TargetServerPort, item.TargetServerSchema, param.TargetServerUsername, param.TargetServerPasswordHash, item);
 
-                        (new Thread(TableWorkerThreadProc)).Start(tableWorkerParam);
+                        (new Thread(TableWorkerThreadProc) { IsBackground = true }).Start(tableWorkerParam);
                     }
                 }
 

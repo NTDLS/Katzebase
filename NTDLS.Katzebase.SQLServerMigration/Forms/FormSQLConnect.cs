@@ -210,7 +210,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     }
                 }
 
-            });
+            }) { IsBackground = true };
 
             _child.Start();
             while (_child?.IsAlive == true)

@@ -35,8 +35,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// </summary>
         public event CacheItemUpdated? OnCacheItemRefreshed;
 
-        private Thread? _thread;
-        private bool _keepRunning = false;
+        private readonly Thread? _thread;
+        private volatile bool _keepRunning = false;
         private bool _resetState = false;
 
         /// <summary>
