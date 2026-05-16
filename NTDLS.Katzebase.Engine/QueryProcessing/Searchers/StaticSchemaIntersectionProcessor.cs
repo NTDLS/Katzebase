@@ -217,11 +217,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         int schemaMatchCount = 0;
 
-                        //using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                        ///hasher.AppendData(query.Hash ?? throw new KbEngineException("Query hash is null when computing where clause hash."));
-                        //hasher.AppendData(schemaMap.Value.Conditions.EnsureNotNull().Hash ?? throw new KbEngineException("Conditions hash is null when computing where clause hash."));
                         var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression,
-                            new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.EnsureNotNull().Hash /*hasher.GetCurrentHash()*/ });
+                            new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.EnsureNotNull().Hash });
 
                         foreach (var documentPointer in documentPointers)
                         {
@@ -388,11 +385,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     return true;
                 }
 
-                //using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-                //hasher.AppendData(query.Hash ?? throw new KbEngineException("Query hash is null when computing where clause hash."));
-                //hasher.AppendData(givenConditions.Hash ?? throw new KbEngineException("Conditions hash is null when computing where clause hash."));
-                var matchExpression = new Expression(givenConditions.MathematicalExpression,
-                    new ExpressionOptions() { CustomHash = givenConditions.Hash /*hasher.GetCurrentHash()*/ });
+                var matchExpression = new Expression(givenConditions.MathematicalExpression);
+                    new ExpressionOptions() { CustomHash = givenConditions.Hash };
 
                 SetExpressionParametersRecursive(givenConditions.Collection);
 
