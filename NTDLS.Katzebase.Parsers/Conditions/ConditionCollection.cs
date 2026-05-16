@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -10,8 +11,15 @@ namespace NTDLS.Katzebase.Parsers.Conditions
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there
     ///     is a seperate ConditionGroup for each OR expression and for each expression contained in parentheses.
     /// </summary>
-    public class ConditionCollection : ConditionGroup
+    public class ConditionCollection
+        : ConditionGroup
     {
+        /// <summary>
+        /// The SHA256 hash of the mathematical expression, used for caching purposes.
+        /// The hash also includes the query hash, so it can not be calculated until the query itself is fully parsed and hashed.
+        /// </summary>
+        internal IncrementalHash? IncrementalSha256 { get; set; }
+
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.
         /// </summary>
@@ -28,7 +36,20 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         /// </summary>
         public byte[]? Hash { get; set; }
 
-        internal IncrementalHash? IncrementalSha256;
+        /// <summary>
+        /// The SHA256 hash of the mathematical expression, used for caching purposes.
+        /// The hash also includes the query hash, so it can not be calculated until the query itself is fully parsed and hashed.
+        /// </summary>
+        public void FinalizeConditionHash(byte[] queryHash)
+        {
+            if (IncrementalSha256 != null)
+            {
+                IncrementalSha256.AppendData(queryHash); //Append the query hash to the condition hash.
+                Hash = IncrementalSha256.GetCurrentHash();
+                IncrementalSha256.Dispose();
+                //Debug.WriteLine($"{BitConverter.ToString(Hash).Replace("-", "")}");
+            }
+        }
 
         public QueryFieldCollection FieldCollection { get; set; }
 
