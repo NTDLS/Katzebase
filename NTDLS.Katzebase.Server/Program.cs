@@ -61,9 +61,9 @@ namespace NTDLS.Katzebase.Server
         public static void Main()
         {
             Log.Logger = new LoggerConfiguration()
-                 .WriteTo.Console()
-                 .MinimumLevel.Information()
-                 .CreateLogger();
+                     .WriteTo.Console()
+                     .MinimumLevel.Information()
+                     .CreateLogger();
 
 #if WINDOWS
             HostLogger.UseLogger(new NullLogWriterFactory()); //Prevent top-shelf from polluting the console.
