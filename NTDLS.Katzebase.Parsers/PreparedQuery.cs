@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers
@@ -48,6 +49,10 @@ namespace NTDLS.Katzebase.Parsers
         /// Contains the hash of the whole query text with all constants and variables removed.
         /// </summary>
         public byte[]? Hash { get; set; }
+        /// <summary>
+        /// Contains the parsed query text.
+        /// </summary>
+        public string? Text { get; set; }
         public PreparedQueryBatch Batch { get; private set; } = queryBatch;
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; } = queryType;
