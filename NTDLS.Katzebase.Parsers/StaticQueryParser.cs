@@ -2,6 +2,8 @@
 using NTDLS.Katzebase.Parsers.Parsing.Root;
 using NTDLS.Katzebase.Parsers.Tokens;
 using NTDLS.Katzebase.Parsers.Validation;
+using System.Security.Cryptography;
+using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers
@@ -13,6 +15,8 @@ namespace NTDLS.Katzebase.Parsers
         /// </summary>
         static public PreparedQuery Parse(PreparedQueryBatch queryBatch, Tokenizer tokenizer)
         {
+            int preParseTokenPosition = tokenizer.Caret;
+
             string token = tokenizer.GetNext();
 
             if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
@@ -54,6 +58,11 @@ namespace NTDLS.Katzebase.Parsers
             };
 
             BasicQueryValidation.Assert(tokenizer, query);
+
+            query.Text = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
+            query.Hash = SHA256.HashData(Encoding.UTF8.GetBytes(query.Text));
+
+            query.Conditions.FinalizeConditionHash(query.Hash);
 
             return query;
         }
