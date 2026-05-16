@@ -28,7 +28,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// This does not block the the same transaction or other transactions from locking other files.
         /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
         /// </summary>
-        private readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks = new();
+        private readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks;
+
+        /// <summary>
+        /// Since we can support multiple instances in the same process, we need to use a separate collection for each DataRootPath.
+        /// </summary>
+        private static readonly KbInsensitiveDictionary<KbInsensitiveDictionary<ObjectConcurrencyLock>> _concurrentGrantLockCollection = new();
 
         /// <summary>
         //We keep track of all files/transactions that are waiting on locks for a few reasons:
@@ -43,6 +48,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal LockManager(EngineCore core)
         {
             _core = core;
+
+            lock (_concurrentGrantLockCollection)
+            {
+                //Since we can support multiple instances in the same process, we need to use a separate collection for each DataRootPath.
+                if (_concurrentGrantLockCollection.TryGetValue(_core.Settings.DataRootPath, out var concurrentGrantLocks))
+                {
+                    _concurrentGrantLocks = concurrentGrantLocks;
+                }
+                else
+                {
+                    _concurrentGrantLocks = new();
+                    _concurrentGrantLockCollection.Add(_core.Settings.DataRootPath, _concurrentGrantLocks);
+                }
+            }
 
             try
             {
