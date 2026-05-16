@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <SyntaxDefinition name="KBSQL" extensions=".kbs" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
-  <Color name="Punctuation" foreground="Green" exampleText="a(b.c);" />
-  <Color name="NumberLiteral" foreground="Blue" exampleText="3.1415f"/>
-  <Color name="KbMarkup" foreground="Brown" fontWeight="bold" exampleText="{$INT 10000:30000}" />
-  <Color name="KbConfig" fontWeight="bold" foreground="DarkCyan" exampleText="TraceWaitTimes"/>
-  <Color name="KbFunction" fontWeight="bold" foreground="DarkBlue" exampleText="DateTimeUTC"/>
-  <Color name="KbConst" fontWeight="bold" foreground="Magenta" exampleText="true"/>
-  <Color name="Comment" foreground="Green" exampleText="-- comment" />
-  <Color name="Char" foreground="Red" exampleText="name = 'abc'"/>
-  <Color name="Keywords" fontWeight="bold" foreground="Blue" exampleText="SELECT FROM"/>
+  <Color name="Punctuation"  foreground="Black"         exampleText="a(b.c);" />
+  <Color name="NumberLiteral" foreground="Black"         exampleText="3.1415f" />
+  <Color name="KbMarkup"    foreground="Brown" fontWeight="bold" exampleText="{$INT 10000:30000}" />
+  <Color name="KbConfig"    foreground="#000080" fontWeight="bold" exampleText="TraceWaitTimes" />
+  <Color name="KbFunction"  foreground="Magenta" fontWeight="bold" exampleText="DateTimeUTC" />
+  <Color name="KbConst"     foreground="#800080" fontWeight="bold" exampleText="true" />
+  <Color name="Comment"     foreground="Green"             exampleText="-- comment" />
+  <Color name="Char"        foreground="Red"               exampleText="name = 'abc'" />
+  <Color name="Keywords"    foreground="Blue"   fontWeight="bold" exampleText="SELECT FROM" />
+
 
   <RuleSet name="MarkupMarkerSet" ignoreCase="true">
     <Rule color="KbMarkup">
@@ -66,105 +67,173 @@
     </Keywords>
     
     <Keywords color="KbConfig">
-      <Word>Cancel</Word>
-      <Word>CheckpointHealthCounters</Word>
-      <Word>ClearCacheAllocations</Word>
-      <Word>ClearHealthCounters</Word>
-      <Word>MinQueryThreads</Word>
-      <Word>QueryThreadWeight</Word>
-      <Word>RefreshMyRoles</Word>
-      <Word>ReleaseCacheAllocations</Word>
-      <Word>ShowAggregateFunctions</Word>
-      <Word>ShowBlocks</Word>
-      <Word>ShowBlockTree</Word>
-      <Word>ShowHealthCounters</Word>
-      <Word>ShowLocks</Word>
-      <Word>ShowMemoryUtilization</Word>
-      <Word>ShowMySchemaPolicy</Word>
-      <Word>ShowProcesses</Word>
-      <Word>ShowScalarFunctions</Word>
-      <Word>ShowSchemaPolicy</Word>
-      <Word>ShowSystemAggregateFunctions</Word>
-      <Word>ShowSystemFunctions</Word>
-      <Word>ShowThreadPools</Word>
-      <Word>ShowTransactions</Word>
-      <Word>ShowVersion</Word>
-      <Word>ShowWaitingLocks</Word>
-      <Word>Terminate</Word>
-      <Word>Terminate</Word>			
-      <Word>TraceWaitTimes</Word>
-      <Word>WarnNullPropagation</Word>
-      <Word>WarnMissingFields</Word>
-      <Word>ReadUncommitted</Word>
+		<Word>Cancel</Word>
+		<Word>CheckpointHealthCounters</Word>
+		<Word>ClearCacheAllocations</Word>
+		<Word>ClearHealthCounters</Word>
+		<Word>MinQueryThreads</Word>
+		<Word>Print</Word>
+		<Word>QueryThreadWeight</Word>
+		<Word>ReadUncommitted</Word>
+		<Word>RefreshMyRoles</Word>
+		<Word>ReleaseCacheAllocations</Word>
+		<Word>ShowAggregateFunctions</Word>
+		<Word>ShowBlocks</Word>
+		<Word>ShowBlockTree</Word>
+		<Word>ShowHealthCounters</Word>
+		<Word>ShowLocks</Word>
+		<Word>ShowMemoryUtilization</Word>
+		<Word>ShowMySchemaPolicy</Word>
+		<Word>ShowProcesses</Word>
+		<Word>ShowScalarFunctions</Word>
+		<Word>ShowSchemaPolicy</Word>
+		<Word>ShowSystemAggregateFunctions</Word>
+		<Word>ShowSystemFunctions</Word>
+		<Word>ShowThreadPools</Word>
+		<Word>ShowTransactions</Word>
+		<Word>ShowVersion</Word>
+		<Word>ShowWaitingLocks</Word>
+		<Word>Sleep</Word>
+		<Word>Terminate</Word>
+		<Word>TraceWaitTimes</Word>
+		<Word>WarnMissingFields</Word>
+		<Word>WarnNullPropagation</Word>
     </Keywords>
     
     <Keywords color="KbFunction">
-      <Word>Avg</Word>
-      <Word>Checksum</Word>
-      <Word>Coalesce</Word>
-      <Word>Concat</Word>
-      <Word>Count</Word>
-      <Word>CountDistinct</Word>
-      <Word>DateDiff</Word>
-      <Word>DateTime</Word>
-      <Word>DateTimeUTC</Word>
-      <Word>DocumentID</Word>
-      <Word>DocumentPage</Word>
-      <Word>DocumentUID</Word>
-      <Word>FormatDateTime</Word>
-      <Word>FormatNumeric</Word>
-      <Word>GeometricMean</Word>
-      <Word>Guid</Word>
-      <Word>IfNull</Word>
-      <Word>IfNullNumeric</Word>
-      <Word>IIF</Word>
-      <Word>IndexOf</Word>
-      <Word>IsBetween</Word>
-      <Word>IsDouble</Word>
-      <Word>IsEqual</Word>
-      <Word>IsEqual</Word>
-      <Word>IsGreater</Word>
-      <Word>IsGreaterOrEqual</Word>
-      <Word>IsInteger</Word>
-      <Word>IsLess</Word>
-      <Word>IsLessOrEqual</Word>
-      <Word>IsLike</Word>
-      <Word>IsNotBetween</Word>
-      <Word>IsNotEqual</Word>
-      <Word>IsNotLike</Word>
-      <Word>IsNull</Word>
-      <Word>IsString</Word>
-      <Word>LastIndexOf</Word>
-      <Word>Left</Word>
-      <Word>Length</Word>
-      <Word>Max</Word>
-      <Word>MaxString</Word>
-      <Word>Mean</Word>
-      <Word>Median</Word>
-      <Word>Min</Word>
-      <Word>MinString</Word>
-      <Word>Mode</Word>
-      <Word>NullIf</Word>
-      <Word>NullIfNumeric</Word>
-      <Word>Print</Word>
-      <Word>Right</Word>
-      <Word>Round</Word>
-      <Word>Sha1</Word>
-      <Word>Sha1Agg</Word>
-      <Word>Sha256</Word>
-      <Word>Sha256Agg</Word>
-      <Word>Sha512</Word>
-      <Word>Sha512Agg</Word>
-      <Word>Sleep</Word>
-      <Word>SubString</Word>
-      <Word>Sum</Word>
-      <Word>ToLower</Word>
-      <Word>ToNumeric</Word>
-      <Word>ToProper</Word>
-      <Word>ToString</Word>
-      <Word>ToUpper</Word>
-      <Word>Trim</Word>
-      <Word>Variance</Word>
+		<Word>Avg</Word>
+		<Word>Checksum</Word>
+		<Word>Coalesce</Word>
+		<Word>Concat</Word>
+		<Word>Count</Word>
+		<Word>CountDistinct</Word>
+		<Word>DateDiff</Word>
+		<Word>DateTime</Word>
+		<Word>DateTimeUTC</Word>
+		<Word>DocumentID</Word>
+		<Word>DocumentPage</Word>
+		<Word>DocumentUID</Word>
+		<Word>FormatDateTime</Word>
+		<Word>FormatNumeric</Word>
+		<Word>GUID</Word>
+		<Word>GeometricMean</Word>
+		<Word>Guid</Word>
+		<Word>IIF</Word>
+		<Word>IfNull</Word>
+		<Word>IfNullNumeric</Word>
+		<Word>IndexOf</Word>
+		<Word>IsBetween</Word>
+		<Word>IsDouble</Word>
+		<Word>IsEqual</Word>
+		<Word>IsGreater</Word>
+		<Word>IsGreaterOrEqual</Word>
+		<Word>IsInteger</Word>
+		<Word>IsLess</Word>
+		<Word>IsLessOrEqual</Word>
+		<Word>IsLike</Word>
+		<Word>IsNotBetween</Word>
+		<Word>IsNotEqual</Word>
+		<Word>IsNotLike</Word>
+		<Word>IsNull</Word>
+		<Word>IsString</Word>
+		<Word>LastIndexOf</Word>
+		<Word>Left</Word>
+		<Word>Length</Word>
+		<Word>Max</Word>
+		<Word>MaxString</Word>
+		<Word>Mean</Word>
+		<Word>Median</Word>
+		<Word>Min</Word>
+		<Word>MinString</Word>
+		<Word>Mode</Word>
+		<Word>NullIf</Word>
+		<Word>NullIfNumeric</Word>
+		<Word>Right</Word>
+		<Word>Round</Word>
+		<Word>Sha1</Word>
+		<Word>Sha1Agg</Word>
+		<Word>Sha256</Word>
+		<Word>Sha256Agg</Word>
+		<Word>Sha512</Word>
+		<Word>Sha512Agg</Word>
+		<Word>SubString</Word>
+		<Word>Sum</Word>
+		<Word>ToLower</Word>
+		<Word>ToNumeric</Word>
+		<Word>ToProper</Word>
+		<Word>ToString</Word>
+		<Word>ToUpper</Word>
+		<Word>Trim</Word>
+		<Word>Variance</Word>
+		<Word>abs</Word>
+		<Word>avg</Word>
+		<Word>ceil</Word>
+		<Word>checksum</Word>
+		<Word>coalesce</Word>
+		<Word>concat</Word>
+		<Word>count</Word>
+		<Word>countdistinct</Word>
+		<Word>dateadd</Word>
+		<Word>datediff</Word>
+		<Word>datetime</Word>
+		<Word>datetimeutc</Word>
+		<Word>documentid</Word>
+		<Word>documentpage</Word>
+		<Word>documentuid</Word>
+		<Word>floor</Word>
+		<Word>formatdatetime</Word>
+		<Word>formatnumeric</Word>
+		<Word>geometricmean</Word>
+		<Word>guid</Word>
+		<Word>ifnull</Word>
+		<Word>ifnullnumeric</Word>
+		<Word>iif</Word>
+		<Word>indexof</Word>
+		<Word>isbetween</Word>
+		<Word>isdouble</Word>
+		<Word>isequal</Word>
+		<Word>isgreater</Word>
+		<Word>isgreaterorequal</Word>
+		<Word>isinteger</Word>
+		<Word>isless</Word>
+		<Word>islessorequal</Word>
+		<Word>islike</Word>
+		<Word>isnotbetween</Word>
+		<Word>isnotequal</Word>
+		<Word>isnotlike</Word>
+		<Word>isnull</Word>
+		<Word>isstring</Word>
+		<Word>lastindexof</Word>
+		<Word>left</Word>
+		<Word>length</Word>
+		<Word>max</Word>
+		<Word>maxstring</Word>
+		<Word>mean</Word>
+		<Word>median</Word>
+		<Word>min</Word>
+		<Word>minstring</Word>
+		<Word>mode</Word>
+		<Word>nullif</Word>
+		<Word>nullifnumeric</Word>
+		<Word>pow</Word>
+		<Word>right</Word>
+		<Word>round</Word>
+		<Word>sha1</Word>
+		<Word>sha1agg</Word>
+		<Word>sha256</Word>
+		<Word>sha256agg</Word>
+		<Word>sha512</Word>
+		<Word>sha512agg</Word>
+		<Word>sleep</Word>
+		<Word>substring</Word>
+		<Word>sum</Word>
+		<Word>tolower</Word>
+		<Word>tonumeric</Word>
+		<Word>toproper</Word>
+		<Word>tostring</Word>
+		<Word>toupper</Word>
+		<Word>trim</Word>
+		<Word>variance</Word>
     </Keywords>
 
     <Keywords color="Keywords">
