@@ -454,8 +454,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
         /// <summary>
         /// Yields chunks of primary schema rows for join processing. Pages are never split — all documents from
-        /// a given physical page are always in the same chunk for cache locality. Pages are accumulated into a
-        /// buffer until IntersectionRowChunkSize is reached, then the buffer is dispatched as one chunk.
+        /// a given physical page are always in the same chunk for cache locality..
         /// For index-matched results, pointers are grouped by page number before buffering.
         /// </summary>
         private static IEnumerable<SchemaIntersectionRowCollection> StreamPrimarySchemaRowChunks(
@@ -464,7 +463,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
-            int chunkSize = core.Settings.IntersectionRowChunkSize;
 
             IEnumerable<DocumentPointer[]> pageGroups;
 
@@ -482,24 +480,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 pageGroups = core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
             }
 
-            //Accumulate whole pages into a buffer until we reach IntersectionRowChunkSize, then dispatch.
-            //Pages are never split, so all documents from a page always land in the same chunk.
-            var buffer = new List<DocumentPointer>(chunkSize);
             foreach (var page in pageGroups)
             {
                 transaction.EnsureActive();
-                buffer.AddRange(page);
-
-                if (buffer.Count >= chunkSize)
-                {
-                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
-                    buffer.Clear();
-                }
-            }
-
-            if (buffer.Count > 0)
-            {
-                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
+                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, page);
             }
         }
 
@@ -514,46 +498,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             DocumentPointer[] documentPointers)
         {
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
-            var childPool = core.ThreadPool.Lookup.CreateChildPool<DocumentPointer>(core.Settings.LookupChildThreadPoolQueueDepth);
 
+            //Threading this loop causes too much lock contention.
+            //Its not just "not worth it", it actually causes a slowdown in performance.
             foreach (var documentPointer in documentPointers)
             {
                 transaction.EnsureActive();
 
-                var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                childPool.Enqueue(documentPointer, (threadDocumentPointer) =>
+                var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, documentPointer, LockOperation.Read);
+
+                var schemaIntersectionRow = new SchemaIntersectionRow();
+                schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
+                schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
+
+                if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
                 {
-                    #region Thread.
+                    //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
+                    schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), documentPointer);
+                }
 
-                    transaction.EnsureActive();
-
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, threadDocumentPointer, LockOperation.Read);
-
-                    //Had to remove this match because the where clause can contain conditions comprised of values from joins.
-                    //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
-                    var schemaIntersectionRow = new SchemaIntersectionRow();
-                    schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
-                    schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
-
-                    if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
-                    {
-                        //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
-                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), threadDocumentPointer);
-                    }
-
-                    lock (schemaIntersectionRowCollection)
-                    {
-                        schemaIntersectionRowCollection.Add(schemaIntersectionRow);
-                    }
-
-                    #endregion
-                });
-                ptThreadQueue?.StopAndAccumulate();
+                schemaIntersectionRowCollection.Add(schemaIntersectionRow);
             }
-
-            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childPool.WaitForCompletion();
-            ptThreadCompletion?.StopAndAccumulate();
 
             return schemaIntersectionRowCollection;
         }

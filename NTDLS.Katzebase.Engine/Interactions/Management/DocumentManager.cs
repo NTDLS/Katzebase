@@ -123,22 +123,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// documents within it are consumed before moving to the next page.
         /// </summary>
         internal IEnumerable<DocumentPointer[]> AcquireDocumentPointersByPage(
-            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention, int limit = -1)
+            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
             var physicalDocumentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(
                 transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
 
-            int count = 0;
             foreach (var item in physicalDocumentPageCatalog.Catalog)
             {
                 var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, item.PageNumber, lockIntention);
-                var pointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(item.PageNumber, o)).ToArray();
-
-                yield return pointers;
-
-                count += pointers.Length;
-                if (limit > 0 && count >= limit)
-                    break;
+                yield return physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(item.PageNumber, o)).ToArray();
             }
         }
 
