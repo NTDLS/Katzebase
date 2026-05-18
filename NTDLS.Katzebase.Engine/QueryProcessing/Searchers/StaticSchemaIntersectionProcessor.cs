@@ -302,7 +302,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         childPool.WaitForCompletion();
                         ptThreadCompletion?.StopAndAccumulate();
 
-                        chunkResult = joinedChunk.Clone();
+                        chunkResult = joinedChunk;
 
                         if (chunkRowLimitExceeded)
                             break;
@@ -314,28 +314,31 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 chunkResult.RemoveAll(o => o.MatchedSchemas.All(m => requiredSchemas.Contains(m) == false));
 
                 //Apply the WHERE clause to this chunk now that all joins are complete.
-                var matchChildPool = core.ThreadPool.Intersection.CreateChildPool<SchemaIntersectionRow>(core.Settings.IntersectionChildThreadPoolQueueDepth);
-
-                foreach (var resultingRow in chunkResult)
+                if (primarySchema.Value.Conditions != null)
                 {
-                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                    matchChildPool.Enqueue(resultingRow, (threadResultingRow) =>
+                    var matchChildPool = core.ThreadPool.Intersection.CreateChildPool<SchemaIntersectionRow>(core.Settings.IntersectionChildThreadPoolQueueDepth);
+
+                    foreach (var resultingRow in chunkResult)
                     {
-                        #region Thread.
+                        var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
+                        matchChildPool.Enqueue(resultingRow, (threadResultingRow) =>
+                        {
+                            #region Thread.
 
-                        var schemaElements = threadResultingRow.SchemaElements.Flatten();
-                        threadResultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
+                            var schemaElements = threadResultingRow.SchemaElements.Flatten();
+                            threadResultingRow.MatchedByWhereClause = IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, schemaElements);
 
-                        #endregion
-                    });
-                    ptThreadQueue?.StopAndAccumulate();
+                            #endregion
+                        });
+                        ptThreadQueue?.StopAndAccumulate();
+                    }
+
+                    var ptThreadCompletion_Removal = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                    matchChildPool.WaitForCompletion();
+                    ptThreadCompletion_Removal?.StopAndAccumulate();
+
+                    chunkResult.RemoveAll(o => !o.MatchedByWhereClause);
                 }
-
-                var ptThreadCompletion_Removal = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-                matchChildPool.WaitForCompletion();
-                ptThreadCompletion_Removal?.StopAndAccumulate();
-
-                chunkResult.RemoveAll(o => !o.MatchedByWhereClause);
 
                 //Accumulate this chunk's results into the final collection and check the row limit.
                 foreach (var row in chunkResult)
@@ -480,10 +483,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 pageGroups = core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
             }
 
+            int chunkSize = core.Settings.IntersectionRowChunkSize;
+            var buffer = new List<DocumentPointer>(chunkSize);
+
             foreach (var page in pageGroups)
             {
                 transaction.EnsureActive();
-                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, page);
+                buffer.AddRange(page);
+
+                if (buffer.Count >= chunkSize)
+                {
+                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
+                    buffer.Clear();
+                }
+            }
+
+            if (buffer.Count > 0)
+            {
+                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
             }
         }
 

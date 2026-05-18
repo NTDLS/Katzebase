@@ -91,6 +91,12 @@
         public int IntersectionChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
+        /// The number of primary-schema rows to gather into a single chunk before processing joins and the WHERE clause.
+        /// Pages are never split — this is a minimum threshold; a chunk may be slightly larger to honour page boundaries.
+        /// </summary>
+        public int IntersectionRowChunkSize { get; set; } = 1000;
+
+        /// <summary>
         /// The maximum number of threads to allocate to the thread pool.
         /// </summary>
         public int MaterializationThreadPoolMaximumSize { get; set; } = 0;
