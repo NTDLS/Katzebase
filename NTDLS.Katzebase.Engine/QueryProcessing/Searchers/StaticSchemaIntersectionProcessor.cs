@@ -453,8 +453,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Yields fixed-size chunks of primary schema rows so that join processing can begin before the entire
-        /// primary schema is loaded into memory. Each chunk is filled in parallel via the Lookup thread pool.
+        /// Yields one chunk of primary schema rows per physical document page so that join processing can begin
+        /// before the entire primary schema is loaded, and so that all documents from a given page are processed
+        /// together for maximum cache locality. For index-matched results, pointers are grouped by page number.
         /// </summary>
         private static IEnumerable<SchemaIntersectionRowCollection> StreamPrimarySchemaRowChunks(
             EngineCore core, Transaction transaction,
@@ -462,24 +463,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
-            IEnumerable<DocumentPointer>? documentPointers = null;
 
             if (primarySchema.Value.Optimization?.IndexingConditionGroup.Count > 0)
             {
-                //We are going to create a limited document catalog using the indexes.
+                //Index path: group matched pointers by page so each chunk hits one page file.
                 var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
                     primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.SchemaPrefix);
 
-                documentPointers = indexMatchedDocuments.Select(o => o.Value);
+                foreach (var pageGroup in indexMatchedDocuments.Select(o => o.Value).GroupBy(p => p.PageNumber))
+                {
+                    transaction.EnsureActive();
+                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, pageGroup.ToArray());
+                }
             }
-
-            //If we do not have any documents then indexing was not performed, then get the whole schema.
-            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
-
-            foreach (var chunk in documentPointers.Chunk(core.Settings.IntersectionRowChunkSize))
+            else
             {
-                transaction.EnsureActive();
-                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, chunk);
+                //Full scan: yield one chunk per document page — each chunk maps to exactly one physical page read.
+                foreach (var pagePointers in core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read))
+                {
+                    transaction.EnsureActive();
+                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, pagePointers);
+                }
             }
         }
 

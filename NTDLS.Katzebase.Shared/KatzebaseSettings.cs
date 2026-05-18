@@ -112,12 +112,6 @@
         public int IntersectionChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
-        /// The number of primary schema rows to process per chunk when performing schema intersection joins.
-        /// Smaller values reduce peak memory at the cost of more thread-pool overhead; larger values do the opposite.
-        /// </summary>
-        public int IntersectionRowChunkSize { get; set; } = 1000;
-
-        /// <summary>
         /// The maximum number of threads to allocate to the thread pool.
         /// </summary>
         public int MaterializationThreadPoolMaximumSize { get; set; } = 0;
