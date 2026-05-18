@@ -239,7 +239,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                                 if (string.IsNullOrEmpty(schemaMap.Value.Conditions?.Hash))
                                 {
-                                    throw new KbEngineException($"Missing condition hash for schema alias [{schemaMap.Value.SchemaPrefix}] in query. This is likely a bug, please report it to the developers.");
+                                    throw new KbEngineException($"Missing condition hash for schema alias [{schemaMap.Value.SchemaPrefix}] in query.");
                                 }
 
                                 var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression,
