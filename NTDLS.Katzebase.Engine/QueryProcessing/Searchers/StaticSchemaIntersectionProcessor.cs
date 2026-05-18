@@ -238,7 +238,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 int schemaMatchCount = 0;
 
                                 var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression,
-                                    new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.EnsureNotNull().Hash });
+                                    new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.Hash });
 
                                 foreach (var documentPointer in documentPointers)
                                 {
