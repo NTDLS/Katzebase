@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33213.308
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11806.211 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Engine", "NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj", "{D69AE82D-107C-4B6C-BEEA-93399912A64F}"
 EndProject
@@ -46,6 +46,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Api", "NTDLS.Katzebase.Api\NTDLS.Katzebase.Api.csproj", "{957FB6A4-69CE-45C5-A4F1-EA713338E692}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Engine.Tests", "NTDLS.Katzebase.Engine.Tests\NTDLS.Katzebase.Engine.Tests.csproj", "{B4A25CA7-7675-4CC2-B083-49E12D349EB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.ExpressionParser", "..\NTDLS.ExpressionParser\NTDLS.ExpressionParser\NTDLS.ExpressionParser.csproj", "{E9EF1606-D4DB-2593-78E0-B62410AAEE19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,6 +107,10 @@ Global
 		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4A25CA7-7675-4CC2-B083-49E12D349EB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9EF1606-D4DB-2593-78E0-B62410AAEE19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9EF1606-D4DB-2593-78E0-B62410AAEE19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9EF1606-D4DB-2593-78E0-B62410AAEE19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9EF1606-D4DB-2593-78E0-B62410AAEE19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -70,12 +70,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NTDLS.DelegateThreadPooling" Version="2.1.0" />
-    <PackageReference Include="NTDLS.ExpressionParser" Version="1.5.7" />
     <PackageReference Include="NTDLS.FastMemoryCache" Version="1.9.4" />
     <PackageReference Include="Serilog" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\NTDLS.ExpressionParser\NTDLS.ExpressionParser\NTDLS.ExpressionParser.csproj" />
     <ProjectReference Include="..\NTDLS.Katzebase.Api\NTDLS.Katzebase.Api.csproj" />
     <ProjectReference Include="..\NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj" />
     <ProjectReference Include="..\NTDLS.Katzebase.PersistentTypes\NTDLS.Katzebase.PersistentTypes.csproj" />
