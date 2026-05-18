@@ -453,9 +453,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Yields one chunk of primary schema rows per physical document page so that join processing can begin
-        /// before the entire primary schema is loaded, and so that all documents from a given page are processed
-        /// together for maximum cache locality. For index-matched results, pointers are grouped by page number.
+        /// Yields chunks of primary schema rows for join processing. Pages are never split — all documents from
+        /// a given physical page are always in the same chunk for cache locality. Pages are accumulated into a
+        /// buffer until IntersectionRowChunkSize is reached, then the buffer is dispatched as one chunk.
+        /// For index-matched results, pointers are grouped by page number before buffering.
         /// </summary>
         private static IEnumerable<SchemaIntersectionRowCollection> StreamPrimarySchemaRowChunks(
             EngineCore core, Transaction transaction,
@@ -463,27 +464,42 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             List<string>? gatherDocumentPointersForSchemaAliases)
         {
             var primarySchema = schemaMappings.First();
+            int chunkSize = core.Settings.IntersectionRowChunkSize;
+
+            IEnumerable<DocumentPointer[]> pageGroups;
 
             if (primarySchema.Value.Optimization?.IndexingConditionGroup.Count > 0)
             {
-                //Index path: group matched pointers by page so each chunk hits one page file.
+                //Index path: group matched pointers by page so documents from the same page are processed together.
                 var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
                     primarySchema.Value.PhysicalSchema, primarySchema.Value.Optimization, query, primarySchema.Value.SchemaPrefix);
 
-                foreach (var pageGroup in indexMatchedDocuments.Select(o => o.Value).GroupBy(p => p.PageNumber))
-                {
-                    transaction.EnsureActive();
-                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, pageGroup.ToArray());
-                }
+                pageGroups = indexMatchedDocuments.Select(o => o.Value).GroupBy(p => p.PageNumber).Select(g => g.ToArray());
             }
             else
             {
-                //Full scan: yield one chunk per document page — each chunk maps to exactly one physical page read.
-                foreach (var pagePointers in core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read))
+                //Full scan: AcquireDocumentPointersByPage yields one array per physical page.
+                pageGroups = core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
+            }
+
+            //Accumulate whole pages into a buffer until we reach IntersectionRowChunkSize, then dispatch.
+            //Pages are never split, so all documents from a page always land in the same chunk.
+            var buffer = new List<DocumentPointer>(chunkSize);
+            foreach (var page in pageGroups)
+            {
+                transaction.EnsureActive();
+                buffer.AddRange(page);
+
+                if (buffer.Count >= chunkSize)
                 {
-                    transaction.EnsureActive();
-                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, pagePointers);
+                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
+                    buffer.Clear();
                 }
+            }
+
+            if (buffer.Count > 0)
+            {
+                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
             }
         }
 

@@ -112,6 +112,13 @@
         public int IntersectionChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
+        /// The minimum number of document pointers to accumulate before dispatching a chunk for join processing.
+        /// Whole document pages are always kept together, so actual chunk sizes will be rounded up to the next
+        /// page boundary. Larger values increase thread pool utilisation at the cost of higher peak memory.
+        /// </summary>
+        public int IntersectionRowChunkSize { get; set; } = 1000;
+
+        /// <summary>
         /// The maximum number of threads to allocate to the thread pool.
         /// </summary>
         public int MaterializationThreadPoolMaximumSize { get; set; } = 0;
