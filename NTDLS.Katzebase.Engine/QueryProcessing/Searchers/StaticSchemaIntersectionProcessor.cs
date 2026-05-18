@@ -483,24 +483,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 pageGroups = core.Documents.AcquireDocumentPointersByPage(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
             }
 
-            int chunkSize = core.Settings.IntersectionRowChunkSize;
-            var buffer = new List<DocumentPointer>(chunkSize);
-
             foreach (var page in pageGroups)
             {
                 transaction.EnsureActive();
-                buffer.AddRange(page);
-
-                if (buffer.Count >= chunkSize)
-                {
-                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
-                    buffer.Clear();
-                }
-            }
-
-            if (buffer.Count > 0)
-            {
-                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, buffer.ToArray());
+                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, page);
             }
         }
 
