@@ -453,8 +453,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Yields fixed-size chunks of primary schema rows so that join processing can begin before the entire primary
-        /// schema is loaded into memory. Each chunk is filled in parallel via the Lookup thread pool.
+        /// Yields fixed-size chunks of primary schema rows so that join processing can begin before the entire
+        /// primary schema is loaded into memory. Each chunk is filled in parallel via the Lookup thread pool.
         /// </summary>
         private static IEnumerable<SchemaIntersectionRowCollection> StreamPrimarySchemaRowChunks(
             EngineCore core, Transaction transaction,
@@ -476,24 +476,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //If we do not have any documents then indexing was not performed, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
 
-            int chunkSize = core.Settings.IntersectionRowChunkSize;
-            var chunk = new List<DocumentPointer>(chunkSize);
-
-            foreach (var documentPointer in documentPointers)
+            foreach (var chunk in documentPointers.Chunk(core.Settings.IntersectionRowChunkSize))
             {
                 transaction.EnsureActive();
-                chunk.Add(documentPointer);
-
-                if (chunk.Count >= chunkSize)
-                {
-                    yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, query, gatherDocumentPointersForSchemaAliases, chunk);
-                    chunk = new List<DocumentPointer>(chunkSize);
-                }
-            }
-
-            if (chunk.Count > 0)
-            {
-                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, query, gatherDocumentPointersForSchemaAliases, chunk);
+                yield return GatherPrimarySchemaRowChunk(core, transaction, primarySchema, gatherDocumentPointersForSchemaAliases, chunk);
             }
         }
 
@@ -504,9 +490,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static SchemaIntersectionRowCollection GatherPrimarySchemaRowChunk(
             EngineCore core, Transaction transaction,
             KeyValuePair<string, QuerySchemaOptimizationMapItem> primarySchema,
-            PreparedQuery query,
             List<string>? gatherDocumentPointersForSchemaAliases,
-            List<DocumentPointer> documentPointers)
+            DocumentPointer[] documentPointers)
         {
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
             var childPool = core.ThreadPool.Lookup.CreateChildPool<DocumentPointer>(core.Settings.LookupChildThreadPoolQueueDepth);
