@@ -237,6 +237,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                                 int schemaMatchCount = 0;
 
+                                if (string.IsNullOrEmpty(schemaMap.Value.Conditions?.Hash))
+                                {
+                                    throw new KbEngineException($"Missing condition hash for schema alias [{schemaMap.Value.SchemaPrefix}] in query. This is likely a bug, please report it to the developers.");
+                                }
+
                                 var matchExpression = new Expression(schemaMap.Value.Conditions.EnsureNotNull().MathematicalExpression,
                                     new ExpressionOptions() { CustomHash = schemaMap.Value.Conditions.Hash });
 
@@ -414,6 +419,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     //There are no conditions, so this is a match.
                     return true;
+                }
+
+                if (string.IsNullOrEmpty(givenConditions.Hash))
+                {
+                    throw new KbEngineException($"Missing condition hash for WHERE clause in query.");
                 }
 
                 var matchExpression = new Expression(givenConditions.MathematicalExpression,
