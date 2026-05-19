@@ -384,8 +384,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     return true;
                 }
 
-                var matchExpression = new Expression(givenConditions.MathematicalExpression);
-                    new ExpressionOptions() { CustomHash = givenConditions.Hash };
+                if (string.IsNullOrEmpty(givenConditions.Hash))
+                {
+                    throw new KbEngineException($"Missing condition hash for WHERE clause in query.");
+                }
+
+                var matchExpression = new Expression(givenConditions.MathematicalExpression,
+                    new ExpressionOptions() { CustomHash = givenConditions.Hash });
 
                 SetExpressionParametersRecursive(givenConditions.Collection);
 

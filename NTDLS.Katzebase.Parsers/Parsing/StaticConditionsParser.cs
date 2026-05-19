@@ -26,13 +26,17 @@ namespace NTDLS.Katzebase.Parsers.Parsing
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-            conditionCollection.IncrementalSha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            using var incrementalSha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+
+            conditionCollection.IncrementalSha256 = incrementalSha256;
 
             ParseRecursive(queryBatch, tokenizer, conditionCollection, conditionCollection, endOfWhereCaret);
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
 
             conditionCollection.IncrementalSha256.AppendData(Encoding.UTF8.GetBytes(conditionCollection.MathematicalExpression));
             conditionCollection.IncrementalSha256.AppendData(Encoding.UTF8.GetBytes(leftHandAliasOfJoin));
+
+            conditionCollection.Hash = Convert.ToHexString(conditionCollection.IncrementalSha256.GetCurrentHash());
 
             return conditionCollection;
         }

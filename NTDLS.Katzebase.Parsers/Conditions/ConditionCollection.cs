@@ -34,22 +34,12 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         /// <summary>
         /// Hash of the MathematicalExpression.
         /// </summary>
-        public byte[]? Hash { get; set; }
+        public string? Hash { get; set; }
 
         /// <summary>
-        /// The SHA256 hash of the mathematical expression, used for caching purposes.
-        /// The hash also includes the query hash, so it can not be calculated until the query itself is fully parsed and hashed.
+        /// Indicates whether this ConditionCollection is a clone of another collection.
         /// </summary>
-        public void FinalizeConditionHash(byte[] queryHash)
-        {
-            if (IncrementalSha256 != null)
-            {
-                IncrementalSha256.AppendData(queryHash); //Append the query hash to the condition hash.
-                Hash = IncrementalSha256.GetCurrentHash();
-                IncrementalSha256.Dispose();
-                //Debug.WriteLine($"{BitConverter.ToString(Hash).Replace("-", "")}");
-            }
-        }
+        public bool IsClone { get; private set; }
 
         public QueryFieldCollection FieldCollection { get; set; }
 
@@ -80,6 +70,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
                 FieldCollection = FieldCollection,
                 MathematicalExpression = MathematicalExpression,
                 Hash = Hash,
+                IsClone = true
             };
 
             foreach (var entry in Collection)
@@ -106,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
             if (!string.IsNullOrEmpty(SchemaAlias)) result.AppendLine($"• " + $"Schema: {SchemaAlias}");
             result.AppendLine($"• " + $"Expression: {MathematicalExpression}");
-            result.AppendLine($"• " + $"Hash: {BitConverter.ToString(Hash ?? Array.Empty<byte>()).Replace("-", string.Empty).ToLower()}");
+            result.AppendLine($"• " + $"Hash: {Hash ?? string.Empty}");
             result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
 
             foreach (var item in Collection)

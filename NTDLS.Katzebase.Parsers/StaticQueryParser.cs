@@ -62,8 +62,6 @@ namespace NTDLS.Katzebase.Parsers
             query.Text = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
             query.Hash = SHA256.HashData(Encoding.UTF8.GetBytes(query.Text));
 
-            query.Conditions.FinalizeConditionHash(query.Hash);
-
             return query;
         }
     }
