@@ -2,7 +2,7 @@
 ;-- Main Setup Information
  AppName                          = Katzebase Server
  AppVerName                       = Katzebase Server 0.34.0
- AppCopyright                     = Copyright © 2025 NetworkDLS.
+ AppCopyright                     = Copyright © 2026 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase
  DefaultGroupName                 = Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.Server.exe

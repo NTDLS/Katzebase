@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
-    <Copyright>Copyright © 2025 NetworkDLS</Copyright>
-    <Version>0.34.0</Version>
+    <Copyright>Copyright © 2026 NetworkDLS</Copyright>
+    <Version>0.35.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Media\IconFull.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
