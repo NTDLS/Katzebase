@@ -117,6 +117,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Yields document pointers one page at a time so that callers process all documents from a single
+        /// physical page together. This maximises cache locality — the page file is loaded once and all
+        /// documents within it are consumed before moving to the next page.
+        /// </summary>
+        internal IEnumerable<DocumentPointer[]> AcquireDocumentPointersByPage(
+            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        {
+            var physicalDocumentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(
+                transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
+
+            foreach (var item in physicalDocumentPageCatalog.Catalog)
+            {
+                var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, item.PageNumber, lockIntention);
+                yield return physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(item.PageNumber, o)).ToArray();
+            }
+        }
+
         internal PhysicalDocumentPageMap AcquireDocumentPageMap(
             Transaction transaction, PhysicalSchema physicalSchema, int pageNumber, LockOperation lockIntention)
         {
