@@ -13,7 +13,6 @@ using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Document;
-using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
