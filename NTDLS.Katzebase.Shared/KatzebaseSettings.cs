@@ -67,28 +67,7 @@
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int IndexingChildThreadPoolQueueDepth { get; set; } = 100;
-
-        /// <summary>
-        /// The maximum number of threads to allocate to the thread pool.
-        /// </summary>
-        public int LookupThreadPoolMaximumSize { get; set; } = 0;
-
-        /// <summary>
-        /// The initial number of threads to allocate to the thread pool.
-        /// </summary>
-        public int LookupThreadPoolInitialSize { get; set; } = 0;
-
-        /// <summary>
-        /// The maximum number of items to queue in the thread pool.
-        /// </summary>
-        public int LookupThreadPoolQueueDepth { get; set; } = 10000;
-
-        /// <summary>
-        /// The maximum number of items to queue in each child thread pool per operation.
-        /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
-        /// </summary>
-        public int LookupChildThreadPoolQueueDepth { get; set; } = 100;
+        public int IndexingChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
         /// The maximum number of threads to allocate to the thread pool.
@@ -109,7 +88,7 @@
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int IntersectionChildThreadPoolQueueDepth { get; set; } = 100;
+        public int IntersectionChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
         /// The maximum number of threads to allocate to the thread pool.

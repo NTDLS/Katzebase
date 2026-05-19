@@ -7,7 +7,6 @@ namespace NTDLS.Katzebase.Engine.Threading
     /// </summary>
     public class ThreadPoolManager
     {
-        public DelegateThreadPool Lookup { get; private set; }
         public DelegateThreadPool Indexing { get; private set; }
         public DelegateThreadPool Intersection { get; private set; }
         public DelegateThreadPool Materialization { get; private set; }
@@ -21,28 +20,21 @@ namespace NTDLS.Katzebase.Engine.Threading
             Indexing = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
             {
                 MaximumThreadCount = _core.Settings.IndexingThreadPoolMaximumSize <= 0 ? (Environment.ProcessorCount * 2) : _core.Settings.IndexingThreadPoolMaximumSize,
-                InitialThreadCount = _core.Settings.IndexingThreadPoolMaximumSize <= 0 ? 2 : Math.Min(_core.Settings.IndexingThreadPoolMaximumSize / 2, 2),
+                InitialThreadCount = _core.Settings.IndexingThreadPoolInitialSize <= 0 ? Environment.ProcessorCount : _core.Settings.IndexingThreadPoolInitialSize,
                 MaximumQueueDepth = _core.Settings.IndexingThreadPoolQueueDepth
-            });
-
-            Lookup = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
-            {
-                MaximumThreadCount = _core.Settings.LookupThreadPoolMaximumSize <= 0 ? (Environment.ProcessorCount * 2) : _core.Settings.LookupThreadPoolMaximumSize,
-                InitialThreadCount = _core.Settings.LookupThreadPoolMaximumSize <= 0 ? 2 : Math.Min(_core.Settings.LookupThreadPoolMaximumSize / 2, 2),
-                MaximumQueueDepth = _core.Settings.LookupThreadPoolQueueDepth
             });
 
             Intersection = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
             {
                 MaximumThreadCount = _core.Settings.IntersectionThreadPoolMaximumSize <= 0 ? (Environment.ProcessorCount * 2) : _core.Settings.IntersectionThreadPoolMaximumSize,
-                InitialThreadCount = _core.Settings.IntersectionThreadPoolMaximumSize <= 0 ? 2 : Math.Min(_core.Settings.IntersectionThreadPoolMaximumSize / 2, 2),
+                InitialThreadCount = _core.Settings.IntersectionThreadPoolInitialSize <= 0 ? Environment.ProcessorCount : _core.Settings.IntersectionThreadPoolInitialSize,
                 MaximumQueueDepth = _core.Settings.IntersectionThreadPoolQueueDepth
             });
 
             Materialization = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
             {
                 MaximumThreadCount = _core.Settings.MaterializationThreadPoolMaximumSize <= 0 ? (Environment.ProcessorCount * 2) : _core.Settings.MaterializationThreadPoolMaximumSize,
-                InitialThreadCount = _core.Settings.MaterializationThreadPoolMaximumSize <= 0 ? 2 : Math.Min(_core.Settings.MaterializationThreadPoolMaximumSize / 2, 2),
+                InitialThreadCount = _core.Settings.MaterializationThreadPoolInitialSize <= 0 ? Environment.ProcessorCount : _core.Settings.MaterializationThreadPoolInitialSize,
                 MaximumQueueDepth = _core.Settings.MaterializationThreadPoolQueueDepth
             });
         }
@@ -50,7 +42,6 @@ namespace NTDLS.Katzebase.Engine.Threading
         public void Stop()
         {
             Indexing.Dispose();
-            Lookup.Dispose();
             Intersection.Dispose();
             Materialization.Dispose();
         }
