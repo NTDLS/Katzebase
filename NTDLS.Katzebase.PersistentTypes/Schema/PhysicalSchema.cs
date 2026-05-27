@@ -22,8 +22,6 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
                 => ParentPhysicalSchema = parentPhysicalSchema;
         }
 
-        public uint PageSize { get; set; }
-
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
 
@@ -53,13 +51,12 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
                 Id = Id,
                 Name = Name,
                 VirtualPath = VirtualPath,
-                PageSize = PageSize,
                 IsTemporary = IsTemporary,
             };
         }
 
         public KbSchema ToClientPayload(Guid parentSchemaId, string parentPath)
-            => new(Id, Name, $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'), parentPath.Trim(':'), parentSchemaId, PageSize);
+            => new(Id, Name, $"{parentPath.TrimEnd(':')}:{Name}".Trim(':'), parentPath.Trim(':'), parentSchemaId);
 
         public VirtualSchema ToVirtual(PhysicalSchema parentPhysicalSchema)
             => new(parentPhysicalSchema)
@@ -68,7 +65,6 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
                 Id = Id,
                 Name = Name,
                 VirtualPath = VirtualPath,
-                PageSize = PageSize,
                 IsTemporary = IsTemporary,
             };
 

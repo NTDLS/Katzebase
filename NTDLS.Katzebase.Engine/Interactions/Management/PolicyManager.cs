@@ -213,14 +213,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, LockOperation.Write);
+                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, LockOperation.Write);
 
                 //First revoke the specified policy types.
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId
                     && (o.Permission == permission || permission == SecurityPolicyPermission.All));
                 foreach (var policyToRemove in policiesToRemove)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(policyToRemove.PolicyId));
+                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(policyToRemove.PolicyId));
                 }
 
                 if (permission == SecurityPolicyPermission.All)
@@ -235,7 +235,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             RoleId = roleId,
                             IsRecursive = isRecursive
                         };
-                        _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
+                        _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
                     }
                 }
                 else
@@ -247,7 +247,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         RoleId = roleId,
                         IsRecursive = isRecursive
                     };
-                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
+                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
                 }
 
                 _schemaPolicyCache.Write(o => o.Clear());
@@ -268,14 +268,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, LockOperation.Write);
+                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, LockOperation.Write);
 
                 //First revoke the specified policy types.
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId
                     && (o.Permission == permission || permission == SecurityPolicyPermission.All));
                 foreach (var policyToRemove in policiesToRemove)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(policyToRemove.PolicyId));
+                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(policyToRemove.PolicyId));
                 }
 
                 if (permission == SecurityPolicyPermission.All)
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             IsRecursive = isRecursive
                         };
 
-                        _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
+                        _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
                     }
                 }
                 else
@@ -304,7 +304,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         IsRecursive = isRecursive
                     };
 
-                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
+                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(newPolicy.PolicyId), newPolicy);
                 }
 
                 _schemaPolicyCache.Write(o => o.Clear());
@@ -325,14 +325,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, LockOperation.Write);
+                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, LockOperation.Write);
 
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId
                     && (o.Permission == permission || permission == SecurityPolicyPermission.All));
 
                 foreach (var policyToRemove in policiesToRemove)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, new RdbKey(policyToRemove.PolicyId));
+                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, new RdbKey(policyToRemove.PolicyId));
                 }
 
                 _schemaPolicyCache.Write(o => o.Clear());
@@ -428,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         while (true)
                         {
-                            var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, LockOperation.Read);
+                            var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, LockOperation.Read);
 
                             var schemaRoles = policyCatalog.Where(o => userRoleIds.Contains(o.RoleId)).ToList();
 
@@ -514,7 +514,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Stability);
-                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Policy, LockOperation.Read);
+                var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Policy, LockOperation.Read);
                 var roles = transaction.ExecuteQuery<KbRole>("GetRoles.kbs");
 
                 var result = new List<AccountPolicyDescriptor>();

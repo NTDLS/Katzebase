@@ -53,7 +53,6 @@
             ColumnSourceTable = new DataGridViewTextBoxColumn();
             ColumnAnalysis = new DataGridViewTextBoxColumn();
             ColumnTargetSchema = new DataGridViewTextBoxColumn();
-            ColumnPageSize = new DataGridViewTextBoxColumn();
             ColumnStatus = new DataGridViewTextBoxColumn();
             menuStripBody.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSqlServer).BeginInit();
@@ -88,7 +87,7 @@
             label2.AutoSize = true;
             label2.Location = new Point(12, 82);
             label2.Name = "label2";
-            label2.Size = new Size(84, 15);
+            label2.Size = new Size(85, 15);
             label2.TabIndex = 3;
             label2.Text = "Target Schema";
             // 
@@ -97,7 +96,7 @@
             label3.AutoSize = true;
             label3.Location = new Point(12, 138);
             label3.Name = "label3";
-            label3.Size = new Size(151, 15);
+            label3.Size = new Size(152, 15);
             label3.TabIndex = 5;
             label3.Text = "SQL Server Tables to Import";
             // 
@@ -211,7 +210,7 @@
             // dataGridViewSqlServer
             // 
             dataGridViewSqlServer.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewSqlServer.Columns.AddRange(new DataGridViewColumn[] { ColumnImportData, ColumnImportIndexes, ColumnSourceTable, ColumnAnalysis, ColumnTargetSchema, ColumnPageSize, ColumnStatus });
+            dataGridViewSqlServer.Columns.AddRange(new DataGridViewColumn[] { ColumnImportData, ColumnImportIndexes, ColumnSourceTable, ColumnAnalysis, ColumnTargetSchema, ColumnStatus });
             dataGridViewSqlServer.Location = new Point(12, 156);
             dataGridViewSqlServer.Name = "dataGridViewSqlServer";
             dataGridViewSqlServer.Size = new Size(805, 330);
@@ -248,11 +247,6 @@
             ColumnTargetSchema.HeaderText = "Target Schema";
             ColumnTargetSchema.Name = "ColumnTargetSchema";
             ColumnTargetSchema.Width = 175;
-            // 
-            // ColumnPageSize
-            // 
-            ColumnPageSize.HeaderText = "Page Size";
-            ColumnPageSize.Name = "ColumnPageSize";
             // 
             // ColumnStatus
             // 
@@ -322,7 +316,6 @@
         private DataGridViewTextBoxColumn ColumnSourceTable;
         private DataGridViewTextBoxColumn ColumnAnalysis;
         private DataGridViewTextBoxColumn ColumnTargetSchema;
-        private DataGridViewTextBoxColumn ColumnPageSize;
         private DataGridViewTextBoxColumn ColumnStatus;
     }
 }

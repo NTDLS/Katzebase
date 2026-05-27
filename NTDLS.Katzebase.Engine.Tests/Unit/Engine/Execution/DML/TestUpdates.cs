@@ -31,9 +31,8 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\UpdateCreatingDuplicates.kbs");
 
             //Ensure the unique key creation causes a failure.
-            var exception = Assert.Throws<AggregateException>(()
+            var exception = Assert.Throws<KbDuplicateKeyViolationException>(()
                 => QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\CreateUniqueKey.kbs"));
-            Assert.Contains(exception.InnerExceptions, ex => ex is KbDuplicateKeyViolationException);
 
             //Test select before and after creation of an index.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Updates\SelectBeforeAndAfterIndex.kbs");

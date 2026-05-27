@@ -420,7 +420,7 @@ ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = false)
 ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = true)
 
 exec print('Test ALTER schema: ' + DateTime())
-ALTER schema Temporary:Payload1 WITH (PageSize = 100)
+--ALTER schema Temporary:Payload1 WITH (PageSize = 100)
 
 exec print('Test functions: ' + DateTime())
 

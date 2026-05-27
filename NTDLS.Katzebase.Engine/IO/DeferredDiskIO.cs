@@ -9,10 +9,10 @@ namespace NTDLS.Katzebase.Engine.IO
 {
     internal class DeferredDiskIO
     {
-        private class DeferredDiskIOObject(string diskPath, KbColumnFamily columnFamily, object reference, RdbKey rdbKey, IOFormat format)
+        private class DeferredDiskIOObject(string diskPath, KbColumnFamilyName columnFamily, object reference, RdbKey rdbKey, IOFormat format)
         {
             public string DiskPath { get; private set; } = diskPath.ToLowerInvariant();
-            public KbColumnFamily ColumnFamily { get; private set; } = columnFamily;
+            public KbColumnFamilyName ColumnFamily { get; private set; } = columnFamily;
             public object Reference { get; set; } = reference;
             public RdbKey DatabaseKey { get; private set; } = rdbKey;
             public IOFormat Format { get; private set; } = format;
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.IO
         /// <param name="key"></param>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public void PutDeferredDiskIO(CacheKey key, string diskPath, KbColumnFamily columnFamily, object reference, RdbKey rdbKey, IOFormat format)
+        public void PutDeferredDiskIO(CacheKey key, string diskPath, KbColumnFamilyName columnFamily, object reference, RdbKey rdbKey, IOFormat format)
         {
             _collection.Use(o =>
             {

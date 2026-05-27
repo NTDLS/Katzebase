@@ -27,9 +27,8 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Deletes\DeleteWhereLastNameDoe.kbs");
 
             //Ensure the unique key creation causes a failure.
-            var exception = Assert.Throws<AggregateException>(()
+            var exception = Assert.Throws<KbDuplicateKeyViolationException>(()
                 => QueryExpectation.ValidateScriptResults(_engine, @"Features\Deletes\CreateUniqueKey.kbs"));
-            Assert.Contains(exception.InnerExceptions, ex => ex is KbDuplicateKeyViolationException);
 
             //Remove the duplicate rows
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Deletes\DeleteDuplicates.kbs");

@@ -15,18 +15,18 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
         public long Sequence { get; set; } = 0;
 
         public string RdbPath { get; set; }
-        public KbColumnFamily ColumnFamily { get; set; }
+        public KbColumnFamilyName ColumnFamilyName { get; set; }
         public byte[] RdbKey { get; set; }
         public byte[]? OriginalData { get; set; }
 
-        public Atom(ActionType action, long sequence, string rdbPath, KbColumnFamily columnFamily, byte[] rdbKey, CacheKey cacheKey)
+        public Atom(ActionType action, long sequence, string rdbPath, KbColumnFamilyName columnFamily, byte[] rdbKey, CacheKey cacheKey)
         {
             Action = action;
             Sequence = sequence;
             RdbKey = rdbKey;
             CacheKey = cacheKey;
             RdbPath = rdbPath;
-            ColumnFamily = columnFamily;
+            ColumnFamilyName = columnFamily;
         }
 
         public AtomSnapshot Snapshot()
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
                 CacheKey = CacheKey,
                 Sequence = Sequence,
                 RdbPath = RdbPath,
-                ColumnFamily = ColumnFamily,
+                ColumnFamily = ColumnFamilyName,
                 RdbKey = RdbKey,
                 OriginalData = OriginalData,
             };

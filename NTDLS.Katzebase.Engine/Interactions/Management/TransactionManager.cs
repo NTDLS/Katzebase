@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactionAPIHandlers APIHandlers { get; private set; }
 
-        public RocksDb TransactionLogRdb { get; private set; }
+        public Rdb TransactionLogRdb { get; private set; }
 
         internal List<TransactionSnapshot> Snapshot()
         {
@@ -65,8 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var columnFamilies = new ColumnFamilies
                         {
                             //The Identity column contains one recors per transaction with the key being the transaction ID and the value being the incrementing value.
-                            { KbColumnFamily.Identity.ToString(), new ColumnFamilyOptions() },
-                            { KbColumnFamily.TransactionAtoms.ToString(), new ColumnFamilyOptions() }
+                            { KbColumnFamilyName.Identity.ToString(), new ColumnFamilyOptions() }
                         };
 
                     var creation = RocksDb.Open(options, _core.Settings.TransactionDataPath, columnFamilies);
@@ -188,7 +187,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     long? lastSequence = null;
 
                     //Get the last sequence jusy for display purposes.
-                    var columnFamily = _core.IO.GetColumnFamily(rdb, new RdbKey(transationId));
+                    var columnFamily = rdb.GetColumnFamily(new RdbKey(transationId));
                     using var iterator = rdb.NewIterator(columnFamily);
                     iterator.SeekToLast();
                     if (iterator.Valid())

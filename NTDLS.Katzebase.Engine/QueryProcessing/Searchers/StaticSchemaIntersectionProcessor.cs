@@ -374,54 +374,54 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
-            #region Internal IsWhereClauseMatch().
+            return resultingRowCollection;
+        }
 
-            static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
-                ConditionCollection? givenConditions, KbInsensitiveDictionary<string?> documentElements)
+        #region Internal IsWhereClauseMatch().
+
+        static bool IsWhereClauseMatch(Transaction transaction, PreparedQuery query,
+            ConditionCollection? givenConditions, KbInsensitiveDictionary<string?> documentElements)
+        {
+            if (givenConditions == null)
             {
-                if (givenConditions == null)
+                //There are no conditions, so this is a match.
+                return true;
+            }
+
+            var matchExpression = new Expression(givenConditions.MathematicalExpression);
+
+            SetExpressionParametersRecursive(givenConditions.Collection);
+
+            var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
+            bool evaluation = (matchExpression.Evaluate() ?? 0) != 0;
+            ptEvaluate?.StopAndAccumulate();
+
+            return evaluation;
+
+            void SetExpressionParametersRecursive(List<ICondition> conditions)
+            {
+                foreach (var condition in conditions)
                 {
-                    //There are no conditions, so this is a match.
-                    return true;
-                }
-
-                var matchExpression = new Expression(givenConditions.MathematicalExpression);
-
-                SetExpressionParametersRecursive(givenConditions.Collection);
-
-                var ptEvaluate = transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
-                bool evaluation = (matchExpression.Evaluate() ?? 0) != 0;
-                ptEvaluate?.StopAndAccumulate();
-
-                return evaluation;
-
-                void SetExpressionParametersRecursive(List<ICondition> conditions)
-                {
-                    foreach (var condition in conditions)
+                    if (condition is ConditionGroup group)
                     {
-                        if (condition is ConditionGroup group)
-                        {
-                            SetExpressionParametersRecursive(group.Collection);
-                        }
-                        else if (condition is ConditionEntry entry)
-                        {
-                            var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
-                            var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
+                        SetExpressionParametersRecursive(group.Collection);
+                    }
+                    else if (condition is ConditionEntry entry)
+                    {
+                        var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
+                        var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
 
-                            matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
-                        }
-                        else
-                        {
-                            throw new NotImplementedException();
-                        }
+                        matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
                     }
                 }
             }
-
-            #endregion
-
-            return resultingRowCollection;
         }
+
+        #endregion
 
         /// <summary>
         /// Gets a collection of WHERE clause qualified rows, in parallel, from the first schema in th query.
@@ -503,10 +503,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             void AddPrimarySchemaRow(PhysicalDocument physicalDocument, uint documentPointer)
             {
-                //Had to remove this match because the where clause can contain conditions comprised of values from joins.
-                //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
-                //if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
-                //{
+                // For single-schema queries, apply the WHERE clause here so that:
+                // (a) non-matching documents are never added to the collection, and
+                // (b) the row-limit check counts only matching rows — preventing TOP N
+                //     from cutting off the scan before N matching rows are found.
+                // Multi-schema (join) queries defer to after the join because WHERE
+                // conditions may reference fields from other schemas.
+                if (schemaMappings.Count == 1)
+                {
+                    var tempElements = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
+                    {
+                        { primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements }
+                    };
+                    if (!IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, tempElements.Flatten()))
+                    {
+                        return;
+                    }
+                }
+
                 var schemaIntersectionRow = new SchemaIntersectionRow();
                 schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
                 schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
@@ -528,7 +542,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         rowLimitExceeded = true;
                     }
                 }
-                //}
             }
 
             return schemaIntersectionRowCollection;

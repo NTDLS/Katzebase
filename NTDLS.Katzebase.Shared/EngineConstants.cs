@@ -18,7 +18,7 @@
         public const string UIDMarker = "$UID$";
         public const string PrimaryIdentityKey = "Primary";
 
-        public enum KbColumnFamily
+        public enum KbColumnFamilyName
         {
             /// <summary>
             /// Column family name that contains document data.
@@ -29,8 +29,6 @@
             /// Column family name that contains auto-incrementing identity values,
             /// </summary>
             Identity,
-
-            TransactionAtoms,
 
             Schema,
             Indexes,

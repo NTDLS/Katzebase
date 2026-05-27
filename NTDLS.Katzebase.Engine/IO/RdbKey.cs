@@ -2,7 +2,7 @@ using System.Text;
 
 namespace NTDLS.Katzebase.Engine.IO
 {
-    internal class RdbKey
+    public class RdbKey
     {
         public byte[] Bytes { get; set; }
 

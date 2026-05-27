@@ -16,6 +16,7 @@ using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
+using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Parsers.Constants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -72,9 +73,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
 
-                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
+                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
 
-                _core.IO.CreateColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
 
@@ -89,90 +90,81 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal string AnalyzeIndex(Transaction transaction, string schemaName, string indexName)
         {
-            return $"Index analysis is not currently implemented.";
-            /*
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
-                if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+                var physicalIndex = AcquireIndex(transaction, physicalSchema, indexName, LockOperation.Read)
+                    ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
+
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
+
+                long distinctKeys = 0;
+                long totalDocRefs = 0;
+                long totalKeyBytes = 0;
+                long totalValueBytes = 0;
+                int minDocsPerKey = int.MaxValue;
+                int maxDocsPerKey = 0;
+                long singleDocKeys = 0;
+
+                using var iter = rdb.NewIterator(indexCF);
+                for (iter.SeekToFirst(); iter.Valid(); iter.Next())
                 {
-                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
+                    transaction.EnsureActive();
+
+                    var keyBytes = iter.Key();
+                    var valueBytes = iter.Value();
+                    int docCount = valueBytes.Length / sizeof(uint);
+
+                    distinctKeys++;
+                    totalDocRefs += docCount;
+                    totalKeyBytes += keyBytes.Length;
+                    totalValueBytes += valueBytes.Length;
+
+                    if (docCount < minDocsPerKey) minDocsPerKey = docCount;
+                    if (docCount > maxDocsPerKey) maxDocsPerKey = docCount;
+                    if (docCount == 1) singleDocKeys++;
                 }
 
-                var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
+                if (distinctKeys == 0)
+                    minDocsPerKey = 0;
 
-                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
-                var physicalIndexPageMapDistilledLeaves = new List<List<PhysicalIndexLeaf>>();
+                double avgDocsPerKey = distinctKeys > 0 ? (double)totalDocRefs / distinctKeys : 0.0;
 
-                double diskSize = 0;
-                double decompressedSiskSize = 0;
+                // Selectivity: fraction of keys that are unique relative to total references.
+                // 100% = perfectly selective (every key maps to exactly one document).
+                double selectivity = totalDocRefs > 0 ? (double)distinctKeys / totalDocRefs * 100.0 : 100.0;
 
-                int rootNodes = 0;
+                var sb = new StringBuilder();
+                sb.AppendLine("Index Analysis {");
+                sb.AppendLine($"    Schema            : {physicalSchema.Name}");
+                sb.AppendLine($"    Name              : {physicalIndex.Name}");
+                sb.AppendLine($"    Id                : {physicalIndex.Id}");
+                sb.AppendLine($"    Unique            : {physicalIndex.IsUnique}");
+                sb.AppendLine($"    Created           : {physicalIndex.Created:u}");
+                sb.AppendLine($"    Modified          : {physicalIndex.Modified:u}");
+                sb.AppendLine($"    Attributes ({physicalIndex.Attributes.Count}) {{");
+                foreach (var attr in physicalIndex.Attributes)
+                    sb.AppendLine($"        {attr.Field}");
+                sb.AppendLine("    }");
+                sb.AppendLine($"    Distinct Keys     : {distinctKeys:N0}");
+                sb.AppendLine($"    Total Doc Refs    : {totalDocRefs:N0}");
+                sb.AppendLine($"    Single-Doc Keys   : {singleDocKeys:N0}");
+                sb.AppendLine($"    Min Docs/Key      : {minDocsPerKey:N0}");
+                sb.AppendLine($"    Max Docs/Key      : {maxDocsPerKey:N0}" + (maxDocsPerKey == 1 ? " (unique)" : ""));
+                sb.AppendLine($"    Avg Docs/Key      : {avgDocsPerKey:N2}");
+                sb.AppendLine($"    Key Data          : {totalKeyBytes / 1024.0:N2}k");
+                sb.AppendLine($"    Value Data        : {totalValueBytes / 1024.0:N2}k");
+                sb.AppendLine($"    Selectivity       : {selectivity:N2}%");
+                sb.AppendLine("}");
 
-                for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
-                {
-                    string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                    physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                    diskSize += IOManager.GetDecompressedSizeTracked(pageDiskPath);
-                    decompressedSiskSize += new FileInfo(pageDiskPath).Length;
-                    physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
-                    rootNodes += physicalIndexPageMap[indexPartition].Root.Children.Count;
-
-                }
-
-                var combinedNodes = physicalIndexPageMapDistilledLeaves.SelectMany(o => o);
-
-                int minDocumentsPerNode = combinedNodes.Min(o => o.Documents?.Count ?? 0);
-                int maxDocumentsPerNode = combinedNodes.Max(o => o.Documents?.Count) ?? 0;
-                double avgDocumentsPerNode = combinedNodes.Average(o => o.Documents?.Count) ?? 0;
-                int documentCount = combinedNodes.Sum(o => o.Documents?.Count ?? 0);
-                double selectivityScore = 100.0;
-
-                if (documentCount > 0)
-                {
-                    selectivityScore = 100.0 - avgDocumentsPerNode / documentCount * 100.0;
-                }
-
-                var builder = new StringBuilder();
-                builder.AppendLine("Index Analysis {");
-                builder.AppendLine($"    Schema            : {physicalSchema.Name}");
-                builder.AppendLine($"    Name              : {physicalIndex.Name}");
-                builder.AppendLine($"    Partitions        : {physicalIndex.Partitions}");
-                builder.AppendLine($"    Id                : {physicalIndex.Id}");
-                builder.AppendLine($"    Unique            : {physicalIndex.IsUnique}");
-                builder.AppendLine($"    Created           : {physicalIndex.Created}");
-                builder.AppendLine($"    Modified          : {physicalIndex.Modified}");
-                builder.AppendLine($"    Disk Path         : {physicalIndex.GetPartitionPagesPath(physicalSchema)}");
-                builder.AppendLine($"    Pages Size        : {diskSize / 1024.0:N2}k");
-                builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
-                builder.AppendLine($"    Compression Ratio : {decompressedSiskSize / diskSize * 100.0:N2}");
-                builder.AppendLine($"    Node Count        : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
-                builder.AppendLine($"    Root Node Count   : {rootNodes:N0}");
-                builder.AppendLine($"    Distinct Nodes    : {combinedNodes.Count():N0}");
-                builder.AppendLine($"    Max. Node Depth   : {physicalIndex.Attributes.Count:N0}");
-                builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
-                builder.AppendLine($"    Max. Node Density : {maxDocumentsPerNode:N0}" + (maxDocumentsPerNode == 1 ? " (unique)" : ""));
-                builder.AppendLine($"    Avg. Node Density : {avgDocumentsPerNode:N2}");
-                builder.AppendLine($"    Document Count    : {documentCount:N0}");
-                builder.AppendLine($"    Selectivity Score : {selectivityScore:N4}%");
-
-                builder.AppendLine("    Attributes {");
-                foreach (var attrib in physicalIndex.Attributes)
-                {
-                    builder.AppendLine($"        {attrib.Field}");
-                }
-                builder.AppendLine("    }");
-                builder.AppendLine("}");
-
-                return builder.ToString();
+                return sb.ToString();
             }
             catch (Exception ex)
             {
                 LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
             }
-            */
         }
 
         internal void DropIndex(Transaction transaction, string schemaName, string indexName)
@@ -183,9 +175,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndex = AcquireIndex(transaction, physicalSchema, indexName, LockOperation.Write);
                 if (physicalIndex != null)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Indexes, new RdbKey(physicalIndex.Id));
+                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id));
                     var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                    _core.IO.DropColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                    rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 }
             }
             catch (Exception ex)
@@ -278,7 +270,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndex = indexLookup.IndexSelection.PhysicalIndex;
                 var attributes = physicalIndex.Attributes;
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                var indexCF = _core.IO.GetColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                 HashSet<uint>? accumulatedResults = null;
 
@@ -477,7 +469,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var key = IndexKeyBuilder.Build(fieldValues);
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                var indexCF = _core.IO.GetColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                 var existingBytes = rdb.Get(key, indexCF);
                 var docIds = existingBytes != null
@@ -606,7 +598,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var docIdSet = new HashSet<uint>(documentIds);
                     var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                    var indexCF = _core.IO.GetColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                    var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                     // Re-read each document to get its field values so we can build the exact key to remove.
                     // Then do a targeted read-modify-write on only those keys.
@@ -658,7 +650,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 physicalIndex.Modified = DateTime.UtcNow;
 
-                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
+                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
             }
             catch (Exception ex)
             {
@@ -681,11 +673,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new KbInvalidArgumentException($"Index [{physicalIndex.Name}] on [{physicalSchema.Name}] has no attributes.");
 
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                var documentsCF = _core.IO.GetColumnFamily(rdb, KbColumnFamily.Documents);
+                var documentsCF = rdb.GetColumnFamily(KbColumnFamilyName.Documents);
 
                 // Step 1: Delete all existing entries for this index by dropping and recreating the column family.
-                _core.IO.DropColumnFamily(rdb, new RdbKey(physicalIndex.Id));
-                var indexCF = _core.IO.CreateColumnFamily(rdb, new RdbKey(physicalIndex.Id));
+                rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
+                var indexCF = rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
                 // Step 2: Accumulate all index entries in memory grouped by key.
                 // Dictionary key: index key bytes (hex string for dictionary equality).
@@ -727,7 +719,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var ptWrite = transaction.Instrumentation.CreateToken(PerformanceCounter.IOWrite);
                 using var batch = new RocksDbSharp.WriteBatch();
                 foreach (var (_, (keyBytes, docIds)) in accumulator)
-                    batch.Put(keyBytes, IndexKeyBuilder.PackDocumentIds(docIds), indexCF);
+                    batch.Put(keyBytes, IndexKeyBuilder.PackDocumentIds(docIds), indexCF.Handle);
                 rdb.Write(batch);
                 ptWrite?.StopAndAccumulate();
             }
@@ -759,7 +751,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Indexes, intendedOperation);
+                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, intendedOperation);
                 return indexes;
             }
             catch (Exception ex)

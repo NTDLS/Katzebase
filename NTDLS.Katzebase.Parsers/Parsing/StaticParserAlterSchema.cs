@@ -21,6 +21,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
             }
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
 
+            /*
             tokenizer.EatIfNext("with");
             {
                 var options = new ExpectedQueryAttributes
@@ -29,6 +30,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
                 };
                 query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
             }
+            */
 
             return query;
         }

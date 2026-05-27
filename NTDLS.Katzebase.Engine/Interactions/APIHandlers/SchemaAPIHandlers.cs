@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 }
 
                 var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                    transactionReference.Transaction, physicalSchema.SchemaFilePath(), KbColumnFamily.Schema, LockOperation.Read);
+                    transactionReference.Transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
 
                 foreach (var item in schemaCatalog)
                 {
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString(), param.PageSize);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString());
                     pathBuilder.Append(':');
                 }
 

@@ -39,8 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         DiskPath = _core.Settings.DataRootPath,
                         VirtualPath = string.Empty,
                         Name = string.Empty,
-                        IsTemporary = false,
-                        PageSize = _core.Settings.DefaultDocumentPageSize,
+                        IsTemporary = false
                     };
                     return _rootPhysicalSchema;
                 }
@@ -106,25 +105,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             _core.Query.SystemExecuteAndCommitNonQuery("InitializeTemporarySchema.kbs");
         }
 
-        internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
+        internal void Alter(Transaction transaction, string schemaName)
         {
             try
             {
-                if (pageSize == 0)
-                {
-                    pageSize = _core.Settings.DefaultDocumentPageSize;
-                }
-
                 var physicalSchema = Acquire(transaction, schemaName, LockOperation.Write);
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
                 var singleSchema = _core.IO.GetJson<PhysicalSchema>(transaction, parentPhysicalSchema.SchemaFilePath(),
-                    KbColumnFamily.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write)
+                    KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write)
                     ?? throw new KbObjectNotFoundException($"Schema not found: [{physicalSchema.Name}].");
 
-                singleSchema.PageSize = pageSize;
+                //singleSchema.SomeOtherAttribute = 0;
 
                 _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaFilePath(),
-                    KbColumnFamily.Schema, new RdbKey(physicalSchema.Name), singleSchema);
+                    KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), singleSchema);
 
                 if (physicalSchema.IsTemporary)
                 {
@@ -142,15 +136,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateSingleSchema(Transaction transaction, string schemaName, uint pageSize = 0)
+        internal void CreateSingleSchema(Transaction transaction, string schemaName)
         {
             try
             {
-                if (pageSize == 0)
-                {
-                    pageSize = _core.Settings.DefaultDocumentPageSize;
-                }
-
                 //Lock the given schema, but also go ahead and place the same lock the parent schema to avoid deadlocks.
                 var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write, LockOperation.Write);
                 if (physicalSchema.Exists)
@@ -160,18 +149,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
-                Directory.CreateDirectory(physicalSchema.DiskPath);
-                _core.IO.CreateDocumentsRdb(transaction, physicalSchema.DocumentsFilePath());
-                _core.IO.CreateSchemaRdb(transaction, physicalSchema.SchemaFilePath());
-
-                if (_core.IO.DoesKeyExist(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamily.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write, out _) == false)
+                if (!_core.IO.DoesKeyExist(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write))
                 {
-                    _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamily.Schema, new RdbKey(physicalSchema.Name),
+                    Directory.CreateDirectory(physicalSchema.DiskPath);
+                    _core.IO.CreateDocumentsRdb(transaction, physicalSchema.DocumentsFilePath());
+                    _core.IO.CreateSchemaRdb(transaction, physicalSchema.SchemaFilePath());
+
+                    _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name),
                           new PhysicalSchema
                           {
                               Id = Guid.NewGuid(),
-                              Name = physicalSchema.Name,
-                              PageSize = pageSize
+                              Name = physicalSchema.Name
                           });
 
                     if (physicalSchema.IsTemporary)
@@ -207,10 +195,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new Exception("Schemas cannot be dropped within a user transaction.");
                 }
 
-                _core.IO.DeleteKey(transaction, physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamily.Schema, new RdbKey(physicalSchema.Name));
+                _core.IO.DeleteKey(transaction, physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name));
+                _core.IO.CloseRdb(physicalSchema.DocumentsFilePath());
+                _core.IO.CloseRdb(physicalSchema.SchemaFilePath());
                 Directory.Delete(physicalSchema.DiskPath, true);
 
-                var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamily.Schema, physicalSchema.Name);
+                var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, physicalSchema.Name);
                 _core.Cache.Remove(cacheKey);
 
                 transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
@@ -229,10 +219,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var schemas = new List<PhysicalSchema>();
 
-                if (_core.IO.DoesKeyExist(transaction, physicalSchema.SchemaFilePath(), KbColumnFamily.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
+                if (_core.IO.DoesKeyExist(transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
                 {
                     var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                        transaction, physicalSchema.SchemaFilePath(), KbColumnFamily.Schema, LockOperation.Read);
+                        transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
 
                     foreach (var catalogItem in schemaCatalog)
                     {
@@ -314,13 +304,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaFile);
-                    if (_core.IO.DoesKeyExist(transaction, parentCatalogDiskPath, KbColumnFamily.Schema, new RdbKey(thisSchemaName), LockOperation.Stability) == false)
+                    if (_core.IO.DoesKeyExist(transaction, parentCatalogDiskPath, KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability) == false)
                     {
                         throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
                     var physicalSchema = _core.IO.GetJson<PhysicalSchema>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaFile), KbColumnFamily.Schema, new RdbKey(thisSchemaName), LockOperation.Stability, out var _);
+                        Path.Combine(parentSchemaDiskPath, SchemaFile), KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability, out var _);
 
                     if (physicalSchema != null)
                     {
@@ -389,7 +379,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var parentCatalogDiskPath = parentPhysicalSchema.SchemaFilePath();
 
-                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, parentCatalogDiskPath, KbColumnFamily.Schema, new RdbKey(thisSchema), parentIntendedOperation)
+                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, parentCatalogDiskPath, KbColumnFamilyName.Schema, new RdbKey(thisSchema), parentIntendedOperation)
                     ?.ToVirtual(parentPhysicalSchema);
                 if (virtualSchema != null)
                 {
@@ -434,7 +424,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
                 var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                    transaction, physicalSchema.SchemaFilePath(), KbColumnFamily.Schema, LockOperation.Read);
+                    transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();
 
@@ -457,64 +447,100 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryResult AnalyzePages(Transaction transaction, string schemaName, bool includePhysicalPages)
+        internal KbQueryResult AnalyzePages(Transaction transaction, string schemaName, bool includeIndexDetails)
         {
-            throw new NotImplementedException();
-            /*
-            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
-
-            var message = new StringBuilder();
-
-            var result = new KbQueryResult();
-            result.AddField("CatalogPageNumber");
-            result.AddField("CatalogDocumentCount");
-            result.AddField("PageFullness");
-            if (includePhysicalPages)
+            try
             {
-                result.AddField("PhysicalPageNumber");
-                result.AddField("PhysicalDocumentCount");
-                result.AddField("MinDocumentSize (KB)");
-                result.AddField("MaxDocumentSize (KB)");
-                result.AddField("AvgDocumentSize (KB)");
-            }
+                var physicalSchema = Acquire(transaction, schemaName, LockOperation.Read);
 
-            foreach (var page in pageCatalog.Catalog)
-            {
-                double pageFullness = ((double)page.DocumentCount / (double)physicalSchema.PageSize) * 100.0;
+                var result = new KbQueryResult();
+                result.AddField("Property");
+                result.AddField("Value");
 
-                message.AppendLine($"Page {page.PageNumber} ({pageFullness:n2}% full)");
+                // Scan the Documents column family for size statistics.
+                // Use the raw iterator value bytes (protobuf) so we never need to deserialize.
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var documentsCF = rdb.GetColumnFamily(KbColumnFamilyName.Documents);
 
-                transaction.EnsureActive();
+                long docCount = 0;
+                long totalBytes = 0;
+                int minBytes = int.MaxValue;
+                int maxBytes = 0;
 
-                var values = new List<string?> {
-                    $"{page.PageNumber:n0}",
-                    $"{page.DocumentCount:n0}",
-                    $"{pageFullness:n2}%" };
-
-                if (includePhysicalPages)
+                using (var iter = rdb.NewIterator(documentsCF))
                 {
-                    //This should not be compressed, right? I intended this to be a raw read.
-                    var physicalDocumentPage = _core.Documents.AcquireDocumentPage(
-                        transaction, physicalSchema, page.PageNumber, LockOperation.Read);
-
-                    values.Add($"{page.PageNumber:n0}");
-                    values.Add($"{physicalDocumentPage.Documents.Count:n0}");
-
-                    values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-
-                    //foreach (var document in physicalDocumentPage.Documents)
-                    //{
-                    //    var content = document.Value.Elements;
-                    //}
+                    for (iter.SeekToFirst(); iter.Valid(); iter.Next())
+                    {
+                        transaction.EnsureActive();
+                        int len = iter.Value().Length;
+                        docCount++;
+                        totalBytes += len;
+                        if (len < minBytes) minBytes = len;
+                        if (len > maxBytes) maxBytes = len;
+                    }
                 }
 
-                result.AddRow(values);
+                if (docCount == 0)
+                    minBytes = 0;
+
+                double avgBytes = docCount > 0 ? (double)totalBytes / docCount : 0.0;
+
+                var indexes = _core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+
+                result.AddRow(["Schema", physicalSchema.Name]);
+                result.AddRow(["Document Count", $"{docCount:N0}"]);
+                result.AddRow(["Total Data", $"{totalBytes / 1024.0:N2} KB"]);
+                result.AddRow(["Min Doc Size", $"{minBytes:N0} B"]);
+                result.AddRow(["Max Doc Size", $"{maxBytes:N0} B"]);
+                result.AddRow(["Avg Doc Size", $"{avgBytes:N2} B"]);
+                result.AddRow(["Index Count", $"{indexes.Count:N0}"]);
+
+                if (includeIndexDetails)
+                {
+                    foreach (var physicalIndex in indexes)
+                    {
+                        transaction.EnsureActive();
+
+                        var idxCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
+
+                        long distinctKeys = 0;
+                        long totalDocRefs = 0;
+                        int minDocs = int.MaxValue;
+                        int maxDocs = 0;
+
+                        using var idxIter = rdb.NewIterator(idxCF);
+                        for (idxIter.SeekToFirst(); idxIter.Valid(); idxIter.Next())
+                        {
+                            int docCount2 = idxIter.Value().Length / sizeof(uint);
+                            distinctKeys++;
+                            totalDocRefs += docCount2;
+                            if (docCount2 < minDocs) minDocs = docCount2;
+                            if (docCount2 > maxDocs) maxDocs = docCount2;
+                        }
+
+                        if (distinctKeys == 0)
+                            minDocs = 0;
+
+                        double avgDocs = distinctKeys > 0 ? (double)totalDocRefs / distinctKeys : 0.0;
+                        double selectivity = totalDocRefs > 0 ? (double)distinctKeys / totalDocRefs * 100.0 : 100.0;
+                        string attrs = string.Join(", ", physicalIndex.Attributes.Select(a => a.Field));
+
+                        result.AddRow([$"Index: {physicalIndex.Name}", $"[{attrs}]"]);
+                        result.AddRow([$"  Unique", $"{physicalIndex.IsUnique}"]);
+                        result.AddRow([$"  Distinct Keys", $"{distinctKeys:N0}"]);
+                        result.AddRow([$"  Total Doc Refs", $"{totalDocRefs:N0}"]);
+                        result.AddRow([$"  Min/Max/Avg Docs per Key", $"{minDocs:N0} / {maxDocs:N0} / {avgDocs:N2}"]);
+                        result.AddRow([$"  Selectivity", $"{selectivity:N2}%"]);
+                    }
+                }
+
+                return result;
             }
-            return result;
-            */
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
         }
     }
 }

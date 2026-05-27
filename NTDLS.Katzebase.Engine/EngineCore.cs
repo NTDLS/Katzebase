@@ -124,20 +124,6 @@ namespace NTDLS.Katzebase.Engine
             IsRunning = true;
 
             _cancellationToken = new();
-
-            /*
-            using var ephemeral = Sessions.CreateEphemeralSystemSession();
-            var physicalSchema = Schemas.Acquire(ephemeral.Transaction, "WordList:Word", LockOperation.Write);
-            var rdb = IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-            var cf = IO.GetColumnFamily(rdb, KbColumnFamily.Documents);
-
-            using var iterator = rdb.NewIterator(cf);
-            for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
-            {
-                var fff = RdbKey.ConvertToUint(iterator.Value());
-
-            }
-            */
         }
 
         public void Stop()

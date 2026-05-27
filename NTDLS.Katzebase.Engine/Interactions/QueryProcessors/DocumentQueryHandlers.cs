@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
                 {
-                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, _core.Settings.DefaultDocumentPageSize);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema);
                     physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write, LockOperation.Read);
                 }
 
@@ -217,6 +217,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 throw;
             }
         }
+
 
         /// <summary>
         /// Updates a documents in a schema based on where clause and join conditions.

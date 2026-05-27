@@ -18,15 +18,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private volatile bool _keepRunning = false;
         private readonly Thread _cacheMonitorThread;
 
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, byte[] key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, string key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, int key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, uint key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, long key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, ulong key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, Guid key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, RdbKey key) => new($"{rdbPath}:{columnFamily}:{key}");
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily) => new($"{rdbPath}:{columnFamily}");
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, byte[] key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, string key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, int key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, uint key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, long key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, ulong key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, Guid key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key) => new($"{rdbPath}:{columnFamily}:{key}");
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily) => new($"{rdbPath}:{columnFamily}");
 
         internal int PartitionCount { get; private set; }
 

@@ -30,7 +30,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     {
         private readonly Lock _identityLock = new();
 
-        private readonly HashSet<string> _recordedObjectKeys = new HashSet<string>();
+        private readonly HashSet<string> _recordedReadObjectKeys = new HashSet<string>();
+        private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
 
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
@@ -64,7 +65,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             set => Interlocked.Exchange(ref _referenceCount, value);
             get => Interlocked.Read(ref _referenceCount);
         }
-
 
         #region Critical objects (Any object in this region must be locked for access).
 
@@ -509,10 +509,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 enableInstrumentation = session.GetConnectionSetting(StateSetting.TraceWaitTimes, false);
 
                 //Create a transaction log column family for this transaction:
-                _core.IO.CreateColumnFamily(transactionManager.TransactionLogRdb, Id.ToString());
+                transactionManager.TransactionLogRdb.CreateColumnFamily(new RdbKey(Id));
 
                 //We also need to put an entry in the identity column family so we can use it to serialize the atoms of the new transaction.
-                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.Identity, new RdbKey(Id), BitConverter.GetBytes(1L));
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(1L));
             }
 
             Instrumentation = new InstrumentationTracker(enableInstrumentation);
@@ -522,17 +522,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             lock (_identityLock)
             {
-                var bytes = _core.IO.GetNotTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.Identity, new RdbKey(Id));
+                var bytes = _core.IO.GetNotTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id));
                 var number = bytes == null ? 0L : BitConverter.ToInt64(bytes);
                 number++;
-                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.Identity, new RdbKey(Id), BitConverter.GetBytes(number));
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(number));
                 return number;
             }
         }
 
         #region Action Recorders.
 
-        public void RecordKeyCreate(string rdbPath, KbColumnFamily columnFamily, RdbKey key, CacheKey cacheKey)
+        public void RecordKeyCreate(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey)
         {
             _core.EnsureNotNull();
 
@@ -542,19 +542,19 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                lock (_recordedObjectKeys)
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedObjectKeys.Contains(cacheKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
-                    _recordedObjectKeys.Add(cacheKey.Value);
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
                 }
 
                 var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey);
 
                 var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.TransactionAtoms, new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -564,7 +564,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyDelete(string rdbPath, KbColumnFamily columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
+        public void RecordKeyDelete(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -576,13 +576,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(cacheKey));
 
-                lock (_recordedObjectKeys)
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedObjectKeys.Contains(cacheKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
-                    _recordedObjectKeys.Add(cacheKey.Value);
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
                 }
 
                 var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey)
@@ -591,7 +591,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 };
 
                 var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.TransactionAtoms, new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -601,7 +601,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyRead(string rdbPath, KbColumnFamily columnFamily, RdbKey key, CacheKey cacheKey)
+        public void RecordKeyRead(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey)
         {
             _core.EnsureNotNull();
 
@@ -611,13 +611,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                lock (_recordedObjectKeys)
+                lock (_recordedReadObjectKeys)
                 {
-                    if (_recordedObjectKeys.Contains(cacheKey.Value))
+                    if (_recordedReadObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
-                    _recordedObjectKeys.Add(cacheKey.Value);
+                    _recordedReadObjectKeys.Add(cacheKey.Value);
                 }
 
                 FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(cacheKey, key.Bytes)));
@@ -631,7 +631,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyAlter(string rdbPath, KbColumnFamily columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
+        public void RecordKeyAlter(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -641,13 +641,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                lock (_recordedObjectKeys)
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedObjectKeys.Contains(cacheKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
-                    _recordedObjectKeys.Add(cacheKey.Value);
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
                 }
 
                 var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey)
@@ -656,7 +656,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 };
 
                 var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamily.TransactionAtoms, new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+
+
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -693,17 +695,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptRollback = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Rollback);
                     try
                     {
-                        var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
-                        var columnFamily = _core.IO.GetColumnFamily(rdb, new RdbKey(Id));
+                        var txRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                        var txCf = txRdb.GetColumnFamily(new RdbKey(Id));
 
-                        using var iterator = rdb.NewIterator(columnFamily);
+                        using var iterator = txRdb.NewIterator(txCf);
 
                         for (iterator.SeekToLast(); iterator.Valid(); iterator.Prev())
                         {
                             var record = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
                             if (record == null)
                             {
-                                LogManager.Warning($"Transction atom is null for {ProcessId}");
+                                LogManager.Warning($"Transaction atom is null for {ProcessId}");
                                 continue;
                             }
 
@@ -714,9 +716,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             {
                                 try
                                 {
-                                    var atomRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                    var atomColumnFamily = _core.IO.GetColumnFamily(atomRdb, record.ColumnFamily);
-                                    atomRdb.Remove(record.RdbKey, atomColumnFamily);
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Remove(record.RdbKey, originalCf);
                                 }
                                 catch (Exception ex)
                                 {
@@ -725,9 +727,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             }
                             else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
                             {
-                                var atomRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                var atomColumnFamily = _core.IO.GetColumnFamily(atomRdb, record.ColumnFamily);
-                                atomRdb.Put(record.RdbKey, record.OriginalData, atomColumnFamily);
+                                try
+                                {
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                }
                             }
                         }
 
@@ -744,26 +753,20 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         {
                             CleanupTransaction();
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            //Discard.
+                            LogManager.Warning($"Failed to cleanup transaction log for process {ProcessId}: {ex.Message}");
                         }
 
                         _transactionManager.RemoveByProcessId(ProcessId);
                         DeleteTemporarySchemas();
-
-                    }
-                    catch
-                    {
-                        throw;
                     }
                     finally
                     {
                         ReleaseLocks();
+                        ptRollback?.StopAndAccumulate();
+                        Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                     }
-
-                    ptRollback?.StopAndAccumulate();
-                    Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -865,7 +868,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             try
             {
                 var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
-                rdb.DropColumnFamily(Id.ToString());
+                //Drop the transaction log column family for this transaction.
+                rdb.DropColumnFamily(new RdbKey(Id));
+                // Remove the identity counter for this transaction.
+                rdb.Remove(new RdbKey(Id).Bytes, rdb.GetColumnFamily(KbColumnFamilyName.Identity));
             }
             catch (Exception ex)
             {

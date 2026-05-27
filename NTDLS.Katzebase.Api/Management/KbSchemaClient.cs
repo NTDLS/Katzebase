@@ -18,21 +18,21 @@ namespace NTDLS.Katzebase.Api.Management
         /// Creates a single schema.
         /// </summary>
         /// <param name="schema"></param>
-        public void Create(string schema, uint pageSize = 0, TimeSpan? queryTimeout = null)
+        public void Create(string schema, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQuerySchemaCreate(_client.ServerConnectionId, schema, pageSize), (TimeSpan)queryTimeout);
+                new KbQuerySchemaCreate(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
         }
 
         /// <summary>
         /// Creates a full schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public void CreateRecursive(string schema, uint pageSize = 0, TimeSpan? queryTimeout = null)
+        public void CreateRecursive(string schema, TimeSpan? queryTimeout = null)
         {
             string fullSchema = string.Empty;
 
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Api.Management
                 fullSchema += part;
                 if (Exists(fullSchema, queryTimeout) == false)
                 {
-                    Create(fullSchema, pageSize, queryTimeout);
+                    Create(fullSchema, queryTimeout);
                 }
                 fullSchema += ':';
             }

@@ -111,8 +111,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 #endregion
 
-                var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
-                _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
+                //var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                _core.Schemas.Alter(transactionReference.Transaction, schemaName);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
@@ -137,8 +137,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 #endregion
 
-                var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
-                _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
+                //var pageSize = query.GetAttribute(PreparedQuery.Attribute.PageSize, _core.Settings.DefaultDocumentPageSize);
+                _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }

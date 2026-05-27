@@ -38,12 +38,6 @@
         public int CacheSeconds { get; set; } = 3600;
 
         /// <summary>
-        /// The number of documents to be stored per file in the schema. When documents are needed from the disk, the entire page will be read.
-        /// The right number strikes the balance between disk trashing and optimal disk reads. This is also the minimum locking granularity.
-        /// </summary>
-        public uint DefaultDocumentPageSize { get; set; } = 100;
-
-        /// <summary>
         /// Number of seconds between operations that check for low server activity before performing LOH compaction. (0 = disabled)
         /// </summary>
         public int LargeObjectHeapCompactionInterval { get; set; } = 60;

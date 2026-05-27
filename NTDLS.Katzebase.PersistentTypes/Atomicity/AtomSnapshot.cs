@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
         public long Sequence { get; set; } = 0;
 
         public string? RdbPath { get; set; }
-        public KbColumnFamily ColumnFamily { get; set; }
+        public KbColumnFamilyName ColumnFamily { get; set; }
         public byte[]? RdbKey { get; set; }
         public byte[]? OriginalData { get; set; }
     }

@@ -23,8 +23,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
                 // TryGetValue rather than the indexer — an absent key means the field was
                 // not populated for this row (e.g. a missing aggregate), which we treat as
                 // non-numeric and fall through to string comparison.
-                x?.OrderByNumericValues.TryGetValue(fieldAlias, out  xNum);
-                y?.OrderByNumericValues.TryGetValue(fieldAlias, out  yNum);
+                x?.OrderByNumericValues.TryGetValue(fieldAlias, out xNum);
+                y?.OrderByNumericValues.TryGetValue(fieldAlias, out yNum);
 
                 // Use numeric comparison when both sides parsed successfully; this
                 // prevents "9000000" from sorting after "28000000" as strings would.

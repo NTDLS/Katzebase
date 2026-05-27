@@ -32,9 +32,7 @@ namespace NTDLS.Katzebase.Parsers
             Schema,
             ObjectName,
             Parameters,
-            Batches,
-            Partitions,
-            PageSize,
+            Batches
         }
 
         /// <summary>

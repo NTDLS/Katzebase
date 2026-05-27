@@ -107,8 +107,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Rollback Transaction if its still open:
                 if (_isCommittedOrRolledBack == false)
                 {
-                    _isCommittedOrRolledBack = true;
-                    Transaction.Rollback();
+                    Rollback();
                 }
             }
 

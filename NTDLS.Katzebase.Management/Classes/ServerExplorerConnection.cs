@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Management.Classes
             LazySchemaCache.OnCacheItemRefreshed += SchemaCache_OnCacheItemRefreshed;
 
             ServerNode = ServerExplorerNode.CreateServerNode(this);
-            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root :", "", "", Guid.Empty, 100));
+            var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root :", "", "", Guid.Empty));
             ServerNode.Nodes.Add(rootSchemaNode);
             ServerExplorerManager.ServerExplorerTree.Nodes.Add(ServerNode);
 
