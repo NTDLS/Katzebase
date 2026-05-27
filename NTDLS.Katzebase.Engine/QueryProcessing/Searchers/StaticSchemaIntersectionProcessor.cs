@@ -577,6 +577,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             var value = MaterializeRowField(transaction, query, threadRow, flattenedSchemaElements, field, FieldCollapseType.ScalerOrderBy);
                             materializedRow.OrderByValues.Add(field.Alias, value);
+                            // Parse numeric value once here so the comparer avoids TryParse on every O(n log n) comparison.
+                            materializedRow.OrderByNumericValues.Add(field.Alias,
+                                double.TryParse(value, out var numeric) ? numeric : null);
                         }
 
                         #endregion
@@ -660,6 +663,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             var value = MaterializeRowField(transaction, query, row, flattenedSchemaElements, field, FieldCollapseType.AggregateOrderBy);
                             groupRow.OrderByValues.Add(field.Alias, value);
+                            // Parse numeric value once here so the comparer avoids TryParse on every O(n log n) comparison.
+                            groupRow.OrderByNumericValues.Add(field.Alias,
+                                double.TryParse(value, out var numeric) ? numeric : null);
                         }
 
                         #endregion
@@ -770,6 +776,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     var materializedRow = new MaterializedRow(groupRow.Value.Values, groupRow.Value.OrderByValues);
 
+                    // Copy the pre-parsed numeric ORDER BY values from the group row so the
+                    // sort comparer has them available without re-parsing during the sort.
+                    foreach (var kvp in groupRow.Value.OrderByNumericValues)
+                        materializedRow.OrderByNumericValues[kvp.Key] = kvp.Value;
+
                     //Execute aggregate functions for SELECT fields:
                     foreach (var selectAggregateFunctionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
                     {
@@ -783,8 +794,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var aggregateExpressionResult = orderByAggregateFunctionField.CollapseAggregateQueryField(transaction, query, groupRow.Value.SortAggregateFunctionParameters);
 
-                        //Save the aggregation result in the ORDER BY collection. 
+                        //Save the aggregation result in the ORDER BY collection.
                         materializedRow.OrderByValues[orderByAggregateFunctionField.Alias] = aggregateExpressionResult;
+                        // Aggregate results overwrite the group-row value, so re-parse the numeric
+                        // representation here to keep OrderByNumericValues in sync.
+                        materializedRow.OrderByNumericValues[orderByAggregateFunctionField.Alias] =
+                            double.TryParse(aggregateExpressionResult, out var n) ? n : null;
                     }
 
                     materializedRowCollection.Rows.Add(materializedRow);
