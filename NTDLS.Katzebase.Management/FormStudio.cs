@@ -754,7 +754,7 @@ namespace NTDLS.Katzebase.Management
                             var text = new StringBuilder("REBUILD ");
                             text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
                             text.Append($" {result.Index.Name} ON {schema.Path}");
-                            text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+                            //text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
@@ -781,7 +781,7 @@ namespace NTDLS.Katzebase.Management
                             }
                             text.Length -= 3;//Remove trialing ",\r\n"
                             text.Append($"\r\n) ON {schema.Path}");
-                            text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+                            //text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;

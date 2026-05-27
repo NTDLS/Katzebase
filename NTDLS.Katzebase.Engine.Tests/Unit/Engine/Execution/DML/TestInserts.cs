@@ -32,9 +32,8 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\JsonNotation\InsertCreatingDuplicates.kbs");
 
             //Ensure the unique key creation causes a failure.
-            var exception = Assert.Throws<AggregateException>(()
+            var exception = Assert.Throws<KbDuplicateKeyViolationException>(()
                 => QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\JsonNotation\CreateUniqueKey.kbs"));
-            Assert.Contains(exception.InnerExceptions, ex => ex is KbDuplicateKeyViolationException);
 
             //Test select before and after creation of an index.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\JsonNotation\SelectBeforeAndAfterIndex.kbs");
@@ -70,9 +69,8 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\ValuesList\InsertCreatingDuplicates.kbs");
 
             //Ensure the unique key creation causes a failure.
-            var exception = Assert.Throws<AggregateException>(()
+            var exception = Assert.Throws<KbDuplicateKeyViolationException>(()
                 => QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\ValuesList\CreateUniqueKey.kbs"));
-            Assert.Contains(exception.InnerExceptions, ex => ex is KbDuplicateKeyViolationException);
 
             //Test select before and after creation of an index.
             QueryExpectation.ValidateScriptResults(_engine, @"Features\Inserts\ValuesList\SelectBeforeAndAfterIndex.kbs");

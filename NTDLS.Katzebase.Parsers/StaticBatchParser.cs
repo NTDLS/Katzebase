@@ -1,8 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Tokens;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace NTDLS.Katzebase.Parsers
 {

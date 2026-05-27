@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
+using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
+using RocksDbSharp;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -25,6 +26,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactionAPIHandlers APIHandlers { get; private set; }
+
+        public Rdb TransactionLogRdb { get; private set; }
 
         internal List<TransactionSnapshot> Snapshot()
         {
@@ -49,10 +52,45 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 QueryHandlers = new TransactionQueryHandlers(core);
                 APIHandlers = new TransactionAPIHandlers(core);
+
+                try
+                {
+                    Directory.CreateDirectory(_core.Settings.TransactionDataPath);
+                    TransactionLogRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                }
+                catch
+                {
+                    //If we fail to open the database, then we attempt to create it.
+                    var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
+                    var columnFamilies = new ColumnFamilies
+                        {
+                            //The Identity column contains one recors per transaction with the key being the transaction ID and the value being the incrementing value.
+                            { KbColumnFamilyName.Identity.ToString(), new ColumnFamilyOptions() }
+                        };
+
+                    var creation = RocksDb.Open(options, _core.Settings.TransactionDataPath, columnFamilies);
+                    creation.Dispose();
+
+                    TransactionLogRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                }
+
             }
             catch (Exception ex)
             {
                 LogManager.Error("Failed to instantiate transaction manager.", ex);
+                throw;
+            }
+        }
+
+        public void Stop()
+        {
+            try
+            {
+                TransactionLogRdb.Dispose();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error("Failed to stop transaction manager.", ex);
                 throw;
             }
         }
@@ -122,41 +160,60 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                Directory.CreateDirectory(_core.Settings.TransactionDataPath);
-
-                var transactionFiles = Directory.EnumerateFiles(
-                    _core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
-
-                if (transactionFiles.Count != 0)
+                var transationIDs = new HashSet<Guid>();
+                var options = new DbOptions();
+                var columnFamilies = new ColumnFamilies();
+                foreach (var cf in RocksDb.ListColumnFamilies(options, _core.Settings.TransactionDataPath))
                 {
-                    LogManager.Warning($"Found {transactionFiles.Count} open transactions.");
+                    if (Guid.TryParse(cf, out var transationId))
+                    {
+                        transationIDs.Add(transationId);
+                    }
                 }
 
-                foreach (string transactionFile in transactionFiles)
+                if (transationIDs.Count == 0)
                 {
-                    var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
-                    ulong processId = ulong.Parse(processIdString.EnsureNotNull());
+                    return;
+                }
 
-                    var transaction = new Transaction(_core, this, processId, true);
+                LogManager.Warning($"Rolling back {transationIDs.Count} open transactions.");
 
-                    var atoms = File.ReadLines(transactionFile).ToList();
-                    foreach (var atom in atoms)
+                var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+
+                foreach (var transationId in transationIDs)
+                {
+                    var transaction = new Transaction(_core, this, 0, true);
+
+                    long? lastSequence = null;
+
+                    //Get the last sequence jusy for display purposes.
+                    var columnFamily = rdb.GetColumnFamily(new RdbKey(transationId));
+                    using var iterator = rdb.NewIterator(columnFamily);
+                    iterator.SeekToLast();
+                    if (iterator.Valid())
                     {
-                        var ra = JsonConvert.DeserializeObject<Atom>(atom).EnsureNotNull();
-                        transaction.Atoms.Write((obj) => obj.Add(ra));
+                        var lastAtom = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
+                        lastSequence = lastAtom?.Sequence;
                     }
 
-                    LogManager.Warning($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.");
+                    iterator.Dispose();
 
-                    try
+                    if (lastSequence != null)
                     {
-                        transaction.Rollback();
-                    }
-                    catch (Exception ex)
-                    {
-                        LogManager.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
+
+                        LogManager.Warning($"Rolling back transaction {transaction} with {lastSequence:n0} actions.");
+
+                        try
+                        {
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogManager.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
+                        }
                     }
                 }
+
             }
             catch (Exception ex)
             {

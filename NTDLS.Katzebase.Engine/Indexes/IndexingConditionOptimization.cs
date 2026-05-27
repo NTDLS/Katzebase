@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
         private static bool WalkConditionTree(IndexingConditionOptimization optimization, PreparedQuery query,
-            Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix)
+            Transaction transaction, List<PhysicalIndex> indexCatalog, string workingSchemaPrefix)
         {
             //We only flatten the condition groups because its easer to work with them this way,
             //    these are references to the optimizers copy of the nested groups, so changes
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
                 //Loop through all indexes, all their attributes and all conditions in this sub-condition
                 //  for the given schema. Keep track of which indexes match each condition field.
-                foreach (var physicalIndex in indexCatalog.Collection)
+                foreach (var physicalIndex in indexCatalog)
                 {
                     //Console.WriteLine($"Considering index: {physicalIndex.Name}");
 

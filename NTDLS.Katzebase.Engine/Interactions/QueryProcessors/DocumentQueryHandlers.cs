@@ -9,7 +9,6 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers;
-using NTDLS.Katzebase.PersistentTypes.Document;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -84,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
                 {
-                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, _core.Settings.DefaultDocumentPageSize);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema);
                     physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write, LockOperation.Read);
                 }
 
@@ -219,6 +218,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+
         /// <summary>
         /// Updates a documents in a schema based on where clause and join conditions.
         /// </summary>
@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
                     _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
 
-                var updatedDocuments = new Dictionary<DocumentPointer, KbInsensitiveDictionary<string?>>();
+                var updatedDocuments = new Dictionary<uint, KbInsensitiveDictionary<string?>>();
 
                 foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
                 {
@@ -431,7 +431,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 var schemaIntersectionRowDocumentIdentifierCollection = StaticSearcherProcessor.FindDocumentPointersByQuery(
                     _core, transactionReference.Transaction, query, gatherDocumentPointersForSchemaAliases);
 
-                var documentsToDelete = new HashSet<DocumentPointer>();
+                var documentsToDelete = new HashSet<uint>();
 
                 foreach (var schemaIntersectionRowDocumentIdentifier in schemaIntersectionRowDocumentIdentifierCollection)
                 {

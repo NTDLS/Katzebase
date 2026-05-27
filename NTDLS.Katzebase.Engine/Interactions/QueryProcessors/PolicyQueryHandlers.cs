@@ -60,6 +60,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (roleId == null)
                 {
+                    transactionReference.Rollback();
                     throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
                 }
 
@@ -99,8 +100,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                         Name = roleName
                     });
 
+                //var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, "Master:Role", LockOperation.Stability);
+                //var allRoles = _core.IO.GetPBufList<PhysicalDocument>(transactionReference.Transaction, physicalSchema.DocumentsFilePath(), KbColumnFamily.Documents, LockOperation.Stability);
+
                 if (roleId == null)
                 {
+                    transactionReference.Rollback();
                     throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
                 }
 
@@ -141,6 +146,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (roleId == null)
                 {
+                    transactionReference.Rollback();
                     throw new KbObjectNotFoundException($"Role not found: [{roleName}].");
                 }
 

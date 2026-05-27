@@ -143,6 +143,9 @@ namespace NTDLS.Katzebase.Engine
 
             LogManager.Information("Stopping health manager.");
             Health.Stop();
+
+            LogManager.Information("Stopping transaction manager.");
+            Transactions.Stop();
         }
     }
 }

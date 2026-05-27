@@ -43,7 +43,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResult results)
             => CommitAndApplyMetricsThenReturnResults(results.RowCount);
 
-
         internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResultCollection results)
             => CommitAndApplyMetricsThenReturnResults(results.Collection.Sum(o => o.RowCount));
 
@@ -108,8 +107,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Rollback Transaction if its still open:
                 if (_isCommittedOrRolledBack == false)
                 {
-                    _isCommittedOrRolledBack = true;
-                    Transaction.Rollback();
+                    Rollback();
                 }
             }
 

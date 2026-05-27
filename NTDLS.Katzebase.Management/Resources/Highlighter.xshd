@@ -111,7 +111,6 @@
 		<Word>DateTime</Word>
 		<Word>DateTimeUTC</Word>
 		<Word>DocumentID</Word>
-		<Word>DocumentPage</Word>
 		<Word>DocumentUID</Word>
 		<Word>FormatDateTime</Word>
 		<Word>FormatNumeric</Word>
@@ -178,7 +177,6 @@
 		<Word>datetime</Word>
 		<Word>datetimeutc</Word>
 		<Word>documentid</Word>
-		<Word>documentpage</Word>
 		<Word>documentuid</Word>
 		<Word>floor</Word>
 		<Word>formatdatetime</Word>
@@ -280,7 +278,6 @@
       <Word>on</Word>
       <Word>or</Word>
       <Word>order</Word>
-      <Word>pagesize</Word>
       <Word>partitions</Word>
       <Word>procedure</Word>
       <Word>read</Word>
@@ -312,8 +309,6 @@
       <Word>CacheScavengeInterval</Word>
       <Word>CacheSeconds</Word>
       <Word>DataRootPath</Word>
-      <Word>DefaultDocumentPageSize</Word>
-      <Word>DefaultIndexPartitions</Word>
       <Word>DeferredIOEnabled</Word>
       <Word>FlushLog</Word>
       <Word>HealthMonitoringChekpointSeconds</Word>

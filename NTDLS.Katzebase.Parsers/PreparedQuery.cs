@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers
@@ -33,9 +32,7 @@ namespace NTDLS.Katzebase.Parsers
             Schema,
             ObjectName,
             Parameters,
-            Batches,
-            Partitions,
-            PageSize,
+            Batches
         }
 
         /// <summary>

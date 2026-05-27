@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 var results = new List<CachedSchema>();
                 results.AddRange(_schemaCache);
                 //Mock in a root schema.
-                results.Add(new CachedSchema(new(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty, 0)));
+                results.Add(new CachedSchema(new(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty)));
 
                 cacheHash = 0;
 
@@ -195,7 +195,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             {
                 if (_schemaWorkQueue.Count == 0)
                 {
-                    _schemaWorkQueue.Add(new KbSchema(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty, 0));
+                    _schemaWorkQueue.Add(new KbSchema(EngineConstants.RootSchemaGUID, "", "", "", Guid.Empty));
                 }
             }
 

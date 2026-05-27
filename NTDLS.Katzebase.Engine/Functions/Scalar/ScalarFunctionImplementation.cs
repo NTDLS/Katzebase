@@ -26,7 +26,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "datetime" => ScalarDateTime.Execute(function),
                 "datetimeutc" => ScalarDateTimeUTC.Execute(function),
                 "documentid" => ScalarDocumentID.Execute(function, rowValues),
-                "documentpage" => ScalarDocumentPage.Execute(function, rowValues),
                 "documentuid" => ScalarDocumentUID.Execute(function, rowValues),
                 "floor" => ScalarFloor.Execute(function),
                 "formatdatetime" => ScalarFormatDateTime.Execute(function),

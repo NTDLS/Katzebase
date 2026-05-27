@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public ObjectLockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; set; } = Guid.NewGuid();
-        public HashSet<string> FilesReadForCache { get; set; } = new();
+        public HashSet<ReadForCacheItem> FilesReadForCache { get; set; } = new();
         public List<AtomSnapshot> Atoms { get; set; } = new();
         public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }

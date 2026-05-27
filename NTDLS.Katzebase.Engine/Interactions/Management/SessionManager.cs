@@ -157,17 +157,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
 
-                //We can TryRead here (instead of TryWrite) because we are not modifying the collection, just a value within it.
-                _collection.TryRead(100, (obj) =>
-                    {
-                        var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
-                        if (session != null)
-                        {
-                            //If we are unable to get here, then the heartbeat thread will clean
-                            //  up the connection once the connection idle timeout is reached.
-                            session.IsExpired = true;
-                        }
-                    });
+                //We can Peek here (instead of Write) because we are not modifying the collection, just a value within it.
+                _collection.Peek(o => {
+                    var session = o.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
+                    //If the session is found, we mark it as expired so that it will be removed as early as possible by the HeartbeatManager.
+                    session?.IsExpired = true;
+                });
 
                 return false;
             }

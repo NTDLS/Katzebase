@@ -25,6 +25,7 @@ WHERE
 ORDER BY
 	10
 
+/*
 --4ms
 select
 	p.body
@@ -36,6 +37,7 @@ where
 	U.DisplayName = 'ntdls'
 order by
 	P.CreationDate
+*/
 
 --48ms
 SELECT

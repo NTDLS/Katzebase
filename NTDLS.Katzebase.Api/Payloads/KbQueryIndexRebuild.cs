@@ -8,14 +8,12 @@ namespace NTDLS.Katzebase.Api.Payloads
         public Guid ConnectionId { get; set; }
         public string Schema { get; set; }
         public string IndexName { get; set; }
-        public uint NewPartitionCount { get; set; }
 
-        public KbQueryIndexRebuild(Guid connectionId, string schema, string indexName, uint newPartitionCount)
+        public KbQueryIndexRebuild(Guid connectionId, string schema, string indexName)
         {
             ConnectionId = connectionId;
             Schema = schema;
             IndexName = indexName;
-            NewPartitionCount = newPartitionCount;
         }
     }
 

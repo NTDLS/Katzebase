@@ -12,6 +12,11 @@
         public int CacheMaxMemoryMegabytes { get; set; } = 4096;
 
         /// <summary>
+        /// When we create the transaction log database, we split it into multiple shards/buckets/partitions.
+        /// </summary>
+        public int TransactionLogPartitions { get; set; } = 32;
+
+        /// <summary>
         /// The number of memory cache partitions to create. (0 = CPU Count)
         /// </summary>
         public int CachePartitions { get; set; } = 0;
@@ -33,20 +38,30 @@
         public int CacheSeconds { get; set; } = 3600;
 
         /// <summary>
-        /// The number of documents to be stored per file in the schema. When documents are needed from the disk, the entire page will be read.
-        /// The right number strikes the balance between disk trashing and optimal disk reads. This is also the minimum locking granularity.
-        /// </summary>
-        public uint DefaultDocumentPageSize { get; set; } = 100;
-
-        /// <summary>
         /// Number of seconds between operations that check for low server activity before performing LOH compaction. (0 = disabled)
         /// </summary>
         public int LargeObjectHeapCompactionInterval { get; set; } = 60;
 
         /// <summary>
-        /// The number of index partitions to create when the partition count is unspecified at index creation.
+        /// The maximum number of threads to allocate to the lookup thread pool.
         /// </summary>
-        public uint DefaultIndexPartitions { get; set; } = 100;
+        public int LookupThreadPoolMaximumSize { get; set; } = 0;
+
+        /// <summary>
+        /// The initial number of threads to allocate to the lookup thread pool.
+        /// </summary>
+        public int LookupThreadPoolInitialSize { get; set; } = 0;
+
+        /// <summary>
+        /// The maximum number of items to queue in the lookup thread pool.
+        /// </summary>
+        public int LookupThreadPoolQueueDepth { get; set; } = 10000;
+
+        /// <summary>
+        /// The maximum number of items to queue in each child thread pool per operation.
+        /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
+        /// </summary>
+        public int LookupChildThreadPoolQueueDepth { get; set; } = 5000;
 
         /// <summary>
         /// The maximum number of threads to allocate to the indexing thread pool.

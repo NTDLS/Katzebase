@@ -8,6 +8,5 @@
         public string? TotalSizeBytes { get; set; }
         public int TotalRows { get; set; }
         public int AvgRowSizeBytes { get; set; }
-        public int TargetPageSize { get; set; }
     }
 }

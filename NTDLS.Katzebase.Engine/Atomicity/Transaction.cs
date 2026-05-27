@@ -14,6 +14,9 @@ using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
+using RocksDbSharp;
+using System.Collections.Concurrent;
+using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -22,10 +25,19 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// <summary>
     /// A collection of reversable work and deferred IO.
     /// </summary>
-    internal class Transaction : ITransaction, IDisposable
+    internal class Transaction
+        : ITransaction, IDisposable
     {
+        private readonly Lock _identityLock = new();
+
+        private readonly HashSet<string> _recordedReadObjectKeys = new HashSet<string>();
+        private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
+
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
+        /// <summary>
+        /// When we create the transaction log database, we split it into buvkets
+        /// </summary>
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public SessionState Session => _core.Sessions.ByProcessId(ProcessId);
@@ -40,7 +52,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public bool IsUserCreated { get; set; }
 
-        private StreamWriter? _transactionLogHandle;
         private readonly EngineCore _core;
         private readonly TransactionManager _transactionManager;
         private readonly PessimisticCriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
@@ -65,12 +76,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
         /// </summary>
-        public OptimisticCriticalResource<HashSet<string>> FilesReadForCache { get; set; } = new();
-
-        /// <summary>
-        /// All abortable operations that the transaction has performed.
-        /// </summary>
-        public OptimisticCriticalResource<List<Atom>> Atoms { get; private set; } = new();
+        public OptimisticCriticalResource<HashSet<ReadForCacheItem>> FilesReadForCache { get; set; } = new();
 
         /// <summary>
         /// We keep a hash-set of locks granted to this transaction by the LockIntention.Key so that we
@@ -96,6 +102,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public OptimisticCriticalResource<HashSet<string>> TemporarySchemas { get; private set; } = new();
 
         #endregion
+
+        private readonly ConcurrentDictionary<string, WriteBatch> _rdbBatches =
+            new(StringComparer.InvariantCultureIgnoreCase);
+
+        internal WriteBatch AcquireRdbWriteBatch(string filePath)
+        {
+            return _rdbBatches.GetOrAdd(filePath, path =>
+            {
+                return new WriteBatch();
+            });
+        }
 
         #region Internal-system query utilities.
 
@@ -222,9 +239,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             BlockedByKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
             HeldLockKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
             TemporarySchemas.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
-            FilesReadForCache.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
+            FilesReadForCache.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.FilesReadForCache = new HashSet<ReadForCacheItem>(obj); });
             DeferredIOs.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
-            Atoms.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
 
             return snapshot;
         }
@@ -484,10 +500,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
 
-            DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-            {
-                obj.SetCore(core);
-            });
+            DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.SetCore(core));
 
             if (isRecovery == false)
             {
@@ -495,32 +508,31 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 enableInstrumentation = session.GetConnectionSetting(StateSetting.TraceWaitTimes, false);
 
-                Directory.CreateDirectory(TransactionPath);
+                //Create a transaction log column family for this transaction:
+                transactionManager.TransactionLogRdb.CreateColumnFamily(new RdbKey(Id));
 
-                _transactionLogHandle = new StreamWriter(TransactionLogFilePath)
-                {
-                    AutoFlush = true
-                }.EnsureNotNull();
+                //We also need to put an entry in the identity column family so we can use it to serialize the atoms of the new transaction.
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(1L));
             }
 
             Instrumentation = new InstrumentationTracker(enableInstrumentation);
         }
 
+        public long GetNextAtomSequence()
+        {
+            lock (_identityLock)
+            {
+                var bytes = _core.IO.GetNotTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id));
+                var number = bytes == null ? 0L : BitConverter.ToInt64(bytes);
+                number++;
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(number));
+                return number;
+            }
+        }
+
         #region Action Recorders.
 
-        private bool IsFileAlreadyRecorded(string filePath)
-        {
-            bool result = false;
-
-            Atoms.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) =>
-            {
-                result = obj.Exists(o => o.Key.Is(filePath));
-            });
-
-            return result;
-        }
-
-        public void RecordFileCreate(string filePath)
+        public void RecordKeyCreate(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey)
         {
             _core.EnsureNotNull();
 
@@ -530,33 +542,29 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
+                }
 
-                    var atom = new Atom(ActionType.FileCreate, filePath)
-                    {
-                        Sequence = obj.Count
-                    };
+                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey);
 
-                    obj.Add(atom);
-
-                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
-                });
-
+                var atomJson = JsonConvert.SerializeObject(atom);
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to record file creation for process {ProcessId}.", ex);
+                LogManager.Error($"Failed to record key creation for process {ProcessId}.", ex);
                 throw;
             }
         }
 
-        public void RecordDirectoryCreate(string path)
+        public void RecordKeyDelete(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -565,32 +573,35 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 EnsureActive();
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+
+                DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(cacheKey));
+
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (IsFileAlreadyRecorded(path))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
+                }
 
-                    var atom = new Atom(ActionType.DirectoryCreate, path)
-                    {
-                        Sequence = obj.Count
-                    };
+                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey)
+                {
+                    OriginalData = originalData
+                };
 
-                    obj.Add(atom);
-
-                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
-                });
+                var atomJson = JsonConvert.SerializeObject(atom);
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to record file creation for process {ProcessId}.", ex);
+                LogManager.Error($"Failed to record key deletion for process {ProcessId}.", ex);
                 throw;
             }
         }
 
-        public void RecordPathDelete(string diskPath)
+        public void RecordKeyRead(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey)
         {
             _core.EnsureNotNull();
 
@@ -600,39 +611,27 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.RemoveItemsWithPrefix(diskPath));
-
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                lock (_recordedReadObjectKeys)
                 {
-                    if (IsFileAlreadyRecorded(diskPath))
+                    if (_recordedReadObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
+                    _recordedReadObjectKeys.Add(cacheKey.Value);
+                }
 
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
-                    Directory.CreateDirectory(backupPath);
-                    Shared.Helpers.CopyDirectory(diskPath, backupPath);
+                FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(cacheKey, key.Bytes)));
 
-                    var atom = new Atom(ActionType.DirectoryDelete, diskPath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = obj.Count
-                    };
-
-                    obj.Add(atom);
-
-                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
-                });
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to record file deletion for process {ProcessId}.", ex);
+                LogManager.Error($"Failed to record key read for process {ProcessId}.", ex);
                 throw;
             }
         }
 
-        public void RecordFileDelete(string filePath)
+        public void RecordKeyAlter(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey cacheKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -642,93 +641,29 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(filePath));
-
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                lock (_recordedWriteObjectKeys)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
+                    if (_recordedWriteObjectKeys.Contains(cacheKey.Value))
                     {
                         return;
                     }
+                    _recordedWriteObjectKeys.Add(cacheKey.Value);
+                }
 
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                    File.Copy(filePath, backupPath);
-
-                    var atom = new Atom(ActionType.FileDelete, filePath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = obj.Count
-                    };
-
-                    obj.Add(atom);
-
-                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
-                });
-                ptRecording?.StopAndAccumulate();
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to record file deletion for process {ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        public void RecordFileRead(string filePath)
-        {
-            _core.EnsureNotNull();
-
-            try
-            {
-                EnsureActive();
-
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
-                FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(filePath));
-
-                ptRecording?.StopAndAccumulate();
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"Failed to record file read for process {ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        public void RecordFileAlter(string filePath)
-        {
-            _core.EnsureNotNull();
-
-            try
-            {
-                EnsureActive();
-
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, cacheKey)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
-                    {
-                        return;
-                    }
+                    OriginalData = originalData
+                };
 
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                    File.Copy(filePath, backupPath);
+                var atomJson = JsonConvert.SerializeObject(atom);
 
-                    var atom = new Atom(ActionType.FileAlter, filePath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = obj.Count
-                    };
 
-                    obj.Add(atom);
-
-                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
-                });
+                _core.IO.PutNonTrackedRaw(_core.Settings.TransactionDataPath, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to record file alteration for process {ProcessId}.", ex);
+                LogManager.Error($"Failed to record key alteration for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -760,83 +695,78 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptRollback = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Rollback);
                     try
                     {
-                        Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                        var txRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                        var txCf = txRdb.GetColumnFamily(new RdbKey(Id));
+
+                        using var iterator = txRdb.NewIterator(txCf);
+
+                        for (iterator.SeekToLast(); iterator.Valid(); iterator.Prev())
                         {
-                            var rollbackActions = obj.OrderByDescending(o => o.Sequence);
-
-                            foreach (var record in rollbackActions)
+                            var record = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
+                            if (record == null)
                             {
-                                //We need to eject the rolled back item from the cache since its last known state has changed.
-                                _core.Cache.Remove(record.OriginalPath);
-
-                                if (record.Action == ActionType.FileCreate)
-                                {
-                                    try
-                                    {
-                                        if (File.Exists(record.OriginalPath))
-                                        {
-                                            File.Delete(record.OriginalPath);
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        //Discard.
-                                    }
-                                    Shared.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
-                                }
-                                else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
-                                {
-                                    var diskPath = Path.GetDirectoryName(record.OriginalPath);
-
-                                    Directory.CreateDirectory(diskPath.EnsureNotNull());
-                                    File.Copy(record.BackupPath.EnsureNotNull(), record.OriginalPath, true);
-                                }
-                                else if (record.Action == ActionType.DirectoryCreate)
-                                {
-                                    if (Directory.Exists(record.OriginalPath))
-                                    {
-                                        Directory.Delete(record.OriginalPath, false);
-                                    }
-                                }
-                                else if (record.Action == ActionType.DirectoryDelete)
-                                {
-                                    Shared.Helpers.CopyDirectory(record.BackupPath.EnsureNotNull(), record.OriginalPath);
-                                }
+                                LogManager.Warning($"Transaction atom is null for {ProcessId}");
+                                continue;
                             }
 
-                            FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                            //We need to eject the rolled back item from the cache since its last known state has changed.
+                            _core.Cache.Remove(record.CacheKey);
+
+                            if (record.Action == ActionType.KeyCreate)
                             {
-                                foreach (var file in obj)
+                                try
                                 {
-                                    //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
-                                    _core.Cache.Remove(file);
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Remove(record.RdbKey, originalCf);
                                 }
-                            });
-
-                            try
-                            {
-                                CleanupTransaction();
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
+                                }
                             }
-                            catch
+                            else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
                             {
-                                //Discard.
+                                try
+                                {
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                }
                             }
+                        }
 
-                            _transactionManager.RemoveByProcessId(ProcessId);
-                            DeleteTemporarySchemas();
+                        FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                        {
+                            foreach (var file in obj)
+                            {
+                                //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
+                                _core.Cache.Remove(file.CacheKey);
+                            }
                         });
-                    }
-                    catch
-                    {
-                        throw;
+
+                        try
+                        {
+                            CleanupTransaction();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogManager.Warning($"Failed to cleanup transaction log for process {ProcessId}: {ex.Message}");
+                        }
+
+                        _transactionManager.RemoveByProcessId(ProcessId);
+                        DeleteTemporarySchemas();
                     }
                     finally
                     {
                         ReleaseLocks();
+                        ptRollback?.StopAndAccumulate();
+                        Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                     }
-
-                    ptRollback?.StopAndAccumulate();
-                    Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -937,31 +867,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                if (_transactionLogHandle != null)
-                {
-                    _transactionLogHandle.Close();
-                    _transactionLogHandle.Dispose();
-                    _transactionLogHandle = null;
-                }
-
-                Atoms.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-                {
-                    foreach (var record in obj)
-                    {
-                        //Delete all the backup files.
-                        if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
-                        {
-                            File.Delete(record.BackupPath.EnsureNotNull());
-                        }
-                        else if (record.Action == ActionType.DirectoryDelete)
-                        {
-                            Directory.Delete(record.BackupPath.EnsureNotNull(), true);
-                        }
-                    }
-                });
-
-                File.Delete(TransactionLogFilePath);
-                Directory.Delete(TransactionPath, true);
+                var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                //Drop the transaction log column family for this transaction.
+                rdb.DropColumnFamily(new RdbKey(Id));
+                // Remove the identity counter for this transaction.
+                rdb.Remove(new RdbKey(Id).Bytes, rdb.GetColumnFamily(KbColumnFamilyName.Identity));
             }
             catch (Exception ex)
             {

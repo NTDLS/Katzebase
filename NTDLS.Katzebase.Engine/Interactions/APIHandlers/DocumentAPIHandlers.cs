@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         }
 
         /// <summary>
-        /// Returns all documents in a schema with there values.
+        /// Returns all documents in a schema with their values.
         /// </summary>
         /// <param name="processId"></param>
         /// <param name="schemaName"></param>
@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var apiResults = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(
-                        transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId
+                        transactionReference.Transaction, param.Schema, param.Document.Content)
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, 1);

@@ -69,14 +69,14 @@ namespace NTDLS.Katzebase.Api.Management
         /// <param name="newPartitionCount"></param>
         /// <exception cref="Exception"></exception>
         /// <exception cref="KbAPIResponseException"></exception>
-        public void Rebuild(string schema, string indexName, uint newPartitionCount = 0, TimeSpan? queryTimeout = null)
+        public void Rebuild(string schema, string indexName, TimeSpan? queryTimeout = null)
         {
             if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
 
             queryTimeout ??= _client.Connection.QueryTimeout;
 
             _ = _client.Connection.Query(
-                new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName, newPartitionCount), (TimeSpan)queryTimeout);
+                new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
         }
 
         /// <summary>

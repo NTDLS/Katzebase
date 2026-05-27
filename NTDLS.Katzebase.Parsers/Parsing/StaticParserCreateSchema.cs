@@ -22,6 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
             query.Schemas.Add(new QuerySchema(tokenizer.GetCurrentLineNumber(), schemaName, QuerySchemaUsageType.Primary));
             query.AddAttribute(PreparedQuery.Attribute.Schema, schemaName);
 
+            /*
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedQueryAttributes
@@ -31,6 +32,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
 
                 query.AddAttributes(StaticParserAttributes.Parse(tokenizer, options));
             }
+            */
 
             return query;
         }

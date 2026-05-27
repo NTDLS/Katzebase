@@ -14,7 +14,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
     {
         private SQLConnectionDetails _connectionDetails = new();
 
-        private double _targetPageSizeBytes = 1024.0 * 100.0;
         private int _activeTableWorkers;
         private readonly int _maxTableWorkers = Environment.ProcessorCount;
         private readonly int _widthToRight;
@@ -44,19 +43,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void DataGridViewSqlServer_CellValidating(object? sender, DataGridViewCellValidatingEventArgs e)
         {
-            if (e.ColumnIndex == ColumnPageSize.Index)
-            {
-                if (int.TryParse(e.FormattedValue?.ToString(), out int result) && result > 0 && result < int.MaxValue)
-                {
-                    dataGridViewSqlServer.Rows[e.RowIndex].ErrorText = string.Empty;
-                }
-                else
-                {
-                    e.Cancel = true;
-                    dataGridViewSqlServer.Rows[e.RowIndex].ErrorText = $"Page Size must be a valid integer between 1 and {int.MaxValue:n0}.";
-                }
-            }
-            else if (e.ColumnIndex == ColumnTargetSchema.Index)
+            if (e.ColumnIndex == ColumnTargetSchema.Index)
             {
                 if (string.IsNullOrWhiteSpace(e.FormattedValue?.ToString()) == false)
                 {
@@ -138,8 +125,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 {
                     param.Items.Add(new SelectedImportObject(item,
                                 (item.Cells[ColumnSourceTable.Index].Value?.ToString()).EnsureNotNull(),
-                                (textBoxServerSchema.Text + ":" + (item.Cells[ColumnTargetSchema.Index].Value?.ToString()).EnsureNotNull()).Trim(':'),
-                                int.Parse((item.Cells[ColumnPageSize.Index].Value?.ToString()).EnsureNotNull()))
+                                (textBoxServerSchema.Text + ":" + (item.Cells[ColumnTargetSchema.Index].Value?.ToString()).EnsureNotNull()).Trim(':'))
                     {
                         ImportData = (importData.Value != null && (bool)importData.Value),
                         ImportIndexes = (importIndexes.Value != null && (bool)importIndexes.Value)
@@ -168,7 +154,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     var schemasToCreate = param.Items.Select(o => new
                     {
                         Name = o.TargetServerSchema,
-                        PageSize = o.TargetServerSchemaPageSize
                     }).Distinct().ToList();
 
                     foreach (var schemaToCreate in schemasToCreate)
@@ -188,7 +173,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                 {
                                     if (client.Schema.Exists(specificSchema.Name) == false)
                                     {
-                                        client.Schema.Create(specificSchema.Name, (uint)specificSchema.PageSize);
+                                        client.Schema.Create(specificSchema.Name);
                                     }
                                     alreadyCreated.Add(specificSchema.Name);
                                 }
@@ -206,7 +191,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         //Create the full schema name:
                         if (alreadyCreated.Contains(schemaToCreate.Name, StringComparer.InvariantCultureIgnoreCase) == false)
                         {
-                            client.Schema.CreateRecursive(schemaToCreate.Name, (uint)schemaToCreate.PageSize);
+                            client.Schema.CreateRecursive(schemaToCreate.Name);
                         }
                     }
                 }
@@ -540,7 +525,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 var sourceObjects = connection.Query<ObjectSourceObject>(Resources.SqlGetObjectsAndSizes, new
                 {
-                    TargetPageSizeBytes = _targetPageSizeBytes
                 });
 
                 foreach (var sourceObject in sourceObjects)
@@ -556,7 +540,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                             targetSchemaObject = sourceObject.TargetObject;
                         }
 
-                        dataGridViewSqlServer.Rows.Add(true, true, sourceObject.SourceSchemaObject ?? string.Empty, analysis, targetSchemaObject ?? string.Empty, sourceObject.TargetPageSize, string.Empty);
+                        dataGridViewSqlServer.Rows.Add(true, true, sourceObject.SourceSchemaObject ?? string.Empty, analysis, targetSchemaObject ?? string.Empty, string.Empty);
                     }
                 }
 

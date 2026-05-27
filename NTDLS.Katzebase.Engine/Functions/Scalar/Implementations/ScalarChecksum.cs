@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 return null;
             }
-            return Shared.Helpers.Checksum(text).ToString();
+            return Shared.KbHelpers.Checksum(text).ToString();
         }
     }
 }

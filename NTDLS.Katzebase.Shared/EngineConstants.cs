@@ -2,19 +2,39 @@
 {
     public static class EngineConstants
     {
-        public const string IndexPageExtension = ".kbixpage";
-        public const string DocumentPageExtension = ".kbpage";
-        public const string DocumentPageDocumentIdExtension = ".kbmap";
-        public const string SchemaCatalogFile = "@schemas.kbcat";
-        public const string PolicyCatalogFile = "@policy.kbcat";
-        public const string DocumentPageCatalogFile = "@pages.kbcat";
-        public const string IndexCatalogFile = "@indexes.kbcat";
-        public const string ProcedureCatalogFile = "@procedures.kbcat";
-        public const string LoginCatalogFile = "@logins.kbcat";
+        /// <summary>
+        /// File that contains the documents and an identity auto-incrementing value.
+        /// </summary>
+        public const string DocumentsFile = "@documents.kbrdb";
+        /// <summary>
+        /// File that contains the schema. Indexes, policies, procedures, etc.
+        /// </summary>
+        public const string SchemaFile = "@schema.kbrdb";
+
+        public const string ProcedureCatalogFile = "@procedures.kbcat"; //TODO: Remove this, it will go in the SchemaFile.
         public const string TransactionActionsFile = "@transaction.kbatom";
         public const string HealthStatsFile = "@health.kblog";
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
+        public const string PrimaryIdentityKey = "Primary";
+
+        public enum KbColumnFamilyName
+        {
+            /// <summary>
+            /// Column family name that contains document data.
+            /// Every schema must have exactly one column family with this name.
+            /// </summary>
+            Documents,
+            /// <summary>
+            /// Column family name that contains auto-incrementing identity values,
+            /// </summary>
+            Identity,
+
+            Schema,
+            Indexes,
+            Policy,
+            Procedures,
+        }
 
         public enum TraceType
         {
@@ -109,12 +129,15 @@
 
         public enum ActionType
         {
-            FileCreate,
-            FileAlter,
-            FileRead,
-            FileDelete,
-            DirectoryCreate,
-            DirectoryDelete
+            //FileCreate,
+            //FileAlter,
+            //FileRead,
+            //FileDelete,
+            //DirectoryCreate,
+            //DirectoryDelete,
+            KeyCreate,
+            KeyAlter,
+            KeyDelete,
         }
 
         public enum HealthCounterType

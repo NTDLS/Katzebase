@@ -7,16 +7,14 @@
         public string Path { get; set; }
         public string ParentPath { get; set; }
         public Guid ParentId { get; set; }
-        public uint PageSize { get; set; }
 
-        public KbSchema(Guid id, string name, string path, string parentPath, Guid parentId, uint pageSize)
+        public KbSchema(Guid id, string name, string path, string parentPath, Guid parentId)
         {
             Id = id;
             Name = name;
             Path = path;
             ParentPath = parentPath;
             ParentId = parentId;
-            PageSize = pageSize;
         }
 
         public override int GetHashCode()
@@ -26,14 +24,13 @@
                 Name,
                 Path,
                 ParentPath,
-                ParentId,
-                PageSize
+                ParentId
             );
 
             return hash;
         }
 
         public KbSchema Clone()
-            => new(Id, Name, Path, ParentPath, ParentId, PageSize);
+            => new(Id, Name, Path, ParentPath, ParentId);
     }
 }

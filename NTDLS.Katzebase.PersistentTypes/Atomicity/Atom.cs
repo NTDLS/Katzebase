@@ -11,16 +11,22 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public ActionType Action { get; set; }
-        public string OriginalPath { get; set; }
-        public string Key { get; set; }
-        public string? BackupPath { get; set; }
-        public int Sequence { get; set; } = 0;
+        public CacheKey CacheKey { get; set; }
+        public long Sequence { get; set; } = 0;
 
-        public Atom(ActionType action, string originalPath)
+        public string RdbPath { get; set; }
+        public KbColumnFamilyName ColumnFamilyName { get; set; }
+        public byte[] RdbKey { get; set; }
+        public byte[]? OriginalData { get; set; }
+
+        public Atom(ActionType action, long sequence, string rdbPath, KbColumnFamilyName columnFamily, byte[] rdbKey, CacheKey cacheKey)
         {
             Action = action;
-            OriginalPath = originalPath;
-            Key = OriginalPath.ToLowerInvariant();
+            Sequence = sequence;
+            RdbKey = rdbKey;
+            CacheKey = cacheKey;
+            RdbPath = rdbPath;
+            ColumnFamilyName = columnFamily;
         }
 
         public AtomSnapshot Snapshot()
@@ -28,10 +34,12 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
             var snapshot = new AtomSnapshot()
             {
                 Action = Action,
-                OriginalPath = OriginalPath,
-                Key = Key,
-                BackupPath = BackupPath,
-                Sequence = Sequence
+                CacheKey = CacheKey,
+                Sequence = Sequence,
+                RdbPath = RdbPath,
+                ColumnFamily = ColumnFamilyName,
+                RdbKey = RdbKey,
+                OriginalData = OriginalData,
             };
 
             return snapshot;
