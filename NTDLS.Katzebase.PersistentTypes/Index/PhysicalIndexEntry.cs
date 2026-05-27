@@ -7,18 +7,14 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
     public class PhysicalIndexEntry
     {
         [ProtoMember(1)]
-        public int PageNumber { get; private set; }
-
-        [ProtoMember(2)]
         public uint DocumentId { get; set; }
 
         [ProtoIgnore]
-        public string Key => $"{PageNumber}:{DocumentId}";
+        public string Key => $"{DocumentId}";
 
-        public PhysicalIndexEntry(uint documentId, int pageNumber)
+        public PhysicalIndexEntry(uint documentId)
         {
             DocumentId = documentId;
-            PageNumber = pageNumber;
         }
 
         public PhysicalIndexEntry()

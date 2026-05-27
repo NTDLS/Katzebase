@@ -58,10 +58,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
                 }
 
-                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
-                    transactionReference.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
+                    transactionReference.Transaction, physicalSchema.SchemaFilePath(), KbColumnFamily.Schema, LockOperation.Read);
 
-                foreach (var item in schemaCatalog.Collection)
+                foreach (var item in schemaCatalog)
                 {
                     apiResults.Collection.Add(item.ToClientPayload(physicalSchema.Id, param.Schema));
                 }
@@ -116,6 +116,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
                 throw;
             }
+
         }
 
         /// <summary>
@@ -234,27 +235,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
-                var segments = param.Schema.Split(':');
-                var parentSchemaName = segments[^1];
-
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
-                var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Delete);
-
-                if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
-                    throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
-
-                var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
-                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
-                    transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Delete);
-
-                var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
-                if (nsItem != null)
-                {
-                    parentCatalog.Collection.Remove(nsItem);
-
-                    _core.IO.DeletePath(transactionReference.Transaction, physicalSchema.DiskPath);
-                    _core.IO.PutJson(transactionReference.Transaction, parentSchemaCatalogFile, parentCatalog);
-                }
+                _core.Schemas.Drop(transactionReference.Transaction, param.Schema);
 
                 var apiResults = new KbQuerySchemaDropReply();
 

@@ -108,9 +108,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                 #endregion
 
                 var indexName = query.GetAttribute<string>(PreparedQuery.Attribute.IndexName);
-                var indexPartitions = query.GetAttribute(PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
-                _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
+                _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
@@ -136,14 +135,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 if (query.SubQueryType == SubQueryType.Index || query.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = query.GetAttribute(
-                        PreparedQuery.Attribute.Partitions, _core.Settings.DefaultIndexPartitions);
-
                     var index = new KbIndex
                     {
                         Name = query.GetAttribute<string>(PreparedQuery.Attribute.IndexName),
-                        IsUnique = query.GetAttribute<bool>(PreparedQuery.Attribute.IsUnique),
-                        Partitions = indexPartitions
+                        IsUnique = query.GetAttribute<bool>(PreparedQuery.Attribute.IsUnique)
                     };
 
                     foreach (var field in query.CreateIndexFields)

@@ -13,7 +13,6 @@ using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
-using System.Security.Cryptography;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 

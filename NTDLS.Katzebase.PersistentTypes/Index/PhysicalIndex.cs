@@ -1,6 +1,4 @@
 ﻿using NTDLS.Katzebase.Api.Models;
-using NTDLS.Katzebase.PersistentTypes.Schema;
-using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.PersistentTypes.Index
 {
@@ -12,33 +10,10 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modified { get; set; }
-        public uint Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
-        public string GetPartitionPagesPath(PhysicalSchema physicalSchema)
-            => Path.Combine(physicalSchema.DiskPath, $"@Index_{Shared.Helpers.MakeSafeFileName(Name)}");
-
-        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, uint indexPartition)
-            => Path.Combine(physicalSchema.DiskPath, $"@Index_{Shared.Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}{EngineConstants.IndexPageExtension}");
 
         public PhysicalIndex()
         {
-        }
-
-        public uint ComputePartition(string? value)
-        {
-            uint hash = 0;
-            if (string.IsNullOrEmpty(value))
-            {
-                return hash;
-            }
-            value = value.ToLowerInvariant();
-
-            const uint seed = 131;
-            foreach (char c in value)
-            {
-                hash = hash * seed + c;
-            }
-            return hash % Partitions;
         }
 
         public PhysicalIndex Clone()
@@ -49,8 +24,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
                 Name = Name,
                 Created = Created,
                 Modified = Modified,
-                IsUnique = IsUnique,
-                Partitions = Partitions,
+                IsUnique = IsUnique
             };
 
             foreach (var attribute in Attributes)
@@ -80,8 +54,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
                 Name = index.Name,
                 Created = index.Created,
                 Modified = index.Modified,
-                IsUnique = index.IsUnique,
-                Partitions = index.Partitions
+                IsUnique = index.IsUnique
             };
 
             foreach (var attribute in index.Attributes)
@@ -105,8 +78,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
                 Name = index.Name,
                 Created = index.Created,
                 Modified = index.Modified,
-                IsUnique = index.IsUnique,
-                Partitions = index.Partitions
+                IsUnique = index.IsUnique
             };
 
             foreach (var attribute in index.Attributes)

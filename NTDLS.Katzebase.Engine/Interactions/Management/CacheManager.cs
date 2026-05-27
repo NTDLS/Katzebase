@@ -1,7 +1,10 @@
 ﻿using NTDLS.FastMemoryCache;
+using NTDLS.Katzebase.Engine.IO;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -14,6 +17,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly PartitionedMemoryCache _cache;
         private volatile bool _keepRunning = false;
         private readonly Thread _cacheMonitorThread;
+
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, byte[] key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, string key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, int key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, uint key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, long key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, ulong key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, Guid key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily, RdbKey key) => new($"{rdbPath}:{columnFamily}:{key}");
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamily columnFamily) => new($"{rdbPath}:{columnFamily}");
 
         internal int PartitionCount { get; private set; }
 
@@ -86,11 +99,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Set(string key, object value, int approximateSizeInBytes = 0)
+        internal void Set(CacheKey key, object value, int approximateSizeInBytes = 0)
         {
             try
             {
-                _cache.Upsert(key, value, approximateSizeInBytes);
+                _cache.Upsert(key.Value, value, approximateSizeInBytes);
             }
             catch (Exception ex)
             {
@@ -112,11 +125,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal bool TryGet(string key, [NotNullWhen(true)] out object? value)
+        internal bool TryGet(CacheKey key, [NotNullWhen(true)] out object? value)
         {
             try
             {
-                if (_cache.TryGet(key, out value))
+                if (_cache.TryGet(key.Value, out value))
                 {
                     return value != null;
                 }
@@ -130,11 +143,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
+        internal bool TryGet<T>(CacheKey key, [NotNullWhen(true)] out T? value)
         {
             try
             {
-                if (_cache.TryGet(key, out value))
+                if (_cache.TryGet(key.Value, out value))
                 {
                     return value != null;
                 }
@@ -147,11 +160,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal object? Get(string key)
+        internal object? Get(CacheKey key)
         {
             try
             {
-                return _cache.Get(key);
+                return _cache.Get(key.Value);
             }
             catch (Exception ex)
             {
@@ -160,11 +173,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Remove(string key)
+        internal void Remove(CacheKey key)
         {
             try
             {
-                _cache.Remove(key);
+                _cache.Remove(key.Value);
             }
             catch (Exception ex)
             {
@@ -173,11 +186,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void RemoveItemsWithPrefix(string prefix)
+        internal void RemoveItemsWithPrefix(CacheKey cacheKey)
         {
             try
             {
-                _cache.RemoveItemsWithPrefix(prefix);
+                _cache.RemoveItemsWithPrefix(cacheKey.Value);
             }
             catch (Exception ex)
             {

@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Api.Types;
-using NTDLS.Katzebase.PersistentTypes.Document;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
@@ -7,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
     {
         public bool MatchedByWhereClause { get; set; } = false;
 
-        public KbInsensitiveDictionary<DocumentPointer> DocumentPointers { get; private set; } = new();
+        public KbInsensitiveDictionary<uint> DocumentPointers { get; private set; } = new();
 
         /// <summary>
         /// A dictionary that contains the elements from each row that comprises this row.

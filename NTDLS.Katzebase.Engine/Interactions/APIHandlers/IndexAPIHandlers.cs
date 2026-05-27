@@ -46,9 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
-                var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
-
-                var physicalIndex = indexCatalog.GetByName(param.IndexName);
+                var physicalIndex = _core.Indexes.AcquireIndex(transactionReference.Transaction, param.Schema, param.IndexName, LockOperation.Read);
 
                 var apiResults = new KbQueryIndexGetReply()
                 {
@@ -85,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 var apiResults = new KbQueryIndexListReply();
 
-                foreach (var index in indexCatalog.Collection)
+                foreach (var index in indexCatalog)
                 {
                     var apiPayload = PhysicalIndex.ToApiPayload(index);
                     if (apiPayload != null)
@@ -121,9 +119,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
-                var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
+                var physicalIndex = _core.Indexes.AcquireIndex(transactionReference.Transaction, param.Schema, param.IndexName, LockOperation.Read);
 
-                bool doesIndexExist = indexCatalog.GetByName(param.IndexName) != null;
+                bool doesIndexExist = physicalIndex != null;
 
                 var apiResults = new KbQueryIndexExistsReply(doesIndexExist);
 
@@ -185,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
-                _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName, param.NewPartitionCount);
+                _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName);
                 var apiResults = new KbQueryIndexRebuildReply();
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults);
             }

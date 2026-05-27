@@ -8,7 +8,6 @@
         public DateTime Created { get; set; }
         public DateTime Modified { get; set; }
         public virtual bool IsUnique { get; set; }
-        public uint Partitions { get; set; }
 
         public KbIndex(string name)
         {
@@ -26,8 +25,7 @@
                 Id,
                 Created,
                 Modified,
-                IsUnique,
-                Partitions
+                IsUnique
             );
 
             foreach (var attribute in Attributes)

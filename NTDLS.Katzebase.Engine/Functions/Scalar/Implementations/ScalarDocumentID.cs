@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Parsers.Functions.Scalar;
-using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
@@ -14,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 return null;
             }
-            return DocumentPointer.Parse(rowId.Value).DocumentId.ToString();
+            return rowId.ToString();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -8,10 +9,12 @@ namespace NTDLS.Katzebase.Engine.IO
 {
     internal class DeferredDiskIO
     {
-        private class DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
+        private class DeferredDiskIOObject(string diskPath, KbColumnFamily columnFamily, object reference, RdbKey rdbKey, IOFormat format)
         {
             public string DiskPath { get; private set; } = diskPath.ToLowerInvariant();
+            public KbColumnFamily ColumnFamily { get; private set; } = columnFamily;
             public object Reference { get; set; } = reference;
+            public RdbKey DatabaseKey { get; private set; } = rdbKey;
             public IOFormat Format { get; private set; } = format;
         }
 
@@ -55,15 +58,19 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 foreach (var obj in o)
                 {
+                    //TODO: Each deferred object is committed via a separate PutNonTrackedButCached call.
+                    //If the process dies mid-loop, the commit is partial. This is where WriteBatch should be used.
+                    //Accumulate all puts into a single batch per RDB path, then call db.Write(batch) once per path.
+
                     if (obj.Value.Reference != null)
                     {
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            _core.IO.PutJsonNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference);
+                            _core.IO.PutNonTrackedButCached(obj.Value.DiskPath, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.JSON);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            _core.IO.PutPBufNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference);
+                            _core.IO.PutNonTrackedButCached(obj.Value.DiskPath, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.PBuf);
                         }
                         else
                         {
@@ -76,13 +83,11 @@ namespace NTDLS.Katzebase.Engine.IO
             });
         }
 
-        public bool GetDeferredDiskIO<T>(string key, out T? outReference)
+        public bool GetDeferredDiskIO<T>(CacheKey key, out T? outReference)
         {
-            key = key.ToLowerInvariant();
-
             outReference = _collection.Use(o =>
             {
-                if (o.TryGetValue(key, out var deferredIO))
+                if (o.TryGetValue(key.Value, out var deferredIO))
                 {
                     return (T)deferredIO.Reference;
                 }
@@ -92,11 +97,9 @@ namespace NTDLS.Katzebase.Engine.IO
             return outReference != null;
         }
 
-        public void Remove(string key)
+        public void Remove(CacheKey key)
         {
-            key = key.ToLowerInvariant();
-
-            _collection.Use(o => o.Remove(key));
+            _collection.Use(o => o.Remove(key.Value));
         }
 
         public void RemoveItemsWithPrefix(string prefix)
@@ -125,19 +128,17 @@ namespace NTDLS.Katzebase.Engine.IO
         /// <param name="key"></param>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat)
+        public void PutDeferredDiskIO(CacheKey key, string diskPath, KbColumnFamily columnFamily, object reference, RdbKey rdbKey, IOFormat format)
         {
-            key = key.ToLowerInvariant();
-
             _collection.Use(o =>
             {
-                if (o.TryGetValue(key, out var value))
+                if (o.TryGetValue(key.Value, out var value))
                 {
                     value.Reference = reference;
                 }
                 else
                 {
-                    o.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat));
+                    o.Add(key.Value, new DeferredDiskIOObject(diskPath, columnFamily, reference, rdbKey, format));
                 }
             });
         }

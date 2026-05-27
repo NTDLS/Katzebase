@@ -1,13 +1,16 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Threading;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
 using static NTDLS.Katzebase.Api.KbConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -124,6 +127,20 @@ namespace NTDLS.Katzebase.Engine
             IsRunning = true;
 
             _cancellationToken = new();
+
+            /*
+            using var ephemeral = Sessions.CreateEphemeralSystemSession();
+            var physicalSchema = Schemas.Acquire(ephemeral.Transaction, "WordList:Word", LockOperation.Write);
+            var rdb = IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var cf = IO.GetColumnFamily(rdb, KbColumnFamily.Documents);
+
+            using var iterator = rdb.NewIterator(cf);
+            for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
+            {
+                var fff = RdbKey.ConvertToUint(iterator.Value());
+
+            }
+            */
         }
 
         public void Stop()
@@ -143,6 +160,9 @@ namespace NTDLS.Katzebase.Engine
 
             LogManager.Information("Stopping health manager.");
             Health.Stop();
+
+            LogManager.Information("Stopping transaction manager.");
+            Transactions.Stop();
         }
     }
 }

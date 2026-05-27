@@ -10,12 +10,20 @@ namespace NTDLS.Katzebase.Engine.Threading
         public DelegateThreadPool Indexing { get; private set; }
         public DelegateThreadPool Intersection { get; private set; }
         public DelegateThreadPool Materialization { get; private set; }
+        public DelegateThreadPool Lookup { get; private set; }
 
         private readonly EngineCore _core;
 
         public ThreadPoolManager(EngineCore core)
         {
             _core = core;
+
+            Lookup = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
+            {
+                MaximumThreadCount = _core.Settings.LookupThreadPoolMaximumSize <= 0 ? (Environment.ProcessorCount * 2) : _core.Settings.LookupThreadPoolMaximumSize,
+                InitialThreadCount = _core.Settings.LookupThreadPoolInitialSize <= 0 ? Environment.ProcessorCount : _core.Settings.LookupThreadPoolInitialSize,
+                MaximumQueueDepth = _core.Settings.LookupThreadPoolQueueDepth
+            });
 
             Indexing = new DelegateThreadPool(new DelegateThreadPoolConfiguration()
             {

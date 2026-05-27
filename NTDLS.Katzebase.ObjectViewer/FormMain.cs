@@ -1,9 +1,6 @@
 using Newtonsoft.Json;
 using NTDLS.Helpers;
-using NTDLS.Katzebase.PersistentTypes.Document;
-using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Procedure;
-using NTDLS.Katzebase.PersistentTypes.Schema;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.ObjectViewer
@@ -19,12 +16,10 @@ namespace NTDLS.Katzebase.ObjectViewer
 
         private readonly List<TypeMapping> _types = new()
         {
-            new TypeMapping(".kbixpage", typeof(PhysicalIndexPages), IOFormat.PBuf),
-            new TypeMapping(".kbpage", typeof(PhysicalDocumentPage), IOFormat.PBuf),
-            new TypeMapping(".kbmap", typeof(PhysicalDocumentPageMap), IOFormat.PBuf),
-            new TypeMapping("@schemas.kbcat", typeof(PhysicalSchemaCatalog), IOFormat.JSON),
-            new TypeMapping("@pages.kbcat", typeof(PhysicalDocumentPageCatalog), IOFormat.PBuf),
-            new TypeMapping("@indexes.kbcat", typeof(PhysicalIndexCatalog), IOFormat.JSON),
+            //new TypeMapping(".kbixpage", typeof(PhysicalIndexPages), IOFormat.PBuf),
+            //new TypeMapping(".kbpage", typeof(PhysicalDocumentPage), IOFormat.PBuf),
+            //new TypeMapping("@schemas.kbcat", typeof(PhysicalSchemaCatalog), IOFormat.JSON),
+            //new TypeMapping("@indexes.kbcat", typeof(PhysicalIndexCatalog), IOFormat.JSON),
             new TypeMapping("@procedures.kbcat", typeof(PhysicalProcedureCatalog), IOFormat.JSON),
         };
 

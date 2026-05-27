@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
@@ -40,6 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal void CreateCustomProcedure(Transaction transaction, string schemaName,
             string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
         {
+            /*
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
@@ -68,21 +68,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }
+            */
         }
 
         internal PhysicalProcedureCatalog Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
+            return new PhysicalProcedureCatalog();
+            /*
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
             }
 
             return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+            */
         }
 
         internal PhysicalProcedure? Acquire(Transaction transaction,
             PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
         {
+            return null;
+            /*
             procedureName = procedureName.ToLowerInvariant();
 
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
@@ -94,6 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
 
             return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
+            */
         }
 
         internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, string schemaName, string procedureName)

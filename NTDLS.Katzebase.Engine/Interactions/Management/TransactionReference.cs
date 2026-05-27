@@ -43,7 +43,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResult results)
             => CommitAndApplyMetricsThenReturnResults(results.RowCount);
 
-
         internal KbActionResponse CommitAndApplyMetricsNonQuery(KbQueryResultCollection results)
             => CommitAndApplyMetricsThenReturnResults(results.Collection.Sum(o => o.RowCount));
 

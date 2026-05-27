@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 return null;
             }
-            return Shared.Helpers.GetSHA512Hash(text);
+            return Shared.KbHelpers.GetSHA512Hash(text);
         }
     }
 }

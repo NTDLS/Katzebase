@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Parsers;
-using NTDLS.Katzebase.PersistentTypes.Document;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
@@ -17,38 +16,28 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static KbQueryResult SampleSchemaFields(
             EngineCore core, Transaction transaction, string schemaName)
         {
+
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+            var currentIdentity = core.Documents.GetCurrentIdentity(physicalSchema);
 
-            if (physicalDocumentPageCatalog.Catalog.Count > 0)
+            if (currentIdentity > 0)
             {
-                var random = new Random(Environment.TickCount);
-
                 int unsuccessfulAttempts = 0;
 
                 while (unsuccessfulAttempts < 10)
                 {
-                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
-                    var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+                    uint documentId = (uint)Random.Shared.NextInt64(0, currentIdentity + 1);
 
-                    if (pageCatalog.DocumentCount == 0)
+                    var physicalDocument = core.Documents.AcquireDocumentVirtual(
+                        transaction, physicalSchema, documentId, LockOperation.Read);
+
+                    if (physicalDocument == null)
                     {
-                        //Page was empty.
                         unsuccessfulAttempts++;
                         continue;
                     }
-
-                    int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
-
-                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(
-                        transaction, physicalSchema, pageNumber, LockOperation.Read);
-
-                    var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
-
-                    var physicalDocument = core.Documents.AcquireDocument(
-                        transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
                     if (result.Fields.Count == 0)
                     {
@@ -74,35 +63,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+            var currentIdentity = core.Documents.GetCurrentIdentity(physicalSchema);
 
-            if (physicalDocumentPageCatalog.Catalog.Count > 0)
+            if (currentIdentity > 0)
             {
-                var random = new Random(Environment.TickCount);
-
                 int unsuccessfulAttempts = 0;
 
                 while (result.Rows.Count < rowLimit && unsuccessfulAttempts < 10)
                 {
-                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
-                    var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+                    uint documentId = (uint)Random.Shared.NextInt64(0, currentIdentity + 1);
 
-                    if (pageCatalog.DocumentCount == 0)
+                    var physicalDocument = core.Documents.AcquireDocumentVirtual(
+                        transaction, physicalSchema, documentId, LockOperation.Read);
+
+                    if (physicalDocument == null)
                     {
-                        //Page was empty.
                         unsuccessfulAttempts++;
                         continue;
                     }
-
-                    int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
-
-                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(
-                        transaction, physicalSchema, pageNumber, LockOperation.Read);
-
-                    var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
-
-                    var physicalDocument = core.Documents.AcquireDocument(
-                        transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
                     if (result.Fields.Count == 0)
                     {
@@ -131,18 +109,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount = -1)
+        internal static KbQueryResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int? topCount = null)
         {
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
+            var documentId = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
 
-            for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
+            for (int i = 0; i < documentId.Count && (i < topCount || topCount < 0); i++)
             {
-                var pageDocument = documentPointers[i];
-
-                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocument, LockOperation.Read);
+                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, documentId[i], LockOperation.Read);
 
                 if (i == 0)
                 {
@@ -175,9 +151,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             foreach (var querySchema in query.Schemas)
             {
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
-                var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions, querySchema.Alias);
+                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, querySchema.Conditions, querySchema.Alias);
                 schemaMap.Add(querySchema.Alias, querySchemaMapItem);
             }
 
@@ -199,7 +174,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         public class SchemaIntersectionRowDocumentIdentifierCollection
-            : Dictionary<DocumentPointer, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>>
+            : Dictionary<uint, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>>
         {
 
         }
@@ -216,9 +191,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             foreach (var querySchema in query.Schemas)
             {
                 var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
-                var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, physicalDocumentPageCatalog, querySchema.Conditions, querySchema.Alias);
+                var querySchemaMapItem = new QuerySchemaOptimizationMapItem(core, transaction, schemaMap, physicalSchema, querySchema.SchemaUsageType, querySchema.Conditions, querySchema.Alias);
                 schemaMap.Add(querySchema.Alias, querySchemaMapItem);
             }
 

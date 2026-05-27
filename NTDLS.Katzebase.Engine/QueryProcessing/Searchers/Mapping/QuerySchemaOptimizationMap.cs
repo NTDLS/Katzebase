@@ -14,10 +14,5 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         private readonly EngineCore _core = core;
         public Transaction Transaction { get; private set; } = transaction;
         public PreparedQuery Query { get; private set; } = query;
-
-        public int TotalDocumentCount()
-        {
-            return this.Sum(o => o.Value.DocumentPageCatalog.TotalDocumentCount());
-        }
     }
 }
