@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Diagnostics;
+using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -117,6 +118,61 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Streams all documents in a schema as (documentId, document) pairs via a single sequential
+        /// iterator scan over the Documents column family.  This is significantly faster than calling
+        /// AcquireDocumentPointers followed by individual AcquireDocument calls because RocksDB's
+        /// sequential iterator benefits from block prefetching, whereas N individual Gets each traverse
+        /// the LSM tree independently with no prefetch benefit.
+        ///
+        /// If deferred IO is enabled and the current transaction has a pending (uncommitted) write for
+        /// a given key, that in-memory version is yielded instead of the on-disk value so the caller
+        /// always sees the transaction's own writes.
+        /// </summary>
+        internal IEnumerable<(uint DocumentId, PhysicalDocument Document)> ScanDocuments(
+            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        {
+            var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var documentsCF = _core.IO.GetColumnFamily(rdb, KbColumnFamily.Documents);
+
+            using var iterator = rdb.NewIterator(documentsCF);
+            for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
+            {
+                var keyBytes = iterator.Key();
+                uint documentId = RdbKey.ConvertToUint(keyBytes);
+                var cacheKey = CacheManager.MakeCacheKey(physicalSchema.DocumentsFilePath(), KbColumnFamily.Documents, new RdbKey(keyBytes));
+
+                transaction.RecordKeyRead(physicalSchema.DocumentsFilePath(), KbColumnFamily.Documents, new RdbKey(keyBytes), cacheKey);
+
+                PhysicalDocument? document = null;
+
+                // If this transaction has a pending write for this key, use that version so the
+                // caller sees its own uncommitted inserts/updates rather than the stale disk value.
+                if (_core.Settings.DeferredIOEnabled)
+                {
+                    document = transaction.DeferredIOs.ReadNullable((dio) =>
+                    {
+                        var ptDeferred = transaction.Instrumentation.CreateToken(PerformanceCounter.DeferredRead);
+                        bool wasDeferred = dio.GetDeferredDiskIO<PhysicalDocument>(cacheKey, out var deferred);
+                        ptDeferred?.StopAndAccumulate();
+                        return wasDeferred ? deferred : null;
+                    });
+                }
+
+                if (document == null)
+                {
+                    document = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
+                    {
+                        using var ms = new MemoryStream(iterator.Value());
+                        return ProtoBuf.Serializer.Deserialize<PhysicalDocument>(ms);
+                    });
+                }
+
+                if (document != null)
+                    yield return (documentId, document);
             }
         }
 

@@ -12,6 +12,7 @@ using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
+using NTDLS.Katzebase.PersistentTypes.Document;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -210,15 +211,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         #endregion
 
-                        //If we do not have any documents then indexing was not performed, then get the whole schema.
-                        documentIds ??= core.Documents.AcquireDocumentPointers(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
+                        // When the index matched specific documents, fetch each by key.
+                        // When there is no index, stream via sequential CF scan — one pass instead of
+                        // N individual Gets, with RocksDB block prefetching doing the heavy lifting.
+                        IEnumerable<(uint DocumentId, PhysicalDocument Document)> documentsToScan = documentIds != null
+                            ? documentIds.Select(id => (id, core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, id, LockOperation.Read)))
+                            : core.Documents.ScanDocuments(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
 
                         int schemaMatchCount = 0;
 
-                        foreach (var documentPointer in documentIds)
+                        foreach (var (documentPointer, physicalDocument) in documentsToScan)
                         {
-                            var physicalDocument = core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, documentPointer, LockOperation.Read);
-
                             threadTemplateRowClone.SchemaElements[schemaMap.Value.SchemaPrefix.ToLowerInvariant()] = physicalDocument.Elements;
 
                             if (IsJoinExpressionMatch(transaction, query, schemaMap.Value.Conditions, threadTemplateRowClone))
@@ -438,71 +441,95 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 documentIds = new HashSet<uint>(indexMatchedDocuments);
             }
 
-            //If we do not have any documents then indexing was not performed, then get the whole schema.
-            documentIds ??= core.Documents.AcquireDocumentPointers(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read);
-
             var schemaIntersectionRowCollection = new SchemaIntersectionRowCollection();
-
-            var childPool = core.ThreadPool.Lookup.CreateChildPool<uint>(core.Settings.LookupChildThreadPoolQueueDepth);
-
             bool rowLimitExceeded = false;
 
-            foreach (var documentPointer in documentIds)
+            // When the index provided a specific set of document IDs, fetch each one individually —
+            // the set is small so parallel point-lookups are appropriate.
+            // When there is no index (full-schema scan), stream documents via a sequential CF iterator
+            // instead of first collecting all IDs and then doing N individual Gets.  The iterator gives
+            // RocksDB a chance to prefetch blocks sequentially, reducing overall scan time significantly.
+            if (documentIds != null)
             {
-                transaction.EnsureActive();
+                var childPool = core.ThreadPool.Lookup.CreateChildPool<uint>(core.Settings.LookupChildThreadPoolQueueDepth);
 
-                var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                childPool.Enqueue(documentPointer, (threadDocumentPointer) =>
+                foreach (var documentPointer in documentIds)
                 {
-                    #region Thread.
-
                     transaction.EnsureActive();
 
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, threadDocumentPointer, LockOperation.Read);
-
-                    //Had to remove this match because the where clause can contain conditions comprised of values from joins.
-                    //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
-                    //if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
-                    //{
-                    var schemaIntersectionRow = new SchemaIntersectionRow();
-                    schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
-
-                    schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
-
-                    if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
+                    childPool.Enqueue(documentPointer, (threadDocumentPointer) =>
                     {
-                        //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
-                        schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), threadDocumentPointer);
-                    }
+                        transaction.EnsureActive();
+                        var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, threadDocumentPointer, LockOperation.Read);
+                        AddPrimarySchemaRow(physicalDocument, threadDocumentPointer);
+                    });
+                    ptThreadQueue?.StopAndAccumulate();
 
-                    //Found a document, add row to the results collection.
-                    lock (schemaIntersectionRowCollection)
-                    {
-                        schemaIntersectionRowCollection.Add(schemaIntersectionRow);
-
-                        //Test to see if we've hit a row limit.
-                        //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
-                        if (query.RowOffset == 0 && query.RowLimit > 0 && schemaIntersectionRowCollection.Count >= query.RowLimit && query.OrderBy.Count == 0)
-                        {
-                            rowLimitExceeded = true;
-                            return; //Break out of thread.
-                        }
-                    }
-                    //}
-
-                    #endregion
-                });
-                ptThreadQueue?.StopAndAccumulate();
-
-                if (rowLimitExceeded)
-                {
-                    break;
+                    if (rowLimitExceeded) break;
                 }
+
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                childPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
+            }
+            else
+            {
+                // Full scan: document is already loaded by the iterator — no AcquireDocument needed.
+                // The thread pool handles join-condition evaluation in parallel while the main thread
+                // drives the sequential CF scan.
+                var childPool = core.ThreadPool.Lookup.CreateChildPool<(uint, PhysicalDocument)>(core.Settings.LookupChildThreadPoolQueueDepth);
+
+                foreach (var (documentPointer, physicalDocument) in core.Documents.ScanDocuments(transaction, primarySchema.Value.PhysicalSchema, LockOperation.Read))
+                {
+                    transaction.EnsureActive();
+
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
+                    childPool.Enqueue((documentPointer, physicalDocument), (args) =>
+                    {
+                        transaction.EnsureActive();
+                        var (threadDocumentPointer, threadPhysicalDocument) = args;
+                        AddPrimarySchemaRow(threadPhysicalDocument, threadDocumentPointer);
+                    });
+                    ptThreadQueue?.StopAndAccumulate();
+
+                    if (rowLimitExceeded) break;
+                }
+
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
+                childPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
             }
 
-            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
-            childPool.WaitForCompletion();
-            ptThreadCompletion?.StopAndAccumulate();
+            void AddPrimarySchemaRow(PhysicalDocument physicalDocument, uint documentPointer)
+            {
+                //Had to remove this match because the where clause can contain conditions comprised of values from joins.
+                //TODO: We use condition groups to determine if we can do early elimination of primary schema results.
+                //if (IsWhereClauseMatch(transaction, query, primarySchema.Value.Conditions, physicalDocument.Elements))
+                //{
+                var schemaIntersectionRow = new SchemaIntersectionRow();
+                schemaIntersectionRow.MatchedSchemas.Add(primarySchema.Key);
+                schemaIntersectionRow.SchemaElements.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), physicalDocument.Elements);
+
+                if (gatherDocumentPointersForSchemaAliases?.Contains(primarySchema.Value.SchemaPrefix, StringComparer.InvariantCultureIgnoreCase) == true)
+                {
+                    //Keep track of document pointers for this schema if we are to do so as denoted by gatherDocumentPointersForSchemaAliases.
+                    schemaIntersectionRow.DocumentPointers.Add(primarySchema.Value.SchemaPrefix.ToLowerInvariant(), documentPointer);
+                }
+
+                //Found a document, add row to the results collection.
+                lock (schemaIntersectionRowCollection)
+                {
+                    schemaIntersectionRowCollection.Add(schemaIntersectionRow);
+
+                    //Not that we cannot limit early when we have an ORDER BY because limiting is done after sorting the results.
+                    if (query.RowOffset == 0 && query.RowLimit > 0 && schemaIntersectionRowCollection.Count >= query.RowLimit && query.OrderBy.Count == 0)
+                    {
+                        rowLimitExceeded = true;
+                    }
+                }
+                //}
+            }
 
             return schemaIntersectionRowCollection;
         }
