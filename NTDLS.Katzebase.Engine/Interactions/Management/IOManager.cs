@@ -384,7 +384,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region RocksDb Helpers.
 
-        private readonly ConcurrentDictionary<string, RocksDb> _rdbInstances =
+        // Lazy<T> wrapper prevents ConcurrentDictionary.GetOrAdd from opening the same RocksDB
+        // instance twice. GetOrAdd does not guarantee the factory runs only once — multiple threads
+        // can race through and each call RocksDb.Open, with the second failing to acquire the LOCK
+        // file. Storing a Lazy<RocksDb> means the factory (the cheap part) can run multiple times,
+        // but only one Lazy wins the slot. RocksDb.Open is then called exactly once when .Value
+        // is first accessed, guarded by Lazy's default ExecutionAndPublication thread-safety mode.
+        private readonly ConcurrentDictionary<string, Lazy<RocksDb>> _rdbInstances =
             new(StringComparer.InvariantCultureIgnoreCase);
 
         public ColumnFamilyHandle GetColumnFamily(RocksDb rdb, KbColumnFamily name)
@@ -423,19 +429,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal RocksDb AcquireRdb(string rdbPath)
         {
-            return _rdbInstances.GetOrAdd(rdbPath, path =>
-            {
-                var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-                var cfOptions = new ColumnFamilyOptions();
-
-                var columnFamilies = new ColumnFamilies();
-                foreach (var cf in RocksDb.ListColumnFamilies(options, path))
+            var lazy = _rdbInstances.GetOrAdd(rdbPath, path =>
+                new Lazy<RocksDb>(() =>
                 {
-                    columnFamilies.Add(cf, cfOptions);
-                }
+                    var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
+                    var cfOptions = new ColumnFamilyOptions();
 
-                return RocksDb.Open(options, path, columnFamilies);
-            });
+                    var columnFamilies = new ColumnFamilies();
+                    foreach (var cf in RocksDb.ListColumnFamilies(options, path))
+                        columnFamilies.Add(cf, cfOptions);
+
+                    return RocksDb.Open(options, path, columnFamilies);
+                }));
+
+            try
+            {
+                return lazy.Value;
+            }
+            catch
+            {
+                // Lazy<T> caches exceptions — remove the faulted entry so the caller's
+                // recovery path (e.g. CreateDocumentsRdb) can retry with a fresh instance.
+                _rdbInstances.TryRemove(rdbPath, out _);
+                throw;
+            }
         }
 
         internal void CreateDocumentsRdb(Transaction? transaction, string rdbPath)
