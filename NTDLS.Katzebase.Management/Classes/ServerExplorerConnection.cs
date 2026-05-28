@@ -89,7 +89,11 @@ namespace NTDLS.Katzebase.Management.Classes
 
             try
             {
-                ServerExplorerManager.ServerExplorerTree.Invoke(() =>
+                // BeginInvoke (async) so the background discovery loop is not blocked
+                // waiting for each individual tree-node insertion. Children arrive in
+                // alphabetical order from the server so no sort is needed here;
+                // SortChildNodes is called in OnCacheItemRefreshed after details load.
+                ServerExplorerManager.ServerExplorerTree.BeginInvoke(() =>
                 {
                     try
                     {
@@ -131,7 +135,6 @@ namespace NTDLS.Katzebase.Management.Classes
                                 parentSchemaNode.Parent?.Expand();
                                 parentSchemaNode.Expand();
                             }
-                            ServerExplorerManager.SortChildNodes(parentSchemaNode); //Sort the indexes.
                         }
                     }
                     finally

@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
 
         public string TopLevelOperation { get; set; } = string.Empty;
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get; internal set; } = Guid.NewGuid();
         /// <summary>
         /// When we create the transaction log database, we split it into buvkets
         /// </summary>
@@ -698,47 +698,48 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         var txRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
                         var txCf = txRdb.GetColumnFamily(new RdbKey(Id));
 
-                        using var iterator = txRdb.NewIterator(txCf);
-
-                        for (iterator.SeekToLast(); iterator.Valid(); iterator.Prev())
+                        using (var iterator = txRdb.NewIterator(txCf))
                         {
-                            var record = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
-                            if (record == null)
+                            for (iterator.SeekToLast(); iterator.Valid(); iterator.Prev())
                             {
-                                LogManager.Warning($"Transaction atom is null for {ProcessId}");
-                                continue;
-                            }
+                                var record = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
+                                if (record == null)
+                                {
+                                    LogManager.Warning($"Transaction atom is null for {ProcessId}");
+                                    continue;
+                                }
 
-                            //We need to eject the rolled back item from the cache since its last known state has changed.
-                            _core.Cache.Remove(record.CacheKey);
+                                //We need to eject the rolled back item from the cache since its last known state has changed.
+                                _core.Cache.Remove(record.CacheKey);
 
-                            if (record.Action == ActionType.KeyCreate)
-                            {
-                                try
+                                if (record.Action == ActionType.KeyCreate)
                                 {
-                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                    originalRdb.Remove(record.RdbKey, originalCf);
+                                    try
+                                    {
+                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                        var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                        originalRdb.Remove(record.RdbKey, originalCf);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
+                                    }
                                 }
-                                catch (Exception ex)
+                                else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
                                 {
-                                    LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
+                                    try
+                                    {
+                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                        var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                        originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                    }
                                 }
                             }
-                            else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
-                            {
-                                try
-                                {
-                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                    originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
-                                }
-                                catch (Exception ex)
-                                {
-                                    LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
-                                }
-                            }
-                        }
+                        } // Iterator closed before CleanupTransaction so the CF handle can be safely destroyed.
 
                         FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                         {
