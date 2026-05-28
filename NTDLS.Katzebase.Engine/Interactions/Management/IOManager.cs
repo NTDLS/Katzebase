@@ -193,6 +193,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return default;
                     }
 
+                    approximateSizeInBytes = bytes.Length;
+
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(bytes)));
 
@@ -204,6 +206,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         return default;
                     }
+
+                    approximateSizeInBytes = bytes.Length;
 
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                     {
@@ -524,8 +528,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, obj);
 
-                    rdb.Put(key.Bytes, output.ToArray(), columnFamilyName);
-
+                    var bytes = output.ToArray();
+                    rdb.Put(key.Bytes, bytes, columnFamilyName);
+                    approximateSizeInBytes = bytes.Length;
                 }
                 else
                 {
