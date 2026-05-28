@@ -680,62 +680,63 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 var indexCF = rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
-                // Step 2: Collect all document IDs with a sequential key-only scan (no deserialization).
-                var documentIds = new List<uint>();
-                using (var docIter = rdb.NewIterator(documentsCF))
-                {
-                    for (docIter.SeekToFirst(); docIter.Valid(); docIter.Next())
-                        documentIds.Add(RdbKey.ConvertToUint(docIter.Key()));
-                }
-
-                // Step 3: Accumulate index entries in parallel. Each worker loads a document,
+                // Step 2: Accumulate index entries in parallel. Each worker loads a document,
                 // extracts the indexed field values, and inserts into a thread-safe accumulator.
                 // ConcurrentDictionary.GetOrAdd + ConcurrentBag.Add are both lock-free for this usage.
-                // Uniqueness violations are checked after the pool completes (see step 4).
+                // Uniqueness violations are checked after the pool completes (see step 3).
                 var accumulator = new ConcurrentDictionary<string, (byte[] KeyBytes, ConcurrentBag<uint> DocIds)>(StringComparer.Ordinal);
 
                 var childPool = _core.ThreadPool.Indexing.CreateChildPool<uint>(_core.Settings.IndexingThreadPoolQueueDepth);
-                foreach (var documentId in documentIds)
+                using (var docIter = rdb.NewIterator(documentsCF))
                 {
-                    childPool.Enqueue(documentId, (threadDocumentId) =>
+                    for (docIter.SeekToFirst(); docIter.Valid(); docIter.Next())
                     {
-                        transaction.EnsureActive();
+                        var documentId = RdbKey.ConvertToUint(docIter.Key());
 
-                        var physicalDocument = _core.Documents.AcquireDocument(
-                            transaction, physicalSchema, threadDocumentId, LockOperation.Read);
-                        if (physicalDocument == null) return;
+                        childPool.Enqueue(documentId, (threadDocumentId) =>
+                            {
+                                transaction.EnsureActive();
 
-                        var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
-                        if (fieldValues.Count != physicalIndex.Attributes.Count)
-                            return; // document is missing one or more indexed fields — skip
+                                var physicalDocument = _core.Documents.AcquireDocument(
+                                    transaction, physicalSchema, threadDocumentId, LockOperation.Read);
+                                if (physicalDocument == null) return;
 
-                        var keyBytes = IndexKeyBuilder.Build(fieldValues);
-                        var keyHex = Convert.ToHexStringLower(keyBytes);
+                                var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
+                                if (fieldValues.Count != physicalIndex.Attributes.Count)
+                                    return; // document is missing one or more indexed fields — skip
 
-                        // GetOrAdd is safe: if two threads race on the same key, only one ConcurrentBag
-                        // is inserted; both threads then Add to that same shared bag via the ref.
-                        var entry = accumulator.GetOrAdd(keyHex, _ => (keyBytes, new ConcurrentBag<uint>()));
-                        entry.DocIds.Add(threadDocumentId);
-                    });
+                                var keyBytes = IndexKeyBuilder.Build(fieldValues);
+                                var keyHex = Convert.ToHexStringLower(keyBytes);
+
+                                // GetOrAdd is safe: if two threads race on the same key, only one ConcurrentBag
+                                // is inserted; both threads then Add to that same shared bag via the ref.
+                                var entry = accumulator.GetOrAdd(keyHex, _ => (keyBytes, new ConcurrentBag<uint>()));
+                                entry.DocIds.Add(threadDocumentId);
+                            });
+                    }
                 }
                 childPool.WaitForCompletion(); // Propagates worker exceptions as AggregateException.
 
-                // Step 4: Check uniqueness constraints now that all documents have been processed.
+                // Step 3: Check uniqueness constraints now that all documents have been processed.
                 if (physicalIndex.IsUnique)
                 {
                     foreach (var (_, (_, docIds)) in accumulator)
                     {
                         if (docIds.Count > 1)
+                        {
                             throw new KbDuplicateKeyViolationException(
                                 $"Duplicate key violation rebuilding unique index [{physicalIndex.Name}] on [{physicalSchema.Name}].");
+                        }
                     }
                 }
 
-                // Step 5: Write all accumulated entries as a single atomic batch.
+                // Step 4: Write all accumulated entries as a single atomic batch.
                 var ptWrite = transaction.Instrumentation.CreateToken(PerformanceCounter.IOWrite);
                 using var batch = new RocksDbSharp.WriteBatch();
                 foreach (var (_, (keyBytes, docIds)) in accumulator)
+                {
                     batch.Put(keyBytes, IndexKeyBuilder.PackDocumentIds(docIds.ToList()), indexCF.Handle);
+                }
                 rdb.Write(batch);
                 ptWrite?.StopAndAccumulate();
             }
