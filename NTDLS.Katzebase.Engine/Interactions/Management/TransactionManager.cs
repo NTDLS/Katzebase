@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 _collection.Write((obj) =>
                 {
-                    var transaction = GetByProcessId(processId);
+                    var transaction = obj.FirstOrDefault(o => o.ProcessId == processId);
                     if (transaction != null)
                     {
                         obj.Remove(transaction);
@@ -137,15 +137,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
+                Transaction? transaction = null;
+
+                // Remove the transaction from the collection first, under the lock, then
+                // roll it back outside the lock. Calling Rollback() while holding _collection
+                // causes a re-entrant deadlock: Rollback() itself needs _collection.CriticalSection
+                // (via WriteAll) and calls RemoveByProcessId() which also writes _collection.
                 var wasLockObtained = _collection.TryWrite(100, (obj) =>
                 {
-                    var transaction = GetByProcessId(processId);
+                    transaction = obj.FirstOrDefault(o => o.ProcessId == processId);
                     if (transaction != null)
                     {
-                        transaction.Rollback();
                         obj.Remove(transaction);
                     }
                 });
+
+                if (wasLockObtained)
+                {
+                    // Rollback outside the lock. If RemoveByProcessId is called again from within
+                    // Rollback(), it will find nothing in the collection and be a no-op.
+                    transaction?.Rollback();
+                }
 
                 return wasLockObtained;
             }
