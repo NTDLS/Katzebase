@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
 
         public string TopLevelOperation { get; set; } = string.Empty;
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get; internal set; } = Guid.NewGuid();
         /// <summary>
         /// When we create the transaction log database, we split it into buvkets
         /// </summary>

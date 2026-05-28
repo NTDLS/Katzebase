@@ -194,35 +194,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var transationId in transationIDs)
                 {
-                    var transaction = new Transaction(_core, this, 0, true);
+                    // Assign the orphaned transaction's ID so Rollback() looks up the correct
+                    // column family and CleanupTransaction() drops it afterwards.
+                    var transaction = new Transaction(_core, this, 0, true) { Id = transationId };
 
-                    long? lastSequence = null;
+                    long lastSequence = 0;
 
-                    //Get the last sequence jusy for display purposes.
                     var columnFamily = rdb.GetColumnFamily(new RdbKey(transationId));
                     using var iterator = rdb.NewIterator(columnFamily);
                     iterator.SeekToLast();
                     if (iterator.Valid())
                     {
                         var lastAtom = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
-                        lastSequence = lastAtom?.Sequence;
+                        lastSequence = lastAtom?.Sequence ?? 0;
                     }
 
-                    iterator.Dispose();
+                    LogManager.Warning($"Rolling back orphaned transaction {transationId} with {lastSequence:N0} actions.");
 
-                    if (lastSequence != null)
+                    try
                     {
-
-                        LogManager.Warning($"Rolling back transaction {transaction} with {lastSequence:n0} actions.");
-
-                        try
-                        {
-                            transaction.Rollback();
-                        }
-                        catch (Exception ex)
-                        {
-                            LogManager.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
-                        }
+                        transaction.Rollback();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogManager.Error($"Failed to rollback orphaned transaction {transationId}.", ex);
                     }
                 }
 
