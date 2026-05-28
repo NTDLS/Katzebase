@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Trace($"IO:Read:{transaction.ProcessId}->{cacheKey}");
 
                 T? deserializedObject;
-                int approximateSizeInBytes = 0;
+                int estimatedObjectSize = 0;
 
                 if (format == IOFormat.JSON)
                 {
@@ -193,11 +193,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return default;
                     }
 
-                    approximateSizeInBytes = bytes.Length;
+                    estimatedObjectSize = bytes.Length;
 
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(bytes)));
-
                 }
                 else if (format == IOFormat.PBuf)
                 {
@@ -207,7 +206,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return default;
                     }
 
-                    approximateSizeInBytes = bytes.Length;
+                    estimatedObjectSize = bytes.Length;
 
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                     {
@@ -223,7 +222,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled && deserializedObject != null)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                        _core.Cache.Set(cacheKey, deserializedObject, approximateSizeInBytes));
+                        _core.Cache.Set(cacheKey, deserializedObject, estimatedObjectSize));
 
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadAdditions);
                 }

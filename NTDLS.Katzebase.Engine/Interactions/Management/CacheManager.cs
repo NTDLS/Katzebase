@@ -40,10 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     SizeLimitBytes = core.Settings.CacheMaxMemoryMegabytes * 1024L * 1024L,
                     IsCaseSensitive = false,
                     PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount,
-                    ExpirationScanFrequency = TimeSpan.FromSeconds(core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30),
-                    // Required: without this the library forces every item's reported size to 0,
-                    // making SizeLimitBytes completely inert and allowing unbounded memory growth.
-                    EstimateObjectSize = true
+                    ExpirationScanFrequency = TimeSpan.FromSeconds(core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30)
                 };
 
                 _cache = new PartitionedMemoryCache(config);
