@@ -196,8 +196,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 _core.IO.DeleteKey(transaction, physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name));
-                _core.IO.CloseRdb(physicalSchema.DocumentsFilePath());
-                _core.IO.CloseRdb(physicalSchema.SchemaFilePath());
+                _core.IO.CloseRdbsUnderPath(physicalSchema.DiskPath);
                 Directory.Delete(physicalSchema.DiskPath, true);
 
                 var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, physicalSchema.Name);

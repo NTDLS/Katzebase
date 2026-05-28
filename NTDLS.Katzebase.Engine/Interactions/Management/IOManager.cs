@@ -396,6 +396,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 lazy.Value.Dispose();
         }
 
+        /// <summary>
+        /// Closes and disposes every open RocksDB instance whose file path lives inside
+        /// the given directory (inclusive). Used before recursively deleting a schema tree
+        /// so that every child schema's RDB files are released before the directory is removed.
+        /// </summary>
+        internal void CloseRdbsUnderPath(string directoryPath)
+        {
+            // Normalize to a prefix that every file path under this directory will start with.
+            var prefix = directoryPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                         + Path.DirectorySeparatorChar;
+
+            foreach (var key in _rdbInstances.Keys)
+            {
+                if (key.StartsWith(prefix, StringComparison.InvariantCultureIgnoreCase)
+                    || key.Equals(directoryPath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (_rdbInstances.TryRemove(key, out var lazy) && lazy.IsValueCreated)
+                        lazy.Value.Dispose();
+                }
+            }
+        }
+
         internal Rdb AcquireRdb(string rdbPath)
         {
             var lazy = _rdbInstances.GetOrAdd(rdbPath, path =>
