@@ -41,21 +41,14 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void DropColumnFamily(KbColumnFamilyName name)
         {
-            // Load the handle into the cache if not already present, then remove and dispose it.
-            // RocksDB requires all handles to a CF to be destroyed before the drop is durably
-            // recorded in the MANIFEST (survives restart). Disposing the handle achieves this.
-            var cf = GetColumnFamily(name);
             ColumnFamilies.TryRemove(name.ToString(), out _);
-            Instance.DropColumnFamily(cf.Handle);
-            cf.Handle.Dispose();
+            Instance.DropColumnFamily(name.ToString());
         }
 
         public void DropColumnFamily(RdbKey key)
         {
-            var cf = GetColumnFamily(key);
             ColumnFamilies.TryRemove(key.ToString(), out _);
-            Instance.DropColumnFamily(cf.Handle);
-            cf.Handle.Dispose();
+            Instance.DropColumnFamily(key.ToString());
         }
 
         #region CreateColumnFamily

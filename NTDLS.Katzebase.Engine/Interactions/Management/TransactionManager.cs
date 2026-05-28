@@ -172,35 +172,40 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var transationIDs = new HashSet<Guid>();
-                var options = new DbOptions();
-                var columnFamilies = new ColumnFamilies();
-                foreach (var cf in RocksDb.ListColumnFamilies(options, _core.Settings.TransactionDataPath))
+                var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+
+                // Use the Identity CF as the source of truth for orphaned transactions rather than
+                // ListColumnFamilies. The Identity entry is removed in CleanupTransaction(), so
+                // even if DropColumnFamily() doesn't permanently remove the CF file on disk, the
+                // same GUID won't be re-processed on subsequent restarts.
+                var transactionIDs = new HashSet<Guid>();
+                var identityCF = rdb.GetColumnFamily(KbColumnFamilyName.Identity);
+                using (var iterator = rdb.NewIterator(identityCF))
                 {
-                    if (Guid.TryParse(cf, out var transationId))
+                    for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
                     {
-                        transationIDs.Add(transationId);
+                        var keyBytes = iterator.Key();
+                        if (keyBytes.Length == 16)
+                            transactionIDs.Add(new Guid(keyBytes));
                     }
                 }
 
-                if (transationIDs.Count == 0)
+                if (transactionIDs.Count == 0)
                 {
                     return;
                 }
 
-                LogManager.Warning($"Rolling back {transationIDs.Count} open transactions.");
+                LogManager.Warning($"Rolling back {transactionIDs.Count} open transactions.");
 
-                var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
-
-                foreach (var transationId in transationIDs)
+                foreach (var transactionId in transactionIDs)
                 {
                     // Assign the orphaned transaction's ID so Rollback() looks up the correct
                     // column family and CleanupTransaction() drops it afterwards.
-                    var transaction = new Transaction(_core, this, 0, true) { Id = transationId };
+                    var transaction = new Transaction(_core, this, 0, true) { Id = transactionId };
 
                     long lastSequence = 0;
 
-                    var columnFamily = rdb.GetColumnFamily(new RdbKey(transationId));
+                    var columnFamily = rdb.GetColumnFamily(new RdbKey(transactionId));
                     using (var iterator = rdb.NewIterator(columnFamily))
                     {
                         iterator.SeekToLast();
@@ -209,9 +214,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var lastAtom = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
                             lastSequence = lastAtom?.Sequence ?? 0;
                         }
-                    } // Iterator closed before Rollback so CleanupTransaction can safely destroy the CF handle.
+                    } // Iterator closed before Rollback so CleanupTransaction can drop the CF.
 
-                    LogManager.Warning($"Rolling back orphaned transaction {transationId} with {lastSequence:N0} actions.");
+                    LogManager.Warning($"Rolling back orphaned transaction {transactionId} with {lastSequence:N0} actions.");
 
                     try
                     {
@@ -219,10 +224,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     catch (Exception ex)
                     {
-                        LogManager.Error($"Failed to rollback orphaned transaction {transationId}.", ex);
+                        LogManager.Error($"Failed to rollback orphaned transaction {transactionId}.", ex);
                     }
                 }
-
             }
             catch (Exception ex)
             {
