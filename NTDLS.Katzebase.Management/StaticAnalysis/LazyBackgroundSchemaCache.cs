@@ -15,6 +15,13 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// </summary>
         private const int ExistingCacheItemRefreshIntervalSeconds = 10;
 
+        /// <summary>
+        /// Maximum number of deferred schema detail fetches (indexes + fields) to process per
+        /// ProcessSchemaQueue cycle. Keeps the tree responsive during bulk discovery by spreading
+        /// network calls across cycles rather than doing hundreds synchronously.
+        /// </summary>
+        private const int DetailFetchBatchSize = 25;
+
         public delegate void CacheUpdated(List<CachedSchema> schemaCache);
         public event CacheUpdated? OnCacheUpdated;
 
@@ -48,6 +55,12 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// The cache of schemas.
         /// </summary>
         private readonly List<CachedSchema> _schemaCache = new();
+
+        /// <summary>
+        /// Newly discovered schemas whose indexes/fields have not yet been fetched.
+        /// Populated during bulk discovery and drained in small batches each cycle.
+        /// </summary>
+        private readonly Queue<CachedSchema> _pendingDetailQueue = new();
 
         public List<CachedSchema> GetCache(out int cacheHash)
         {
@@ -85,6 +98,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     {
                         _schemaCache.Clear();
                         _schemaWorkQueue.Clear();
+                        lock (_pendingDetailQueue)
+                            _pendingDetailQueue.Clear();
                     }
                     else
                     {
@@ -143,6 +158,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                                             _schemaCache.Clear();
                                         }
                                     }
+                                    lock (_pendingDetailQueue)
+                                        _pendingDetailQueue.Clear();
                                 }
 
                                 if (ProcessSchemaQueue())
@@ -272,6 +289,35 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 _schemaWorkQueue.AddRange(schemasInParent);
             }
 
+            // Drain a small batch of deferred detail requests (indexes + fields) so
+            // schemas discovered in bulk get their details populated progressively.
+            List<CachedSchema> detailBatch = new();
+            lock (_pendingDetailQueue)
+            {
+                while (_pendingDetailQueue.Count > 0 && detailBatch.Count < DetailFetchBatchSize)
+                    detailBatch.Add(_pendingDetailQueue.Dequeue());
+            }
+
+            foreach (var schema in detailBatch)
+            {
+                if (ServerExplorerConnection.Client?.IsConnected != true) break;
+                try
+                {
+                    var indexes = ServerExplorerConnection.Client.Schema.Indexes.List(schema.Schema.Path);
+                    schema.Indexes = indexes.Collection;
+                    var fields = ServerExplorerConnection.Client.Schema.FieldSample(schema.Schema.Path);
+                    schema.Fields = fields.Collection.Select(o => o.Name).ToList();
+                    OnCacheItemRefreshed?.Invoke(schema);
+                    wereItemsUpdated = true;
+                }
+                catch
+                {
+                    // Re-enqueue so it gets another attempt next cycle.
+                    lock (_pendingDetailQueue)
+                        _pendingDetailQueue.Enqueue(schema);
+                }
+            }
+
             return wereItemsUpdated;
         }
 
@@ -315,17 +361,29 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
 
             if (newlyAddedOrUpdatedSchemaCacheItem != null)
             {
-                try
+                if (schemaCacheItemAdded)
                 {
-                    var indexes = ServerExplorerConnection.Client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
-                    newlyAddedOrUpdatedSchemaCacheItem.Indexes = indexes.Collection;
-
-                    var fields = ServerExplorerConnection.Client.Schema.FieldSample(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
-                    newlyAddedOrUpdatedSchemaCacheItem.Fields = fields.Collection.Select(o => o.Name).ToList();
+                    // Defer detail loading for newly discovered schemas so bulk discovery
+                    // (e.g. a parent with hundreds of children) doesn't block on hundreds of
+                    // synchronous Indexes.List + FieldSample roundtrips. The schema appears
+                    // in the tree immediately; details trickle in via the pending detail queue.
+                    lock (_pendingDetailQueue)
+                        _pendingDetailQueue.Enqueue(newlyAddedOrUpdatedSchemaCacheItem);
                 }
-                catch
+                else if (schemaCacheItemRefreshed)
                 {
-                    //Probably a timeout, carry on...
+                    try
+                    {
+                        var indexes = ServerExplorerConnection.Client.Schema.Indexes.List(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
+                        newlyAddedOrUpdatedSchemaCacheItem.Indexes = indexes.Collection;
+
+                        var fields = ServerExplorerConnection.Client.Schema.FieldSample(newlyAddedOrUpdatedSchemaCacheItem.Schema.Path);
+                        newlyAddedOrUpdatedSchemaCacheItem.Fields = fields.Collection.Select(o => o.Name).ToList();
+                    }
+                    catch
+                    {
+                        //Probably a timeout, carry on...
+                    }
                 }
             }
 
