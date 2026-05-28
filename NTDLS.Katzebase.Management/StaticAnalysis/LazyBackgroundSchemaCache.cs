@@ -22,6 +22,13 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// </summary>
         private const int DetailFetchBatchSize = 25;
 
+        /// <summary>
+        /// Maximum number of schemas to dequeue from the work queue per ProcessSchemaQueue cycle.
+        /// Prevents hundreds of Client.Schema.List() calls firing back-to-back when a parent with
+        /// many children is first discovered — each List() call is a network round-trip.
+        /// </summary>
+        private const int WorkQueueBatchSize = 10;
+
         public delegate void CacheUpdated(List<CachedSchema> schemaCache);
         public event CacheUpdated? OnCacheUpdated;
 
@@ -222,8 +229,11 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             {
                 if (_schemaWorkQueue.Count > 0)
                 {
-                    workingQueue.AddRange(_schemaWorkQueue);
-                    _schemaWorkQueue.Clear();
+                    // Take only a bounded batch per cycle so a parent with hundreds of children
+                    // doesn't cause hundreds of Client.Schema.List() calls in one uninterrupted loop.
+                    int take = Math.Min(_schemaWorkQueue.Count, WorkQueueBatchSize);
+                    workingQueue.AddRange(_schemaWorkQueue.Take(take));
+                    _schemaWorkQueue.RemoveRange(0, take);
                 }
             }
 
