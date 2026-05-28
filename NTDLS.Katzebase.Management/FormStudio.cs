@@ -58,6 +58,7 @@ namespace NTDLS.Katzebase.Management
             treeViewMacros.Dock = DockStyle.Fill;
 
             treeViewServerExplorer.NodeMouseClick += TreeViewServerExplorer_NodeMouseClick;
+            treeViewServerExplorer.AfterExpand += TreeViewServerExplorer_AfterExpand;
 
             tabControlBody.Click += TabControlBody_Click;
             tabControlBody.TabIndexChanged += TabControlBody_TabIndexChanged;
@@ -565,6 +566,15 @@ namespace NTDLS.Katzebase.Management
         #endregion
 
         #region Server Explorer Treeview Shenanigans.
+
+        private void TreeViewServerExplorer_AfterExpand(object? sender, TreeViewEventArgs e)
+        {
+            if (e.Node is ServerExplorerNode { NodeType: Constants.ServerNodeType.Schema } schemaNode && schemaNode.Schema != null)
+            {
+                var serverNode = ServerExplorerManager.GetServerNodeFor(schemaNode);
+                serverNode?.ExplorerConnection?.LazySchemaCache.PrioritizeSchema(schemaNode.Schema.Id);
+            }
+        }
 
         private void TreeViewServerExplorer_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
         {

@@ -92,6 +92,27 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         }
 
         /// <summary>
+        /// Moves the given schema to the front of the pending detail queue so its
+        /// indexes and field list load before any other queued schemas. Called when
+        /// the user expands a schema node in the tree.
+        /// </summary>
+        public void PrioritizeSchema(Guid schemaId)
+        {
+            lock (_pendingDetailQueue)
+            {
+                var items = _pendingDetailQueue.ToList();
+                var target = items.FirstOrDefault(o => o.Schema.Id == schemaId);
+                if (target == null) return;
+
+                items.Remove(target);
+                _pendingDetailQueue.Clear();
+                _pendingDetailQueue.Enqueue(target);
+                foreach (var item in items)
+                    _pendingDetailQueue.Enqueue(item);
+            }
+        }
+
+        /// <summary>
         /// Removes all cache items that start with the given schema path.
         /// </summary>
         /// <param name="schemaPath"></param>
