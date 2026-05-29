@@ -67,8 +67,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
             CancelButton = cmdCancel;
 
 #if DEBUG
-            textBoxServer.Text = ".";
-            comboBoxDatabaseName.Text = "WordList";
+            textBoxServer.Text = "devsql01";
+            comboBoxDatabaseName.Text = "AdventureWorks";
 #endif
 
         }
