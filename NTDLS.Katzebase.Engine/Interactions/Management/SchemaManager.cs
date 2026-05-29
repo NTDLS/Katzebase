@@ -207,6 +207,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.IO.CloseRdbsUnderPath(physicalSchema.DiskPath);
                 Directory.Delete(physicalSchema.DiskPath, true);
 
+                transaction.LockPathRecursive(LockOperation.Delete, new CacheKey(physicalSchema.DiskPath));
+
                 var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, physicalSchema.Name);
                 _core.Cache.Remove(cacheKey);
 
