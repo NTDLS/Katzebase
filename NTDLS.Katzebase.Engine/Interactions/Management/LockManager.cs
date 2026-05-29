@@ -124,6 +124,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
+                // A PathRecursive intention must also see finer-grained locks that already
+                // exist within its target subtree, otherwise a schema-level delete could be
+                // granted while another transaction holds an Object or Path lock on a child.
+                if (intention.Granularity == LockGranularity.PathRecursive)
+                {
+                    var childLocks = existingLocks.Where(o =>
+                        (o.Granularity == LockGranularity.Object || o.Granularity == LockGranularity.Path)
+                        && o.TargetKey.Value.StartsWith(intention.TargetKey.Value)).ToList();
+
+                    childLocks.ForEach(o => result.Add(o));
+                }
+
                 return result;
             });
 
