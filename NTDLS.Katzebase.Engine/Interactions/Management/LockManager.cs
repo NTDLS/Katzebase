@@ -99,14 +99,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var result = new HashSet<ObjectLock>();
 
-                var intentionDirectory = (Path.GetDirectoryName(intention.TargetKey.Value) ?? string.Empty) + Path.DirectorySeparatorChar;
+                var intentionDirectory = (Path.GetDirectoryName(intention.TargetKey.Canonical) ?? string.Empty) + Path.DirectorySeparatorChar;
 
                 //If we are locking a file, then look for all other locks for the exact path.
                 if (intention.Granularity == LockGranularity.Object)
                 {
                     var fileLocks = existingLocks.Where(o =>
                         o.Granularity == LockGranularity.Object
-                        && o.TargetKey.Value == intention.TargetKey.Value).ToList();
+                        && o.TargetKey.Canonical == intention.TargetKey.Canonical).ToList();
 
                     fileLocks.ForEach(o => result.Add(o));
                 }
@@ -114,13 +114,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Check if the intended file or directory is in a locked directory.
                 var exactDirectoryLocks = existingLocks.Where(o =>
                     (o.Granularity == LockGranularity.Path)
-                    && o.TargetKey.Value == intentionDirectory).ToList();
+                    && o.TargetKey.Canonical == intentionDirectory).ToList();
 
                 exactDirectoryLocks.ForEach(o => result.Add(o));
 
                 var directoryAndSubPathLocks = existingLocks.Where(o =>
                     o.Granularity == LockGranularity.PathRecursive
-                    && intentionDirectory.StartsWith(o.TargetKey.Value)).ToList();
+                    && intentionDirectory.StartsWith(o.TargetKey.Canonical)).ToList();
 
                 directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var childLocks = existingLocks.Where(o =>
                         (o.Granularity == LockGranularity.Object || o.Granularity == LockGranularity.Path)
-                        && o.TargetKey.Value.StartsWith(intention.TargetKey.Value)).ToList();
+                        && o.TargetKey.Canonical.StartsWith(intention.TargetKey.Canonical)).ToList();
 
                     childLocks.ForEach(o => result.Add(o));
                 }
@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             lock (_concurrentGrantLocks)
             {
                 // Produces a semaphore that is used to ensure that we do not simultaneously operate on any single file.
-                if (_concurrentGrantLocks.TryGetValue(intention.Key, out concurrencyLock))
+                if (_concurrentGrantLocks.TryGetValue(intention.TargetKey.FilePath, out concurrencyLock))
                 {
                     //There are other threads currently waiting for a lock on this file.
                     concurrencyLock.ReferenceCount++;
@@ -166,7 +166,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     //This is the first thread in line for a lock on this file.
                     concurrencyLock = new ObjectConcurrencyLock();
-                    _concurrentGrantLocks.Add(intention.Key, concurrencyLock);
+                    _concurrentGrantLocks.Add(intention.TargetKey.FilePath, concurrencyLock);
                 }
 
                 //Record that we are waiting on the grant. This is used for deadlock detection.
@@ -235,10 +235,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 lock (_concurrentGrantLocks)
                 {
                     //Decrement this threads lock on the file and remove it from the collection if we are the last one.
-                    _concurrentGrantLocks[intention.Key].ReferenceCount--;
-                    if (_concurrentGrantLocks[intention.Key].ReferenceCount == 0)
+                    _concurrentGrantLocks[intention.TargetKey.FilePath].ReferenceCount--;
+                    if (_concurrentGrantLocks[intention.TargetKey.FilePath].ReferenceCount == 0)
                     {
-                        _concurrentGrantLocks.Remove(intention.Key);
+                        _concurrentGrantLocks.Remove(intention.TargetKey.FilePath);
                     }
 
                     //Let other transactions know that we are no longer waiting on this lock.
@@ -668,7 +668,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             explanation.AppendLine("        Lock Intention {");
             explanation.AppendLine($"            Granularity: {intention.Granularity}");
             explanation.AppendLine($"            Operation: {intention.Operation}");
-            explanation.AppendLine($"            Object: {intention.TargetKey.Value}");
+            explanation.AppendLine($"            Object: {intention.TargetKey.Canonical}");
             explanation.AppendLine("        }");
             explanation.AppendLine("        Held Locks {");
             transaction.HeldLockKeys.Read((obj) =>

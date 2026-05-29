@@ -13,9 +13,9 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ulong ProcessId { get; set; }
 
         public string ObjectName
-            => $"{ObjectLock.Granularity}:{ObjectLock.TargetKey.Value}";
+            => $"{ObjectLock.Granularity}:{ObjectLock.TargetKey.Canonical}";
 
         public new string ToString()
-            => $"{ObjectLock.Granularity}:{Operation}:{ObjectLock.TargetKey.Value}";
+            => $"{ObjectLock.Granularity}:{Operation}:{ObjectLock.TargetKey.Canonical}";
     }
 }

@@ -25,8 +25,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, long key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
         public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, ulong key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
         public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, Guid key) => MakeCacheKey(rdbPath, columnFamily, new RdbKey(key));
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key) => new($"{rdbPath}:{columnFamily}:{key}");
-        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily) => new($"{rdbPath}:{columnFamily}");
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key) => new(rdbPath, $"{rdbPath}:{columnFamily}:{key}");
+        public static CacheKey MakeCacheKey(string rdbPath, KbColumnFamilyName columnFamily) => new(rdbPath, $"{rdbPath}:{columnFamily}");
 
         internal int PartitionCount { get; private set; }
 
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var ttl = _core.Settings.CacheSeconds > 0 ? TimeSpan.FromSeconds(_core.Settings.CacheSeconds) : (TimeSpan?)null;
-                _cache.Upsert(key.Value, value, approximateSizeInBytes, ttl);
+                _cache.Upsert(key.Canonical, value, approximateSizeInBytes, ttl);
             }
             catch (Exception ex)
             {
@@ -130,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (_cache.TryGet(key.Value, out value))
+                if (_cache.TryGet(key.Canonical, out value))
                 {
                     return value != null;
                 }
@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (_cache.TryGet(key.Value, out value))
+                if (_cache.TryGet(key.Canonical, out value))
                 {
                     return value != null;
                 }
@@ -165,7 +165,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _cache.Get(key.Value);
+                return _cache.Get(key.Canonical);
             }
             catch (Exception ex)
             {
@@ -178,7 +178,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _cache.Remove(key.Value);
+                _cache.Remove(key.Canonical);
             }
             catch (Exception ex)
             {
@@ -191,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _cache.RemoveItemsWithPrefix(cacheKey.Value);
+                _cache.RemoveItemsWithPrefix(cacheKey.Canonical);
             }
             catch (Exception ex)
             {

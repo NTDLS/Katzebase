@@ -6,7 +6,6 @@ using NTDLS.Katzebase.Engine.Locking;
 using RocksDbSharp;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;

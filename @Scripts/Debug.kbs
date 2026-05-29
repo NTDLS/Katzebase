@@ -1,12 +1,14 @@
---2ms
+set TraceWaitTimes true
+set WarnMissingFields false
+
 SELECT
-	S.Value,
-	Sha1('t'),
-    11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
-    6 * -1 as Negative,
-    10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
-    10 + 10 + 'ten' + 10 * 10,
-    'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
+	S.Value, --Should be null.
+	Sha1('t') as Hash,
+    11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2) as MathAndStr,
+    6 * 10 * -1 as Negative,
+    10 + 10 + (11 ^ 3) + 10 + '->' + Guid() as GuidConcat,
+    10 + 10 + 'ten' + 10 * 10 as MathStr2,
+    'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt') as DtConcat
 FROM
 	Single as S
 WHERE
@@ -25,7 +27,6 @@ WHERE
 ORDER BY
 	10
 
---4ms
 select
 	p.body
 from
@@ -37,11 +38,10 @@ where
 order by
 	P.CreationDate
 
---48ms
 SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,
-	Avg(sw.Id) as Average,
+	Round(Avg(sw.Id), 2) as Average,
 	Count(0) as CountOf
 FROM
 	WordList:Word as sw
@@ -61,31 +61,5 @@ GROUP BY
 	tw.Text
 ORDER BY
 	Avg(sw.Id / 60) asc,
-	sw.Text desc
-
---22 ms
-SELECT
-	sw.Text as SourceWord,
-	tw.Text as TargetWord,
-	Avg(sw.Id) as Average,
-	Count(0) as CountOf
-FROM
-	WordList:Word as sw
-INNER JOIN WordList:Language as sl
-	ON sl.Id = sw.LanguageId
-INNER JOIN WordList:Synonym as s
-	ON s.SourceWordId = sw.Id
-INNER JOIN WordList:Word as tw
-	ON tw.Id = s.TargetWordId
-INNER JOIN WordList:Language as tl
-	ON tl.Id = tw.LanguageId
-WHERE
-	sw.Text = 'Car'
-	OR sw.Text = 'Gym'
-GROUP BY
-	sw.Text,
-	tw.Text
-ORDER BY
-	Avg(sw.Id / 60) asc,
-	sw.Text desc
-	
+	sw.Text desc,
+	tw.Text asc

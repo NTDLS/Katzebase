@@ -157,7 +157,7 @@
         public enum LockGranularity
         {
             /// <summary>
-            /// All files in a directory.
+            /// All files in a path.
             /// </summary>
             Path = 1,
             /// <summary>
@@ -165,7 +165,7 @@
             /// </summary>
             Object = 2,
             /// <summary>
-            /// All files in a directory and all directories below it.
+            /// All files in a path and all paths below it.
             /// </summary>
             PathRecursive = 3
         }

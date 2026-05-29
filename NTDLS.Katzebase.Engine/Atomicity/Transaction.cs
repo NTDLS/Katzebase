@@ -540,11 +540,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
@@ -574,11 +574,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
@@ -609,11 +609,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedReadObjectKeys)
                 {
-                    if (_recordedReadObjectKeys.Contains(targetKey.Value))
+                    if (_recordedReadObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedReadObjectKeys.Add(targetKey.Value);
+                    _recordedReadObjectKeys.Add(targetKey.Canonical);
                 }
 
                 FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(targetKey, key.Bytes)));
@@ -639,11 +639,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
