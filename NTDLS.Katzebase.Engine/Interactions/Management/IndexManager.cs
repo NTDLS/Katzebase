@@ -73,9 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-
-                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
-
+                _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
                 rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
@@ -173,11 +171,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
                 var physicalIndex = AcquireIndex(transaction, physicalSchema, indexName, LockOperation.Write);
                 if (physicalIndex != null)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id));
-                    var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                    _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id));
                     rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 }
             }
@@ -607,7 +605,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         transaction.EnsureActive();
 
-                        var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read, false);
+                        var physicalDocument = _core.Documents.AcquireDocument(transaction, rdb, documentId, LockOperation.Read, false);
                         if (physicalDocument == null) continue;
 
                         var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
@@ -645,12 +643,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var physicalIndex = AcquireIndex(transaction, schemaName, indexName, LockOperation.Write)
                     ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
 
                 physicalIndex.Modified = DateTime.UtcNow;
 
-                _core.IO.PutJson(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
+                _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
             }
             catch (Exception ex)
             {
@@ -708,7 +707,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             transaction.EnsureActive();
 
-                            var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, threadDocumentId, LockOperation.Read, false);
+                            var physicalDocument = _core.Documents.AcquireDocument(transaction, rdb, threadDocumentId, LockOperation.Read, false);
                             if (physicalDocument == null) return;
 
                             var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
@@ -774,12 +773,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction,
-            PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             try
             {
-                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Indexes, intendedOperation);
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, rdb, KbColumnFamilyName.Indexes, intendedOperation);
                 return indexes;
             }
             catch (Exception ex)

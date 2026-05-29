@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Locking;
 using RocksDbSharp;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -54,12 +55,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public T? GetNotTracked<T>(string rdbPath, KbColumnFamilyName columnFamilyName, byte[] key, IOFormat format)
+        public T? GetNotTracked<T>(Rdb rdb, KbColumnFamilyName columnFamilyName, byte[] key, IOFormat format)
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
-
                 T? deserializedObject;
 
                 if (format == IOFormat.JSON)
@@ -93,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
@@ -101,45 +100,43 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public byte[] GetNotTrackedRaw(string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key)
+        public byte[] GetNotTrackedRaw(Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key)
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
                 return rdb.Get(key.Bytes, columnFamilyName);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey, populateCache);
+        internal T? GetJson<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdb, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey, populateCache);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey, populateCache);
+        internal T? GetPBuf<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdb, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey, populateCache);
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out _, populateCache);
+        internal T? GetJson<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdb, columnFamilyName, key, lockOperation, IOFormat.JSON, out _, populateCache);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _, populateCache);
+        internal T? GetPBuf<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdb, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _, populateCache);
 
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public T? InternalTrackedGet<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key,
+        public T? InternalTrackedGet<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key,
             LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
         {
             try
             {
                 transaction.EnsureActive();
-                acquiredLockKey = transaction.LockFile(lockOperation, rdbPath);
-                var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, key);
-                transaction.RecordKeyRead(rdbPath, columnFamilyName, key, cacheKey);
-                var rdb = AcquireRdb(rdbPath);
+                var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
+                acquiredLockKey = transaction.LockSingleObject(lockOperation, cacheKey);
+                transaction.RecordKeyRead(rdb.Path, columnFamilyName, key, cacheKey);
 
                 if (_core.Settings.DeferredIOEnabled)
                 {
@@ -152,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         if (wasDeferred)
                         {
                             _core.Health.IncrementDiscrete(HealthCounterType.IODeferredReads);
-                            LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{rdbPath}");
+                            LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{cacheKey}");
                             return deferredReference;
                         }
                         return default;
@@ -231,34 +228,33 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal List<T> GetJsonList<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGetList<T>(transaction, rdbPath, columnFamilyName, lockOperation, IOFormat.JSON, out acquiredLockKey);
+        internal List<T> GetJsonList<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
+            => InternalTrackedGetList<T>(transaction, rdb, columnFamilyName, lockOperation, IOFormat.JSON, out acquiredLockKey);
 
-        internal List<T> GetPBufList<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGetList<T>(transaction, rdbPath, columnFamilyName, lockOperation, IOFormat.PBuf, out acquiredLockKey);
+        internal List<T> GetPBufList<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
+            => InternalTrackedGetList<T>(transaction, rdb, columnFamilyName, lockOperation, IOFormat.PBuf, out acquiredLockKey);
 
-        internal List<T> GetJsonList<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, LockOperation lockOperation)
-            => InternalTrackedGetList<T>(transaction, rdbPath, columnFamilyName, lockOperation, IOFormat.JSON, out _);
+        internal List<T> GetJsonList<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, LockOperation lockOperation)
+            => InternalTrackedGetList<T>(transaction, rdb, columnFamilyName, lockOperation, IOFormat.JSON, out _);
 
-        internal List<T> GetPBufList<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, LockOperation lockOperation)
-            => InternalTrackedGetList<T>(transaction, rdbPath, columnFamilyName, lockOperation, IOFormat.PBuf, out _);
+        internal List<T> GetPBufList<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, LockOperation lockOperation)
+            => InternalTrackedGetList<T>(transaction, rdb, columnFamilyName, lockOperation, IOFormat.PBuf, out _);
 
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public List<T> InternalTrackedGetList<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName,
+        public List<T> InternalTrackedGetList<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName,
             LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey)
         {
             try
             {
                 transaction.EnsureActive();
-                acquiredLockKey = transaction.LockFile(lockOperation, rdbPath);
-                var rdb = AcquireRdb(rdbPath);
+                acquiredLockKey = transaction.LockSingleObject(lockOperation, CacheManager.MakeCacheKey(rdb.Path, columnFamilyName));
 
                 /*
                 //We cant cache lists because we have no way to invalidate them on mutation of any single item in the list.
@@ -287,9 +283,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     using var iterator = rdb.NewIterator(columnFamilyName);
                     for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
                     {
-                        var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, new RdbKey(iterator.Key()));
+                        var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()));
 
-                        transaction.RecordKeyRead(rdbPath, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
+                        transaction.RecordKeyRead(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
 
                         if (_core.Settings.DeferredIOEnabled)
                         {
@@ -317,7 +313,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                             JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(iterator.Value())))
-                            ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdbPath}].");
+                            ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdb.Path}].");
 
                             deserializedObject.Add(obj);
                         }
@@ -328,9 +324,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     using var iterator = rdb.NewIterator(columnFamilyName);
                     for (iterator.SeekToFirst(); iterator.Valid(); iterator.Next())
                     {
-                        var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, new RdbKey(iterator.Key()));
+                        var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()));
 
-                        transaction.RecordKeyRead(rdbPath, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
+                        transaction.RecordKeyRead(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
 
                         if (_core.Settings.DeferredIOEnabled)
                         {
@@ -360,7 +356,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             {
                                 using var input = new MemoryStream(iterator.Value());
                                 return ProtoBuf.Serializer.Deserialize<T>(input);
-                            }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdbPath}].");
+                            }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdb.Path}].");
                             deserializedObject.Add(obj);
                         }
                     }
@@ -374,7 +370,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdb.Path}].", ex);
                 throw;
             }
         }
@@ -391,7 +387,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         // is first accessed, guarded by Lazy's default ExecutionAndPublication thread-safety mode.
         private readonly ConcurrentDictionary<string, Lazy<Rdb>> _rdbInstances =
             new(StringComparer.InvariantCultureIgnoreCase);
-
 
         internal void CloseRdb(string rdbPath)
         {
@@ -444,19 +439,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: if transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
+            var defaultCfOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                .SetWalTtlSeconds(0);
+
             var columnFamilies = new ColumnFamilies
                 {
-                    { KbColumnFamilyName.Documents.ToString(), columnFamilyOptions }, //Document data.
-                    { KbColumnFamilyName.Identity.ToString(), columnFamilyOptions },  //Identity management for auto-incrementing keys, etc.
-                    { KbColumnFamilyName.Indexes.ToString(), columnFamilyOptions },   //Indexes metadata for the documents.
-                    { KbColumnFamilyName.Policy.ToString(), columnFamilyOptions }     //Schema security policies.
+                    { KbColumnFamilyName.Documents.ToString(), defaultCfOptions }, //Document data.
+                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions },  //Identity management for auto-incrementing keys, etc.
+                    { KbColumnFamilyName.Indexes.ToString(), defaultCfOptions },   //Indexes metadata for the documents.
+                    { KbColumnFamilyName.Policy.ToString(), defaultCfOptions }     //Schema security policies.
                 };
             using var rdbInstance = RocksDb.Open(options, rdbPath, columnFamilies);
             rdbInstance.Dispose();
 
-            _core.IO.PutNonTrackedRaw(rdbPath, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(1U));
+            var rdb = AcquireRdb(rdbPath);
+            _core.IO.PutNonTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(1U));
         }
 
         internal void CreateSchemaRdb(Transaction? transaction, string rdbPath)
@@ -464,39 +462,39 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: is transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
+            var defaultCfOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                .SetWalTtlSeconds(0);
+
             var columnFamilies = new ColumnFamilies
                 {
-                    { KbColumnFamilyName.Schema.ToString(), columnFamilyOptions }, //Child schema definitions.
-                    //{ KbColumnFamily.Indexes.ToString(), columnFamilyOptions }, /Indexes are stored in the documents RDB, not the schema RDB.
-                    { KbColumnFamilyName.Procedures.ToString(), columnFamilyOptions }, //Stored procedures.
-                    { KbColumnFamilyName.Identity.ToString(), columnFamilyOptions } //Identity management for auto-incrementing keys, etc.
+                    { KbColumnFamilyName.Schema.ToString(), defaultCfOptions }, //Child schema definitions.
+                    { KbColumnFamilyName.Procedures.ToString(), defaultCfOptions }, //Stored procedures.
+                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions } //Identity management for auto-incrementing keys, etc.
                 };
             using var rdbInstance = RocksDb.Open(options, rdbPath, columnFamilies);
             rdbInstance.Dispose();
         }
 
-        internal bool DoesKeyExist(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation intendedOperation)
-            => DoesKeyExist(transaction, rdbPath, columnFamilyName, key, intendedOperation, out _);
+        internal bool DoesKeyExist(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation intendedOperation)
+            => DoesKeyExist(transaction, rdb, columnFamilyName, key, intendedOperation, out _);
 
-        internal bool DoesKeyExist(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName,
+        internal bool DoesKeyExist(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName,
             RdbKey key, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
         {
             transaction.EnsureActive();
-            acquiredLockKey = transaction.LockFile(intendedOperation, rdbPath);
-            var rdb = AcquireRdb(rdbPath);
+            var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
+            acquiredLockKey = transaction.LockSingleObject(intendedOperation, cacheKey);
             return rdb.Get(key.Bytes, columnFamilyName) != null;
         }
 
-        internal void DeleteKey(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key)
+        internal void DeleteKey(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key)
         {
             transaction.EnsureActive();
-            transaction.LockFile(LockOperation.Delete, rdbPath);
-            var rdb = AcquireRdb(rdbPath);
-            var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, key);
+            var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
+            transaction.LockSingleObject(LockOperation.Delete, cacheKey);
 
-            transaction.RecordKeyDelete(rdbPath, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+            transaction.RecordKeyDelete(rdb.Path, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
             rdb.Remove(key.Bytes, columnFamilyName);
         }
 
@@ -504,13 +502,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Putters.
 
-        internal void PutNonTrackedButCached<T>(string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, IOFormat format)
+        internal void PutNonTrackedButCached<T>(Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, IOFormat format)
             where T : notnull
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
-                var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, key);
+                var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
 
                 int approximateSizeInBytes = 0;
 
@@ -547,61 +544,56 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal void PutNonTrackedRaw(string rdbPath, RdbKey columnFamily, RdbKey key, byte[] objBytes)
+        internal void PutNonTrackedRaw(Rdb rdb, RdbKey columnFamily, RdbKey key, byte[] objBytes)
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
                 var cf = rdb.GetColumnFamily(columnFamily);
                 rdb.Put(key.Bytes, objBytes, cf);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal void PutNonTrackedRaw(string rdbPath, RdbColumnFamily columnFamily, RdbKey key, byte[] objBytes)
+        internal void PutNonTrackedRaw(Rdb rdb, RdbColumnFamily columnFamily, RdbKey key, byte[] objBytes)
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
                 rdb.Put(key.Bytes, objBytes, columnFamily);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal void PutNonTrackedRaw(string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, byte[] objBytes)
+        internal void PutNonTrackedRaw(Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, byte[] objBytes)
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
                 rdb.Put(key.Bytes, objBytes, columnFamilyName);
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal void PutNonTracked<T>(string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, IOFormat format)
+        internal void PutNonTracked<T>(Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, IOFormat format)
             where T : notnull
         {
             try
             {
-                var rdb = AcquireRdb(rdbPath);
-
                 if (format == IOFormat.JSON)
                 {
                     string text = JsonConvert.SerializeObject(obj);
@@ -621,40 +613,38 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for file: [{rdb.Path}].", ex);
                 throw;
             }
         }
 
-        internal void PutJson(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
-            => InternalTrackedPut(transaction, rdbPath, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON);
+        internal void PutJson(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON);
 
-        internal void PutPBuf(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
-            => InternalTrackedPut(transaction, rdbPath, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf);
+        internal void PutPBuf(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf);
 
         /// <summary>
         /// Writes to a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public void InternalTrackedPut<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format, bool populateCache = true)
+        public void InternalTrackedPut<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format, bool populateCache = true)
             where T : notnull
         {
             try
             {
                 transaction.EnsureActive();
-                var rdb = AcquireRdb(rdbPath);
-                var cacheKey = CacheManager.MakeCacheKey(rdbPath, columnFamilyName, key);
-                //var rdbWriteBatch = transaction.AcquireRdbWriteBatch(filePath);
+                var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
 
-                transaction.LockFile(LockOperation.Write, rdbPath);
+                transaction.LockSingleObject(LockOperation.Write, cacheKey);
 
-                bool doesKeyExist = DoesKeyExist(transaction, rdbPath, columnFamilyName, key, LockOperation.Write, out _);
+                bool doesKeyExist = DoesKeyExist(transaction, rdb, columnFamilyName, key, LockOperation.Write, out _);
                 if (doesKeyExist)
                 {
-                    transaction.RecordKeyAlter(rdbPath, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+                    transaction.RecordKeyAlter(rdb.Path, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
                 }
                 else
                 {
-                    transaction.RecordKeyCreate(rdbPath, columnFamilyName, key, cacheKey);
+                    transaction.RecordKeyCreate(rdb.Path, columnFamilyName, key, cacheKey);
                 }
 
                 if (_core.Settings.DeferredIOEnabled)
@@ -662,7 +652,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     transaction.DeferredIOs.Write((dio) =>
                     {
                         transaction.Instrumentation.Measure(PerformanceCounter.DeferredWrite, () =>
-                            dio.PutDeferredDiskIO(cacheKey, rdbPath, columnFamilyName, obj, key, format));
+                            dio.PutDeferredDiskIO(cacheKey, rdb.Path, columnFamilyName, obj, key, format));
                     });
 
                     _core.Health.IncrementDiscrete(HealthCounterType.IODeferredWrites);
@@ -716,7 +706,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdbPath}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], file: [{rdb.Path}].", ex);
                 throw;
             }
         }

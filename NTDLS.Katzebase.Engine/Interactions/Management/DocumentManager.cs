@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Diagnostics;
+using System.Runtime.Intrinsics.Arm;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -44,11 +45,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Allows for returning null if the document doesn't exist;
         /// </summary>
         internal PhysicalDocument? AcquireDocumentVirtual(
-            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention, bool populateCache = true)
+            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockIntention, bool populateCache = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache);
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache);
             }
             catch (Exception ex)
             {
@@ -60,16 +61,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// When we want to read a document we do it here.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="physicalSchema"></param>
-        /// <param name="documentId"></param>
         internal PhysicalDocument AcquireDocument(
-            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention, bool populateCache = true)
+            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockIntention, bool populateCache = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache)
-                    ?? throw new Exception($"Document with ID [{documentId}] does not exist in schema [{physicalSchema.Name}].");
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache)
+                    ?? throw new Exception($"Document with ID [{documentId}] does not exist in store [{rdb.Path}].");
             }
             catch (Exception ex)
             {
@@ -220,10 +218,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (GetIdentityLock(physicalSchema.SchemaFilePath()))
             {
-                var bytes = _core.IO.GetNotTrackedRaw(physicalSchema.SchemaFilePath(), KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
+                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
+
+                var bytes = _core.IO.GetNotTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
                 var identity = bytes == null ? 0U : BitConverter.ToUInt32(bytes);
                 identity++;
-                _core.IO.PutNonTrackedRaw(physicalSchema.SchemaFilePath(), KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(identity));
+                _core.IO.PutNonTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(identity));
                 return identity;
             }
         }
@@ -232,7 +232,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (GetIdentityLock(physicalSchema.SchemaFilePath()))
             {
-                var bytes = _core.IO.GetNotTrackedRaw(physicalSchema.SchemaFilePath(), KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
+                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
+                var bytes = _core.IO.GetNotTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
                 var identity = bytes == null ? 0U : BitConverter.ToUInt32(bytes);
                 return identity;
             }
@@ -253,7 +254,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     Modified = DateTime.UtcNow,
                 };
 
-                _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument);
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument);
 
                 //Update all of the indexes that reference the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, physicalDocumentId);
@@ -281,9 +283,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexingDocuments = new Dictionary<uint, PhysicalDocument>();
                 var modifiedFieldNames = new HashSet<string>();
 
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+
                 foreach (var updatedDocument in updatedDocuments)
                 {
-                    var physicalDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), LockOperation.Write, populateCache)
+                    var physicalDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), LockOperation.Write, populateCache)
                         ?? throw new Exception($"Document with ID [{updatedDocument.Key}] does not exist in schema [{physicalSchema.Name}].");
 
                     physicalDocument.Modified = DateTime.UtcNow;
@@ -299,7 +303,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     indexingDocuments.Add(updatedDocument.Key, physicalDocument);
 
                     //Save the document page:
-                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), physicalDocument);
+                    _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), physicalDocument);
                 }
 
                 //var modifiedFieldNames = documentContent.Select(o=>o.Value);
@@ -324,9 +328,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
+                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+
                 foreach (var documentId in documentIds)
                 {
-                    _core.IO.DeleteKey(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId));
+                    _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId));
 
                 }
 

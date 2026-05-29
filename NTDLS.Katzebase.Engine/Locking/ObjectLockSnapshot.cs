@@ -1,4 +1,5 @@
-﻿using static NTDLS.Katzebase.Shared.EngineConstants;
+﻿using NTDLS.Katzebase.PersistentTypes.Atomicity;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
@@ -7,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     /// </summary>
     internal class ObjectLockSnapshot
     {
-        public string DiskPath { get; set; } = string.Empty;
+        public CacheKey TargetKey { get; set; } = new CacheKey(string.Empty);
         public LockGranularity Granularity { get; set; }
         public List<ObjectLockKeySnapshot> Keys { get; set; } = new();
         public ulong Hits { get; set; }

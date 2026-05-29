@@ -159,15 +159,15 @@
             /// <summary>
             /// All files in a directory.
             /// </summary>
-            Directory = 1,
+            Path = 1,
             /// <summary>
             /// A single file.
             /// </summary>
-            File = 2,
+            Object = 2,
             /// <summary>
             /// All files in a directory and all directories below it.
             /// </summary>
-            RecursiveDirectory = 3
+            PathRecursive = 3
         }
 
         public enum LockOperation

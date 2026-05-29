@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
@@ -8,11 +9,11 @@ namespace NTDLS.Katzebase.Engine.Locking
         public DateTime CreationTime { get; set; }
         public LockGranularity Granularity { get; private set; }
         public LockOperation Operation { get; private set; }
-        public string DiskPath { get; private set; }
+        public CacheKey TargetKey { get; private set; }
 
-        public string Key => $"{Granularity}:{Operation}:{DiskPath}";
+        public string Key => $"{Granularity}:{Operation}:{TargetKey}";
 
-        public ObjectLockIntention(Transaction transaction, string diskPath, LockGranularity lockGranularity, LockOperation operation)
+        public ObjectLockIntention(Transaction transaction, CacheKey targetKey, LockGranularity lockGranularity, LockOperation operation)
         {
             if (operation == LockOperation.Read && transaction.Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
             {
@@ -20,14 +21,14 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
 
             CreationTime = DateTime.UtcNow;
-            DiskPath = diskPath;
+            TargetKey = targetKey;
             Granularity = lockGranularity;
             Operation = operation;
 
-            if ((lockGranularity == LockGranularity.Directory
-                || lockGranularity == LockGranularity.RecursiveDirectory) && (DiskPath.EndsWith('\\') == false))
+            if ((lockGranularity == LockGranularity.Path
+                || lockGranularity == LockGranularity.PathRecursive) && (TargetKey.Value.EndsWith('\\') == false))
             {
-                DiskPath = $"{DiskPath}\\";
+                TargetKey = new CacheKey($"{TargetKey.Value}\\");
             }
         }
 
@@ -35,26 +36,26 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             get
             {
-                return $"{Granularity}:{DiskPath}";
+                return $"{Granularity}:{TargetKey}";
             }
         }
 
         public bool IsObjectEqual(ObjectLockIntention intention)
         {
             return (intention.Granularity == Granularity
-                && intention.DiskPath == DiskPath);
+                && intention.TargetKey == TargetKey);
         }
 
         public bool IsEqual(ObjectLockIntention intention)
         {
             return (intention.Granularity == Granularity
                 && intention.Operation == Operation
-                && intention.DiskPath == DiskPath);
+                && intention.TargetKey == TargetKey);
         }
 
         public new string ToString()
         {
-            return $"{Granularity}+{Operation}:{DiskPath}";
+            return $"{Granularity}+{Operation}:{TargetKey}";
         }
     }
 }

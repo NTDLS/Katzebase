@@ -58,8 +58,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
                 }
 
+                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
+
                 var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                    transactionReference.Transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
+                    transactionReference.Transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
 
                 foreach (var item in schemaCatalog)
                 {

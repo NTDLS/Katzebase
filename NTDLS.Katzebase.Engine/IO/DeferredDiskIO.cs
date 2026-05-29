@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -64,13 +65,15 @@ namespace NTDLS.Katzebase.Engine.IO
 
                     if (obj.Value.Reference != null)
                     {
+                        var rdb = _core.IO.AcquireRdb(obj.Value.DiskPath);
+
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            _core.IO.PutNonTrackedButCached(obj.Value.DiskPath, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.JSON);
+                            _core.IO.PutNonTrackedButCached(rdb, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.JSON);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            _core.IO.PutNonTrackedButCached(obj.Value.DiskPath, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.PBuf);
+                            _core.IO.PutNonTrackedButCached(rdb, obj.Value.ColumnFamily, obj.Value.DatabaseKey, obj.Value.Reference, IOFormat.PBuf);
                         }
                         else
                         {

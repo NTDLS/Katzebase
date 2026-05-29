@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.IO;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -109,15 +110,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
+
                 var physicalSchema = Acquire(transaction, schemaName, LockOperation.Write);
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
-                var singleSchema = _core.IO.GetJson<PhysicalSchema>(transaction, parentPhysicalSchema.SchemaFilePath(),
+
+                var rdb = _core.IO.AcquireRdb(parentPhysicalSchema.SchemaFilePath());
+
+                var singleSchema = _core.IO.GetJson<PhysicalSchema>(transaction, rdb,
                     KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write)
                     ?? throw new KbObjectNotFoundException($"Schema not found: [{physicalSchema.Name}].");
 
                 //singleSchema.SomeOtherAttribute = 0;
 
-                _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaFilePath(),
+                _core.IO.PutJson(transaction, rdb,
                     KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), singleSchema);
 
                 if (physicalSchema.IsTemporary)
@@ -148,14 +153,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
+                var rdb = _core.IO.AcquireRdb(parentPhysicalSchema.SchemaFilePath());
 
-                if (!_core.IO.DoesKeyExist(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write))
+                if (!_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), LockOperation.Write))
                 {
                     Directory.CreateDirectory(physicalSchema.DiskPath);
                     _core.IO.CreateDocumentsRdb(transaction, physicalSchema.DocumentsFilePath());
                     _core.IO.CreateSchemaRdb(transaction, physicalSchema.SchemaFilePath());
 
-                    _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name),
+                    _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name),
                           new PhysicalSchema
                           {
                               Id = Guid.NewGuid(),
@@ -195,7 +201,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new Exception("Schemas cannot be dropped within a user transaction.");
                 }
 
-                _core.IO.DeleteKey(transaction, physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name));
+                var rdb = _core.IO.AcquireRdb(physicalSchema.ParentPhysicalSchema.SchemaFilePath());
+
+                _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name));
                 _core.IO.CloseRdbsUnderPath(physicalSchema.DiskPath);
                 Directory.Delete(physicalSchema.DiskPath, true);
 
@@ -217,11 +225,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var schemas = new List<PhysicalSchema>();
+                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
 
-                if (_core.IO.DoesKeyExist(transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
+                if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
                 {
                     var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                        transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
+                        transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
 
                     foreach (var catalogItem in schemaCatalog)
                     {
@@ -303,13 +312,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaFile);
-                    if (_core.IO.DoesKeyExist(transaction, parentCatalogDiskPath, KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability) == false)
+                    var rdb = _core.IO.AcquireRdb(parentCatalogDiskPath);
+                    if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability) == false)
                     {
                         throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
-                    var physicalSchema = _core.IO.GetJson<PhysicalSchema>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaFile), KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability, out var _);
+                    var physicalSchema = _core.IO.GetJson<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability, out var _);
 
                     if (physicalSchema != null)
                     {
@@ -323,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
-                    transaction.LockDirectory(intendedOperation, physicalSchema.DiskPath);
+                    transaction.LockPath(intendedOperation, new CacheKey(physicalSchema.DiskPath));
 
                     return physicalSchema;
                 }
@@ -377,8 +386,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var parentPhysicalSchema = Acquire(transaction, parentSchema, parentIntendedOperation);
 
                 var parentCatalogDiskPath = parentPhysicalSchema.SchemaFilePath();
+                var rdb = _core.IO.AcquireRdb(parentCatalogDiskPath);
 
-                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, parentCatalogDiskPath, KbColumnFamilyName.Schema, new RdbKey(thisSchema), parentIntendedOperation)
+                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchema), parentIntendedOperation)
                     ?.ToVirtual(parentPhysicalSchema);
                 if (virtualSchema != null)
                 {
@@ -401,7 +411,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     };
                 }
 
-                transaction.LockDirectory(intendedOperation, virtualSchema.DiskPath);
+                transaction.LockPath(intendedOperation, new CacheKey(virtualSchema.DiskPath));
 
                 return virtualSchema;
 
@@ -422,8 +432,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
                 var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                    transaction, physicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, LockOperation.Read);
+                    transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();
 

@@ -2,7 +2,7 @@
 {
     public class CacheKey(string value)
     {
-        public string Value { get; set; } = value.ToLowerInvariant();
+        public string Value { get; private set; } = value.ToLowerInvariant();
 
         public override string ToString() => Value;
         public override int GetHashCode() => Value.GetHashCode();

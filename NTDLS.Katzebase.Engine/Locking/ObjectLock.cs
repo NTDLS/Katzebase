@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -7,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     internal class ObjectLock
     {
         private readonly EngineCore _core;
-        public string DiskPath { get; private set; }
+        public CacheKey TargetKey { get; private set; }
         public LockGranularity Granularity { get; private set; }
         public OptimisticCriticalResource<List<ObjectLockKey>> Keys { get; private set; }
 
@@ -21,12 +22,12 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             _core = core;
             Keys = new OptimisticCriticalResource<List<ObjectLockKey>>(core.LockManagementSemaphore);
-            DiskPath = intention.DiskPath;
+            TargetKey = intention.TargetKey;
             Granularity = intention.Granularity;
 
-            if (Granularity == LockGranularity.Directory && (DiskPath.EndsWith('\\') == false))
+            if (Granularity == LockGranularity.Path && (TargetKey.Value.EndsWith('\\') == false))
             {
-                DiskPath = $"{DiskPath}\\";
+                TargetKey = new CacheKey($"{TargetKey.Value}\\");
             }
         }
 
@@ -34,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             var snapshot = new ObjectLockSnapshot()
             {
-                DiskPath = DiskPath,
+                TargetKey = TargetKey,
                 Granularity = Granularity,
                 Hits = Hits,
             };

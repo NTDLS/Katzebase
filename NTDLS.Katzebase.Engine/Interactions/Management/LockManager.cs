@@ -99,28 +99,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var result = new HashSet<ObjectLock>();
 
-                var intentionDirectory = (Path.GetDirectoryName(intention.DiskPath) ?? string.Empty) + Path.DirectorySeparatorChar;
+                var intentionDirectory = (Path.GetDirectoryName(intention.TargetKey.Value) ?? string.Empty) + Path.DirectorySeparatorChar;
 
                 //If we are locking a file, then look for all other locks for the exact path.
-                if (intention.Granularity == LockGranularity.File)
+                if (intention.Granularity == LockGranularity.Object)
                 {
                     var fileLocks = existingLocks.Where(o =>
-                        o.Granularity == LockGranularity.File
-                        && o.DiskPath == intention.DiskPath).ToList();
+                        o.Granularity == LockGranularity.Object
+                        && o.TargetKey.Value == intention.TargetKey.Value).ToList();
 
                     fileLocks.ForEach(o => result.Add(o));
                 }
 
                 //Check if the intended file or directory is in a locked directory.
                 var exactDirectoryLocks = existingLocks.Where(o =>
-                    (o.Granularity == LockGranularity.Directory)
-                    && o.DiskPath == intentionDirectory).ToList();
+                    (o.Granularity == LockGranularity.Path)
+                    && o.TargetKey.Value == intentionDirectory).ToList();
 
                 exactDirectoryLocks.ForEach(o => result.Add(o));
 
                 var directoryAndSubPathLocks = existingLocks.Where(o =>
-                    o.Granularity == LockGranularity.RecursiveDirectory
-                    && intentionDirectory.StartsWith(o.DiskPath)).ToList();
+                    o.Granularity == LockGranularity.PathRecursive
+                    && intentionDirectory.StartsWith(o.TargetKey.Value)).ToList();
 
                 directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
@@ -656,7 +656,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             explanation.AppendLine("        Lock Intention {");
             explanation.AppendLine($"            Granularity: {intention.Granularity}");
             explanation.AppendLine($"            Operation: {intention.Operation}");
-            explanation.AppendLine($"            Object: {intention.DiskPath}");
+            explanation.AppendLine($"            Object: {intention.TargetKey.Value}");
             explanation.AppendLine("        }");
             explanation.AppendLine("        Held Locks {");
             transaction.HeldLockKeys.Read((obj) =>

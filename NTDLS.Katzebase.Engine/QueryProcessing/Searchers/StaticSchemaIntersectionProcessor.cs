@@ -175,6 +175,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         #region Thread.
 
+                        var rdb = core.IO.AcquireRdb(schemaMap.Value.PhysicalSchema.DocumentsFilePath());
+
                         transaction.EnsureActive();
 
                         HashSet<uint>? documentIds = null;
@@ -215,7 +217,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         // When there is no index, stream via sequential CF scan — one pass instead of
                         // N individual Gets, with RocksDB block prefetching doing the heavy lifting.
                         IEnumerable<(uint DocumentId, PhysicalDocument Document)> documentsToScan = documentIds != null
-                            ? documentIds.Select(id => (id, core.Documents.AcquireDocument(transaction, schemaMap.Value.PhysicalSchema, id, LockOperation.Read)))
+                            ? documentIds.Select(id => (id, core.Documents.AcquireDocument(transaction, rdb, id, LockOperation.Read)))
                             : core.Documents.ScanDocuments(transaction, schemaMap.Value.PhysicalSchema, LockOperation.Read);
 
                         int schemaMatchCount = 0;
@@ -453,6 +455,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 var childPool = core.ThreadPool.Lookup.CreateChildPool<uint>(core.Settings.LookupChildThreadPoolQueueDepth);
 
+                var rdb = core.IO.AcquireRdb(primarySchema.Value.PhysicalSchema.DocumentsFilePath());
+
                 foreach (var documentPointer in documentIds)
                 {
                     transaction.EnsureActive();
@@ -461,7 +465,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     childPool.Enqueue(documentPointer, (threadDocumentPointer) =>
                     {
                         transaction.EnsureActive();
-                        var physicalDocument = core.Documents.AcquireDocument(transaction, primarySchema.Value.PhysicalSchema, threadDocumentPointer, LockOperation.Read);
+                        var physicalDocument = core.Documents.AcquireDocument(transaction, rdb, threadDocumentPointer, LockOperation.Read);
                         AddPrimarySchemaRow(physicalDocument, threadDocumentPointer);
                     });
                     ptThreadQueue?.StopAndAccumulate();

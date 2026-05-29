@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactionAPIHandlers APIHandlers { get; private set; }
 
-        public Rdb TransactionLogRdb { get; private set; }
+        public Rdb TxRdb { get; private set; }
 
         internal List<TransactionSnapshot> Snapshot()
         {
@@ -56,24 +56,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 try
                 {
                     Directory.CreateDirectory(_core.Settings.TransactionDataPath);
-                    TransactionLogRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                    TxRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
                 }
                 catch
                 {
                     //If we fail to open the database, then we attempt to create it.
                     var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-                    var noBlockCache = new ColumnFamilyOptions()
-                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
+                    var defaultCfOptions = new ColumnFamilyOptions()
+                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                        .SetWalTtlSeconds(0);
                     var columnFamilies = new ColumnFamilies
                         {
                             //The Identity column contains one record per transaction with the key being the transaction ID and the value being the incrementing value.
-                            { KbColumnFamilyName.Identity.ToString(), noBlockCache }
+                            { KbColumnFamilyName.Identity.ToString(), defaultCfOptions }
                         };
 
                     var creation = RocksDb.Open(options, _core.Settings.TransactionDataPath, columnFamilies);
                     creation.Dispose();
 
-                    TransactionLogRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
+                    TxRdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
                 }
 
             }
@@ -88,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                TransactionLogRdb.Dispose();
+                TxRdb.Dispose();
             }
             catch (Exception ex)
             {
