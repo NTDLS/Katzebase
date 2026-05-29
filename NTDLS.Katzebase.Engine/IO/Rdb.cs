@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Shared;
-using RocksDbSharp;
+﻿using RocksDbSharp;
 using System.Collections.Concurrent;
 using System.Text;
 using static NTDLS.Katzebase.Shared.EngineConstants;

@@ -158,7 +158,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
 
                 //We can Peek here (instead of Write) because we are not modifying the collection, just a value within it.
-                _collection.Peek(o => {
+                _collection.Peek(o =>
+                {
                     var session = o.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                     //If the session is found, we mark it as expired so that it will be removed as early as possible by the HeartbeatManager.
                     session?.IsExpired = true;
