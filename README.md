@@ -3,7 +3,7 @@
 
 A fast, embeddable document database for .NET with a familiar SQL syntax.
 
-Katzebase is an ACID compliant document-based database written in C# using .NET 10 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessaging](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs , a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
+Katzebase is an ACID compliant document-based database written in C# using .NET 10 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessaging](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs, a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
 
 ## Testing Status
 [![Regression Tests](https://github.com/NTDLS/Katzebase/actions/workflows/Regression%20Tests.yaml/badge.svg)](https://github.com/NTDLS/Katzebase/actions/workflows/Regression%20Tests.yaml)
