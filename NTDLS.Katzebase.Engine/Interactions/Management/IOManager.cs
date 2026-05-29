@@ -444,7 +444,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: if transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions();
+            var columnFamilyOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
             var columnFamilies = new ColumnFamilies
                 {
                     { KbColumnFamilyName.Documents.ToString(), columnFamilyOptions }, //Document data.
@@ -463,7 +464,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: is transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions();
+            var columnFamilyOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
             var columnFamilies = new ColumnFamilies
                 {
                     { KbColumnFamilyName.Schema.ToString(), columnFamilyOptions }, //Child schema definitions.
