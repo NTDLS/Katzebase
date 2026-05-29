@@ -72,6 +72,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Write-cached objects that need to be flushed to disk upon commit.
         /// </summary>
         public OptimisticCriticalResource<DeferredDiskIO> DeferredIOs { get; private set; } = new();
+
         /// <summary>
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.

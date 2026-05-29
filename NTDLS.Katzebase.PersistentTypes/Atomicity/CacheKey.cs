@@ -26,6 +26,12 @@
             Canonical = FilePath.ToLowerInvariant();
         }
 
+        public CacheKey()
+        {
+            FilePath = string.Empty;
+            Canonical = string.Empty;
+        }
+
         public static CacheKey Empty()
         {
             return new CacheKey(string.Empty, string.Empty);
