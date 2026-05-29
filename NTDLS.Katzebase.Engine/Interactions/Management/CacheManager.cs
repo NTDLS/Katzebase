@@ -103,7 +103,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _cache.Upsert(key.Value, value, approximateSizeInBytes);
+                var ttl = _core.Settings.CacheSeconds > 0 ? TimeSpan.FromSeconds(_core.Settings.CacheSeconds) : (TimeSpan?)null;
+                _cache.Upsert(key.Value, value, approximateSizeInBytes, ttl);
             }
             catch (Exception ex)
             {

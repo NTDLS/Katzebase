@@ -15,6 +15,7 @@ using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -606,8 +607,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         transaction.EnsureActive();
 
-                        var physicalDocument = _core.Documents.AcquireDocument(
-                            transaction, physicalSchema, documentId, LockOperation.Read);
+                        var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read, false);
                         if (physicalDocument == null) continue;
 
                         var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
@@ -675,52 +675,80 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
                 var documentsCF = rdb.GetColumnFamily(KbColumnFamilyName.Documents);
 
-                // Step 1: Delete all existing entries for this index by dropping and recreating the column family.
+                // Step 1: Drop and recreate the index column family to clear any existing entries.
                 rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 var indexCF = rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
-                // Step 2: Accumulate all index entries in memory grouped by key.
-                // Dictionary key: index key bytes (hex string for dictionary equality).
-                // Dictionary value: list of document IDs that share those field values.
-                var accumulator = new Dictionary<string, (byte[] KeyBytes, List<uint> DocIds)>();
-
-                using var docIter = rdb.NewIterator(documentsCF);
-                for (docIter.SeekToFirst(); docIter.Valid(); docIter.Next())
+                // Step 2: Collect all document IDs with a sequential key-only scan (no deserialization).
+                var documentIds = new List<uint>();
+                using (var docIter = rdb.NewIterator(documentsCF))
                 {
-                    transaction.EnsureActive();
-
-                    uint documentId = RdbKey.ConvertToUint(docIter.Key());
-                    var physicalDocument = _core.Documents.AcquireDocument(
-                        transaction, physicalSchema, documentId, LockOperation.Read);
-                    if (physicalDocument == null) continue;
-
-                    var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
-                    if (fieldValues.Count != physicalIndex.Attributes.Count)
-                        continue; // document is missing one or more indexed fields — skip
-
-                    var keyBytes = IndexKeyBuilder.Build(fieldValues);
-                    var keyHex = Convert.ToHexStringLower(keyBytes);
-
-                    if (!accumulator.TryGetValue(keyHex, out var entry))
-                    {
-                        entry = (keyBytes, new List<uint>());
-                        accumulator[keyHex] = entry;
-                    }
-
-                    if (physicalIndex.IsUnique && entry.DocIds.Count > 0)
-                        throw new KbDuplicateKeyViolationException(
-                            $"Duplicate key violation rebuilding index [{physicalIndex.Name}], values: [{string.Join("][", fieldValues)}]");
-
-                    entry.DocIds.Add(documentId);
+                    for (docIter.SeekToFirst(); docIter.Valid(); docIter.Next())
+                        documentIds.Add(RdbKey.ConvertToUint(docIter.Key()));
                 }
 
-                // Step 3: Write all accumulated entries in one pass.
-                // Each key maps to a packed array of document IDs (4 bytes each).
+                // Step 3: Process documents in batches to keep memory bounded.
+                // Each batch accumulates in parallel, writes to RocksDB, then is discarded.
+                // Cross-batch key merging uses read-modify-write so non-unique index entries
+                // from different batches that share the same key value are correctly combined.
+                const int batchSize = 50_000;
+
                 var ptWrite = transaction.Instrumentation.CreateToken(PerformanceCounter.IOWrite);
-                using var batch = new RocksDbSharp.WriteBatch();
-                foreach (var (_, (keyBytes, docIds)) in accumulator)
-                    batch.Put(keyBytes, IndexKeyBuilder.PackDocumentIds(docIds), indexCF.Handle);
-                rdb.Write(batch);
+
+                for (int batchStart = 0; batchStart < documentIds.Count; batchStart += batchSize)
+                {
+                    var batchEnd = Math.Min(batchStart + batchSize, documentIds.Count);
+                    var accumulator = new ConcurrentDictionary<string, (byte[] KeyBytes, ConcurrentBag<uint> DocIds)>(StringComparer.Ordinal);
+
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<uint>(_core.Settings.IndexingThreadPoolQueueDepth);
+                    for (int i = batchStart; i < batchEnd; i++)
+                    {
+                        var documentId = documentIds[i];
+                        childPool.Enqueue(documentId, (threadDocumentId) =>
+                        {
+                            transaction.EnsureActive();
+
+                            var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, threadDocumentId, LockOperation.Read, false);
+                            if (physicalDocument == null) return;
+
+                            var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
+                            if (fieldValues.Count != physicalIndex.Attributes.Count)
+                                return; // document is missing one or more indexed fields — skip
+
+                            var keyBytes = IndexKeyBuilder.Build(fieldValues);
+                            var keyHex = Convert.ToHexStringLower(keyBytes);
+
+                            var entry = accumulator.GetOrAdd(keyHex, _ => (keyBytes, new ConcurrentBag<uint>()));
+                            entry.DocIds.Add(threadDocumentId);
+                        });
+                    }
+                    childPool.WaitForCompletion(); // Propagates worker exceptions as AggregateException.
+
+                    // Check uniqueness within this batch and against any previously written batches.
+                    if (physicalIndex.IsUnique)
+                    {
+                        foreach (var (_, (keyBytes, docIds)) in accumulator)
+                        {
+                            if (docIds.Count > 1 || rdb.Get(keyBytes, indexCF) != null)
+                            {
+                                throw new KbDuplicateKeyViolationException(
+                                    $"Duplicate key violation rebuilding unique index [{physicalIndex.Name}] on [{physicalSchema.Name}].");
+                            }
+                        }
+                    }
+
+                    using var batch = new RocksDbSharp.WriteBatch();
+                    foreach (var (_, (keyBytes, docIds)) in accumulator)
+                    {
+                        var existingBytes = rdb.Get(keyBytes, indexCF);
+                        var allDocIds = existingBytes != null
+                            ? IndexKeyBuilder.UnpackDocumentIds(existingBytes)
+                            : new List<uint>();
+                        allDocIds.AddRange(docIds);
+                        batch.Put(keyBytes, IndexKeyBuilder.PackDocumentIds(allDocIds), indexCF.Handle);
+                    }
+                    rdb.Write(batch);
+                }
                 ptWrite?.StopAndAccumulate();
             }
             catch (Exception ex)

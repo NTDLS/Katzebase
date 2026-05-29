@@ -115,23 +115,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey);
+        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey, populateCache);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey);
+        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey, populateCache);
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out _);
+        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out _, populateCache);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _);
+        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool populateCache = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _, populateCache);
 
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
         public T? InternalTrackedGet<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key,
-            LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey)
+            LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool populateCache = true)
         {
             try
             {
@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Trace($"IO:Read:{transaction.ProcessId}->{cacheKey}");
 
                 T? deserializedObject;
-                int approximateSizeInBytes = 0;
+                int estimatedObjectSize = 0;
 
                 if (format == IOFormat.JSON)
                 {
@@ -193,9 +193,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return default;
                     }
 
+                    estimatedObjectSize = bytes.Length;
+
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(bytes)));
-
                 }
                 else if (format == IOFormat.PBuf)
                 {
@@ -204,6 +205,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         return default;
                     }
+
+                    estimatedObjectSize = bytes.Length;
 
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                     {
@@ -216,10 +219,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
-                if (_core.Settings.CacheEnabled && deserializedObject != null)
+                if (_core.Settings.CacheEnabled && deserializedObject != null && populateCache)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                        _core.Cache.Set(cacheKey, deserializedObject, approximateSizeInBytes));
+                        _core.Cache.Set(cacheKey, deserializedObject, estimatedObjectSize));
 
                     _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadAdditions);
                 }
@@ -441,7 +444,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: if transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions();
+            var columnFamilyOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
             var columnFamilies = new ColumnFamilies
                 {
                     { KbColumnFamilyName.Documents.ToString(), columnFamilyOptions }, //Document data.
@@ -460,7 +464,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //TODO: is transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
 
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var columnFamilyOptions = new ColumnFamilyOptions();
+            var columnFamilyOptions = new ColumnFamilyOptions()
+                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
             var columnFamilies = new ColumnFamilies
                 {
                     { KbColumnFamilyName.Schema.ToString(), columnFamilyOptions }, //Child schema definitions.
@@ -524,8 +529,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, obj);
 
-                    rdb.Put(key.Bytes, output.ToArray(), columnFamilyName);
-
+                    var bytes = output.ToArray();
+                    rdb.Put(key.Bytes, bytes, columnFamilyName);
+                    approximateSizeInBytes = bytes.Length;
                 }
                 else
                 {
@@ -629,7 +635,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Writes to a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
-        public void InternalTrackedPut<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format)
+        public void InternalTrackedPut<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format, bool populateCache = true)
             where T : notnull
         {
             try
@@ -700,7 +706,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
-                if (_core.Settings.CacheEnabled)
+                if (_core.Settings.CacheEnabled && populateCache)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
                         _core.Cache.Set(cacheKey, obj, approximateSizeInBytes));

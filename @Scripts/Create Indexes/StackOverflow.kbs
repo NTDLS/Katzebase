@@ -1,12 +1,24 @@
-CREATE INDEX IX_Users(
-    DisplayName
-) ON StackOverflow:Users WITH (PARTITIONS=1000)
-GO
-
-CREATE INDEX IX_Id(
+CREATE UNIQUEKEY PK_Badges_Id(
     Id
-) ON StackOverflow:Users WITH (PARTITIONS=1000)
+) ON StackOverflow:Badges
+
+CREATE UNIQUEKEY PK_Posts_Id(
+    Id
+) ON StackOverflow:Posts
+
+CREATE UNIQUEKEY PK_Comments_Id(
+    Id
+) ON StackOverflow:Comments
+
+CREATE UNIQUEKEY PK_Votes_Id(
+    Id
+) ON StackOverflow:Votes
+
+CREATE INDEX IX_Users_DisplayName(
+    DisplayName
+) ON StackOverflow:Users
 
 CREATE INDEX IX_Posts_OwnerUserId(
     OwnerUserId
-) ON StackOverflow:Posts WITH (PARTITIONS=1000)
+) ON StackOverflow:Posts
+

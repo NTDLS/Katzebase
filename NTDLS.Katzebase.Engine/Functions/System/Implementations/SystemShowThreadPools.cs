@@ -53,6 +53,22 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 result.AddRow(values);
             }
 
+            foreach (var thread in core.ThreadPool.Lookup.Threads)
+            {
+                var values = new List<string?>
+                {
+                    "Lookup",
+                    $"{thread.NativeThread?.Id}",
+                    $"{thread.NativeThread?.TotalProcessorTime.TotalMilliseconds:n0}",
+                    $"{thread.NativeThread?.UserProcessorTime.TotalMilliseconds:n0}",
+                    $"{thread.NativeThread?.PrivilegedProcessorTime.TotalMilliseconds:n0}",
+                    $"{thread.NativeThread?.BasePriority:n0}",
+                    $"{thread.NativeThread?.CurrentPriority:n0}",
+                    $"{thread.State}"
+                };
+                result.AddRow(values);
+            }
+
             foreach (var thread in core.ThreadPool.Materialization.Threads)
             {
                 var values = new List<string?>
