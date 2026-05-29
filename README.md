@@ -1,10 +1,12 @@
 # Katzebase
 ![Logo128](https://github.com/NTDLS/NTDLS.Katzebase.Server/assets/11428567/fa827156-4d19-4803-860f-aa0ef3a5151d)
 
-Katzebase is an ACID compliant document-based database written in C# using .NET 9 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessageing](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs , a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
+A fast, embeddable document database for .NET with a familiar SQL syntax.
+
+Katzebase is an ACID compliant document-based database written in C# using .NET 10 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The default engine is wrapped by [ReliableMessaging](https://github.com/NTDLS/NTDLS.ReliableMessaging) controllers and allows access via APIs , a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
 
 ## Testing Status
-[![Regression Tests](https://github.com/NTDLS/Katzebase/actions/workflows/%20Regression%20Tests.yaml/badge.svg)](https://github.com/NTDLS/Katzebase/actions/workflows/%20Regression%20Tests.yaml)
+[![Regression Tests](https://github.com/NTDLS/Katzebase/actions/workflows/Regression%20Tests.yaml/badge.svg)](https://github.com/NTDLS/Katzebase/actions/workflows/Regression%20Tests.yaml)
 
 ## Documentation and Links
 - **Full documentation** at [https://katzebase.com/](https://katzebase.com/).
@@ -30,7 +32,7 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Api/) for your project over at nuget.org.
 
 ## Sample Data
-To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationsips between the words and languages.
+To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationships between the words and languages.
 If you are feeling more ambitious, you can grab the larger [Katzebase with StackOverflow](https://katzebase.com/WWWRoot/Download/Katzebase%20with%20StackOverflow.7z) database.
 
 # Management UI
@@ -60,7 +62,7 @@ We even included a tool to import your schema, data and indexes from SQL Server 
 ---
 
 ### ![Expression Parser](https://katzebase.com/Page/Image/home/expressionparser_png) Expression Parser
-[NTDLS.ExpressionParser](https://github.com/NTDLS/NTDLS.ExpressionParser) is a mathematics parsing engine. It supports expression nesting, custom variables, custom functions all standard mathematical operations for integer, decimal (floating point), logic and bitwise. It sets at the core of all Katzebase condition matches.
+[NTDLS.ExpressionParser](https://github.com/NTDLS/NTDLS.ExpressionParser) is a mathematics parsing engine. It supports expression nesting, custom variables, custom functions all standard mathematical operations for integer, decimal (floating point), logic and bitwise. It sits at the core of all Katzebase condition matches.
 
 Benchmarked at ~0.22 µs per expression (~4.5M eval/s per core). That's ~22M arithmetic ops/sec with our test expression. Roughly on par with compiled expression trees / LLVM-JIT math engines — this parser isn't "fast for C#"; it's fast, period.
 
@@ -80,7 +82,7 @@ Benchmarked at ~0.22 µs per expression (~4.5M eval/s per core). That's ~22M ari
 [NTDLS.Persistence](https://github.com/NTDLS/NTDLS.Persistence) are helpers for reading and writing serialized objects to/from files. Helpful for configuration files.
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (it's on my profile).
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
