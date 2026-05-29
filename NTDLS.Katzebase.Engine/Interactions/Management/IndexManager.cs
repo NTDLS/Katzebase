@@ -607,8 +607,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         transaction.EnsureActive();
 
-                        var physicalDocument = _core.Documents.AcquireDocument(
-                            transaction, physicalSchema, documentId, LockOperation.Read);
+                        var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read, false);
                         if (physicalDocument == null) continue;
 
                         var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
@@ -709,8 +708,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             transaction.EnsureActive();
 
-                            var physicalDocument = _core.Documents.AcquireDocument(
-                                transaction, physicalSchema, threadDocumentId, LockOperation.Read);
+                            var physicalDocument = _core.Documents.AcquireDocument(transaction, physicalSchema, threadDocumentId, LockOperation.Read, false);
                             if (physicalDocument == null) return;
 
                             var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
@@ -732,8 +730,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         foreach (var (_, (keyBytes, docIds)) in accumulator)
                         {
                             if (docIds.Count > 1 || rdb.Get(keyBytes, indexCF) != null)
+                            {
                                 throw new KbDuplicateKeyViolationException(
                                     $"Duplicate key violation rebuilding unique index [{physicalIndex.Name}] on [{physicalSchema.Name}].");
+                            }
                         }
                     }
 

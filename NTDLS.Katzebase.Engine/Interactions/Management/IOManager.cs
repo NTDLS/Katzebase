@@ -115,23 +115,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey);
+        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool cacheOnRead = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out acquiredLockKey, cacheOnRead);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey);
+        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, out ObjectLockKey? acquiredLockKey, bool cacheOnRead = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out acquiredLockKey, cacheOnRead);
 
-        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out _);
+        internal T? GetJson<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool cacheOnRead = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.JSON, out _, cacheOnRead);
 
-        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation)
-            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _);
+        internal T? GetPBuf<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation lockOperation, bool cacheOnRead = true)
+            => InternalTrackedGet<T>(transaction, rdbPath, columnFamilyName, key, lockOperation, IOFormat.PBuf, out _, cacheOnRead);
 
         /// <summary>
         /// Reads from a RDB with transactional tracking, locking and deferred IO, and without caching.
         /// </summary>
         public T? InternalTrackedGet<T>(Transaction transaction, string rdbPath, KbColumnFamilyName columnFamilyName, RdbKey key,
-            LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey)
+            LockOperation lockOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool cacheOnRead = true)
         {
             try
             {
@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
-                if (_core.Settings.CacheEnabled && deserializedObject != null)
+                if (_core.Settings.CacheEnabled && deserializedObject != null && cacheOnRead)
                 {
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
                         _core.Cache.Set(cacheKey, deserializedObject, estimatedObjectSize));

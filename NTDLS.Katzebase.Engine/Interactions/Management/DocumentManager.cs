@@ -44,11 +44,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Allows for returning null if the document doesn't exist;
         /// </summary>
         internal PhysicalDocument? AcquireDocumentVirtual(
-            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention)
+            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention, bool cacheOnRead = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention);
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, cacheOnRead);
             }
             catch (Exception ex)
             {
@@ -64,11 +64,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
         internal PhysicalDocument AcquireDocument(
-            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention)
+            Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention, bool cacheOnRead = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention)
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, cacheOnRead)
                     ?? throw new Exception($"Document with ID [{documentId}] does not exist in schema [{physicalSchema.Name}].");
             }
             catch (Exception ex)
@@ -274,7 +274,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="physicalSchema"></param>
         /// <param name="updatedDocuments">List of document pointers and their new content.</param>
         internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            Dictionary<uint, KbInsensitiveDictionary<string?>> updatedDocuments)
+            Dictionary<uint, KbInsensitiveDictionary<string?>> updatedDocuments, bool cacheOnRead = true)
         {
             try
             {
