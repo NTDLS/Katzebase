@@ -212,8 +212,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, physicalSchema.Name);
                 _core.Cache.Remove(cacheKey);
 
+                // Eject everything under the dropped schema's directory — documents, indexes,
+                // sub-schema catalogs, and all nested sub-schema contents.
                 transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                         _core.Cache.RemoveItemsWithPrefix(cacheKey));
+                    _core.Cache.RemoveItemsWithPrefix(new CacheKey(physicalSchema.DiskPath + Path.DirectorySeparatorChar)));
             }
             catch (Exception ex)
             {
