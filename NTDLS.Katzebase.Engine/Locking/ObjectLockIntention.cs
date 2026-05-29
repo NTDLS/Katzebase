@@ -26,9 +26,9 @@ namespace NTDLS.Katzebase.Engine.Locking
             Operation = operation;
 
             if ((lockGranularity == LockGranularity.Path
-                || lockGranularity == LockGranularity.PathRecursive) && (TargetKey.Value.EndsWith('\\') == false))
+                || lockGranularity == LockGranularity.PathRecursive) && (TargetKey.Value.EndsWith(Path.DirectorySeparatorChar) == false))
             {
-                TargetKey = new CacheKey($"{TargetKey.Value}\\");
+                TargetKey = new CacheKey($"{TargetKey.Value}{Path.DirectorySeparatorChar}");
             }
         }
 
