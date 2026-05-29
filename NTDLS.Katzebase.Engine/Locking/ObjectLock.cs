@@ -25,9 +25,9 @@ namespace NTDLS.Katzebase.Engine.Locking
             TargetKey = intention.TargetKey;
             Granularity = intention.Granularity;
 
-            if (Granularity == LockGranularity.Path && (TargetKey.Value.EndsWith(Path.DirectorySeparatorChar) == false))
+            if (Granularity == LockGranularity.Path && (TargetKey.Canonical.EndsWith(Path.DirectorySeparatorChar) == false))
             {
-                TargetKey = new CacheKey($"{TargetKey.Value}{Path.DirectorySeparatorChar}");
+                TargetKey = new CacheKey(intention.TargetKey.FilePath, $"{TargetKey.Canonical}{Path.DirectorySeparatorChar}");
             }
         }
 

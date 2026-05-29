@@ -7,7 +7,6 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.Arm;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 

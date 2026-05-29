@@ -35,6 +35,7 @@
             columnHeaderApplication = new ColumnHeader();
             columnHeaderVersion = new ColumnHeader();
             linkWebsite = new LinkLabel();
+            linkLabel1 = new LinkLabel();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -42,7 +43,7 @@
             // 
             pictureBox1.BackgroundImageLayout = ImageLayout.Center;
             pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
-            pictureBox1.Location = new Point(35, 35);
+            pictureBox1.Location = new Point(18, 32);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(103, 108);
@@ -52,20 +53,21 @@
             // 
             // cmdOk
             // 
-            cmdOk.Location = new Point(419, 171);
+            cmdOk.Location = new Point(394, 196);
             cmdOk.Margin = new Padding(4, 3, 4, 3);
             cmdOk.Name = "cmdOk";
             cmdOk.Size = new Size(88, 27);
             cmdOk.TabIndex = 7;
             cmdOk.Text = "Ok";
             cmdOk.UseVisualStyleBackColor = true;
+            cmdOk.Click += buttonOk_Click;
             // 
             // listViewVersions
             // 
             listViewVersions.Columns.AddRange(new ColumnHeader[] { columnHeaderApplication, columnHeaderVersion });
             listViewVersions.FullRowSelect = true;
             listViewVersions.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            listViewVersions.Location = new Point(174, 14);
+            listViewVersions.Location = new Point(150, 12);
             listViewVersions.Margin = new Padding(4, 3, 4, 3);
             listViewVersions.MultiSelect = false;
             listViewVersions.Name = "listViewVersions";
@@ -89,20 +91,34 @@
             // 
             linkWebsite.AutoSize = true;
             linkWebsite.Font = new Font("Microsoft Sans Serif", 11F);
-            linkWebsite.Location = new Point(170, 171);
+            linkWebsite.Location = new Point(150, 172);
             linkWebsite.Margin = new Padding(4, 0, 4, 0);
             linkWebsite.Name = "linkWebsite";
             linkWebsite.Size = new Size(149, 18);
             linkWebsite.TabIndex = 9;
             linkWebsite.TabStop = true;
             linkWebsite.Text = "www.Katzebase.com";
-            linkWebsite.LinkClicked += LinkWebsite_LinkClicked;
+            linkWebsite.LinkClicked += LinkWebsiteKb_LinkClicked;
+            // 
+            // linkLabel1
+            // 
+            linkLabel1.AutoSize = true;
+            linkLabel1.Font = new Font("Microsoft Sans Serif", 11F);
+            linkLabel1.Location = new Point(150, 199);
+            linkLabel1.Margin = new Padding(4, 0, 4, 0);
+            linkLabel1.Name = "linkLabel1";
+            linkLabel1.Size = new Size(164, 18);
+            linkLabel1.TabIndex = 10;
+            linkLabel1.TabStop = true;
+            linkLabel1.Text = "www.NetworkDLS.com";
+            linkLabel1.LinkClicked += LinkWebsiteNtdls_LinkClicked;
             // 
             // FormAbout
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(517, 210);
+            ClientSize = new Size(497, 233);
+            Controls.Add(linkLabel1);
             Controls.Add(linkWebsite);
             Controls.Add(listViewVersions);
             Controls.Add(cmdOk);
@@ -115,7 +131,7 @@
             Name = "FormAbout";
             SizeGripStyle = SizeGripStyle.Hide;
             StartPosition = FormStartPosition.CenterParent;
-            Text = "About";
+            Text = "Katzebase";
             Load += FormAbout_Load;
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
@@ -130,5 +146,6 @@
         private ColumnHeader columnHeaderApplication;
         private ColumnHeader columnHeaderVersion;
         private LinkLabel linkWebsite;
+        private LinkLabel linkLabel1;
     }
 }

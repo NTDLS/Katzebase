@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
     public class AtomSnapshot
     {
         public ActionType Action { get; set; }
-        public CacheKey CacheKey { get; set; } = new CacheKey(string.Empty);
+        public CacheKey CacheKey { get; set; } = CacheKey.Empty();
         public long Sequence { get; set; } = 0;
 
         public string? RdbPath { get; set; }

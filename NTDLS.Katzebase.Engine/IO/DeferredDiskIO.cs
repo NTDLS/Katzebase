@@ -1,7 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
-using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Shared.EngineConstants;
@@ -90,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             outReference = _collection.Use(o =>
             {
-                if (o.TryGetValue(key.Value, out var deferredIO))
+                if (o.TryGetValue(key.Canonical, out var deferredIO))
                 {
                     return (T)deferredIO.Reference;
                 }
@@ -102,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void Remove(CacheKey key)
         {
-            _collection.Use(o => o.Remove(key.Value));
+            _collection.Use(o => o.Remove(key.Canonical));
         }
 
         public void RemoveItemsWithPrefix(string prefix)
@@ -135,13 +134,13 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             _collection.Use(o =>
             {
-                if (o.TryGetValue(key.Value, out var value))
+                if (o.TryGetValue(key.Canonical, out var value))
                 {
                     value.Reference = reference;
                 }
                 else
                 {
-                    o.Add(key.Value, new DeferredDiskIOObject(diskPath, columnFamily, reference, rdbKey, format));
+                    o.Add(key.Canonical, new DeferredDiskIOObject(diskPath, columnFamily, reference, rdbKey, format));
                 }
             });
         }

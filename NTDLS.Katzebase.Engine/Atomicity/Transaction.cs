@@ -72,6 +72,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Write-cached objects that need to be flushed to disk upon commit.
         /// </summary>
         public OptimisticCriticalResource<DeferredDiskIO> DeferredIOs { get; private set; } = new();
+
         /// <summary>
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
@@ -540,11 +541,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
@@ -574,11 +575,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
@@ -609,11 +610,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedReadObjectKeys)
                 {
-                    if (_recordedReadObjectKeys.Contains(targetKey.Value))
+                    if (_recordedReadObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedReadObjectKeys.Add(targetKey.Value);
+                    _recordedReadObjectKeys.Add(targetKey.Canonical);
                 }
 
                 FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(targetKey, key.Bytes)));
@@ -639,11 +640,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Value))
+                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Value);
+                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
                 var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
