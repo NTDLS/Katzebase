@@ -213,7 +213,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Write);
 
@@ -270,7 +270,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Write);
 
                 //First revoke the specified policy types.
@@ -328,7 +328,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Write);
 
@@ -429,7 +429,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var userRoleIds = transaction.Session.Roles.Select(o => o.Id);
 
                         var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Stability);
-                        var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                        var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                         var givenSchemaId = physicalSchema.Id;
 
@@ -521,7 +521,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Stability);
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Read);
                 var roles = transaction.ExecuteQuery<KbRole>("GetRoles.kbs");
 

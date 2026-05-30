@@ -13,6 +13,7 @@ using NTDLS.Katzebase.Parsers.Fields;
 using NTDLS.Katzebase.Parsers.Fields.Expressions;
 using NTDLS.Katzebase.Parsers.SupportingTypes;
 using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -175,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         #region Thread.
 
-                        var rdb = core.IO.AcquireRdb(schemaMap.Value.PhysicalSchema.DocumentsFilePath());
+                        var rdb = core.IO.AcquireDocumentsRdb(schemaMap.Value.PhysicalSchema);
 
                         transaction.EnsureActive();
 
@@ -455,7 +456,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 var childPool = core.ThreadPool.Lookup.CreateChildPool<uint>(core.Settings.LookupChildThreadPoolQueueDepth);
 
-                var rdb = core.IO.AcquireRdb(primarySchema.Value.PhysicalSchema.DocumentsFilePath());
+                var rdb = core.IO.AcquireDocumentsRdb(primarySchema.Value.PhysicalSchema);
 
                 foreach (var documentPointer in documentIds)
                 {

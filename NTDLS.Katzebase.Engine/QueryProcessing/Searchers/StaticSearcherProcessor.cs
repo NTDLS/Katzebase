@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var currentIdentity = core.Documents.GetCurrentIdentity(physicalSchema);
 
-            var rdb = core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var rdb = core.IO.AcquireDocumentsRdb(physicalSchema);
 
             if (currentIdentity > 0)
             {
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var currentIdentity = core.Documents.GetCurrentIdentity(physicalSchema);
-            var rdb = core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var rdb = core.IO.AcquireDocumentsRdb(physicalSchema);
 
             if (currentIdentity > 0)
             {
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var rdb = core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var rdb = core.IO.AcquireDocumentsRdb(physicalSchema);
             var documentId = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
 
             for (int i = 0; i < documentId.Count && (i < topCount || topCount < 0); i++)

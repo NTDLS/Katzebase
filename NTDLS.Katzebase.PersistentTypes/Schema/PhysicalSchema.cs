@@ -67,6 +67,5 @@ namespace NTDLS.Katzebase.PersistentTypes.Schema
                 VirtualPath = VirtualPath,
                 IsTemporary = IsTemporary,
             };
-
     }
 }

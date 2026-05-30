@@ -3,6 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.PersistentTypes.Schema;
 using RocksDbSharp;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -415,6 +416,109 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        internal Rdb AcquireDocumentsRdb(PhysicalSchema physicalSchema)
+        {
+            var documentsFilePath = physicalSchema.DocumentsFilePath();
+
+            var lazy = _rdbInstances.GetOrAdd(documentsFilePath, path =>
+            {
+                var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
+
+                var defaultCfOptions = new ColumnFamilyOptions()
+                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                    .SetWalTtlSeconds(0);
+
+                var documentsCfOptions = new ColumnFamilyOptions()
+                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                    .SetWalTtlSeconds(0);
+
+                var columnFamilies = new ColumnFamilies();
+                foreach (var cf in RocksDb.ListColumnFamilies(options, documentsFilePath))
+                {
+                    if (cf.Equals(KbColumnFamilyName.Documents.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        columnFamilies.Add(cf, documentsCfOptions);
+                    }
+                    else
+                    {
+                        columnFamilies.Add(cf, defaultCfOptions);
+                    }
+                }
+
+                var instance = RocksDb.Open(options, documentsFilePath, columnFamilies);
+
+                return new Lazy<Rdb>(() => new Rdb(path, instance));
+            });
+
+            try
+            {
+                return lazy.Value;
+            }
+            catch
+            {
+                // Lazy<T> caches exceptions — remove the faulted entry so the caller's
+                // recovery path (e.g. CreateDocumentsRdb) can retry with a fresh instance.
+                _rdbInstances.TryRemove(documentsFilePath, out _);
+                throw;
+            }
+        }
+
+        internal void CreateSchemaArtifacts(PhysicalSchema physicalSchema)
+        {
+            try
+            {
+                Directory.CreateDirectory(physicalSchema.DiskPath);
+
+                var rdbOptions = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
+
+                var defaultCfOptions = new ColumnFamilyOptions()
+                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                    .SetWalTtlSeconds(0);
+
+                //Create schema catalog RDB with necessary column families.
+                var schemaCFs = new ColumnFamilies
+                {
+                    { KbColumnFamilyName.Schema.ToString(), defaultCfOptions }, //Child schema definitions.
+                    { KbColumnFamilyName.Procedures.ToString(), defaultCfOptions }, //Stored procedures.
+                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions } //Identity management for auto-incrementing keys, etc.
+                };
+                using var schemaRdbInstance = RocksDb.Open(rdbOptions, physicalSchema.SchemaFilePath(), schemaCFs);
+                schemaRdbInstance.Dispose();
+
+                //Create documents RDB with necessary column families.
+
+                var documentsCfOptions = new ColumnFamilyOptions()
+                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
+                    .SetWalTtlSeconds(0);
+
+                /*
+                if (physicalSchema.someOption)
+                {
+                    documentsCfOptions.SomeOption(true);
+                }
+                */
+
+                var documentsCFs = new ColumnFamilies
+                {
+                    { KbColumnFamilyName.Documents.ToString(), documentsCfOptions }, //Document data.
+                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions },  //Identity management for auto-incrementing keys, etc.
+                    { KbColumnFamilyName.Indexes.ToString(), defaultCfOptions },   //Indexes metadata for the documents.
+                    { KbColumnFamilyName.Policy.ToString(), defaultCfOptions }     //Schema security policies.
+                };
+                using var rdbInstance = RocksDb.Open(rdbOptions, physicalSchema.DocumentsFilePath(), documentsCFs);
+                rdbInstance.Dispose();
+
+                //Create an initial identity value for the documents RDB.
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
+                _core.IO.PutNonTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(1U));
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()}.", ex);
+                throw;
+            }
+        }
+
         internal Rdb AcquireRdb(string rdbPath)
         {
             var lazy = _rdbInstances.GetOrAdd(rdbPath, path =>
@@ -431,48 +535,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _rdbInstances.TryRemove(rdbPath, out _);
                 throw;
             }
-        }
-
-        internal void CreateDocumentsRdb(Transaction? transaction, string rdbPath)
-        {
-            //TODO: if transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
-
-            var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var defaultCfOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                .SetWalTtlSeconds(0);
-
-            var columnFamilies = new ColumnFamilies
-                {
-                    { KbColumnFamilyName.Documents.ToString(), defaultCfOptions }, //Document data.
-                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions },  //Identity management for auto-incrementing keys, etc.
-                    { KbColumnFamilyName.Indexes.ToString(), defaultCfOptions },   //Indexes metadata for the documents.
-                    { KbColumnFamilyName.Policy.ToString(), defaultCfOptions }     //Schema security policies.
-                };
-            using var rdbInstance = RocksDb.Open(options, rdbPath, columnFamilies);
-            rdbInstance.Dispose();
-
-            var rdb = AcquireRdb(rdbPath);
-            _core.IO.PutNonTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey), BitConverter.GetBytes(1U));
-        }
-
-        internal void CreateSchemaRdb(Transaction? transaction, string rdbPath)
-        {
-            //TODO: is transaction is not null then we need to write some sort of transaction action to delete this file if the transaction rolls back.
-
-            var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-            var defaultCfOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                .SetWalTtlSeconds(0);
-
-            var columnFamilies = new ColumnFamilies
-                {
-                    { KbColumnFamilyName.Schema.ToString(), defaultCfOptions }, //Child schema definitions.
-                    { KbColumnFamilyName.Procedures.ToString(), defaultCfOptions }, //Stored procedures.
-                    { KbColumnFamilyName.Identity.ToString(), defaultCfOptions } //Identity management for auto-incrementing keys, etc.
-                };
-            using var rdbInstance = RocksDb.Open(options, rdbPath, columnFamilies);
-            rdbInstance.Dispose();
         }
 
         internal bool DoesKeyExist(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, LockOperation intendedOperation)
@@ -617,11 +679,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutJson(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
-            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON);
+        internal void PutJson(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj, bool populateCache = true)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON, populateCache);
 
-        internal void PutPBuf(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
-            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf);
+        internal void PutPBuf(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj, bool populateCache = true)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf, populateCache);
 
         /// <summary>
         /// Writes to a RDB with transactional tracking, locking and deferred IO, and without caching.

@@ -75,27 +75,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal IEnumerable<uint> AcquireDocumentPointers(
-            Transaction transaction, string schemaName, LockOperation lockIntention, int? maxCount = null)
-        {
-            try
-            {
-                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                return AcquireDocumentPointers(transaction, physicalSchema, lockIntention, maxCount);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
-                throw;
-            }
-        }
-
         internal HashSet<uint> AcquireDocumentPointers(
             Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention, int? maxCount = null)
         {
             try
             {
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                 var documentPointers = new HashSet<uint>();
 
@@ -132,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal IEnumerable<(uint DocumentId, PhysicalDocument Document)> ScanDocuments(
             Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
-            var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+            var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
             var documentsCF = rdb.GetColumnFamily(KbColumnFamilyName.Documents);
 
             using var iterator = rdb.NewIterator(documentsCF);
@@ -174,40 +159,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// When we want to create a document, this is where we do it - no exceptions.
-        /// </summary>
-        internal uint InsertDocument(Transaction transaction, string schemaName, object pageContent)
-        {
-            try
-            {
-                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                return InsertDocument(transaction, physicalSchema, JsonConvert.SerializeObject(pageContent));
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// When we want to create a document, this is where we do it - no exceptions.
-        /// </summary>
-        internal uint InsertDocument(Transaction transaction, string schemaName, string pageContent)
-        {
-            try
-            {
-                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                return InsertDocument(transaction, physicalSchema, pageContent);
-            }
-            catch (Exception ex)
-            {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
         /// Fixed memory, low contention at 256 buckets, no cleanup needed. Two different paths can theoretically share
         /// a bucket (hash collision) and serialize against each other, but it's rare and harmless — correctness is maintained either way.
         /// </summary>
@@ -217,8 +168,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (GetIdentityLock(physicalSchema.SchemaFilePath()))
             {
-                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
-
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var bytes = _core.IO.GetNotTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
                 var identity = bytes == null ? 0U : BitConverter.ToUInt32(bytes);
                 identity++;
@@ -231,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (GetIdentityLock(physicalSchema.SchemaFilePath()))
             {
-                var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var bytes = _core.IO.GetNotTrackedRaw(rdb, KbColumnFamilyName.Identity, new RdbKey(PrimaryIdentityKey));
                 var identity = bytes == null ? 0U : BitConverter.ToUInt32(bytes);
                 return identity;
@@ -253,8 +203,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     Modified = DateTime.UtcNow,
                 };
 
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
-                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument);
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
+                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument, false);
 
                 //Update all of the indexes that reference the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, physicalDocumentId);
@@ -282,7 +232,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexingDocuments = new Dictionary<uint, PhysicalDocument>();
                 var modifiedFieldNames = new HashSet<string>();
 
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                 foreach (var updatedDocument in updatedDocuments)
                 {
@@ -327,7 +277,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var rdb = _core.IO.AcquireRdb(physicalSchema.DocumentsFilePath());
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                 foreach (var documentId in documentIds)
                 {

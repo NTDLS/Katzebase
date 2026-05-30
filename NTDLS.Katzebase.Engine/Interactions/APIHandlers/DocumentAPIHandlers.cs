@@ -133,10 +133,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 #endregion
 
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
+
                 var apiResults = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(
-                        transactionReference.Transaction, param.Schema, param.Document.Content)
+                        transactionReference.Transaction, physicalSchema, param.Document.Content)
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, 1);
