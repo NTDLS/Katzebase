@@ -1,17 +1,18 @@
 SELECT /*TOP 100*/
-	P.Name,
-	TH.TransactionId,
-	P.ProductNumber,
-	PSC.Name as Category
+	count(0)
+	--P.Name,
+	--TH.TransactionId,
+	--P.ProductNumber,
+	--PSC.Name as Category
 FROM
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
-	ON p.ProductID = th.ProductID
-    AND p.ListPrice = th.ActualCost
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
-	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+	AdventureWorks:Production:Product as P
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
+	ON TH.ProductID = P.ProductID
+    AND TH.ActualCost = P.ListPrice
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
+	ON PSC.ProductSubcategoryID = P.ProductSubcategoryID
 
 
 /*
-	Average completed in 1,300ms.
+	Average completed in 4,400ms.
 */

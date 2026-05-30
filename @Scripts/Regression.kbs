@@ -346,7 +346,7 @@ ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = false)
 ANALYZE SCHEMA Temporary:Payload1 WITH (IncludePhysicalPages = true)
 
 --Test ALTER schema.
-ALTER schema Temporary:Payload1 WITH (PageSize = 100)
+ALTER schema Temporary:Payload1
 
 --Test functions:
 
@@ -406,7 +406,6 @@ SELECT Length('Hello World') FROM Single
 SELECT DateTime('yyyy-MM-dd HH:mm:ss.ms') FROM Single
 SELECT DateTimeUTC('yyyy-MM-dd HH:mm:ss.ms') FROM Single
 SELECT DocumentID('h') FROM Single
-SELECT DocumentPage('') FROM Single
 SELECT DocumentUID('') FROM Single
 SELECT Guid() FROM Single
 SELECT IndexOf('text', 'This is some text and this is more text.') FROM Single

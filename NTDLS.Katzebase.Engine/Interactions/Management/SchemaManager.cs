@@ -212,8 +212,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var cacheKey = CacheManager.MakeCacheKey(physicalSchema.ParentPhysicalSchema.SchemaFilePath(), KbColumnFamilyName.Schema, physicalSchema.Name);
                 _core.Cache.Remove(cacheKey);
 
+                // Eject everything under the dropped schema's directory — documents, indexes,
+                // sub-schema catalogs, and all nested sub-schema contents.
                 transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                         _core.Cache.RemoveItemsWithPrefix(cacheKey));
+                    _core.Cache.RemoveItemsForPath(new CacheKey(physicalSchema.DiskPath)));
             }
             catch (Exception ex)
             {
@@ -231,8 +233,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
                 {
-                    var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(
-                        transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
+                    var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
 
                     foreach (var catalogItem in schemaCatalog)
                     {
