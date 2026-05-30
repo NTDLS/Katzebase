@@ -187,7 +187,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void RemoveItemsWithPrefix(CacheKey cacheKey)
+        /// <summary>
+        /// Removes items where their cache key starts with the given cache key's file path.
+        /// </summary>
+        internal void RemoveItemsForPath(CacheKey cacheKey)
+        {
+            try
+            {
+                _cache.RemoveItemsWithPrefix(cacheKey.FilePath);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error("Failed to remove cache path prefixed-object.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Removes items where their cache key starts with the given cache key.
+        /// </summary>
+        internal void RemoveItemsStartingWith(CacheKey cacheKey)
         {
             try
             {
