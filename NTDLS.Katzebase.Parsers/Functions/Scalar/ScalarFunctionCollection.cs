@@ -42,7 +42,6 @@ namespace NTDLS.Katzebase.Parsers.Functions.Scalar
                 "String DateTime (String format = 'yyyy-MM-dd HH:mm:ss.fff')|'Returns the current local date and time using the given format.'",
                 "String DateTimeUTC (String format = 'yyyy-MM-dd HH:mm:ss.fff')|'Returns the current UCT date and time using the given format.'",
                 "String DocumentID (String schemaAlias)|'Returns the ID of the current document.'",
-                "String DocumentPage (String schemaAlias)|'Returns the page number of the current document.'",
                 "String DocumentUID (String schemaAlias)|'Returns the page number and ID of the current document.'",
                 "String FormatDateTime (String datetime, String format = 'yyyy-MM-dd HH:mm:ss.fff')|'Returns the supplied date and time using the given format.'",
                 "String FormatNumeric (Numeric value, String format = 'N')|'Returns the supplied numeric value as a formatted string using the given format.'",

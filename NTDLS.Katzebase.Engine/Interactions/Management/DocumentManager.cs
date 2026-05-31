@@ -199,8 +199,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var physicalDocument = new PhysicalDocument(pageContent)
                 {
-                    Created = DateTime.UtcNow,
-                    Modified = DateTime.UtcNow,
+                    CreatedUTC = DateTime.UtcNow,
+                    ModifiedUTC = DateTime.UtcNow,
                 };
 
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
@@ -239,7 +239,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var physicalDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), LockOperation.Write, populateCache)
                         ?? throw new Exception($"Document with ID [{updatedDocument.Key}] does not exist in schema [{physicalSchema.Name}].");
 
-                    physicalDocument.Modified = DateTime.UtcNow;
+                    physicalDocument.ModifiedUTC = DateTime.UtcNow;
 
                     //Update all of the modified values into the document:
                     foreach (var updatedValue in updatedDocument.Value)
