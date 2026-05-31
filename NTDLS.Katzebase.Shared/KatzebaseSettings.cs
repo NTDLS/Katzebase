@@ -184,7 +184,7 @@
             {
                 transactionDataPath = value.TrimEnd(['/', '\\']).Trim();
 
-                if (Path.IsPathRooted(dataRootPath) == false)
+                if (Path.IsPathRooted(transactionDataPath) == false)
                 {
                     transactionDataPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, transactionDataPath));
                 }
@@ -202,7 +202,7 @@
             set
             {
                 logDirectory = value.TrimEnd(['/', '\\']).Trim();
-                if (Path.IsPathRooted(dataRootPath) == false)
+                if (Path.IsPathRooted(logDirectory) == false)
                 {
                     logDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, logDirectory));
                 }
