@@ -278,14 +278,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
+                //Update all of the indexes that reference the documents.
+                _core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentIds);
+
                 foreach (var documentId in documentIds)
                 {
                     _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId));
-
                 }
-
-                //Update all of the indexes that reference the documents.
-                _core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentIds);
             }
             catch (Exception ex)
             {

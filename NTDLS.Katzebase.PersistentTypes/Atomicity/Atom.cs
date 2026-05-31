@@ -14,10 +14,15 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
         public CacheKey? CacheKey { get; set; }
         public long Sequence { get; set; } = 0;
 
-        public string RdbPath { get; set; }
-        public string ColumnFamilyName { get; set; }
+        public string RdbPath { get; set; } = string.Empty;
+        public string ColumnFamilyName { get; set; } = string.Empty;
         public byte[]? RdbKey { get; set; }
         public byte[]? OriginalData { get; set; }
+
+        public Atom()
+        {
+
+        }
 
         public Atom(ActionType action, long sequence, string rdbPath, string columnFamilyName)
         {
