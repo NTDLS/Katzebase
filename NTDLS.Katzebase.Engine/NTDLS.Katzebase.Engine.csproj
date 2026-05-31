@@ -69,7 +69,7 @@
     <EmbeddedResource Include="Scripts\CreateAccount.kbs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NTDLS.DelegateThreadPooling" Version="2.1.2" />
+    <PackageReference Include="NTDLS.DelegateThreadPooling" Version="2.1.3" />
     <PackageReference Include="NTDLS.ExpressionParser" Version="1.5.8" />
     <PackageReference Include="NTDLS.FastMemoryCache" Version="1.9.5" />
     <PackageReference Include="RocksDB" Version="10.10.1.649" />

@@ -10,14 +10,23 @@ sudo apt update
 sudo apt-get install -y aspnetcore-runtime-9.0
 ```
 
+Need to cleanup?
+ > rm -rf ~/Katzebase
+
+
 - Install unzip
   > sudo apt install unzip
 
 - Download Katzebase (be sure to change the URL for the version you want to install)
-  > wget https://github.com/NTDLS/Katzebase/releases/download/0.33.0/Katzebase.linux.x64.zip
+  > wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.x64.zip
+  -or-
+  > wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.arm64.zip
+  > wget https://ntdls.com/Katzebase.linux.arm64.zip
 
 - Extract files
   > unzip Katzebase.linux.x64.zip -d Katzebase
+  -or-
+  > unzip Katzebase.linux.arm64.zip -d Katzebase
 
 - Make the File Executable
   > chmod +x ~/Katzebase/NTDLS.Katzebase.Server

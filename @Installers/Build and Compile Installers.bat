@@ -15,10 +15,13 @@ del publish\win-x64\Server\*.pdb /q
 dotnet publish ..\NTDLS.Katzebase.SQLServerMigration -c Release -o publish\win-x64\SQLServerMigration --runtime win-x64 --self-contained false
 del publish\win-x64\SQLServerMigration\*.pdb /q
 
-dotnet publish ..\NTDLS.Katzebase.Server -c Release -o publish\linux-x64 --runtime linux-x64 --self-contained false
+dotnet publish ..\NTDLS.Katzebase.Server -c Release -o publish\linux-x64 --runtime linux-x64 --self-contained true
 del publish\linux-x64\*.pdb /q
-
 7z.exe a -tzip -r -mx9 ".\output\Katzebase.linux.x64.zip" ".\publish\linux-x64\*.*"
+
+dotnet publish ..\NTDLS.Katzebase.Server -c Release -o publish\linux-arm64 --runtime linux-arm64 --self-contained true
+del publish\linux-arm64\*.pdb /q
+7z.exe a -tzip -r -mx9 ".\output\Katzebase.linux.arm64.zip" ".\publish\linux-arm64\*.*"
 
 iscc Windows.Installer.iss
 rd publish /q /s

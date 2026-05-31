@@ -108,9 +108,9 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             prefix = prefix.ToLowerInvariant();
 
-            if (prefix.EndsWith('\\') == false)
+            if (prefix.EndsWith(Path.PathSeparator.ToString()) == false)
             {
-                prefix += '\\';
+                prefix += Path.PathSeparator;
             }
 
             _collection.Use(o =>
