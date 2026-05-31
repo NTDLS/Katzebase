@@ -707,7 +707,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             transaction.EnsureActive();
 
-                            var physicalDocument = _core.Documents.AcquireDocument(transaction, rdb, threadDocumentId, LockOperation.Read, false);
+                            // Read directly without transaction tracking: this rebuild already writes
+                            // via raw WriteBatch (bypassing the transaction atom log), so tracking
+                            // reads for rollback-cache-eviction would be both inconsistent and a
+                            // source of unbounded memory growth across the full document set.
+                            var physicalDocument = _core.IO.GetNotTracked<PhysicalDocument>(
+                                rdb, KbColumnFamilyName.Documents, new RdbKey(threadDocumentId).Bytes, IOFormat.PBuf);
                             if (physicalDocument == null) return;
 
                             var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
