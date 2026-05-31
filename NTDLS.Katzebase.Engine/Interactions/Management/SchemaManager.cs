@@ -235,7 +235,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         schemas.Add(new PhysicalSchema()
                         {
-                            DiskPath = physicalSchema.DiskPath + Path.PathSeparator + catalogItem.Name,
+                            DiskPath = physicalSchema.DiskPath + Path.DirectorySeparatorChar + catalogItem.Name,
                             Id = catalogItem.Id,
                             Name = catalogItem.Name,
                             VirtualPath = physicalSchema.VirtualPath + ":" + catalogItem.Name
@@ -307,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var segments = schemaName.Split(':');
                     var thisSchemaName = segments[^1];
 
-                    var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join(Path.PathSeparator.ToString(), segments));
+                    var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join(Path.DirectorySeparatorChar.ToString(), segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaFile);
@@ -392,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (virtualSchema != null)
                 {
                     virtualSchema.Name = thisSchema;
-                    virtualSchema.DiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join(Path.PathSeparator.ToString(), schemaSegments));
+                    virtualSchema.DiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join(Path.DirectorySeparatorChar.ToString(), schemaSegments));
                     virtualSchema.VirtualPath = schemaName;
                     virtualSchema.Exists = true;
                     virtualSchema.IsTemporary = isTemporary;
@@ -402,7 +402,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     virtualSchema = new VirtualSchema(parentPhysicalSchema)
                     {
                         Name = thisSchema,
-                        DiskPath = Path.Combine(_core.Settings.DataRootPath, schemaName.Replace(':', Path.PathSeparator)),
+                        DiskPath = Path.Combine(_core.Settings.DataRootPath, schemaName.Replace(':', Path.DirectorySeparatorChar)),
 
                         VirtualPath = schemaName,
                         Exists = false,

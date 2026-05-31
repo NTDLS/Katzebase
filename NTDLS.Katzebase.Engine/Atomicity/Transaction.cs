@@ -481,7 +481,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         public string TransactionLogFilePath
-            => TransactionPath + "\\" + TransactionAtomsFile;
+            => Path.Combine(TransactionPath, TransactionAtomsFile);
 
         public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {

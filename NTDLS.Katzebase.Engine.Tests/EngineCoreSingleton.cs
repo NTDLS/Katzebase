@@ -39,9 +39,9 @@ namespace NTDLS.Katzebase.Engine.Tests
 
             _settings = new KatzebaseSettings();
             _settings.ListenPort = Constants.LISTEN_PORT;
-            _settings.DataRootPath = @$"{Constants.ROOT_PATH}\Root";
-            _settings.TransactionDataPath = @$"{Constants.ROOT_PATH}\Transaction";
-            _settings.LogDirectory = @$"{Constants.ROOT_PATH}\Logs";
+            _settings.DataRootPath = Path.Combine(Constants.ROOT_PATH, "Root");
+            _settings.TransactionDataPath = Path.Combine(Constants.ROOT_PATH, "Transaction");
+            _settings.LogDirectory = Path.Combine(Constants.ROOT_PATH, "Logs");
 
             _messageServer = new RmServer();
             _messageServer.SetCompressionProvider(new RmDeflateCompressionProvider());
