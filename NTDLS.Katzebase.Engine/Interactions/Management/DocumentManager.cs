@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint documentId = RdbKey.ConvertToUint(keyBytes);
                 var cacheKey = CacheManager.MakeCacheKey(physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(keyBytes));
 
-                transaction.RecordKeyRead(physicalSchema.DocumentsFilePath(), KbColumnFamilyName.Documents, new RdbKey(keyBytes), cacheKey);
+                transaction.RecordKeyRead(new RdbKey(keyBytes), cacheKey);
 
                 PhysicalDocument? document = null;
 

@@ -11,10 +11,12 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
+using RocksDbSharp;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
@@ -72,9 +74,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new KbObjectAlreadyExistsException($"Index already exists: [{index.Name}].");
                 }
 
+                var indexCfName = new RdbKey(physicalIndex.Id);
+
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
-                _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
-                rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
+
+                _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, indexCfName, physicalIndex);
+                rdb.CreateColumnFamily(indexCfName);
+
+                // Record the new index in the transaction's write set for proper commit/rollback handling.
+                transaction.RecordCfCreate(rdb, indexCfName);
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
 

@@ -101,24 +101,28 @@
     </Keywords>
     
     <Keywords color="KbFunction">
+		<Word>abs</Word>
 		<Word>Avg</Word>
+		<Word>avg</Word>
+		<Word>ceil</Word>
 		<Word>Checksum</Word>
 		<Word>Coalesce</Word>
 		<Word>Concat</Word>
 		<Word>Count</Word>
 		<Word>CountDistinct</Word>
+		<Word>DateAdd</Word>
 		<Word>DateDiff</Word>
 		<Word>DateTime</Word>
 		<Word>DateTimeUTC</Word>
 		<Word>DocumentID</Word>
+		<Word>Floor</Word>
 		<Word>FormatDateTime</Word>
 		<Word>FormatNumeric</Word>
-		<Word>GUID</Word>
 		<Word>GeometricMean</Word>
 		<Word>Guid</Word>
-		<Word>IIF</Word>
 		<Word>IfNull</Word>
 		<Word>IfNullNumeric</Word>
+		<Word>IIF</Word>
 		<Word>IndexOf</Word>
 		<Word>IsBetween</Word>
 		<Word>IsDouble</Word>
@@ -145,7 +149,11 @@
 		<Word>MinString</Word>
 		<Word>Mode</Word>
 		<Word>NullIf</Word>
+		<Word>IsNumeric</Word>
 		<Word>NullIfNumeric</Word>
+		<Word>NullWhen</Word>
+		<Word>NullWhenNumeric</Word>
+		<Word>Pow</Word>
 		<Word>Right</Word>
 		<Word>Round</Word>
 		<Word>Sha1</Word>
@@ -154,6 +162,7 @@
 		<Word>Sha256Agg</Word>
 		<Word>Sha512</Word>
 		<Word>Sha512Agg</Word>
+		<Word>Sleep</Word>
 		<Word>SubString</Word>
 		<Word>Sum</Word>
 		<Word>ToLower</Word>
@@ -163,74 +172,8 @@
 		<Word>ToUpper</Word>
 		<Word>Trim</Word>
 		<Word>Variance</Word>
-		<Word>abs</Word>
-		<Word>avg</Word>
-		<Word>ceil</Word>
-		<Word>checksum</Word>
-		<Word>coalesce</Word>
-		<Word>concat</Word>
-		<Word>count</Word>
-		<Word>countdistinct</Word>
-		<Word>dateadd</Word>
-		<Word>datediff</Word>
-		<Word>datetime</Word>
-		<Word>datetimeutc</Word>
-		<Word>documentid</Word>
-		<Word>floor</Word>
-		<Word>formatdatetime</Word>
-		<Word>formatnumeric</Word>
-		<Word>geometricmean</Word>
-		<Word>guid</Word>
-		<Word>ifnull</Word>
-		<Word>ifnullnumeric</Word>
-		<Word>iif</Word>
-		<Word>indexof</Word>
-		<Word>isbetween</Word>
-		<Word>isdouble</Word>
-		<Word>isequal</Word>
-		<Word>isgreater</Word>
-		<Word>isgreaterorequal</Word>
-		<Word>isinteger</Word>
-		<Word>isless</Word>
-		<Word>islessorequal</Word>
-		<Word>islike</Word>
-		<Word>isnotbetween</Word>
-		<Word>isnotequal</Word>
-		<Word>isnotlike</Word>
-		<Word>isnull</Word>
-		<Word>isstring</Word>
-		<Word>lastindexof</Word>
-		<Word>left</Word>
-		<Word>length</Word>
-		<Word>max</Word>
-		<Word>maxstring</Word>
-		<Word>mean</Word>
-		<Word>median</Word>
-		<Word>min</Word>
-		<Word>minstring</Word>
-		<Word>mode</Word>
-		<Word>nullif</Word>
-		<Word>nullifnumeric</Word>
-		<Word>pow</Word>
-		<Word>right</Word>
-		<Word>round</Word>
-		<Word>sha1</Word>
-		<Word>sha1agg</Word>
-		<Word>sha256</Word>
-		<Word>sha256agg</Word>
-		<Word>sha512</Word>
-		<Word>sha512agg</Word>
-		<Word>sleep</Word>
-		<Word>substring</Word>
-		<Word>sum</Word>
-		<Word>tolower</Word>
-		<Word>tonumeric</Word>
-		<Word>toproper</Word>
-		<Word>tostring</Word>
-		<Word>toupper</Word>
-		<Word>trim</Word>
-		<Word>variance</Word>
-    </Keywords>
+		<Word>IsEmpty</Word>
+	</Keywords>
 
     <Keywords color="Keywords">
       <Word>account</Word>

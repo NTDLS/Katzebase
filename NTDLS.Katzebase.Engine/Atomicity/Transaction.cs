@@ -529,7 +529,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Action Recorders.
 
-        public void RecordKeyCreate(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+        public void RecordKeyCreate(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+            => RecordKeyCreate(rdb, columnFamily.ToString(), key, targetKey);
+
+        public void RecordKeyCreate(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey)
+            => RecordKeyCreate(rdb, columnFamily.ToString(), key, targetKey);
+
+        public void RecordKeyCreate(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -547,7 +553,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
-                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
+                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -559,7 +565,41 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyDelete(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+        public void RecordCfCreate(Rdb rdb, KbColumnFamilyName columnFamily)
+            => RecordCfCreate(rdb, columnFamily.ToString());
+
+        public void RecordCfCreate(Rdb rdb, RdbKey columnFamily)
+            => RecordCfCreate(rdb, columnFamily.ToString());
+
+        public void RecordCfCreate(Rdb rdb, string columnFamilyName)
+        {
+            _core.EnsureNotNull();
+
+            try
+            {
+                EnsureActive();
+
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
+
+                var atom = new Atom(ActionType.CfCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName);
+                var atomJson = JsonConvert.SerializeObject(atom);
+                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                ptRecording?.StopAndAccumulate();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to record key creation for process {ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        public void RecordKeyDelete(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyDelete(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyDelete(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyDelete(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyDelete(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -578,7 +618,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey, originalData);
+                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey, originalData);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -590,7 +630,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyRead(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+        /// <summary>
+        /// We need to record reads as well so that we can invalidate the cache upon rollback.
+        /// If a key is both read and written, it only needs to be recorded as a write since
+        /// the rollback will restore the original value in that case, but if it's only read
+        /// then we need to make sure to remove it from the cache upon rollback since we may
+        /// have cached a value that has been changed by another transaction.
+        /// </summary>
+        public void RecordKeyRead(RdbKey key, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -618,7 +665,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyAlter(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+        public void RecordKeyAlter(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyAlter(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyAlter(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyAlter(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyAlter(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -635,7 +688,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-                var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
+                var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey)
                 {
                     OriginalData = originalData
                 };
@@ -692,7 +745,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 }
 
                                 //We need to eject the rolled back item from the cache since its last known state has changed.
-                                _core.Cache.Remove(record.CacheKey);
+                                if (record.CacheKey != null)
+                                {
+                                    _core.Cache.Remove(record.CacheKey);
+                                }
 
                                 if (record.Action == ActionType.KeyCreate)
                                 {
@@ -700,7 +756,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
                                         var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Remove(record.RdbKey, originalCf);
+                                        originalRdb.Remove(record.RdbKey.EnsureNotNull(), originalCf);
                                     }
                                     catch (Exception ex)
                                     {
@@ -713,11 +769,23 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
                                         var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
+                                        originalRdb.Put(record.RdbKey.EnsureNotNull(), record.OriginalData, originalCf);
                                     }
                                     catch (Exception ex)
                                     {
                                         LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                    }
+                                }
+                                else if (record.Action == ActionType.CfCreate)
+                                {
+                                    try
+                                    {
+                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                        originalRdb.DropColumnFamily(record.ColumnFamilyName);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
                                     }
                                 }
                             }

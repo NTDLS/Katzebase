@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 transaction.EnsureActive();
                 var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
                 acquiredLockKey = transaction.LockSingleObject(lockOp, cacheKey);
-                transaction.RecordKeyRead(rdb.Path, columnFamilyName, key, cacheKey);
+                transaction.RecordKeyRead(key, cacheKey);
 
                 if (_core.Settings.DeferredIOEnabled)
                 {
@@ -285,7 +285,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()));
 
-                        transaction.RecordKeyRead(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
+                        transaction.RecordKeyRead(new RdbKey(iterator.Key()), cacheKey);
 
                         if (_core.Settings.DeferredIOEnabled)
                         {
@@ -326,7 +326,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()));
 
-                        transaction.RecordKeyRead(rdb.Path, columnFamilyName, new RdbKey(iterator.Key()), cacheKey);
+                        transaction.RecordKeyRead(new RdbKey(iterator.Key()), cacheKey);
 
                         if (_core.Settings.DeferredIOEnabled)
                         {
@@ -555,7 +555,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
             transaction.LockSingleObject(LockOperation.Delete, cacheKey);
 
-            transaction.RecordKeyDelete(rdb.Path, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+            transaction.RecordKeyDelete(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
             rdb.Remove(key.Bytes, columnFamilyName);
         }
 
@@ -701,11 +701,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 bool doesKeyExist = DoesKeyExist(transaction, rdb, columnFamilyName, key, lockOp ?? LockOperation.Write, out _);
                 if (doesKeyExist)
                 {
-                    transaction.RecordKeyAlter(rdb.Path, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+                    transaction.RecordKeyAlter(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
                 }
                 else
                 {
-                    transaction.RecordKeyCreate(rdb.Path, columnFamilyName, key, cacheKey);
+                    transaction.RecordKeyCreate(rdb, columnFamilyName, key, cacheKey);
                 }
 
                 if (_core.Settings.DeferredIOEnabled)

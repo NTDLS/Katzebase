@@ -54,8 +54,13 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void DropColumnFamily(KbColumnFamilyName name)
         {
-            ColumnFamilies.TryRemove(name.ToString(), out _);
-            Instance.DropColumnFamily(name.ToString());
+            DropColumnFamily(name.ToString());
+        }
+
+        public void DropColumnFamily(string name)
+        {
+            ColumnFamilies.TryRemove(name, out _);
+            Instance.DropColumnFamily(name);
         }
 
         public void DropColumnFamily(RdbKey key)

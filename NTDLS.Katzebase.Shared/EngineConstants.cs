@@ -132,6 +132,10 @@
             KeyCreate,
             KeyAlter,
             KeyDelete,
+            /// <summary>
+            /// Create a column family.
+            /// </summary>
+            CfCreate
         }
 
         public enum HealthCounterType
