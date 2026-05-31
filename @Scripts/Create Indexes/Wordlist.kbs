@@ -1,29 +1,39 @@
-CREATE INDEX ix_Text(
+CREATE INDEX ix_Word_Text(
     Text
-) ON WordList:Word WITH (PARTITIONS=100)
+) ON WordList:Word
 
-CREATE INDEX ix_LanguageId(
+CREATE INDEX ix_Word_LanguageId(
     LanguageId
-) ON WordList:Word WITH (PARTITIONS=100)
+) ON WordList:Word
 
-CREATE UNIQUEKEY ix_Id(
+CREATE UNIQUEKEY PK_Word(
     Id
-) ON WordList:Word WITH (PARTITIONS=100)
+) ON WordList:Word
 
-CREATE INDEX ix_SourceWordId(
-    SourcewordId
-) ON WordList:Synonym WITH (PARTITIONS=1000)
+CREATE INDEX ix_Synonym_SourceWordId(
+    SourceWordId
+) ON WordList:Synonym
 
-CREATE INDEX ix_English(
+CREATE INDEX ix_FlatTranslate_English(
     English
-) ON WordList:FlatTranslate WITH (PARTITIONS=100)
+) ON WordList:FlatTranslate
 
-CREATE INDEX ix_TargetWordId(
-    TargetwordId
-) ON WordList:Synonym WITH (PARTITIONS=1000)
+CREATE INDEX ix_Synonym_TargetWordId(
+    TargetWordId
+) ON WordList:Synonym
 
-CREATE INDEX ix_Translation
+CREATE INDEX ix_Translation_SourceLanguageId_TargetLanguageId
 (
     SourceLanguageId,
     TargetLanguageId
-) ON WordList:Translation WITH (PARTITIONS = 1000)
+) ON WordList:Translation
+
+CREATE INDEX ix_Translation_TargetLanguageId
+(
+    TargetLanguageId
+) ON WordList:Translation
+
+CREATE INDEX ix_Translation_SourceLanguageId
+(
+    SourceLanguageId
+) ON WordList:Translation

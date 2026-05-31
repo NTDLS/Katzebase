@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         // Dedup guards for the transaction atom log. Capped to avoid unbounded growth during
         // bulk operations; when capped, duplicate atoms may be written (harmless on rollback).
-        private const int MaxAtomDeduplicationEntries = 500_000;
+        private const int MaxAtomDeduplicationEntries = 10000;
         private readonly HashSet<string> _recordedReadObjectKeys = new HashSet<string>();
         private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
         private bool _writeTrackingCapped = false;

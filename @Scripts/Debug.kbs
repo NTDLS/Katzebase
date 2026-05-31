@@ -1,6 +1,7 @@
 set TraceWaitTimes true
 set WarnMissingFields false
 
+-----------------------------------------------------------------------------
 SELECT
 	S.Value, --Should be null.
 	Sha1('t') as Hash,
@@ -27,17 +28,19 @@ WHERE
 ORDER BY
 	10
 
-select
+-----------------------------------------------------------------------------
+SELECT
 	p.body
-from
+FROM
 	StackOverflow:Users as U
-inner join Stackoverflow:Posts as P
+INNER JOIN Stackoverflow:Posts as P
 	ON P.OwnerUserId = U.Id
-where
+WHERE
 	U.DisplayName = 'ntdls'
-order by
+ORDER BY
 	P.CreationDate
 
+-----------------------------------------------------------------------------
 SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,
