@@ -19,7 +19,6 @@ SELECT
 	DateTime('yyyy-MM-dd HH:mm:ss.fff') as DateTime1,
 	DateTimeUTC('yyyy-MM-dd HH:mm:ss.fff') as DateTimeUTC1,
 	DocumentID('h') as DocumentID1,
-	DocumentUID('') as DocumentUID1,
 	Guid() as Guid1,
 	IndexOf('text', 'This is some text and this is more text.') as IndexOf1,
 	Left('Hello world', 5) as Left1,
@@ -47,6 +46,6 @@ FROM
 		DateTimeUTC1=Format(nnnn-nn-nn nn:nn:nn.nnn)
 		Guid1=Guid()
 	}
-IsBetween1	IsBetween2	IsEqual1	IsGreater1	IsGreaterOrEqual1	IsLess	IsLessOrEqual1	IsLike1	IsNotBetween1	IsNotEqual1	IsNotLike`	IsInteger1	IsString1	IsDouble1	Checksum1	LastIndexOf1	Length1	DateTime1	DateTimeUTC1	DocumentID1	DocumentUID1	Guid1	IndexOf1	Left1	Right1	Sha1	Sha256	Sha512	SubString1	ToLower1	ToProper1	ToUpper1	Concat1	Coalesce1	Trim1	Trim2	IIF1
-1	0	0	1	1	0	0	1	0	1	0	0	0	1	43636	35	11	2024-10-18 16:48:49.676	2024-10-18 20:48:49.679	<null>	<null>	74052aa6-48a6-4e63-b820-c0ac8ae3395a	13	Hello	world	7b502c3a1f48c8609ae212cdfb639dee39673f5e	64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c	b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47	cruel	hello cruel world	Hello Cruel World	HELLO CRUEL WORLD	hello world	hello	o wor	hello world	Is True
+IsBetween1	IsBetween2	IsEqual1	IsGreater1	IsGreaterOrEqual1	IsLess	IsLessOrEqual1	IsLike1	IsNotBetween1	IsNotEqual1	IsNotLike`	IsInteger1	IsString1	IsDouble1	Checksum1	LastIndexOf1	Length1	DateTime1	DateTimeUTC1	DocumentID1	Guid1	IndexOf1	Left1	Right1	Sha1	Sha256	Sha512	SubString1	ToLower1	ToProper1	ToUpper1	Concat1	Coalesce1	Trim1	Trim2	IIF1
+1	0	0	1	1	0	0	1	0	1	0	0	0	1	43636	35	11	2024-10-18 16:48:49.676	2024-10-18 20:48:49.679	<null>	74052aa6-48a6-4e63-b820-c0ac8ae3395a	13	Hello	world	7b502c3a1f48c8609ae212cdfb639dee39673f5e	64ec88ca00b268e5ba1a35678a1b5316d212f4f366b2477232534a8aeca37f3c	b7f783baed8297f0db917462184ff4f08e69c2d5e5f79a942600f9725f58ce1f29c18139bf80b06c0fff2bdd34738452ecf40c488c22a7e3d80cdf6f9c1c0d47	cruel	hello cruel world	Hello Cruel World	HELLO CRUEL WORLD	hello world	hello	o wor	hello world	Is True
 }

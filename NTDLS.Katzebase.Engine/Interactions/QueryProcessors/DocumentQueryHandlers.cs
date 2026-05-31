@@ -142,8 +142,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 #endregion
 
-                var physicalSchema = _core.Schemas.Acquire(
-                    transactionReference.Transaction, targetSchema, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema, LockOperation.Write);
 
                 if (query.InsertFieldValues != null)
                 {

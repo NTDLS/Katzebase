@@ -1339,7 +1339,7 @@ namespace NTDLS.Katzebase.Management
         {
             if (e.Item is FunctionTreeNode functionNode)
             {
-                treeViewMacros.DoDragDrop($"{functionNode.Function.Name}({functionNode.Function.Parameters})", DragDropEffects.All);
+                treeViewMacros.DoDragDrop($"EXEC {functionNode.Function.Name}(/*{functionNode.Function.Parameters}*/)", DragDropEffects.All);
             }
         }
 

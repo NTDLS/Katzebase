@@ -389,11 +389,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Locking Helpers.
 
-        public ObjectLockKey? LockSingleObject(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockSingleObject(LockOperation lockOp, CacheKey targetKey)
         {
-            if (lockOperation == LockOperation.Read && Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
+            if (lockOp == LockOperation.Read && Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
             {
-                lockOperation = LockOperation.Stability;
+                lockOp = LockOperation.Stability;
             }
 
             _core.EnsureNotNull();
@@ -402,7 +402,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Object, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Object, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Object:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -420,7 +420,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Locks a single database schema path and all files (but not sub-schemas) that it contains.
         /// </summary>
-        public ObjectLockKey? LockPath(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockPath(LockOperation lockOp, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -428,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Path, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Path, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Path:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -446,7 +446,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Locks a path (which means the schema, sub-schema and all files beneath it).
         /// </summary>
-        public ObjectLockKey? LockPathRecursive(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockPathRecursive(LockOperation lockOp, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -454,7 +454,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.PathRecursive, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.PathRecursive, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Path:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -481,7 +481,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         public string TransactionLogFilePath
-            => TransactionPath + "\\" + TransactionActionsFile;
+            => TransactionPath + "\\" + TransactionAtomsFile;
 
         public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
@@ -529,7 +529,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Action Recorders.
 
-        public void RecordKeyCreate(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+        public void RecordKeyCreate(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+            => RecordKeyCreate(rdb, columnFamily.ToString(), key, targetKey);
+
+        public void RecordKeyCreate(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey)
+            => RecordKeyCreate(rdb, columnFamily.ToString(), key, targetKey);
+
+        public void RecordKeyCreate(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -537,19 +543,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
-                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
+                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -561,7 +565,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyDelete(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+        public void RecordCfCreate(Rdb rdb, KbColumnFamilyName columnFamily)
+            => RecordCfCreate(rdb, columnFamily.ToString());
+
+        public void RecordCfCreate(Rdb rdb, RdbKey columnFamily)
+            => RecordCfCreate(rdb, columnFamily.ToString());
+
+        public void RecordCfCreate(Rdb rdb, string columnFamilyName)
         {
             _core.EnsureNotNull();
 
@@ -571,22 +581,44 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
+                var atom = new Atom(ActionType.CfCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName);
+                var atomJson = JsonConvert.SerializeObject(atom);
+                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                ptRecording?.StopAndAccumulate();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to record key creation for process {ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        public void RecordKeyDelete(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyDelete(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyDelete(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyDelete(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyDelete(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey, byte[] originalData)
+        {
+            _core.EnsureNotNull();
+
+            try
+            {
+                EnsureActive();
+
                 DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(targetKey));
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
-                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
-                {
-                    OriginalData = originalData
-                };
-
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
+                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey, originalData);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -598,7 +630,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyRead(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey)
+        /// <summary>
+        /// We need to record reads as well so that we can invalidate the cache upon rollback.
+        /// If a key is both read and written, it only needs to be recorded as a write since
+        /// the rollback will restore the original value in that case, but if it's only read
+        /// then we need to make sure to remove it from the cache upon rollback since we may
+        /// have cached a value that has been changed by another transaction.
+        /// </summary>
+        public void RecordKeyRead(RdbKey key, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -606,17 +645,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedReadObjectKeys)
                 {
-                    if (_recordedReadObjectKeys.Contains(targetKey.Canonical))
+                    if (!_recordedReadObjectKeys.Add(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedReadObjectKeys.Add(targetKey.Canonical);
                 }
 
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
                 FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(targetKey, key.Bytes)));
 
                 ptRecording?.StopAndAccumulate();
@@ -628,7 +665,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public void RecordKeyAlter(string rdbPath, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+        public void RecordKeyAlter(Rdb rdb, KbColumnFamilyName columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyAlter(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyAlter(Rdb rdb, RdbKey columnFamily, RdbKey key, CacheKey targetKey, byte[] originalData)
+            => RecordKeyAlter(rdb, columnFamily.ToString(), key, targetKey, originalData);
+
+        public void RecordKeyAlter(Rdb rdb, string columnFamilyName, RdbKey key, CacheKey targetKey, byte[] originalData)
         {
             _core.EnsureNotNull();
 
@@ -636,25 +679,21 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
                         return;
                     }
-                    _recordedWriteObjectKeys.Add(targetKey.Canonical);
                 }
 
-                var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
+                var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey)
                 {
                     OriginalData = originalData
                 };
 
                 var atomJson = JsonConvert.SerializeObject(atom);
-
-
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
@@ -706,7 +745,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 }
 
                                 //We need to eject the rolled back item from the cache since its last known state has changed.
-                                _core.Cache.Remove(record.CacheKey);
+                                if (record.CacheKey != null)
+                                {
+                                    _core.Cache.Remove(record.CacheKey);
+                                }
 
                                 if (record.Action == ActionType.KeyCreate)
                                 {
@@ -714,7 +756,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
                                         var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Remove(record.RdbKey, originalCf);
+                                        originalRdb.Remove(record.RdbKey.EnsureNotNull(), originalCf);
                                     }
                                     catch (Exception ex)
                                     {
@@ -727,11 +769,23 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
                                         var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Put(record.RdbKey, record.OriginalData, originalCf);
+                                        originalRdb.Put(record.RdbKey.EnsureNotNull(), record.OriginalData, originalCf);
                                     }
                                     catch (Exception ex)
                                     {
                                         LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                    }
+                                }
+                                else if (record.Action == ActionType.CfCreate)
+                                {
+                                    try
+                                    {
+                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                        originalRdb.DropColumnFamily(record.ColumnFamilyName);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
                                     }
                                 }
                             }
@@ -741,7 +795,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         {
                             foreach (var file in obj)
                             {
-                                //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
                                 _core.Cache.Remove(file.CacheKey);
                             }
                         });

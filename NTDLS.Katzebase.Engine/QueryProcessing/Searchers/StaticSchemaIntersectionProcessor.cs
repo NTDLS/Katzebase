@@ -175,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         #region Thread.
 
-                        var rdb = core.IO.AcquireRdb(schemaMap.Value.PhysicalSchema.DocumentsFilePath());
+                        var rdb = core.IO.AcquireDocumentsRdb(schemaMap.Value.PhysicalSchema);
 
                         transaction.EnsureActive();
 
@@ -455,7 +455,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 var childPool = core.ThreadPool.Lookup.CreateChildPool<uint>(core.Settings.LookupChildThreadPoolQueueDepth);
 
-                var rdb = core.IO.AcquireRdb(primarySchema.Value.PhysicalSchema.DocumentsFilePath());
+                var rdb = core.IO.AcquireDocumentsRdb(primarySchema.Value.PhysicalSchema);
 
                 foreach (var documentPointer in documentIds)
                 {

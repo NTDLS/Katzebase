@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace NTDLS.Katzebase.PersistentTypes.Document
 {
     /// <summary>
-    /// This is the page document that is physically written to the disk by virtue of being contained in the collection in PhysicalDocumentPage.
+    /// This is the page document that is physically written to the disk.
     /// </summary>
     [Serializable]
     [ProtoContract]
@@ -16,10 +16,10 @@ namespace NTDLS.Katzebase.PersistentTypes.Document
         public KbInsensitiveDictionary<string?> Elements { get; set; }
 
         [ProtoMember(2)]
-        public DateTime Created { get; set; }
+        public DateTime CreatedUTC { get; set; }
 
         [ProtoMember(3)]
-        public DateTime Modified { get; set; }
+        public DateTime ModifiedUTC { get; set; }
 
         [ProtoIgnore]
         private int? _contentLength = null;

@@ -12,7 +12,7 @@
         public const string SchemaFile = "@schema.kbrdb";
 
         public const string ProcedureCatalogFile = "@procedures.kbcat"; //TODO: Remove this, it will go in the SchemaFile.
-        public const string TransactionActionsFile = "@transaction.kbatom";
+        public const string TransactionAtomsFile = "@transaction.kbatom";
         public const string HealthStatsFile = "@health.kblog";
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
         public const string UIDMarker = "$UID$";
@@ -129,15 +129,13 @@
 
         public enum ActionType
         {
-            //FileCreate,
-            //FileAlter,
-            //FileRead,
-            //FileDelete,
-            //DirectoryCreate,
-            //DirectoryDelete,
             KeyCreate,
             KeyAlter,
             KeyDelete,
+            /// <summary>
+            /// Create a column family.
+            /// </summary>
+            CfCreate
         }
 
         public enum HealthCounterType

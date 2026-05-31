@@ -2,6 +2,24 @@ set TraceWaitTimes true
 set WarnMissingFields false
 
 SELECT
+	count(0)
+    --p.FullName
+    --Count(o.OrderID) as OrderCount,
+    --Sum(ol.Quantity) as TotalItemsSold
+FROM
+    WideWorldImporters:Application:People as p
+INNER JOIN WideWorldImporters:Sales:Orders as o
+    ON o.SalespersonPersonID = p.PersonID
+--INNER JOIN WideWorldImporters:Sales:OrderLines as ol
+    --ON ol.OrderID = o.OrderID
+--GROUP BY
+    --p.FullName
+--ORDER BY
+    --Count(o.OrderID)
+
+
+-----------------------------------------------------------------------------
+SELECT
 	S.Value, --Should be null.
 	Sha1('t') as Hash,
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2) as MathAndStr,
@@ -27,17 +45,19 @@ WHERE
 ORDER BY
 	10
 
-select
+-----------------------------------------------------------------------------
+SELECT
 	p.body
-from
+FROM
 	StackOverflow:Users as U
-inner join Stackoverflow:Posts as P
+INNER JOIN Stackoverflow:Posts as P
 	ON P.OwnerUserId = U.Id
-where
+WHERE
 	U.DisplayName = 'ntdls'
-order by
+ORDER BY
 	P.CreationDate
 
+-----------------------------------------------------------------------------
 SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,

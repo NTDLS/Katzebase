@@ -26,12 +26,19 @@ namespace NTDLS.Katzebase.Engine.IO
                 .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
                 .SetWalTtlSeconds(0);
 
-
             var columnFamilies = new ColumnFamilies();
             foreach (var cf in RocksDb.ListColumnFamilies(options, path))
+            {
                 columnFamilies.Add(cf, defaultCfOptions);
+            }
 
             Instance = RocksDb.Open(options, path, columnFamilies);
+        }
+
+        public Rdb(string path, RocksDb instance)
+        {
+            Path = path;
+            Instance = instance;
         }
 
         public Iterator NewIterator(RdbColumnFamily columnFamily)
@@ -47,8 +54,13 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void DropColumnFamily(KbColumnFamilyName name)
         {
-            ColumnFamilies.TryRemove(name.ToString(), out _);
-            Instance.DropColumnFamily(name.ToString());
+            DropColumnFamily(name.ToString());
+        }
+
+        public void DropColumnFamily(string name)
+        {
+            ColumnFamilies.TryRemove(name, out _);
+            Instance.DropColumnFamily(name);
         }
 
         public void DropColumnFamily(RdbKey key)

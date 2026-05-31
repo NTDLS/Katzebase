@@ -11,22 +11,41 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public ActionType Action { get; set; }
-        public CacheKey CacheKey { get; set; }
+        public CacheKey? CacheKey { get; set; }
         public long Sequence { get; set; } = 0;
 
         public string RdbPath { get; set; }
-        public KbColumnFamilyName ColumnFamilyName { get; set; }
-        public byte[] RdbKey { get; set; }
+        public string ColumnFamilyName { get; set; }
+        public byte[]? RdbKey { get; set; }
         public byte[]? OriginalData { get; set; }
 
-        public Atom(ActionType action, long sequence, string rdbPath, KbColumnFamilyName columnFamily, byte[] rdbKey, CacheKey cacheKey)
+        public Atom(ActionType action, long sequence, string rdbPath, string columnFamilyName)
+        {
+            Action = action;
+            Sequence = sequence;
+            RdbPath = rdbPath;
+            ColumnFamilyName = columnFamilyName;
+        }
+
+        public Atom(ActionType action, long sequence, string rdbPath, string columnFamilyName, byte[] rdbKey, CacheKey cacheKey)
         {
             Action = action;
             Sequence = sequence;
             RdbKey = rdbKey;
             CacheKey = cacheKey;
             RdbPath = rdbPath;
-            ColumnFamilyName = columnFamily;
+            ColumnFamilyName = columnFamilyName;
+        }
+
+        public Atom(ActionType action, long sequence, string rdbPath, string columnFamilyName, byte[] rdbKey, CacheKey cacheKey, byte[]? originalData)
+        {
+            Action = action;
+            Sequence = sequence;
+            RdbKey = rdbKey;
+            CacheKey = cacheKey;
+            OriginalData = originalData;
+            RdbPath = rdbPath;
+            ColumnFamilyName = columnFamilyName;
         }
 
         public AtomSnapshot Snapshot()
@@ -37,7 +56,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
                 CacheKey = CacheKey,
                 Sequence = Sequence,
                 RdbPath = RdbPath,
-                ColumnFamily = ColumnFamilyName,
+                ColumnFamilyName = ColumnFamilyName,
                 RdbKey = RdbKey,
                 OriginalData = OriginalData,
             };
