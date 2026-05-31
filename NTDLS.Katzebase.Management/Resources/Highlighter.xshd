@@ -111,7 +111,6 @@
 		<Word>DateTime</Word>
 		<Word>DateTimeUTC</Word>
 		<Word>DocumentID</Word>
-		<Word>DocumentUID</Word>
 		<Word>FormatDateTime</Word>
 		<Word>FormatNumeric</Word>
 		<Word>GUID</Word>
@@ -177,7 +176,6 @@
 		<Word>datetime</Word>
 		<Word>datetimeutc</Word>
 		<Word>documentid</Word>
-		<Word>documentuid</Word>
 		<Word>floor</Word>
 		<Word>formatdatetime</Word>
 		<Word>formatnumeric</Word>

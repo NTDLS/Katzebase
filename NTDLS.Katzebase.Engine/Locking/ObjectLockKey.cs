@@ -3,13 +3,13 @@ using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    internal class ObjectLockKey(ObjectLock objectLock, ulong processId, LockOperation operation)
+    internal class ObjectLockKey(ObjectLock objectLock, ulong processId, LockOperation lockOp)
     {
         public DateTime IssueTime { get; set; } = DateTime.UtcNow;
 
         [JsonIgnore]
         public ObjectLock ObjectLock { get; private set; } = objectLock;
-        public LockOperation Operation { get; private set; } = operation;
+        public LockOperation Operation { get; private set; } = lockOp;
         public ulong ProcessId { get; private set; } = processId;
 
         public void TurnInKey()

@@ -759,12 +759,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction, string schemaName, LockOperation lockOp)
         {
             try
             {
-                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, intendedOperation);
-                return AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, lockOp);
+                return AcquireIndexCatalog(transaction, physicalSchema, lockOp);
             }
             catch (Exception ex)
             {
@@ -773,12 +773,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal List<PhysicalIndex> AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockOp)
         {
             try
             {
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
-                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, rdb, KbColumnFamilyName.Indexes, intendedOperation);
+                var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, rdb, KbColumnFamilyName.Indexes, lockOp);
                 return indexes;
             }
             catch (Exception ex)
@@ -788,17 +788,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalIndex? AcquireIndex(Transaction transaction, string schemaName, string indexName, LockOperation intendedOperation)
+        internal PhysicalIndex? AcquireIndex(Transaction transaction, string schemaName, string indexName, LockOperation lockOp)
         {
-            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, intendedOperation);
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, lockOp);
+            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, lockOp);
 
             return indexCatalog.FirstOrDefault(o => o.Name.Equals(indexName, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        internal PhysicalIndex? AcquireIndex(Transaction transaction, PhysicalSchema physicalSchema, string indexName, LockOperation intendedOperation)
+        internal PhysicalIndex? AcquireIndex(Transaction transaction, PhysicalSchema physicalSchema, string indexName, LockOperation lockOp)
         {
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
+            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, lockOp);
             return indexCatalog.FirstOrDefault(o => o.Name.Equals(indexName, StringComparison.InvariantCultureIgnoreCase));
         }
     }

@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             */
         }
 
-        internal PhysicalProcedureCatalog Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal PhysicalProcedureCatalog Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockOp)
         {
             return new PhysicalProcedureCatalog();
             /*
@@ -80,12 +80,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
             }
 
-            return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+            return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), lockOp);
             */
         }
 
         internal PhysicalProcedure? Acquire(Transaction transaction,
-            PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
+            PhysicalSchema physicalSchema, string procedureName, LockOperation lockOp)
         {
             return null;
             /*
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
 
             var procedureCatalog = _core.IO.GetJson<PhysicalProcedureCatalog>(
-                transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+                transaction, physicalSchema.ProcedureCatalogFilePath(), lockOp);
 
             return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
             */

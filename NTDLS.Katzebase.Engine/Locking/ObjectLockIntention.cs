@@ -13,17 +13,17 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public string Key => $"{Granularity}:{Operation}:{TargetKey}";
 
-        public ObjectLockIntention(Transaction transaction, CacheKey targetKey, LockGranularity lockGranularity, LockOperation operation)
+        public ObjectLockIntention(Transaction transaction, CacheKey targetKey, LockGranularity lockGranularity, LockOperation lockOp)
         {
-            if (operation == LockOperation.Read && transaction.Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
+            if (lockOp == LockOperation.Read && transaction.Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
             {
-                operation = LockOperation.Stability;
+                lockOp = LockOperation.Stability;
             }
 
             CreationTime = DateTime.UtcNow;
             TargetKey = targetKey;
             Granularity = lockGranularity;
-            Operation = operation;
+            Operation = lockOp;
 
             if ((lockGranularity == LockGranularity.Path
                 || lockGranularity == LockGranularity.PathRecursive) && (TargetKey.Canonical.EndsWith(Path.DirectorySeparatorChar) == false))

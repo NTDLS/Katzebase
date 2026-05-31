@@ -214,12 +214,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
-
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Write);
 
                 //First revoke the specified policy types.
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId
                     && (o.Permission == permission || permission == SecurityPolicyPermission.All));
+
                 foreach (var policyToRemove in policiesToRemove)
                 {
                     _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Policy, new RdbKey(policyToRemove.PolicyId));
@@ -276,6 +276,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //First revoke the specified policy types.
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId
                     && (o.Permission == permission || permission == SecurityPolicyPermission.All));
+
                 foreach (var policyToRemove in policiesToRemove)
                 {
                     _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Policy, new RdbKey(policyToRemove.PolicyId));
@@ -329,7 +330,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
-
                 var policyCatalog = _core.IO.GetPBufList<PhysicalPolicy>(transaction, rdb, KbColumnFamilyName.Policy, LockOperation.Write);
 
                 var policiesToRemove = policyCatalog.Where(o => o.RoleId == roleId

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Api.Types;
+﻿using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
@@ -44,11 +43,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Allows for returning null if the document doesn't exist;
         /// </summary>
         internal PhysicalDocument? AcquireDocumentVirtual(
-            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockIntention, bool populateCache = true)
+            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockOp, bool populateCache = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache);
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockOp, populateCache);
             }
             catch (Exception ex)
             {
@@ -61,11 +60,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// When we want to read a document we do it here.
         /// </summary>
         internal PhysicalDocument AcquireDocument(
-            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockIntention, bool populateCache = true)
+            Transaction transaction, Rdb rdb, uint documentId, LockOperation lockOp, bool populateCache = true)
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockIntention, populateCache)
+                return _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), lockOp, populateCache)
                     ?? throw new Exception($"Document with ID [{documentId}] does not exist in store [{rdb.Path}].");
             }
             catch (Exception ex)
@@ -76,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal HashSet<uint> AcquireDocumentPointers(
-            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention, int? maxCount = null)
+            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockOp, int? maxCount = null)
         {
             try
             {
@@ -115,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// always sees the transaction's own writes.
         /// </summary>
         internal IEnumerable<(uint DocumentId, PhysicalDocument Document)> ScanDocuments(
-            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+            Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockOp)
         {
             var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
             var documentsCF = rdb.GetColumnFamily(KbColumnFamilyName.Documents);

@@ -389,11 +389,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Locking Helpers.
 
-        public ObjectLockKey? LockSingleObject(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockSingleObject(LockOperation lockOp, CacheKey targetKey)
         {
-            if (lockOperation == LockOperation.Read && Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
+            if (lockOp == LockOperation.Read && Session.GetConnectionSetting(StateSetting.ReadUncommitted, false))
             {
-                lockOperation = LockOperation.Stability;
+                lockOp = LockOperation.Stability;
             }
 
             _core.EnsureNotNull();
@@ -402,7 +402,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Object, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Object, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Object:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -420,7 +420,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Locks a single database schema path and all files (but not sub-schemas) that it contains.
         /// </summary>
-        public ObjectLockKey? LockPath(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockPath(LockOperation lockOp, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -428,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Path, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.Path, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Path:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -446,7 +446,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Locks a path (which means the schema, sub-schema and all files beneath it).
         /// </summary>
-        public ObjectLockKey? LockPathRecursive(LockOperation lockOperation, CacheKey targetKey)
+        public ObjectLockKey? LockPathRecursive(LockOperation lockOp, CacheKey targetKey)
         {
             _core.EnsureNotNull();
 
@@ -454,7 +454,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.PathRecursive, lockOperation);
+                var lockIntention = new ObjectLockIntention(this, targetKey, LockGranularity.PathRecursive, lockOp);
 
                 var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Path:{lockIntention.Operation}");
                 var result = _core.Locking.Acquire(this, lockIntention);
@@ -481,7 +481,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         public string TransactionLogFilePath
-            => TransactionPath + "\\" + TransactionActionsFile;
+            => TransactionPath + "\\" + TransactionAtomsFile;
 
         public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {

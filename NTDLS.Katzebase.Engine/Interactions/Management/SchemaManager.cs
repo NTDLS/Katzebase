@@ -8,7 +8,6 @@ using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Katzebase.PersistentTypes.Schema;
-using RocksDbSharp;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.PersistentTypes.Schema.PhysicalSchema;
@@ -218,14 +217,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockOp)
         {
             try
             {
                 var schemas = new List<PhysicalSchema>();
                 var rdb = _core.IO.AcquireRdb(physicalSchema.SchemaFilePath());
 
-                if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), intendedOperation, out _))
+                if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(physicalSchema.Name), lockOp, out _))
                 {
                     var schemaCatalog = _core.IO.GetJsonList<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, LockOperation.Read);
 
@@ -250,7 +249,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalSchema AcquireParent(Transaction transaction, PhysicalSchema child, LockOperation intendedOperation)
+        internal PhysicalSchema AcquireParent(Transaction transaction, PhysicalSchema child, LockOperation lockOp)
         {
             try
             {
@@ -266,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var segments = child.VirtualPath.Split(':');
                 string parentSchema = string.Join(":", segments.Take(segments.Length - 1));
-                return Acquire(transaction, parentSchema, intendedOperation);
+                return Acquire(transaction, parentSchema, lockOp);
             }
             catch (Exception ex)
             {
@@ -279,7 +278,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Opens a schema for a desired access. Takes a virtual schema path 
         ///     (schema0:schema2:schema3) and converts to to a physical location.
         /// </summary>
-        internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation lockOp)
         {
             InstrumentationDurationToken? ptLockSchema = null;
 
@@ -329,7 +328,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
-                    transaction.LockPath(intendedOperation, new CacheKey(physicalSchema.DiskPath));
+                    transaction.LockPath(lockOp, new CacheKey(physicalSchema.DiskPath));
 
                     return physicalSchema;
                 }
@@ -351,11 +350,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="transaction">Current transaction.</param>
         /// <param name="schemaName">Schema name to a acquire a lock on.</param>
-        /// <param name="intendedOperation">Intended operation on the schema.</param>
-        /// <param name="parentIntendedOperation">Intended operation on the parent schema.</param>
+        /// <param name="lockOp">Intended operation on the schema.</param>
+        /// <param name="parentLockOp">Intended operation on the parent schema.</param>
         /// <returns></returns>
         internal VirtualSchema AcquireVirtual(Transaction transaction, string schemaName,
-            LockOperation intendedOperation, LockOperation parentIntendedOperation)
+            LockOperation lockOp, LockOperation parentLockOp)
         {
             InstrumentationDurationToken? ptLockSchema = null;
 
@@ -380,12 +379,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var thisSchema = schemaSegments[^1];
                 var parentSchema = string.Join(':', schemaSegments.Take(schemaSegments.Length - 1));
 
-                var parentPhysicalSchema = Acquire(transaction, parentSchema, parentIntendedOperation);
+                var parentPhysicalSchema = Acquire(transaction, parentSchema, parentLockOp);
 
                 var parentCatalogDiskPath = parentPhysicalSchema.SchemaFilePath();
                 var rdb = _core.IO.AcquireRdb(parentCatalogDiskPath);
 
-                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchema), parentIntendedOperation)
+                var virtualSchema = _core.IO.GetJson<PhysicalSchema>(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchema), parentLockOp)
                     ?.ToVirtual(parentPhysicalSchema);
                 if (virtualSchema != null)
                 {
@@ -408,7 +407,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     };
                 }
 
-                transaction.LockPath(intendedOperation, new CacheKey(virtualSchema.DiskPath));
+                transaction.LockPath(lockOp, new CacheKey(virtualSchema.DiskPath));
 
                 return virtualSchema;
 
