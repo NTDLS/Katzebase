@@ -719,7 +719,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     _core.Health.IncrementDiscrete(HealthCounterType.IODeferredWrites);
 
                     //We can skip caching because we write this to the deferred IO cache - which
-                    //  is infinitely more deterministic than the memory cache auto-ejections.
+                    //  is infinitely more deterministic than the memory cache with auto-ejections.
                     return;
                 }
 
