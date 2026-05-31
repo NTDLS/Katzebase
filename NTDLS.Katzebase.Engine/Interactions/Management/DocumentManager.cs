@@ -204,7 +204,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 };
 
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
-                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument, false);
+                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(physicalDocumentId), physicalDocument);
 
                 //Update all of the indexes that reference the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, physicalDocumentId);

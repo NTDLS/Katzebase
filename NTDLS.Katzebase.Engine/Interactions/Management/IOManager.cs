@@ -679,16 +679,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutJson(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj, bool populateCache = true)
-            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON, populateCache);
+        internal void PutJson(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.JSON);
 
-        internal void PutPBuf(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj, bool populateCache = true)
-            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf, populateCache);
+        internal void PutPBuf(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, object obj)
+            => InternalTrackedPut(transaction, rdb, columnFamilyName, key, obj, LockOperation.Write, IOFormat.PBuf);
 
         /// <summary>
-        /// Writes to a RDB with transactional tracking, locking and deferred IO, and without caching.
+        /// Writes to a RDB with transactional tracking, locking and deferred IO.
         /// </summary>
-        public void InternalTrackedPut<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format, bool populateCache = true)
+        public void InternalTrackedPut<T>(Transaction transaction, Rdb rdb, KbColumnFamilyName columnFamilyName, RdbKey key, T obj, LockOperation? lockOperation, IOFormat format)
             where T : notnull
         {
             try
@@ -723,20 +723,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                int approximateSizeInBytes = 0;
-
                 if (format == IOFormat.JSON)
                 {
                     string text = transaction.Instrumentation.Measure(PerformanceCounter.Serialize, () =>
                         JsonConvert.SerializeObject(obj));
 
-                    var bytes = Encoding.UTF8.GetBytes(text);
-
                     transaction.Instrumentation.Measure(PerformanceCounter.IOWrite, () =>
-                        rdb.Put(key.Bytes, bytes, columnFamilyName));
-
-                    approximateSizeInBytes = bytes.Length;
-
+                        rdb.Put(key.Bytes, Encoding.UTF8.GetBytes(text), columnFamilyName));
                 }
                 else if (format == IOFormat.PBuf)
                 {
@@ -749,21 +742,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     transaction.Instrumentation.Measure(PerformanceCounter.IOWrite, () =>
                         rdb.Put(key.Bytes, bytes, columnFamilyName));
-
-                    approximateSizeInBytes = bytes.Length;
                 }
                 else
                 {
                     throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
-                if (_core.Settings.CacheEnabled && populateCache)
-                {
-                    transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
-                        _core.Cache.Set(cacheKey, obj, approximateSizeInBytes));
-
-                    _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
-                }
+                // Write-through caching is intentionally omitted: reads populate cache on demand.
+                // Caching every write inflates memory 3-5x (C# object vs. serialized bytes estimate)
+                // and is counterproductive during bulk import where those entries are rarely re-read.
             }
             catch (Exception ex)
             {
