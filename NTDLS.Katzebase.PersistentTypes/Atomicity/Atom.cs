@@ -29,6 +29,17 @@ namespace NTDLS.Katzebase.PersistentTypes.Atomicity
             ColumnFamilyName = columnFamily;
         }
 
+        public Atom(ActionType action, long sequence, string rdbPath, KbColumnFamilyName columnFamily, byte[] rdbKey, CacheKey cacheKey, byte[]? originalData)
+        {
+            Action = action;
+            Sequence = sequence;
+            RdbKey = rdbKey;
+            CacheKey = cacheKey;
+            OriginalData = originalData;
+            RdbPath = rdbPath;
+            ColumnFamilyName = columnFamily;
+        }
+
         public AtomSnapshot Snapshot()
         {
             var snapshot = new AtomSnapshot()

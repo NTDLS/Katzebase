@@ -30,13 +30,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     {
         private readonly Lock _identityLock = new();
 
-        // Dedup guards for the transaction atom log. Capped to avoid unbounded growth during
-        // bulk operations; when capped, duplicate atoms may be written (harmless on rollback).
-        private const int MaxAtomDeduplicationEntries = 10000;
         private readonly HashSet<string> _recordedReadObjectKeys = new HashSet<string>();
         private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
-        private bool _writeTrackingCapped = false;
-        private bool _readTrackingCapped = false;
 
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; internal set; } = Guid.NewGuid();
@@ -542,28 +537,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (!_writeTrackingCapped)
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
-                        if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
-                        {
-                            return;
-                        }
-                        _recordedWriteObjectKeys.Add(targetKey.Canonical);
-                        if (_recordedWriteObjectKeys.Count >= MaxAtomDeduplicationEntries)
-                        {
-                            _writeTrackingCapped = true;
-                            _recordedWriteObjectKeys.Clear();
-                            _recordedWriteObjectKeys.TrimExcess();
-                        }
+                        return;
                     }
                 }
 
-                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
+                var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -583,33 +567,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 DeferredIOs.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(targetKey));
 
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (!_writeTrackingCapped)
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
-                        if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
-                        {
-                            return;
-                        }
-                        _recordedWriteObjectKeys.Add(targetKey.Canonical);
-                        if (_recordedWriteObjectKeys.Count >= MaxAtomDeduplicationEntries)
-                        {
-                            _writeTrackingCapped = true;
-                            _recordedWriteObjectKeys.Clear();
-                            _recordedWriteObjectKeys.TrimExcess();
-                        }
+                        return;
                     }
                 }
 
-                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
-                {
-                    OriginalData = originalData
-                };
-
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
+                var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey, originalData);
                 var atomJson = JsonConvert.SerializeObject(atom);
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
@@ -629,27 +598,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedReadObjectKeys)
                 {
-                    if (_readTrackingCapped)
+                    if (!_recordedReadObjectKeys.Add(targetKey.Canonical))
                     {
                         return;
-                    }
-                    if (_recordedReadObjectKeys.Contains(targetKey.Canonical))
-                    {
-                        return;
-                    }
-                    _recordedReadObjectKeys.Add(targetKey.Canonical);
-                    if (_recordedReadObjectKeys.Count >= MaxAtomDeduplicationEntries)
-                    {
-                        _readTrackingCapped = true;
-                        _recordedReadObjectKeys.Clear();
-                        _recordedReadObjectKeys.TrimExcess();
                     }
                 }
 
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
                 FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(new ReadForCacheItem(targetKey, key.Bytes)));
 
                 ptRecording?.StopAndAccumulate();
@@ -669,34 +626,21 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
-
                 lock (_recordedWriteObjectKeys)
                 {
-                    if (!_writeTrackingCapped)
+                    if (!_recordedWriteObjectKeys.Add(targetKey.Canonical))
                     {
-                        if (_recordedWriteObjectKeys.Contains(targetKey.Canonical))
-                        {
-                            return;
-                        }
-                        _recordedWriteObjectKeys.Add(targetKey.Canonical);
-                        if (_recordedWriteObjectKeys.Count >= MaxAtomDeduplicationEntries)
-                        {
-                            _writeTrackingCapped = true;
-                            _recordedWriteObjectKeys.Clear();
-                            _recordedWriteObjectKeys.TrimExcess();
-                        }
+                        return;
                     }
                 }
 
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
                 var atom = new Atom(ActionType.KeyAlter, GetNextAtomSequence(), rdbPath, columnFamily, key.Bytes, targetKey)
                 {
                     OriginalData = originalData
                 };
 
                 var atomJson = JsonConvert.SerializeObject(atom);
-
-
                 _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
                 ptRecording?.StopAndAccumulate();
             }
@@ -779,16 +723,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             }
                         } // Iterator closed before CleanupTransaction so the CF handle can be safely destroyed.
 
-                        if (!_readTrackingCapped)
+                        FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                         {
-                            FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
+                            foreach (var file in obj)
                             {
-                                foreach (var file in obj)
-                                {
-                                    _core.Cache.Remove(file.CacheKey);
-                                }
-                            });
-                        }
+                                _core.Cache.Remove(file.CacheKey);
+                            }
+                        });
 
                         try
                         {
