@@ -32,8 +32,10 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Api/) for your project over at nuget.org.
 
 ## Sample Data
-To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationships between the words and languages.
-If you are feeling more ambitious, you can grab the larger [Katzebase with StackOverflow](https://katzebase.com/WWWRoot/Download/Katzebase%20with%20StackOverflow.7z) database.
+- [AdventureWorks](https://katzebase.com/WWWRoot/Download/AdventureWorks.zip) as of 2024
+- [StackOverflow](https://katzebase.com/WWWRoot/Download/StackOverflow.zip) as of 2016
+- [WideWorldImporters](https://katzebase.com/WWWRoot/Download/WideWorldImporters.zip) as of 2026
+- [WordList](https://katzebase.com/WWWRoot/Download/WordList.zip) as of 2026
 
 # Management UI
 ![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
