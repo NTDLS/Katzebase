@@ -45,6 +45,11 @@ We even included a tool to import your schema, data and indexes from SQL Server 
 
 ![image](https://github.com/user-attachments/assets/88f99e45-adc1-40e2-a6b2-2cd1776f8716)
 
+## Linux
+Katzebase runs on x64 and arm64 versions of Linux.
+A pre-built Raspberry Pi 5 image is available with Katzebase pre-installed, including a sample WordList database schema. Simply write the image to a 32GB+ SD card using a free imaging tool (such as Win32DiskImager), insert it into your Raspberry Pi 5, and power it on — Katzebase starts automatically.
+[Katzebase.RaspberryPi.5.arm64.7z](https://katzebase.com/WWWRoot/Download/Katzebase.RaspberryPi.5.arm64.7z) (1.8GB expands to 31GB)
+
 ## Technologies
 ---
 
