@@ -32,10 +32,10 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 Grab the [nuget package](https://www.nuget.org/packages/NTDLS.Katzebase.Api/) for your project over at nuget.org.
 
 ## Sample Data
-- [AdventureWorks](https://katzebase.com/WWWRoot/Download/AdventureWorks.zip) as of 2024
-- [StackOverflow](https://katzebase.com/WWWRoot/Download/StackOverflow.zip) as of 2016
-- [WideWorldImporters](https://katzebase.com/WWWRoot/Download/WideWorldImporters.zip) as of 2026
-- [WordList](https://katzebase.com/WWWRoot/Download/WordList.zip) as of 2026
+- [AdventureWorks](https://katzebase.com/Download/AdventureWorks.zip) as of 2024
+- [StackOverflow](https://katzebase.com/Download/StackOverflow.zip) as of 2016
+- [WideWorldImporters](https://katzebase.com/Download/WideWorldImporters.zip) as of 2026
+- [WordList](https://katzebase.com/Download/WordList.zip) as of 2026
 
 # Management UI
 ![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
@@ -48,7 +48,7 @@ We even included a tool to import your schema, data and indexes from SQL Server 
 ## Linux
 Katzebase runs on x64 and arm64 versions of Linux.
 A pre-built Raspberry Pi 5 image is available with Katzebase pre-installed, including a sample WordList database schema. Simply write the image to a 32GB+ SD card using a free imaging tool (such as Win32DiskImager), insert it into your Raspberry Pi 5, and power it on — Katzebase starts automatically.
-[Katzebase.RaspberryPi.5.arm64.7z](https://katzebase.com/WWWRoot/Download/Katzebase.RaspberryPi.5.arm64.7z) (1.8GB expands to 31GB)
+[Katzebase.RaspberryPi.5.arm64.7z](https://katzebase.com/Download/Katzebase.RaspberryPi.5.arm64.7z) (1.8GB expands to 31GB)
 
 ## Technologies
 ---
