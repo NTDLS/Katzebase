@@ -3,76 +3,52 @@
 - Connect to the Linux server with your favorite SSH client. I'm using Putty.
 - You can get the IP address of the Linux machine via ```ip addr show```
 
-- Install .net
-```
-sudo add-apt-repository ppa:dotnet/backports
+## Prerequisites
 sudo apt update
-sudo apt-get install -y aspnetcore-runtime-9.0
-```
+sudo apt install -y unzip
 
-Need to cleanup?
- > rm -rf ~/Katzebase
+## Download & Extract
+# Download (update version as needed)
+wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.x64.zip
+- or -
+wget https://github.com/NTDLS/Katzebase/releases/download/0.38.0/Katzebase.linux.arm64.zip
 
+# Extract to /opt
+sudo unzip Katzebase.linux.x64.zip -d /opt/katzebase
+- or -
+sudo unzip Katzebase.linux.arm64.zip -d /opt/katzebase
 
-- Install unzip
-  > sudo apt install unzip
+# Make executable
+sudo chmod +x /opt/katzebase/NTDLS.Katzebase.Server
 
-- Download Katzebase (be sure to change the URL for the version you want to install)
-  > wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.x64.zip
-  -or-
-  > wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.arm64.zip
-  > wget https://ntdls.com/Katzebase.linux.arm64.zip
+## Create a Dedicated Service User
 
-- Extract files
-  > unzip Katzebase.linux.x64.zip -d Katzebase
-  -or-
-  > unzip Katzebase.linux.arm64.zip -d Katzebase
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin katzebase
+sudo chown -R katzebase:katzebase /opt/katzebase
 
-- Make the File Executable
-  > chmod +x ~/Katzebase/NTDLS.Katzebase.Server
+## Install the systemd Service
+sudo nano /etc/systemd/system/katzebase.service
 
-- Execute the file
-  > ~/Katzebase/NTDLS.Katzebase.Server
+# Paste
+[Unit]
+Description=Katzebase Document Database Server
+After=network.target
 
-# Windows to Linux file copy using SSH
+[Service]
+Type=simple
+User=katzebase
+WorkingDirectory=/opt/katzebase
+ExecStart=/opt/katzebase/NTDLS.Katzebase.Server
+Restart=on-failure
+RestartSec=5
 
-- Linux
-  - Get the IP address for the Linux machine
-    > ip addr show
+[Install]
+WantedBy=multi-user.target
 
-- Windows
-  - Install putty, connect to SSH with ip address from previous step.
+## Enable and Start
+sudo systemctl enable katzebase
+sudo systemctl start katzebase
 
-- Linux
-  - Configure SSH for password auth for file copy.
-    > sudo nano /etc/ssh/sshd_config
-
-  - Look for the following lines and ensure they are set:
-    - "PasswordAuthentication yes"
-
-  - Restart the ssh service.
-      > sudo systemctl restart ssh
-
-  - Install .net
-    - >sudo add-apt-repository ppa:dotnet/backports
-    - > sudo apt update
-    - > sudo apt-get install -y aspnetcore-runtime-9.0
-    - > (NOT NEEDED BUR DOCUMENTING HERE) sudo apt-get install -y dotnet-runtime-9.0
-
-- Linux
-  - Install unzip
-    > sudo apt install unzip
-
-- Windows:
-  - Copy package to the linux server.
-    > scp .\output\Katzebase.linux.x64.zip josh@172.22.103.236:/home/josh
-
-- Linux
-  - Extract files
-    > sudo unzip Katzebase.linux.x64.zip -d /opt/Katzebase
-
-  - Make the File Executable
-    > sudo chmod +x /opt/Katzebase/NTDLS.Katzebase.Server
-
-  - Execute the file
-    > sudo /opt/Katzebase/NTDLS.Katzebase.Server
+## Verify
+sudo systemctl status katzebase
+journalctl -u katzebase -f

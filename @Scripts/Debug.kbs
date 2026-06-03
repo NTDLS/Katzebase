@@ -61,6 +61,7 @@ ORDER BY
 SELECT
 	sw.Text as SourceWord,
 	tw.Text as TargetWord,
+	tl.Name as TargetLanguage,
 	Round(Avg(sw.Id), 2) as Average,
 	Count(0) as CountOf
 FROM
@@ -78,7 +79,8 @@ WHERE
 	OR sw.Text = 'Gym'
 GROUP BY
 	sw.Text,
-	tw.Text
+	tw.Text,
+	tl.Name
 ORDER BY
 	Avg(sw.Id / 60) asc,
 	sw.Text desc,
