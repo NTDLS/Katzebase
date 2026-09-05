@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.PersistentTypes.Policy
     [ProtoContract]
     public class PhysicalPolicy
     {
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = true)]
         public Guid PolicyId { get; set; } = Guid.NewGuid();
 
         [ProtoMember(2)]

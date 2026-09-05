@@ -9,7 +9,7 @@ sudo apt install -y unzip
 
 ## Download & Extract
 # Download (update version as needed)
-wget https://github.com/NTDLS/Katzebase/releases/download/0.37.0/Katzebase.linux.x64.zip
+wget https://github.com/NTDLS/Katzebase/releases/download/0.38.0/Katzebase.linux.x64.zip
 - or -
 wget https://github.com/NTDLS/Katzebase/releases/download/0.38.0/Katzebase.linux.arm64.zip
 

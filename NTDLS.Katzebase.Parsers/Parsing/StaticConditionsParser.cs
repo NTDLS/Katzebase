@@ -217,7 +217,7 @@ namespace NTDLS.Katzebase.Parsers.Parsing
 
             //Replace the condition with the name of the variable that must be evaluated to determine the value for this condition.
             string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();
-            conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.ReplaceFirst(conditionSetText, conditionPair.ExpressionVariable);
+            conditionCollection.MathematicalExpression = Text.ReplaceFirstOccurrence(conditionCollection.MathematicalExpression, conditionSetText, conditionPair.ExpressionVariable);
 
             conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, left));
             conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, right));
