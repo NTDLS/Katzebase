@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for object [{objectLock.ToString()}].", ex);
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for object [{objectLock}].", ex);
                 throw;
             }
         }
