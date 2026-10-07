@@ -307,16 +307,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (result != null)
                             {
                                 deserializedObject.Add(result);
+                                continue;
                             }
                         }
-                        else
-                        {
-                            var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                            JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(iterator.Value())))
-                            ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdb.Path}].");
 
-                            deserializedObject.Add(obj);
-                        }
+                        //Not modified by this transaction (or deferred IO is disabled): use the stored value.
+                        var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
+                        JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(iterator.Value())))
+                        ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdb.Path}].");
+
+                        deserializedObject.Add(obj);
                     }
                 }
                 else if (format == IOFormat.PBuf)
@@ -348,17 +348,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (result != null)
                             {
                                 deserializedObject.Add(result);
+                                continue;
                             }
                         }
-                        else
+
+                        //Not modified by this transaction (or deferred IO is disabled): use the stored value.
+                        var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         {
-                            var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                            {
-                                using var input = new MemoryStream(iterator.Value());
-                                return ProtoBuf.Serializer.Deserialize<T>(input);
-                            }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdb.Path}].");
-                            deserializedObject.Add(obj);
-                        }
+                            using var input = new MemoryStream(iterator.Value());
+                            return ProtoBuf.Serializer.Deserialize<T>(input);
+                        }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdb.Path}].");
+                        deserializedObject.Add(obj);
                     }
                 }
                 else
@@ -697,11 +697,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
 
                 transaction.LockSingleObject(LockOperation.Write, cacheKey);
-
-                bool doesKeyExist = DoesKeyExist(transaction, rdb, columnFamilyName, key, lockOp ?? LockOperation.Write, out _);
-                if (doesKeyExist)
+                if (lockOp != null && lockOp != LockOperation.Write)
                 {
-                    transaction.RecordKeyAlter(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+                    transaction.LockSingleObject(lockOp.Value, cacheKey);
+                }
+
+                //A single read both determines whether the key exists and captures its original value for the transaction log.
+                var originalData = rdb.Get(key.Bytes, columnFamilyName);
+                if (originalData != null)
+                {
+                    transaction.RecordKeyAlter(rdb, columnFamilyName, key, cacheKey, originalData);
                 }
                 else
                 {

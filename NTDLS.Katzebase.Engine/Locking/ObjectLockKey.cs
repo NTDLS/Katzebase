@@ -15,7 +15,8 @@ namespace NTDLS.Katzebase.Engine.Locking
         public void TurnInKey()
             => ObjectLock.TurnInKey(this);
 
-        public string Key => $"{ObjectLock.Granularity}:{Operation}:{ObjectLock.TargetKey.Canonical}";
+        private string? _key;
+        public string Key => _key ??= $"{ObjectLock.Granularity}:{Operation}:{ObjectLock.TargetKey.Canonical}";
 
         public new string ToString() => Key;
 

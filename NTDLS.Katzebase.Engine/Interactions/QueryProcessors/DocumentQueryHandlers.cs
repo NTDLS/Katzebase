@@ -240,7 +240,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
 
                 #endregion
 
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema.Name, LockOperation.Read);
+                //Acquire the target schema for write up front (as INSERT does). Taking a read lock here and then requesting
+                //  document write locks is a lock upgrade, which deadlocks any two concurrent UPDATEs of the same schema
+                //  because each one's schema read lock blocks the other's document write locks.
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, targetSchema.Name, LockOperation.Write);
 
                 var gatherDocumentPointersForSchemaAliases = new List<string>() { targetSchemaAlias };
 

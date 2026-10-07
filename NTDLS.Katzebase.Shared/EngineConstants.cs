@@ -34,6 +34,12 @@
             Indexes,
             Policy,
             Procedures,
+            /// <summary>
+            /// Transaction log (undo atoms) for all transactions. Keys are [16-byte transaction id][8-byte big-endian sequence].
+            /// A single shared column family is used because creating/dropping a column family per transaction
+            /// forces a synchronous MANIFEST write in RocksDB (~10ms each) and serializes all transactions.
+            /// </summary>
+            TransactionAtoms,
         }
 
         public enum TraceType

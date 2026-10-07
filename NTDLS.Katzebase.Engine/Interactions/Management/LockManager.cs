@@ -19,21 +19,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly EngineCore _core;
 
         /// <summary>
-        /// Collection of all locks across all transactions.
+        /// Collection of all locks across all transactions, indexed so that overlap checks do not need to scan every lock.
         /// </summary>
-        private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
-
-        /// <summary>
-        /// Used to ensure that across all transactions, we only allow 1 thread at a time to lock any individual files.
-        /// This does not block the the same transaction or other transactions from locking other files.
-        /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
-        /// </summary>
-        private readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks;
-
-        /// <summary>
-        /// Since we can support multiple instances in the same process, we need to use a separate collection for each DataRootPath.
-        /// </summary>
-        private static readonly KbInsensitiveDictionary<KbInsensitiveDictionary<ObjectConcurrencyLock>> _concurrentGrantLockCollection = new();
+        private readonly OptimisticCriticalResource<LockTable> _collection;
 
         /// <summary>
         //We keep track of all files/transactions that are waiting on locks for a few reasons:
@@ -42,26 +30,57 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         // (2.1) Point number 2 is now only half true, the transaction is working in this function - but it can be using multiple
         //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
         //          transactions may be changed.
+        //Only requests that are actually blocked are registered here, requests that are granted on their first attempt never wait.
         /// </summary>
         private readonly OptimisticCriticalResource<Dictionary<Guid, ObjectPendingLockIntention>> _pendingGrants;
+
+        /// <summary>
+        /// Incremented every time a lock key is turned in. Blocked requests sleep until this changes rather than
+        /// spinning on the lock table, which previously starved every other transaction of the lock management semaphore.
+        /// </summary>
+        private long _releaseGeneration;
+        private int _waiterCount;
+        private readonly object _releaseSignal = new();
+
+        /// <summary>
+        /// Blocked requests wake at least this often to re-run deadlock detection, lock wait timeouts and cancellation checks.
+        /// </summary>
+        private const int BlockedRetryIntervalMs = 25;
+
+        private enum AttemptResult
+        {
+            /// <summary>
+            /// A new lock key was issued to the transaction.
+            /// </summary>
+            Granted,
+            /// <summary>
+            /// The transaction already holds keys that satisfy the intention (e.g. a covering schema/path lock).
+            /// </summary>
+            AlreadyHeld,
+            /// <summary>
+            /// Another transaction holds a conflicting key.
+            /// </summary>
+            Blocked,
+            /// <summary>
+            /// The lock table or transaction critical sections could not be obtained, retry shortly.
+            /// </summary>
+            Busy
+        }
+
+        private class LockRequest(Transaction transaction, ObjectLockIntention intention)
+        {
+            public Transaction Transaction { get; } = transaction;
+            public ObjectLockIntention Intention { get; } = intention;
+            public ObjectLockKey? LockKey { get; set; }
+            /// <summary>
+            /// Set once the request has been registered in _pendingGrants (after its first blocked attempt).
+            /// </summary>
+            public Guid? PendingGrantKey { get; set; }
+        }
 
         internal LockManager(EngineCore core)
         {
             _core = core;
-
-            lock (_concurrentGrantLockCollection)
-            {
-                //Since we can support multiple instances in the same process, we need to use a separate collection for each DataRootPath.
-                if (_concurrentGrantLockCollection.TryGetValue(_core.Settings.DataRootPath, out var concurrentGrantLocks))
-                {
-                    _concurrentGrantLocks = concurrentGrantLocks;
-                }
-                else
-                {
-                    _concurrentGrantLocks = new();
-                    _concurrentGrantLockCollection.Add(_core.Settings.DataRootPath, _concurrentGrantLocks);
-                }
-            }
 
             try
             {
@@ -89,57 +108,59 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Returns a set (if any) of existing locks that that would conflict with the given lock intention.
+        /// Wakes any blocked lock requests so they can re-attempt their lock.
         /// </summary>
-        /// <param name="intention"></param>
-        /// <returns></returns>
-        internal HashSet<ObjectLock> GetOverlappingLocks(ObjectLockIntention intention)
+        internal void NotifyLockReleased()
         {
-            var result = _collection.Read((existingLocks) =>
+            Interlocked.Increment(ref _releaseGeneration);
+
+            if (Volatile.Read(ref _waiterCount) > 0)
             {
-                var result = new HashSet<ObjectLock>();
-
-                var intentionDirectory = (Path.GetDirectoryName(intention.TargetKey.Canonical) ?? string.Empty) + Path.DirectorySeparatorChar;
-
-                //If we are locking a file, then look for all other locks for the exact path.
-                if (intention.Granularity == LockGranularity.Object)
+                lock (_releaseSignal)
                 {
-                    var fileLocks = existingLocks.Where(o =>
-                        o.Granularity == LockGranularity.Object
-                        && o.TargetKey.Canonical == intention.TargetKey.Canonical).ToList();
-
-                    fileLocks.ForEach(o => result.Add(o));
+                    Monitor.PulseAll(_releaseSignal);
                 }
+            }
+        }
 
-                //Check if the intended file or directory is in a locked directory.
-                var exactDirectoryLocks = existingLocks.Where(o =>
-                    (o.Granularity == LockGranularity.Path)
-                    && o.TargetKey.Canonical == intentionDirectory).ToList();
-
-                exactDirectoryLocks.ForEach(o => result.Add(o));
-
-                var directoryAndSubPathLocks = existingLocks.Where(o =>
-                    o.Granularity == LockGranularity.PathRecursive
-                    && intentionDirectory.StartsWith(o.TargetKey.Canonical)).ToList();
-
-                directoryAndSubPathLocks.ForEach(o => result.Add(o));
-
-                // A PathRecursive intention must also see finer-grained locks that already
-                // exist within its target subtree, otherwise a schema-level delete could be
-                // granted while another transaction holds an Object or Path lock on a child.
-                if (intention.Granularity == LockGranularity.PathRecursive)
+        private void WaitForLockRelease(long observedGeneration)
+        {
+            Interlocked.Increment(ref _waiterCount);
+            try
+            {
+                lock (_releaseSignal)
                 {
-                    var childLocks = existingLocks.Where(o =>
-                        (o.Granularity == LockGranularity.Object || o.Granularity == LockGranularity.Path)
-                        && o.TargetKey.Canonical.StartsWith(intention.TargetKey.Canonical)).ToList();
-
-                    childLocks.ForEach(o => result.Add(o));
+                    //If a lock was released after our attempt, then don't wait - just try again.
+                    if (Interlocked.Read(ref _releaseGeneration) == observedGeneration)
+                    {
+                        Monitor.Wait(_releaseSignal, BlockedRetryIntervalMs);
+                    }
                 }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _waiterCount);
+            }
+        }
 
-                return result;
-            });
-
-            return result;
+        /// <summary>
+        /// Returns true if a lock key with the operation [heldOperation] (held by another transaction)
+        /// prevents a lock with the operation [requestedOperation] from being granted.
+        /// </summary>
+        private static bool IsBlockedBy(LockOperation requestedOperation, LockOperation heldOperation)
+        {
+            return requestedOperation switch
+            {
+                //Stability is blocked by: Delete.
+                LockOperation.Stability => heldOperation == LockOperation.Delete,
+                //Read is blocked by: Write and Delete.
+                LockOperation.Read => heldOperation == LockOperation.Write || heldOperation == LockOperation.Delete,
+                //Write is blocked by: Read, Write, Delete.
+                LockOperation.Write => heldOperation != LockOperation.Stability,
+                //Delete is blocked by: Everything.
+                LockOperation.Delete => true,
+                _ => throw new NotImplementedException($"Lock operation is not implemented: [{requestedOperation}].")
+            };
         }
 
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
@@ -150,110 +171,141 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            ObjectConcurrencyLock? concurrencyLock = null;
+            transaction.EnsureActive();
 
-            var pendingGrantKey = Guid.NewGuid();
-
-            lock (_concurrentGrantLocks)
+            //This transaction was already granted this exact lock by a previous call to Acquire().
+            //  The transaction has the key, but the caller will not be be provided with it since
+            //  modification by a non-creator caller would be dangerous.
+            var ptGrantedLockCache = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Read");
+            bool isCached = transaction.GrantedLockCache.ContainsKey(intention.Key);
+            ptGrantedLockCache?.StopAndAccumulate();
+            if (isCached)
             {
-                // Produces a semaphore that is used to ensure that we do not simultaneously operate on any single file.
-                if (_concurrentGrantLocks.TryGetValue(intention.TargetKey.FilePath, out concurrencyLock))
-                {
-                    //There are other threads currently waiting for a lock on this file.
-                    concurrencyLock.ReferenceCount++;
-                }
-                else
-                {
-                    //This is the first thread in line for a lock on this file.
-                    concurrencyLock = new ObjectConcurrencyLock();
-                    _concurrentGrantLocks.Add(intention.TargetKey.FilePath, concurrencyLock);
-                }
-
-                //Record that we are waiting on the grant. This is used for deadlock detection.
-                var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
-                _pendingGrants.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (pendingGrants) =>
-                {
-                    ptPendingGrantLock?.StopAndAccumulate();
-                    pendingGrants.Add(pendingGrantKey, new(transaction, intention));
-                });
+                return null;
             }
+
+            //The most common case: the transaction already holds a lock that covers this one (e.g. a document within a
+            //  schema that the transaction has already locked). This only needs a shared read of the lock table.
+            if (IsSatisfiedByHeldLocks(transaction, intention))
+            {
+                transaction.GrantedLockCache.TryAdd(intention.Key, 0);
+                return null;
+            }
+
+            var request = new LockRequest(transaction, intention);
+            var spinWait = new SpinWait();
 
             try
             {
-                //We will loop until we either get the lock or an exception occurs (most likely a deadlock or cancelled transaction).
+                //We will loop until we either get the lock or an exception occurs (most likely a deadlock, timeout or cancelled transaction).
                 while (true)
                 {
-                    //Lock the individual object semaphore, because we only allow an attempt for a lock on a single distinct file at a time.
-                    var ptLockConcurrencyWait = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.LockConcurrencyWait);
-                    if (concurrencyLock.Semaphore.Wait(1))
-                    {
-                        ptLockConcurrencyWait?.StopAndAccumulate();
-                        try
-                        {
-                            var ptGrantedLockCache = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Read");
-                            if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
-                            {
-                                ptGrantedLockCache?.StopAndAccumulate();
-                                //This transaction owns the lock, but it was created with a previous call to Acquire().
-                                //  This means that the transaction has the key, but the caller will not be be provided
-                                //  with it since modification by a non-creator caller would be dangerous.
-                                //
-                                //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
-                                return null;
-                            }
-                            ptGrantedLockCache?.StopAndAccumulate();
+                    var observedGeneration = Interlocked.Read(ref _releaseGeneration);
 
-                            var ptAttemptLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AttemptLock);
-                            var lockKey = AttemptLock(transaction, intention);
-                            ptAttemptLock?.StopAndAccumulate();
+                    var ptAttemptLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AttemptLock);
+                    var result = AttemptLock(request);
+                    ptAttemptLock?.StopAndAccumulate();
 
-                            if (lockKey != null)
-                            {
-                                //We got a lock, record it and return the key to the caller.
-                                var ptGrantedLockCacheWrite = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.GrantedLockCache, "Write");
-                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
-                                ptGrantedLockCacheWrite?.StopAndAccumulate();
-                                return lockKey;
-                            }
-                        }
-                        finally
-                        {
-                            //Allow other threads to now attempt a lock on this file.
-                            concurrencyLock.Semaphore.Release();
-                        }
-                    }
-                    else
+                    switch (result)
                     {
-                        ptLockConcurrencyWait?.StopAndAccumulate();
-                        transaction.EnsureActive(); // catch cancellation/deadlock even when the concurrency lock is contended
-                        Thread.Sleep(0);            // yield to the scheduler rather than spinning
+                        case AttemptResult.Granted:
+                            transaction.GrantedLockCache.TryAdd(intention.Key, 0);
+                            RecordLockWait(intention);
+                            return request.LockKey;
+
+                        case AttemptResult.AlreadyHeld:
+                            //Every overlapping lock is already owned by this transaction with the same operation — a
+                            //  coarser-granularity lock (e.g. Path) covers this request. No new key is issued.
+                            transaction.GrantedLockCache.TryAdd(intention.Key, 0);
+                            RecordLockWait(intention);
+                            return null;
+
+                        case AttemptResult.Busy:
+                            //The lock table or this transaction's critical section is momentarily held by another thread.
+                            spinWait.SpinOnce();
+                            break;
+
+                        case AttemptResult.Blocked:
+                            var ptLockWait = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.LockConcurrencyWait);
+                            WaitForLockRelease(observedGeneration);
+                            ptLockWait?.StopAndAccumulate();
+                            break;
                     }
                 }
             }
             finally
             {
-                lock (_concurrentGrantLocks)
+                if (request.PendingGrantKey is Guid pendingGrantKey)
                 {
-                    //Decrement this threads lock on the file and remove it from the collection if we are the last one.
-                    _concurrentGrantLocks[intention.TargetKey.FilePath].ReferenceCount--;
-                    if (_concurrentGrantLocks[intention.TargetKey.FilePath].ReferenceCount == 0)
-                    {
-                        _concurrentGrantLocks.Remove(intention.TargetKey.FilePath);
-                    }
-
                     //Let other transactions know that we are no longer waiting on this lock.
-                    var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Read");
-                    _pendingGrants.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (pendingGrants) =>
-                    {
-                        ptPendingGrantLock?.StopAndAccumulate();
-                        pendingGrants.Remove(pendingGrantKey);
-                    });
+                    var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
+                    _pendingGrants.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (pendingGrants) => pendingGrants.Remove(pendingGrantKey));
+                    ptPendingGrantLock?.StopAndAccumulate();
                 }
             }
         }
 
-        private ObjectLockKey? AttemptLock(Transaction transaction, ObjectLockIntention intention)
+        private void RecordLockWait(ObjectLockIntention intention)
         {
+            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+            if (_core.Settings.HealthMonitoringInstanceLevelEnabled)
+            {
+                _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+            }
+        }
+
+        /// <summary>
+        /// Determines, using only a shared read of the lock table, whether the transaction already holds keys of the same operation on
+        /// every lock that overlaps the intention and no other transaction holds a conflicting key. This is exactly the condition in
+        /// which AttemptLock() would grant the request without issuing a new key, so the exclusive path can be skipped entirely.
+        /// </summary>
+        private bool IsSatisfiedByHeldLocks(Transaction transaction, ObjectLockIntention intention)
+        {
+            return _collection.Read((table) =>
+            {
+                var overlappingLocks = table.GetOverlappingLocks(intention);
+                if (overlappingLocks.Count == 0)
+                {
+                    return false; //A new lock would need to be created.
+                }
+
+                foreach (var overlappingLock in overlappingLocks)
+                {
+                    bool holdsSameOperation = false;
+
+                    foreach (var key in overlappingLock.Keys.Read((keys) => keys))
+                    {
+                        if (key.ProcessId == transaction.ProcessId)
+                        {
+                            holdsSameOperation |= key.Operation == intention.Operation;
+                        }
+                        else if (IsBlockedBy(intention.Operation, key.Operation))
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (!holdsSameOperation)
+                    {
+                        return false;
+                    }
+                }
+
+                foreach (var overlappingLock in overlappingLocks)
+                {
+                    overlappingLock.IncrementHits();
+                }
+
+                return true;
+            });
+        }
+
+        private AttemptResult AttemptLock(LockRequest request)
+        {
+            var transaction = request.Transaction;
+            var intention = request.Intention;
+
             try
             {
                 transaction.EnsureActive();
@@ -277,373 +329,207 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new KbTimeoutException($"Timeout exceeded while waiting on lock: [{intention.ToString()}]");
                 }
 
-                //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
-                //  section "Locking.CriticalSectionLockManagement", we will only need:
-                return _collection.TryWriteAllNullable([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
-                {
-                    ObjectLockKey? lockKey = null;
+                var result = AttemptResult.Busy;
 
-                    var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
+                //Since _collection, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
+                //  section "Locking.CriticalSectionLockManagement", we will only need:
+                _collection.TryWriteAllNullable([transaction.TransactionSemaphore], out bool isLockHeld, (table) =>
+                {
+                    var lockedObjects = table.GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
 
                     if (lockedObjects.Count == 0)
                     {
                         //No locks on the object exist - so add one to the local and class collections.
                         var lockedObject = new ObjectLock(_core, intention);
-                        obj.Add(lockedObject);
-                        lockedObjects.Add(lockedObject);
+                        table.Add(lockedObject);
 
-                        lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                        var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
                         transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
+                        transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
 
-                        var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                        _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
-                        _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-
+                        request.LockKey = lockKey;
+                        result = AttemptResult.Granted;
                         return lockKey;
                     }
 
-                    #region Stability Lock.
+                    var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                        .Where(o => o.ProcessId != transaction.ProcessId && IsBlockedBy(intention.Operation, o.Operation))
+                        .Distinct().ToList();
 
-                    if (intention.Operation == LockOperation.Stability)
+                    if (blockers.Count == 0)
                     {
-                        //This operation is blocked by: Delete.
-                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                            .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
+                        transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
 
-                        if (blockers.Count == 0)
+                        foreach (var lockedObject in lockedObjects)
                         {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
+                            lockedObject.IncrementHits();
 
-                            foreach (var lockedObject in lockedObjects)
+                            if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                             {
-                                lockedObject.Hits++;
-
-                                if (lockedObject.Keys.Read((obj) => obj)
-                                        .Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
-                                {
-                                    //Do we really need to hand out multiple keys to the same object
-                                    //  of the same type? I don't think we do. Just continue...
-                                    continue;
-                                }
-
-                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
+                                //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do.
+                                continue;
                             }
 
-                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                            var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                            transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
+                            request.LockKey = lockKey;
+                        }
 
-                            if (lockKey == null)
-                            {
-                                // Every overlapping lock is already owned by this transaction with the same
-                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
-                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
-                                // rather than spinning forever on a null return.
-                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
-                            }
-                            return lockKey;
-                        }
-                        else
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-                            {
-                                obj.Clear();
-                                obj.AddRange(blockers.Distinct());
-                            });
-                        }
+                        result = request.LockKey != null ? AttemptResult.Granted : AttemptResult.AlreadyHeld;
+                        return request.LockKey;
                     }
 
-                    #endregion
-
-                    #region Read Lock.
-
-                    else if (intention.Operation == LockOperation.Read)
+                    transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                     {
-                        //This operation is blocked by: Write and Delete.
-                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                            .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
-                            && o.ProcessId != transaction.ProcessId).ToList();
-
-                        if (blockers.Count == 0)
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
-
-                            foreach (var lockedObject in lockedObjects)
-                            {
-                                lockedObject.Hits++;
-
-                                if (lockedObject.Keys.Read((obj) => obj).Any(o
-                                    => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
-                                {
-                                    //Do we really need to hand out multiple keys to the same
-                                    //  object of the same type? I don't think we do. Just continue...
-                                    continue;
-                                }
-
-                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
-                            }
-
-                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-
-                            if (lockKey == null)
-                            {
-                                // Every overlapping lock is already owned by this transaction with the same
-                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
-                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
-                                // rather than spinning forever on a null return.
-                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
-                            }
-                            return lockKey;
-                        }
-                        else
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-                            {
-                                obj.Clear();
-                                obj.AddRange(blockers.Distinct());
-                            });
-                        }
-                    }
-
-                    #endregion
-
-                    #region Write Lock.
-
-                    else if (intention.Operation == LockOperation.Write)
-                    {
-                        //This operation is blocked by: Read, Write, Delete.
-                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                            .Where(o => o.Operation != LockOperation.Stability && o.ProcessId != transaction.ProcessId).ToList();
-
-                        if (blockers.Count == 0)
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
-
-                            foreach (var lockedObject in lockedObjects)
-                            {
-                                lockedObject.Hits++;
-
-                                if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId
-                                && o.Operation == intention.Operation)))
-                                {
-                                    //Do we really need to hand out multiple keys to the same object of the same type?
-                                    //I don't think we do.
-                                    continue;
-                                }
-
-                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
-                            }
-
-                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-
-                            if (lockKey == null)
-                            {
-                                // Every overlapping lock is already owned by this transaction with the same
-                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
-                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
-                                // rather than spinning forever on a null return.
-                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
-                            }
-                            return lockKey;
-                        }
-                        else
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-                            {
-                                obj.Clear();
-                                obj.AddRange(blockers.Distinct());
-                            });
-                        }
-                    }
-
-                    #endregion
-
-                    #region Delete Lock.
-
-                    else if (intention.Operation == LockOperation.Delete)
-                    {
-                        //This operation is blocked by: Everything
-                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                            .Where(o => o.ProcessId != transaction.ProcessId).ToList();
-
-                        if (blockers.Count == 0) //If there are no existing un-owned locks.
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
-
-                            foreach (var lockedObject in lockedObjects)
-                            {
-                                lockedObject.Hits++;
-
-                                if (lockedObject.Keys.Read((obj) => obj.Any(
-                                    o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
-                                {
-                                    //Do we really need to hand out multiple keys to the same object of the same type?
-                                    //I don't think we do.
-                                    continue;
-                                }
-
-                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-
-                                transaction.HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(lockKey));
-                            }
-
-                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-
-                            if (lockKey == null)
-                            {
-                                // Every overlapping lock is already owned by this transaction with the same
-                                // operation — a coarser-granularity lock (e.g. Directory) covers this request.
-                                // Populate GrantedLockCache so Acquire() exits cleanly on its next pass
-                                // rather than spinning forever on a null return.
-                                transaction.GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Add(intention.Key));
-                            }
-                            return lockKey;
-                        }
-                        else
-                        {
-                            transaction.BlockedByKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
-                            {
-                                obj.Clear();
-                                obj.AddRange(blockers.Distinct());
-                            });
-                        }
-                    }
-
-                    #endregion
-
-                    #region Deadlock Detection.
-
-                    var ptDeadlockDetection = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.DeadlockDetection);
-                    transaction.BlockedByKeys.Read((currentBlockedByKeys) =>
-                    {
-                        if (currentBlockedByKeys.Count != 0)
-                        {
-                            var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Read");
-                            _pendingGrants.Read((pendingGrants) =>
-                            {
-                                ptPendingGrantLock?.StopAndAccumulate();
-
-                                // Build a lookup of all non-deadlocked waiting transactions.
-                                var waitingTransactions = pendingGrants
-                                    .Where(o => o.Value.Transaction.IsDeadlocked == false)
-                                    .Select(o => o.Value.Transaction)
-                                    .Distinct()
-                                    .ToDictionary(o => o.ProcessId);
-
-                                // Deadlock detection using Depth-First Search (DFS) over the waits-for graph.
-                                //
-                                // The waits-for graph has one node per transaction and a directed edge A→B
-                                // whenever transaction A is waiting on a lock held by transaction B.
-                                // A deadlock is a cycle in this graph — every transaction in the cycle is
-                                // permanently stuck waiting on the next one.
-                                //
-                                // We detect a cycle by starting at the current transaction's blockers and
-                                // following edges as deep as possible before backtracking (DFS). If we ever
-                                // arrive back at the current transaction's ProcessId, a cycle exists.
-                                //
-                                // Example — 3-party deadlock (A→B→C→A):
-                                //   seed → push B            parent[B] = A
-                                //   pop B  (B≠A)  →  push C  parent[C] = B
-                                //   pop C  (C≠A)  →  push A  parent[A] = C
-                                //   pop A  (A==A) →  deadlock! walk parent map: A←C←B←A → reverse → A→B→C→A
-                                //
-                                // The visited set prevents infinite loops when the graph contains a cycle
-                                // that does not involve the current transaction: once a node is fully
-                                // explored there is no value in visiting it again.
-                                //
-                                // The parent map records who pushed each node, enabling reconstruction of
-                                // the full ordered cycle chain for the deadlock explanation.
-                                var visited = new HashSet<ulong>();
-                                var toVisit = new Stack<ulong>();
-
-                                // parent[X] = Y means Y pushed X during traversal — used to reconstruct
-                                // the cycle chain by walking backwards when a deadlock is detected.
-                                var parent = new Dictionary<ulong, ulong>();
-
-                                // Seed the search with every transaction that is currently blocking us.
-                                foreach (var blockerKey in currentBlockedByKeys)
-                                {
-                                    var blockerPid = blockerKey.ProcessId;
-                                    if (waitingTransactions.ContainsKey(blockerPid) && !parent.ContainsKey(blockerPid))
-                                    {
-                                        parent[blockerPid] = transaction.ProcessId;
-                                        toVisit.Push(blockerPid);
-                                    }
-                                }
-
-                                while (toVisit.Count > 0)
-                                {
-                                    var pid = toVisit.Pop();
-
-                                    if (pid == transaction.ProcessId)
-                                    {
-                                        // Cycle detected. Walk the parent map backwards from the current
-                                        // transaction to reconstruct the full ordered cycle chain, then reverse.
-                                        // e.g. for A→B→C→A with parent={B:A, C:B, A:C}:
-                                        //   walk: A → C → B → A  →  reversed: A → B → C → A
-                                        var cycleChain = new List<ulong>();
-                                        var cur = transaction.ProcessId;
-                                        do
-                                        {
-                                            cycleChain.Add(cur);
-                                            cur = parent[cur];
-                                        } while (cur != transaction.ProcessId);
-                                        cycleChain.Add(transaction.ProcessId); // close the loop
-                                        cycleChain.Reverse();
-
-                                        var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, cycleChain, waitingTransactions);
-
-                                        transaction.SetDeadlocked();
-                                        ptDeadlockDetection?.StopAndAccumulate();
-
-                                        throw new KbDeadlockException(
-                                            $"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.",
-                                            explanation.ToString());
-                                    }
-
-                                    if (!visited.Add(pid))
-                                        continue; // Already explored every edge from this node.
-
-                                    // Follow this transaction's own blockers to go one level deeper.
-                                    if (waitingTransactions.TryGetValue(pid, out var nextTx))
-                                    {
-                                        nextTx.BlockedByKeys.Read((blockedBy) =>
-                                        {
-                                            foreach (var key in blockedBy)
-                                            {
-                                                if (!visited.Contains(key.ProcessId) && !parent.ContainsKey(key.ProcessId))
-                                                {
-                                                    parent[key.ProcessId] = pid;
-                                                    toVisit.Push(key.ProcessId);
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        }
+                        obj.Clear();
+                        obj.AddRange(blockers);
                     });
-                    ptDeadlockDetection?.StopAndAccumulate();
 
-                    #endregion
+                    //Record that we are waiting on the grant. This is used for deadlock detection (both ours and other transactions').
+                    if (request.PendingGrantKey == null)
+                    {
+                        var pendingGrantKey = Guid.NewGuid();
+                        var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Write");
+                        _pendingGrants.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (pendingGrants) =>
+                        {
+                            ptPendingGrantLock?.StopAndAccumulate();
+                            pendingGrants.Add(pendingGrantKey, new(transaction, intention));
+                        });
+                        request.PendingGrantKey = pendingGrantKey;
+                    }
 
+                    DetectDeadlock(transaction, intention); //Throws if this transaction is part of a deadlock.
+
+                    result = AttemptResult.Blocked;
                     return null;
-                }); //If we got a lock, return its key.
+                });
+
+                return isLockHeld ? result : AttemptResult.Busy;
             }
             catch (Exception ex)
             {
                 LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}], object: [{intention.ToString()}].", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Must be called while holding the lock management critical section.
+        /// Throws a KbDeadlockException (and marks the transaction as deadlocked) if the transaction is part of a waits-for cycle.
+        /// </summary>
+        private void DetectDeadlock(Transaction transaction, ObjectLockIntention intention)
+        {
+            var ptDeadlockDetection = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.DeadlockDetection);
+            transaction.BlockedByKeys.Read((currentBlockedByKeys) =>
+            {
+                if (currentBlockedByKeys.Count != 0)
+                {
+                    var ptPendingGrantLock = transaction.Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.PendingGrantLock, "Read");
+                    _pendingGrants.Read((pendingGrants) =>
+                    {
+                        ptPendingGrantLock?.StopAndAccumulate();
+
+                        // Build a lookup of all non-deadlocked waiting transactions.
+                        var waitingTransactions = pendingGrants
+                            .Where(o => o.Value.Transaction.IsDeadlocked == false)
+                            .Select(o => o.Value.Transaction)
+                            .Distinct()
+                            .ToDictionary(o => o.ProcessId);
+
+                        // Deadlock detection using Depth-First Search (DFS) over the waits-for graph.
+                        //
+                        // The waits-for graph has one node per transaction and a directed edge A→B
+                        // whenever transaction A is waiting on a lock held by transaction B.
+                        // A deadlock is a cycle in this graph — every transaction in the cycle is
+                        // permanently stuck waiting on the next one.
+                        //
+                        // We detect a cycle by starting at the current transaction's blockers and
+                        // following edges as deep as possible before backtracking (DFS). If we ever
+                        // arrive back at the current transaction's ProcessId, a cycle exists.
+                        //
+                        // Example — 3-party deadlock (A→B→C→A):
+                        //   seed → push B            parent[B] = A
+                        //   pop B  (B≠A)  →  push C  parent[C] = B
+                        //   pop C  (C≠A)  →  push A  parent[A] = C
+                        //   pop A  (A==A) →  deadlock! walk parent map: A←C←B←A → reverse → A→B→C→A
+                        //
+                        // The visited set prevents infinite loops when the graph contains a cycle
+                        // that does not involve the current transaction: once a node is fully
+                        // explored there is no value in visiting it again.
+                        //
+                        // The parent map records who pushed each node, enabling reconstruction of
+                        // the full ordered cycle chain for the deadlock explanation.
+                        var visited = new HashSet<ulong>();
+                        var toVisit = new Stack<ulong>();
+
+                        // parent[X] = Y means Y pushed X during traversal — used to reconstruct
+                        // the cycle chain by walking backwards when a deadlock is detected.
+                        var parent = new Dictionary<ulong, ulong>();
+
+                        // Seed the search with every transaction that is currently blocking us.
+                        foreach (var blockerKey in currentBlockedByKeys)
+                        {
+                            var blockerPid = blockerKey.ProcessId;
+                            if (waitingTransactions.ContainsKey(blockerPid) && !parent.ContainsKey(blockerPid))
+                            {
+                                parent[blockerPid] = transaction.ProcessId;
+                                toVisit.Push(blockerPid);
+                            }
+                        }
+
+                        while (toVisit.Count > 0)
+                        {
+                            var pid = toVisit.Pop();
+
+                            if (pid == transaction.ProcessId)
+                            {
+                                // Cycle detected. Walk the parent map backwards from the current
+                                // transaction to reconstruct the full ordered cycle chain, then reverse.
+                                // e.g. for A→B→C→A with parent={B:A, C:B, A:C}:
+                                //   walk: A → C → B → A  →  reversed: A → B → C → A
+                                var cycleChain = new List<ulong>();
+                                var cur = transaction.ProcessId;
+                                do
+                                {
+                                    cycleChain.Add(cur);
+                                    cur = parent[cur];
+                                } while (cur != transaction.ProcessId);
+                                cycleChain.Add(transaction.ProcessId); // close the loop
+                                cycleChain.Reverse();
+
+                                var explanation = GetDeadlockExplanation(transaction, pendingGrants, intention, cycleChain, waitingTransactions);
+
+                                transaction.SetDeadlocked();
+                                ptDeadlockDetection?.StopAndAccumulate();
+
+                                throw new KbDeadlockException(
+                                    $"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.",
+                                    explanation.ToString());
+                            }
+
+                            if (!visited.Add(pid))
+                                continue; // Already explored every edge from this node.
+
+                            // Follow this transaction's own blockers to go one level deeper.
+                            if (waitingTransactions.TryGetValue(pid, out var nextTx))
+                            {
+                                nextTx.BlockedByKeys.Read((blockedBy) =>
+                                {
+                                    foreach (var key in blockedBy)
+                                    {
+                                        if (!visited.Contains(key.ProcessId) && !parent.ContainsKey(key.ProcessId))
+                                        {
+                                            parent[key.ProcessId] = pid;
+                                            toVisit.Push(key.ProcessId);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+            ptDeadlockDetection?.StopAndAccumulate();
         }
 
         private static string GetDeadlockExplanation(

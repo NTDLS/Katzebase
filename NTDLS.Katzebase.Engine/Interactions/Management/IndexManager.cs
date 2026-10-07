@@ -11,12 +11,14 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
+using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Katzebase.PersistentTypes.Document;
 using NTDLS.Katzebase.PersistentTypes.Index;
 using NTDLS.Katzebase.PersistentTypes.Schema;
 using NTDLS.Katzebase.Shared;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Parsers.Constants;
@@ -32,6 +34,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly EngineCore _core;
         internal IndexQueryHandlers QueryHandlers { get; private set; }
         public IndexAPIHandlers APIHandlers { get; private set; }
+
+        /// <summary>
+        /// Deserialized index catalogs, cached per documents RDB instance. The catalog is read for every inserted, updated
+        /// and deleted document and for every query, but only changes on CREATE/DROP/REBUILD INDEX. Keying by the Rdb
+        /// instance (rather than path) means a dropped and re-created schema can never observe a stale catalog.
+        /// </summary>
+        private readonly ConditionalWeakTable<Rdb, List<PhysicalIndex>> _catalogCache = new();
+        private readonly Lock _catalogCacheLock = new();
+        /// <summary>
+        /// Incremented on every invalidation so that a catalog loaded concurrently with an invalidation is not cached.
+        /// </summary>
+        private long _catalogGeneration;
 
         internal IndexManager(EngineCore core)
         {
@@ -76,6 +90,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
+                InvalidateIndexCatalog(transaction, rdb);
                 _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, indexCfName, physicalIndex);
                 rdb.CreateColumnFamily(indexCfName);
 
@@ -181,6 +196,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndex = AcquireIndex(transaction, physicalSchema, indexName, LockOperation.Write);
                 if (physicalIndex != null)
                 {
+                    InvalidateIndexCatalog(transaction, rdb);
                     _core.IO.DeleteKey(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id));
                     rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 }
@@ -242,8 +258,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
             PreparedQuery query, KbInsensitiveDictionary<string?>? keyValues = null)
         {
-            var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
-                query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, keyValues);
+            //All conditions in a group are ANDed, so each of the group's index lookups yields a superset of the matching
+            //  documents and the group's candidates are their intersection. Lookups are ordered most selective first.
+            HashSet<uint>? thisGroupResults = null;
+
+            foreach (var indexLookup in givenConditionGroup.IndexLookups)
+            {
+                if (thisGroupResults != null
+                    && (thisGroupResults.Count <= 1 || IndexingConditionOptimization.EstimateLookupCost(indexLookup) > IndexingConditionOptimization.PointLookupCost))
+                {
+                    //We already have a small candidate set: the WHERE clause is re-evaluated against every candidate
+                    //  document anyway, so scanning another index to narrow it further is not worth the cost.
+                    break;
+                }
+
+                var lookupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
+                    query, indexLookup, physicalSchema, keyValues);
+
+                var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                thisGroupResults = thisGroupResults.MaterializedIntersectWith(lookupResults);
+                ptDocumentPointerIntersect?.StopAndAccumulate();
+            }
+
+            thisGroupResults ??= new();
 
             foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup>().Where(o => o.IndexLookup != null))
             {
@@ -277,81 +314,93 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
-                HashSet<uint>? accumulatedResults = null;
-
-                var firstAttrConditions = indexLookup.AttributeConditionSets[attributes[0].Field.EnsureNotNull()];
-
-                foreach (var firstCondition in firstAttrConditions)
+                //Resolve the right-hand value of every condition once up front, rather than once per scanned index key.
+                var attributeConditions = new List<(ConditionEntry Condition, string? Value)>?[attributes.Count];
+                for (int depth = 0; depth < attributes.Count; depth++)
                 {
-                    var conditionResults = new HashSet<uint>();
-                    var resolvedValue = ResolveConditionValue(transaction, query, firstCondition, keyValues);
-
-                    // For equality on the first attribute, seek directly to the value's bytes.
-                    // We use the raw value bytes (no trailing separator) so the seek lands ON
-                    // the key rather than past it — stored keys have no trailing 0x00.
-                    byte[]? seekBytes = firstCondition.Qualifier == LogicalQualifier.Equals && resolvedValue != null
-                        ? IndexKeyBuilder.Build([resolvedValue])
-                        : null;
-
-                    using var iter = rdb.NewIterator(indexCF);
-                    if (seekBytes != null)
-                        iter.Seek(seekBytes);
-                    else
-                        iter.SeekToFirst();
-
-                    for (; iter.Valid(); iter.Next())
+                    if (indexLookup.AttributeConditionSets.TryGetValue(attributes[depth].Field.EnsureNotNull(), out var conditions))
                     {
-                        var key = iter.Key();
-
-                        // In equality-seek mode, stop once we've passed all keys for this value.
-                        // A key belongs to this value if it equals seekBytes exactly (single-attribute)
-                        // or starts with seekBytes followed by 0x00 (compound key).
-                        if (seekBytes != null)
-                        {
-                            if (key.Length < seekBytes.Length) break;
-                            if (!key.AsSpan(0, seekBytes.Length).SequenceEqual(seekBytes)) break;
-                            if (key.Length > seekBytes.Length && key[seekBytes.Length] != 0x00) continue;
-                        }
-
-                        var fieldValues = IndexKeyBuilder.DecodeFieldValues(key);
-
-                        // Apply the first attribute's condition.
-                        if (!ConditionEntry.IsMatch(fieldValues[0], firstCondition.Qualifier, resolvedValue))
-                            continue;
-
-                        // Apply conditions for any remaining attributes in a compound index.
-                        bool allMatch = true;
-                        for (int depth = 1; depth < attributes.Count && allMatch; depth++)
-                        {
-                            if (!indexLookup.AttributeConditionSets.TryGetValue(
-                                    attributes[depth].Field.EnsureNotNull(), out var depthConditions))
-                                continue;
-
-                            string? fieldValue = depth < fieldValues.Length ? fieldValues[depth] : null;
-                            foreach (var depthCondition in depthConditions)
-                            {
-                                var depthValue = ResolveConditionValue(transaction, query, depthCondition, keyValues);
-                                if (!ConditionEntry.IsMatch(fieldValue, depthCondition.Qualifier, depthValue))
-                                {
-                                    allMatch = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (allMatch)
-                            conditionResults.UnionWith(IndexKeyBuilder.UnpackDocumentIds(iter.Value()));
+                        attributeConditions[depth] = conditions
+                            .Select(condition => (condition, ResolveConditionValue(transaction, query, condition, keyValues))).ToList();
                     }
-
-                    var ptIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                    accumulatedResults = accumulatedResults.MaterializedIntersectWith(conditionResults);
-                    ptIntersect?.StopAndAccumulate();
-
-                    if (accumulatedResults.Count == 0)
-                        break;
                 }
 
-                return accumulatedResults ?? [];
+                //Index keys are [field1][0x00][field2]..., so the leading attributes that are constrained by an equality
+                //  form a key prefix that we can seek directly to, rather than scanning the index from the beginning.
+                var equalityPrefix = new List<string>();
+                for (int depth = 0; depth < attributes.Count; depth++)
+                {
+                    var equalityValue = attributeConditions[depth]?
+                        .Where(o => o.Condition.Qualifier == LogicalQualifier.Equals && o.Value != null)
+                        .Select(o => o.Value).FirstOrDefault();
+                    if (equalityValue == null)
+                    {
+                        break;
+                    }
+                    equalityPrefix.Add(equalityValue);
+                }
+
+                var results = new HashSet<uint>();
+
+                if (equalityPrefix.Count == attributes.Count)
+                {
+                    //Every attribute is pinned by an equality, this is a single key point-lookup.
+                    var key = IndexKeyBuilder.Build(equalityPrefix);
+                    var bytes = rdb.Get(key, indexCF);
+                    if (bytes != null && IsIndexKeyMatch([.. equalityPrefix]))
+                    {
+                        results.UnionWith(IndexKeyBuilder.UnpackDocumentIds(bytes));
+                    }
+                    return results;
+                }
+
+                var seekPrefix = equalityPrefix.Count > 0 ? IndexKeyBuilder.BuildSeekPrefix(equalityPrefix) : null;
+
+                using var iter = rdb.NewIterator(indexCF);
+                if (seekPrefix != null)
+                    iter.Seek(seekPrefix);
+                else
+                    iter.SeekToFirst();
+
+                for (; iter.Valid(); iter.Next())
+                {
+                    var key = iter.Key();
+
+                    if (seekPrefix != null && !key.AsSpan().StartsWith(seekPrefix))
+                    {
+                        break; //We have passed all keys that share the equality prefix.
+                    }
+
+                    if (IsIndexKeyMatch(IndexKeyBuilder.DecodeFieldValues(key)))
+                    {
+                        results.UnionWith(IndexKeyBuilder.UnpackDocumentIds(iter.Value()));
+                    }
+                }
+
+                return results;
+
+                //All conditions on all attributes must match (conditions within a group are ANDed).
+                bool IsIndexKeyMatch(string[] fieldValues)
+                {
+                    for (int depth = 0; depth < attributes.Count; depth++)
+                    {
+                        var conditions = attributeConditions[depth];
+                        if (conditions == null)
+                        {
+                            continue;
+                        }
+
+                        string? fieldValue = depth < fieldValues.Length ? fieldValues[depth] : null;
+                        foreach (var (condition, value) in conditions)
+                        {
+                            if (!ConditionEntry.IsMatch(fieldValue, condition.Qualifier, value))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
             }
             catch (Exception ex)
             {
@@ -465,15 +514,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction transaction,
             PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, PhysicalDocument document, uint documentId)
+            => InsertDocumentIntoIndex(transaction, _core.IO.AcquireDocumentsRdb(physicalSchema), physicalIndex, document.Elements, documentId);
+
+        private static void InsertDocumentIntoIndex(Transaction transaction,
+            Rdb rdb, PhysicalIndex physicalIndex, KbInsensitiveDictionary<string?> elements, uint documentId)
         {
             try
             {
-                var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, document);
+                var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, elements);
                 if (fieldValues.Count != physicalIndex.Attributes.Count)
                     return; // one or more indexed fields are null/missing — document not indexed
 
                 var key = IndexKeyBuilder.Build(fieldValues);
-                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
                 var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                 var existingBytes = rdb.Get(key, indexCF);
@@ -481,12 +533,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     ? IndexKeyBuilder.UnpackDocumentIds(existingBytes)
                     : new List<uint>();
 
+                if (docIds.Contains(documentId))
+                    return; //Already indexed under this key.
+
                 if (physicalIndex.IsUnique && docIds.Count > 0)
                     throw new KbDuplicateKeyViolationException(
                         $"Duplicate key violation for index [{physicalIndex.Name}], values: [{string.Join("][", fieldValues)}]");
 
                 docIds.Add(documentId);
-                rdb.Put(key, IndexKeyBuilder.PackDocumentIds(docIds), indexCF);
+                WriteIndexEntry(transaction, rdb, indexCF, key, existingBytes, docIds);
             }
             catch (Exception ex)
             {
@@ -495,7 +550,60 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Removes the given documents from the single index entry identified by [fieldValues].
+        /// </summary>
+        private static void RemoveDocumentsFromIndexKey(Transaction transaction,
+            Rdb rdb, RdbColumnFamily indexCF, List<string> fieldValues, HashSet<uint> documentIds)
+        {
+            var key = IndexKeyBuilder.Build(fieldValues);
+            var existingBytes = rdb.Get(key, indexCF);
+            if (existingBytes == null) return;
+
+            var docIds = IndexKeyBuilder.UnpackDocumentIds(existingBytes);
+            if (docIds.RemoveAll(documentIds.Contains) == 0) return;
+
+            WriteIndexEntry(transaction, rdb, indexCF, key, existingBytes, docIds);
+        }
+
+        /// <summary>
+        /// Writes an index entry (or removes it when no document ids remain) and records the entry's prior state in the
+        /// transaction log so the change is undone if the transaction rolls back. Without this, a rolled back insert leaves
+        /// index entries that point at documents which no longer exist (and permanently occupies unique key values).
+        /// </summary>
+        private static void WriteIndexEntry(Transaction transaction, Rdb rdb, RdbColumnFamily indexCF,
+            byte[] key, byte[]? existingBytes, List<uint> docIds)
+        {
+            var rdbKey = new RdbKey(key);
+            var cacheKey = new CacheKey(rdb.Path, $"{rdb.Path}:{indexCF.Name}:{rdbKey}");
+
+            if (existingBytes == null)
+            {
+                transaction.RecordKeyCreate(rdb, indexCF.Name, rdbKey, cacheKey);
+            }
+            else if (docIds.Count == 0)
+            {
+                transaction.RecordKeyDelete(rdb, indexCF.Name, rdbKey, cacheKey, existingBytes);
+            }
+            else
+            {
+                transaction.RecordKeyAlter(rdb, indexCF.Name, rdbKey, cacheKey, existingBytes);
+            }
+
+            if (docIds.Count == 0)
+            {
+                rdb.Remove(key, indexCF);
+            }
+            else
+            {
+                rdb.Put(key, IndexKeyBuilder.PackDocumentIds(docIds), indexCF);
+            }
+        }
+
         private static List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, PhysicalDocument document)
+            => GetIndexSearchTokens(transaction, physicalIndex, document.Elements);
+
+        private static List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, KbInsensitiveDictionary<string?> elements)
         {
             try
             {
@@ -503,7 +611,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var indexAttribute in physicalIndex.Attributes)
                 {
-                    if (document.Elements.TryGetValue(indexAttribute.Field.EnsureNotNull(), out string? documentValue))
+                    if (elements.TryGetValue(indexAttribute.Field.EnsureNotNull(), out string? documentValue))
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
@@ -526,27 +634,56 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Index Update.
 
         /// <summary>
-        /// Updates an index entry for a single document into each index in the schema.
+        /// Moves updated documents to their new entries in each affected index of the schema.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="physicalSchema"></param>
-        /// <param name="documents"></param>
+        /// <param name="documents">The updated documents along with a copy of their elements from before the update.
+        /// The original values are required because the index key to remove the document from is derived from them.</param>
         /// <param name="listOfModifiedFields">When not null, is used to limit the work needed to be done for index updates.</param>
         internal void UpdateDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema,
-            Dictionary<uint, PhysicalDocument> documents, IEnumerable<string>? listOfModifiedFields)
+            Dictionary<uint, (KbInsensitiveDictionary<string?> OriginalElements, PhysicalDocument Document)> documents,
+            IEnumerable<string>? listOfModifiedFields)
         {
-            if (documents.Any())
+            if (documents.Count != 0)
             {
                 try
                 {
                     var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+                    var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
                     foreach (var physicalIndex in indexCatalog)
                     {
-                        if (listOfModifiedFields == null || physicalIndex.Attributes.Any(o => listOfModifiedFields.Contains(o.Field)))
+                        if (listOfModifiedFields != null && !physicalIndex.Attributes.Any(o => listOfModifiedFields.Contains(o.Field)))
                         {
-                            RemoveDocumentsFromIndex(transaction, physicalSchema, physicalIndex, documents.Select(o => o.Key));
-                            InsertDocumentsIntoIndex(transaction, physicalSchema, physicalIndex, documents);
+                            continue;
+                        }
+
+                        var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
+
+                        //Remove every document from its old entry before adding any to their new entries so that
+                        //  unique indexes allow values to be swapped between documents within the same statement.
+                        var moved = new List<(uint DocumentId, PhysicalDocument Document)>();
+                        foreach (var document in documents)
+                        {
+                            transaction.EnsureActive();
+
+                            var originalValues = GetIndexSearchTokens(transaction, physicalIndex, document.Value.OriginalElements);
+                            var updatedValues = GetIndexSearchTokens(transaction, physicalIndex, document.Value.Document.Elements);
+
+                            if (originalValues.SequenceEqual(updatedValues))
+                            {
+                                continue; //The indexed values did not change, so neither does the index entry.
+                            }
+
+                            if (originalValues.Count == physicalIndex.Attributes.Count)
+                            {
+                                RemoveDocumentsFromIndexKey(transaction, rdb, indexCF, originalValues, [document.Key]);
+                            }
+                            moved.Add((document.Key, document.Value.Document));
+                        }
+
+                        foreach (var (documentId, document) in moved)
+                        {
+                            InsertDocumentIntoIndex(transaction, rdb, physicalIndex, document.Elements, documentId);
                         }
                     }
                 }
@@ -592,7 +729,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Removes a collection of documents from an index. Locks the index page catalog for write.
+        /// Removes a collection of (not yet modified) documents from an index.
         /// </summary>
         private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalSchema physicalSchema,
             PhysicalIndex physicalIndex, IEnumerable<uint> documentIds)
@@ -611,23 +748,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         transaction.EnsureActive();
 
-                        var physicalDocument = _core.Documents.AcquireDocument(transaction, rdb, documentId, LockOperation.Read, false);
+                        var physicalDocument = _core.Documents.AcquireDocumentVirtual(transaction, rdb, documentId, LockOperation.Read, false);
                         if (physicalDocument == null) continue;
 
                         var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
                         if (fieldValues.Count != physicalIndex.Attributes.Count) continue;
 
-                        var key = IndexKeyBuilder.Build(fieldValues);
-                        var existingBytes = rdb.Get(key, indexCF);
-                        if (existingBytes == null) continue;
-
-                        var docIds = IndexKeyBuilder.UnpackDocumentIds(existingBytes);
-                        docIds.RemoveAll(id => docIdSet.Contains(id));
-
-                        if (docIds.Count == 0)
-                            rdb.Remove(key, indexCF);
-                        else
-                            rdb.Put(key, IndexKeyBuilder.PackDocumentIds(docIds), indexCF);
+                        RemoveDocumentsFromIndexKey(transaction, rdb, indexCF, fieldValues, docIdSet);
                     }
                 }
                 catch (Exception ex)
@@ -655,6 +782,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 physicalIndex.Modified = DateTime.UtcNow;
 
+                InvalidateIndexCatalog(transaction, rdb);
                 _core.IO.PutJson(transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
             }
             catch (Exception ex)
@@ -789,13 +917,64 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
+
+                //Only shared reads are served from the cache. Writers (and any transaction that has modified this catalog
+                //  but not yet committed) read it directly so they see their own changes and never publish them early.
+                if ((lockOp != LockOperation.Read && lockOp != LockOperation.Stability)
+                    || transaction.ModifiedIndexCatalogs.ContainsKey(rdb.Path))
+                {
+                    return _core.IO.GetJsonList<PhysicalIndex>(transaction, rdb, KbColumnFamilyName.Indexes, lockOp);
+                }
+
+                //Take the same lock that reading the catalog from disk would, so that locking semantics are unchanged.
+                transaction.LockSingleObject(lockOp, CacheManager.MakeCacheKey(rdb.Path, KbColumnFamilyName.Indexes));
+
+                long generation;
+                lock (_catalogCacheLock)
+                {
+                    if (_catalogCache.TryGetValue(rdb, out var cachedIndexes))
+                    {
+                        return new List<PhysicalIndex>(cachedIndexes);
+                    }
+                    generation = _catalogGeneration;
+                }
+
                 var indexes = _core.IO.GetJsonList<PhysicalIndex>(transaction, rdb, KbColumnFamilyName.Indexes, lockOp);
+
+                lock (_catalogCacheLock)
+                {
+                    //Don't cache a catalog that may have been read while it was being changed.
+                    if (generation == _catalogGeneration)
+                    {
+                        _catalogCache.AddOrUpdate(rdb, new List<PhysicalIndex>(indexes));
+                    }
+                }
+
                 return indexes;
             }
             catch (Exception ex)
             {
                 LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Must be called before a transaction modifies the index catalog of a schema. Evicts the cached catalog immediately
+        /// and again when the transaction commits or rolls back (see Transaction.ModifiedIndexCatalogs).
+        /// </summary>
+        private void InvalidateIndexCatalog(Transaction transaction, Rdb rdb)
+        {
+            transaction.ModifiedIndexCatalogs.TryAdd(rdb.Path, rdb);
+            InvalidateIndexCatalog(rdb);
+        }
+
+        internal void InvalidateIndexCatalog(Rdb rdb)
+        {
+            lock (_catalogCacheLock)
+            {
+                _catalogGeneration++;
+                _catalogCache.Remove(rdb);
             }
         }
 

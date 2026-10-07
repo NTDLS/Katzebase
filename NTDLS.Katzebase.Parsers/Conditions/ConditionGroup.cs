@@ -11,7 +11,16 @@ namespace NTDLS.Katzebase.Parsers.Conditions
 
         public HashSet<IndexSelection> UsableIndexes { get; set; } = new();
 
-        public IndexingConditionLookup? IndexLookup { get; set; }
+        /// <summary>
+        /// The index lookups selected for this group, ordered from most to least selective. Since all conditions
+        /// in the group are ANDed, the documents matching the group are the intersection of the lookups.
+        /// </summary>
+        public List<IndexingConditionLookup> IndexLookups { get; set; } = new();
+
+        /// <summary>
+        /// The most selective index lookup for this group, if any.
+        /// </summary>
+        public IndexingConditionLookup? IndexLookup => IndexLookups.Count > 0 ? IndexLookups[0] : null;
 
         public List<ICondition> Collection { get; set; } = new();
 

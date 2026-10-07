@@ -11,7 +11,10 @@ namespace NTDLS.Katzebase.Engine.Locking
         public LockOperation Operation { get; private set; }
         public CacheKey TargetKey { get; private set; }
 
-        public string Key => $"{Granularity}:{Operation}:{TargetKey}";
+        /// <summary>
+        /// Computed once: this is used as a dictionary key on every lock request.
+        /// </summary>
+        public string Key { get; private set; }
 
         public ObjectLockIntention(Transaction transaction, CacheKey targetKey, LockGranularity lockGranularity, LockOperation lockOp)
         {
@@ -30,15 +33,18 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 TargetKey = new CacheKey(TargetKey.FilePath, $"{TargetKey.Canonical}{Path.DirectorySeparatorChar}");
             }
+
+            Key = $"{Granularity}:{Operation}:{TargetKey}";
+            DirectoryKey = (Path.GetDirectoryName(TargetKey.Canonical) ?? string.Empty) + Path.DirectorySeparatorChar;
         }
 
-        public string ObjectName
-        {
-            get
-            {
-                return $"{Granularity}:{TargetKey}";
-            }
-        }
+        /// <summary>
+        /// The canonical directory that contains the target (for path locks, this is the path itself), ending with a directory separator.
+        /// Used to find directory locks that cover this intention.
+        /// </summary>
+        public string DirectoryKey { get; private set; }
+
+        public string ObjectName => $"{Granularity}:{TargetKey}";
 
         public bool IsObjectEqual(ObjectLockIntention intention)
         {

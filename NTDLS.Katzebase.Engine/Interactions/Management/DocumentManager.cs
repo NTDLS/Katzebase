@@ -228,8 +228,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var indexingDocuments = new Dictionary<uint, PhysicalDocument>();
-                var modifiedFieldNames = new HashSet<string>();
+                var indexingDocuments = new Dictionary<uint, (KbInsensitiveDictionary<string?> OriginalElements, PhysicalDocument Document)>();
+                var modifiedFieldNames = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
@@ -237,6 +237,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var physicalDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), LockOperation.Write, populateCache)
                         ?? throw new Exception($"Document with ID [{updatedDocument.Key}] does not exist in schema [{physicalSchema.Name}].");
+
+                    //The indexes need the pre-update values to find the entries the document must be removed from.
+                    var originalElements = new KbInsensitiveDictionary<string?>();
+                    foreach (var element in physicalDocument.Elements)
+                    {
+                        originalElements.Add(element.Key, element.Value);
+                    }
 
                     physicalDocument.ModifiedUTC = DateTime.UtcNow;
 
@@ -248,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     //Keep track of the modified physical documents for indexing:
-                    indexingDocuments.Add(updatedDocument.Key, physicalDocument);
+                    indexingDocuments.Add(updatedDocument.Key, (originalElements, physicalDocument));
 
                     //Save the document page:
                     _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), physicalDocument);
