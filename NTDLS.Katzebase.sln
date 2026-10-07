@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "TestApplicatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InsertLockTest", "TestApplications\InsertLockTest\InsertLockTest.csproj", "{ECB41E2F-28BA-4F95-96C2-1CC089912855}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InsertBenchmark", "TestApplications\InsertBenchmark\InsertBenchmark.csproj", "{98F2C916-8448-4999-8265-C4FDCC363B0E}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Management", "NTDLS.Katzebase.Management\NTDLS.Katzebase.Management.csproj", "{7323B8B9-9CFE-4DBC-A0E4-318032F5EC09}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.SQLServerMigration", "NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration.csproj", "{45F95764-BD7B-4CE5-99AE-40A61C470B8A}"
@@ -53,6 +55,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{98F2C916-8448-4999-8265-C4FDCC363B0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98F2C916-8448-4999-8265-C4FDCC363B0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98F2C916-8448-4999-8265-C4FDCC363B0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98F2C916-8448-4999-8265-C4FDCC363B0E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D69AE82D-107C-4B6C-BEEA-93399912A64F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D69AE82D-107C-4B6C-BEEA-93399912A64F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D69AE82D-107C-4B6C-BEEA-93399912A64F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -110,6 +116,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{98F2C916-8448-4999-8265-C4FDCC363B0E} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{2EF323CE-ACC9-4266-9A5E-C9047F41E4B5} = {7ADB6C27-7022-46C9-A0BD-FF2667492931}
 		{165EFF5B-0860-4A40-AAD9-F40854941EF6} = {B64FD573-E392-4B4D-867C-6A6758EE6B64}
 		{ED40E73A-7188-49FA-ABA8-926D250DC5C1} = {08463189-3AA6-472B-8116-584F09A0A305}

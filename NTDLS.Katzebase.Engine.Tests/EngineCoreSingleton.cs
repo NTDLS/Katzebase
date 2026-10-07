@@ -44,7 +44,6 @@ namespace NTDLS.Katzebase.Engine.Tests
             _settings.LogDirectory = Path.Combine(Constants.ROOT_PATH, "Logs");
 
             _messageServer = new RmServer();
-            _messageServer.SetCompressionProvider(new RmDeflateCompressionProvider());
             _messageServer.OnException += RmServer_OnException;
             _messageServer.OnConnected += RmServer_OnConnected;
             _messageServer.OnDisconnected += RmServer_OnDisconnected;
