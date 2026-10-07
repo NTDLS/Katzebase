@@ -1,4 +1,6 @@
 using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Engine.IO;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
 {
@@ -123,6 +125,40 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Engine.Execution.DML
             Assert.Equal(1, RowCount($"SELECT * FROM {schema} WHERE Category = 'x' AND Code = 'a2'"));
             Assert.Equal(0, RowCount($"SELECT * FROM {schema} WHERE Category = 'y' AND Code = 'a2'"));
             Assert.Equal(2, RowCount($"SELECT * FROM {schema} WHERE Category = 'y' OR Code = 'a1'"));
+        }
+
+        [Fact(DisplayName = "Indexes in an older storage layout are not used until rebuilt")]
+        public void OutdatedIndexStorageVersion()
+        {
+            var schema = CreateIndexedSchema("OutdatedIndex");
+
+            //Simulate an index whose entries were written by an older version of the engine.
+            using (var ephemeral = _engine.Sessions.CreateEphemeralSystemSession())
+            {
+                var physicalSchema = _engine.Schemas.Acquire(ephemeral.Transaction, schema, LockOperation.Write);
+                var rdb = _engine.IO.AcquireDocumentsRdb(physicalSchema);
+                var physicalIndex = _engine.Indexes.AcquireIndex(ephemeral.Transaction, physicalSchema, "ix_Category", LockOperation.Write);
+                Assert.NotNull(physicalIndex);
+
+                physicalIndex.StorageVersion = 1;
+                _engine.IO.PutJson(ephemeral.Transaction, rdb, KbColumnFamilyName.Indexes, new RdbKey(physicalIndex.Id), physicalIndex);
+                ephemeral.Commit();
+
+                _engine.Indexes.InvalidateIndexCatalog(rdb);
+            }
+
+            //Queries ignore the outdated index (falling back to a document scan) so results are still correct.
+            Assert.Equal(2, RowCount($"SELECT * FROM {schema} WHERE Category = 'x'"));
+
+            //Writes that would have to maintain the outdated index fail with an actionable error.
+            var exception = Assert.Throws<KbEngineException>(()
+                => Execute($"INSERT INTO {schema}(Code, Category) VALUES('a4', 'x')"));
+            Assert.Contains("REBUILD INDEX", exception.Message);
+
+            //Rebuilding brings the index up to date.
+            Execute($"REBUILD INDEX ix_Category ON {schema}");
+            Execute($"INSERT INTO {schema}(Code, Category) VALUES('a4', 'x')");
+            Assert.Equal(3, RowCount($"SELECT * FROM {schema} WHERE Category = 'x'"));
         }
 
         [Fact(DisplayName = "Concurrent updates of the same schema do not deadlock")]

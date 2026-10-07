@@ -424,13 +424,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-                var defaultCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
-                var documentsCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var documentsCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 var columnFamilies = new ColumnFamilies();
                 foreach (var cf in RocksDb.ListColumnFamilies(options, documentsFilePath))
@@ -471,9 +467,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var rdbOptions = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-                var defaultCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 //Create schema catalog RDB with necessary column families.
                 var schemaCFs = new ColumnFamilies
@@ -487,9 +481,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //Create documents RDB with necessary column families.
 
-                var documentsCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var documentsCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 /*
                 if (physicalSchema.someOption)

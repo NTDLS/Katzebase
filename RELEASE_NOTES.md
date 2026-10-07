@@ -25,6 +25,7 @@ This release targets insert and select throughput. Single statements are now up 
 
 - **Every transaction no longer creates and drops its own RocksDB column family.** Doing so forced RocksDB to rewrite its MANIFEST, which took ~22 ms and was serialized across the whole database. Because every statement runs in a transaction, this capped the server at roughly 40 statements per second regardless of load or thread count. The undo log now lives in one shared `TransactionAtoms` column family, keyed by transaction id and sequence. The overhead of an empty transaction dropped from ~22 ms to ~0.13 ms.
 - Transaction log sequence numbers are generated in memory, replacing a RocksDB read and write per logged change.
+- **Transaction log entries are stored in a compact binary format** instead of JSON. One entry is written for every key a transaction creates, alters or deletes.
 - The name of the API operation is now captured at compile time, so a stack trace is no longer captured on every statement.
 
 ### Locking
@@ -38,6 +39,9 @@ This release targets insert and select throughput. Single statements are now up 
 
 ### Indexing
 
+- **New index storage layout: one entry per document.** Previously each distinct indexed value had one entry holding the packed list of every matching document id. Every insert or delete then read and rewrote the whole list, so maintaining an index on a column with few distinct values got slower as the table grew. In testing, an index on a two-value column dropped from ~5,600 to ~700 rows/s by 200,000 rows. Each document now has its own entry, so inserts and deletes are a single small write; the same test stays flat at ~30,000 rows/s.
+  - Non-unique indexes are keyed by the values plus the document id. Unique indexes are keyed by the values alone, with the document id as the value, so unique lookups and uniqueness checks are a single key read.
+- **Bloom filters are enabled on all RocksDB tables.** Lookups for keys that don't exist, such as the existence check on every insert, can skip reading data from disk. They apply to newly written data files; existing files gain them as RocksDB compacts.
 - **The index catalog is cached.** It was read from RocksDB and JSON-deserialized for every inserted, updated or deleted document and for every query. It is now cached per schema and invalidated by `CREATE INDEX`, `DROP INDEX` and `REBUILD INDEX`, including on commit and rollback.
 - **Multiple indexes are now intersected.** Previously, when a condition group could use more than one index, only the last lookup chosen was kept, which was the least selective one. Lookups are now ranked (unique point lookup, then point lookup, then prefix seek, then full index scan) and the cheap ones are intersected.
 - **Composite indexes seek on all leading equality columns.** Previously only the first column was used. When every column is constrained by an equality, the lookup is a single key read.
@@ -75,6 +79,9 @@ This release targets insert and select throughput. Single statements are now up 
 ### Breaking changes
 
 - **The wire protocol has changed: client/server compression has been removed.** Clients and servers from this release cannot communicate with clients or servers from earlier releases. Upgrade the server and every application that uses `NTDLS.Katzebase.Api` (including the management tools) together.
+- **The index storage format has changed. Every existing index must be rebuilt** with `REBUILD INDEX <name> ON <schema>` after upgrading. Until it is rebuilt, an index:
+  - is ignored by queries, which fall back to scanning documents, so results stay correct but are slower;
+  - causes inserts, updates and deletes on its schema to fail with an error naming the index and the command to run.
 
 ### Behavior changes
 
@@ -85,8 +92,8 @@ This release targets insert and select throughput. Single statements are now up 
 
 - **Upgrade the server and all clients at the same time.** See *Breaking changes*.
 - **The on-disk transaction log format has changed.** Shut the server down cleanly before upgrading. Transactions that were left open by a crash of a previous version are not rolled back by this version.
-- No changes to document, schema or index storage formats are required. Existing indexes do not need to be rebuilt.
-  - Exception: indexes that have been affected by the bugs above may contain stale entries. Run `REBUILD INDEX` on them to remove those entries.
+- **Rebuild every index** (`REBUILD INDEX <name> ON <schema>`) after upgrading. See *Breaking changes*. Rebuilding also removes any stale entries left by the index bugs fixed in this release.
+- Document and schema storage formats are unchanged.
 
 ### Testing
 

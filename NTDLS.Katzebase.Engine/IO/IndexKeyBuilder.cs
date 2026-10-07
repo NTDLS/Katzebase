@@ -1,76 +1,110 @@
+using System.Buffers.Binary;
 using System.Text;
 
 namespace NTDLS.Katzebase.Engine.IO
 {
     /// <summary>
-    /// Builds and decodes RocksDB keys for index entries.
+    /// Builds and decodes RocksDB keys and values for index entries. There is one entry per indexed document.
     ///
-    /// Key format: [field1 UTF-8 lowercase][0x00][field2 UTF-8 lowercase]...[fieldN UTF-8 lowercase]
+    ///   Values prefix: [field1 UTF-8 lowercase][0x00][field2 UTF-8 lowercase][0x00]...[fieldN UTF-8 lowercase][0x00]
     ///
-    /// The index identity is carried by the column family name (the index GUID), not the key,
-    /// so no GUID prefix is needed. The 0x00 separator between fields is safe because field
-    /// values are lowercased UTF-8 strings, which never contain 0x00 bytes.
+    ///   Non-unique indexes: key = [values prefix][document id, 4 bytes big-endian], value = empty.
+    ///   Unique indexes:     key = [values prefix],                                value = [document id, 4 bytes big-endian].
+    ///
+    /// Previously there was one entry per distinct value whose value was the packed list of every matching document id.
+    /// Every insert or delete had to read and rewrite that whole list (and log its original value for rollback), so the
+    /// cost of maintaining a low-cardinality index grew with the size of the table. With one entry per document, inserts
+    /// and deletes are a single small write regardless of how many documents share the value. Unique indexes have at most
+    /// one document per value, so their key is the values alone, which makes lookups and uniqueness checks a single Get.
+    ///
+    /// The index identity is carried by the column family name (the index GUID), not the key. The 0x00 separator is
+    /// safe because field values are lowercased UTF-8 strings, which never contain 0x00 bytes. Because every key starts
+    /// with all of the index's fields, [fields of the leading attributes][0x00] is a prefix shared by exactly the entries
+    /// whose leading attributes have those values, which is what lookups seek to.
     /// </summary>
     internal static class IndexKeyBuilder
     {
         private const byte FieldSeparator = 0x00;
+        private const int DocumentIdLength = sizeof(uint);
+        private static readonly byte[] EmptyValue = [];
 
         /// <summary>
-        /// Builds the full key for an exact index entry (used for inserts, deletes, and point lookups).
+        /// Builds the key of the index entry for a single document.
         /// </summary>
-        public static byte[] Build(IReadOnlyList<string> fieldValues)
+        public static byte[] BuildEntryKey(bool isUnique, IReadOnlyList<string> fieldValues, uint documentId)
         {
-            using var ms = new MemoryStream(fieldValues.Sum(v => v.Length) + fieldValues.Count);
-            for (int i = 0; i < fieldValues.Count; i++)
+            var prefix = BuildPrefix(fieldValues);
+            if (isUnique)
             {
-                if (i > 0) ms.WriteByte(FieldSeparator);
-                ms.Write(Encoding.UTF8.GetBytes(fieldValues[i]));
+                return prefix;
             }
-            return ms.ToArray();
+
+            var key = new byte[prefix.Length + DocumentIdLength];
+            prefix.CopyTo(key, 0);
+            BinaryPrimitives.WriteUInt32BigEndian(key.AsSpan(prefix.Length), documentId);
+            return key;
         }
 
         /// <summary>
-        /// Builds a seek prefix for scanning entries that match the given leading field values.
-        /// Appends a trailing 0x00 after equality fields so the seek lands at the first entry
-        /// whose next field begins, rather than at or before a key that ends at this prefix.
-        ///
-        /// Example — index on (FirstName, LastName, Country), seeking FirstName=john:
-        ///   seek key: [j][o][h][n][0x00]
-        ///   scan while: key.StartsWith(seekPrefix)
-        ///
-        /// Example — seeking FirstName=john AND LastName starts with park:
-        ///   seek key: [j][o][h][n][0x00][p][a][r][k]
-        ///   scan while: key.StartsWith(seekPrefix)   (no trailing 0x00 — prefix match on "park")
+        /// Builds the value of the index entry for a single document.
         /// </summary>
-        public static byte[] BuildSeekPrefix(IReadOnlyList<string> equalityFields, string? rangePrefix = null)
+        public static byte[] BuildEntryValue(bool isUnique, uint documentId)
         {
-            using var ms = new MemoryStream(64);
-
-            for (int i = 0; i < equalityFields.Count; i++)
+            if (!isUnique)
             {
-                if (i > 0) ms.WriteByte(FieldSeparator);
-                ms.Write(Encoding.UTF8.GetBytes(equalityFields[i]));
+                return EmptyValue;
             }
 
-            if (rangePrefix != null)
-            {
-                ms.WriteByte(FieldSeparator);
-                ms.Write(Encoding.UTF8.GetBytes(rangePrefix));
-            }
-            else if (equalityFields.Count > 0)
-            {
-                ms.WriteByte(FieldSeparator);
-            }
-
-            return ms.ToArray();
+            var value = new byte[DocumentIdLength];
+            BinaryPrimitives.WriteUInt32BigEndian(value, documentId);
+            return value;
         }
 
         /// <summary>
-        /// Decodes the field values from an index key.
+        /// Builds the prefix shared by all entries whose leading attributes have the given values:
+        /// [field1][0x00]...[fieldN][0x00]. Given values for all of the index's attributes, this is the prefix
+        /// of every document indexed with exactly those values (and, for unique indexes, the entire key).
         /// </summary>
-        public static string[] DecodeFieldValues(byte[] key)
+        public static byte[] BuildPrefix(IReadOnlyList<string> fieldValues)
         {
-            var payload = key.AsSpan();
+            int length = 0;
+            foreach (var value in fieldValues)
+            {
+                length += Encoding.UTF8.GetByteCount(value) + 1;
+            }
+
+            var prefix = new byte[length];
+            int offset = 0;
+            foreach (var value in fieldValues)
+            {
+                offset += Encoding.UTF8.GetBytes(value, prefix.AsSpan(offset));
+                prefix[offset++] = FieldSeparator;
+            }
+            return prefix;
+        }
+
+        /// <summary>
+        /// Returns the part of an entry key that identifies its field values (everything except the document id).
+        /// Two entries have the same indexed values exactly when these spans are equal.
+        /// </summary>
+        public static ReadOnlySpan<byte> GetValuePart(bool isUnique, byte[] key)
+            => isUnique ? key : key.AsSpan(0, key.Length - DocumentIdLength);
+
+        /// <summary>
+        /// Decodes the document id from an index entry.
+        /// </summary>
+        public static uint DecodeDocumentId(bool isUnique, byte[] key, byte[] value)
+            => isUnique
+                ? BinaryPrimitives.ReadUInt32BigEndian(value)
+                : BinaryPrimitives.ReadUInt32BigEndian(key.AsSpan(key.Length - DocumentIdLength));
+
+        /// <summary>
+        /// Decodes the field values from an index entry key.
+        /// </summary>
+        public static string[] DecodeFieldValues(bool isUnique, byte[] key)
+        {
+            //Exclude the document id (non-unique only) and the separator that terminates the last field.
+            var payload = key.AsSpan(0, key.Length - (isUnique ? 0 : DocumentIdLength) - 1);
             var result = new List<string>();
             int start = 0;
             for (int i = 0; i <= payload.Length; i++)
@@ -82,28 +116,6 @@ namespace NTDLS.Katzebase.Engine.IO
                 }
             }
             return result.ToArray();
-        }
-
-        /// <summary>
-        /// Packs a list of document IDs into a compact byte array (4 bytes each, little-endian).
-        /// </summary>
-        public static byte[] PackDocumentIds(IReadOnlyList<uint> documentIds)
-        {
-            var bytes = new byte[documentIds.Count * sizeof(uint)];
-            for (int i = 0; i < documentIds.Count; i++)
-                BitConverter.TryWriteBytes(bytes.AsSpan(i * sizeof(uint)), documentIds[i]);
-            return bytes;
-        }
-
-        /// <summary>
-        /// Unpacks a byte array into a list of document IDs.
-        /// </summary>
-        public static List<uint> UnpackDocumentIds(byte[] bytes)
-        {
-            var result = new List<uint>(bytes.Length / sizeof(uint));
-            for (int i = 0; i < bytes.Length; i += sizeof(uint))
-                result.Add(BitConverter.ToUInt32(bytes, i));
-            return result;
         }
     }
 }

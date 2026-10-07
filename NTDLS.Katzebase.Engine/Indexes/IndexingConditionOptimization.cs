@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Expressions;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
@@ -39,6 +40,16 @@ namespace NTDLS.Katzebase.Engine.Indexes
             var optimization = new IndexingConditionOptimization(transaction, conditions);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+
+            //Indexes stored in an older layout cannot be read until they are rebuilt. Don't use them for lookups
+            //  (the query falls back to scanning documents, so results are still correct).
+            var outdatedIndexes = indexCatalog.Where(o => !o.IsCurrentStorageVersion()).ToList();
+            if (outdatedIndexes.Count > 0)
+            {
+                LogManager.Warning($"Index(es) [{string.Join("], [", outdatedIndexes.Select(o => o.Name))}] on [{physicalSchema.Name}]"
+                    + " were created by an older version of Katzebase and are not used until rebuilt (REBUILD INDEX).");
+                indexCatalog = indexCatalog.Where(o => o.IsCurrentStorageVersion()).ToList();
+            }
 
             if (WalkConditionTree(optimization, query, transaction, indexCatalog, workingSchemaPrefix))
             {

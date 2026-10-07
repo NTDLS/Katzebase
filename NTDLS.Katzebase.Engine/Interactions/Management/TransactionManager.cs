@@ -63,9 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     //If we fail to open the database, then we attempt to create it.
                     var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-                    var defaultCfOptions = new ColumnFamilyOptions()
-                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                        .SetWalTtlSeconds(0);
+                    var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
                     var columnFamilies = new ColumnFamilies
                         {
                             //The Identity column contains one record per transaction with the key being the transaction ID and the value being the incrementing value.

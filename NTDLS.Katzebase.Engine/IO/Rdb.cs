@@ -19,12 +19,8 @@ namespace NTDLS.Katzebase.Engine.IO
             Path = path;
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-            // Disable RocksDB's internal block cache: Katzebase has its own caching layer,
-            // so the block cache is redundant. More importantly, HyperClockCache (the default
-            // in RocksDB 8+) uses anonymous mmap which fails hard under memory pressure.
-            var defaultCfOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                .SetWalTtlSeconds(0);
+            // See RdbOptions for why the block cache is disabled and bloom filters are enabled.
+            var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
             var columnFamilies = new ColumnFamilies();
             foreach (var cf in RocksDb.ListColumnFamilies(options, path))
@@ -81,8 +77,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             return ColumnFamilies.GetOrAdd(name, n =>
             {
-                var cfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
+                var cfOptions = RdbOptions.CreateColumnFamilyOptions();
                 return new RdbColumnFamily(n, Instance.CreateColumnFamily(cfOptions, name));
             });
         }
@@ -107,9 +102,7 @@ namespace NTDLS.Katzebase.Engine.IO
                 }
                 catch
                 {
-                    var defaultCfOptions = new ColumnFamilyOptions()
-                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                        .SetWalTtlSeconds(0);
+                    var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
                     return new RdbColumnFamily(n, Instance.CreateColumnFamily(defaultCfOptions, name));
                 }
             });

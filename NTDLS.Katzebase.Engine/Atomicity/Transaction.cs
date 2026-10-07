@@ -546,7 +546,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private void WriteAtom(Atom atom)
         {
             var cf = _transactionManager.TxRdb.GetColumnFamily(KbColumnFamilyName.TransactionAtoms);
-            _transactionManager.TxRdb.Put(MakeAtomKey(atom.Sequence), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(atom)), cf);
+            _transactionManager.TxRdb.Put(MakeAtomKey(atom.Sequence), atom.ToBytes(), cf);
         }
 
         /// <summary>
@@ -573,13 +573,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     Interlocked.Exchange(ref _atomSequence, sequence);
                 }
 
-                var atom = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
-                if (atom == null)
-                {
-                    LogManager.Warning($"Transaction atom is null for {ProcessId}");
-                    continue;
-                }
-                yield return atom;
+                yield return Atom.FromBytes(iterator.Value());
             }
         }
 
