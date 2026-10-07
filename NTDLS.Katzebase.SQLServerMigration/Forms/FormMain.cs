@@ -386,6 +386,57 @@ namespace NTDLS.Katzebase.SQLServerMigration
             }
         }
 
+        private class SourceColumn
+        {
+            public string Name { get; set; } = string.Empty;
+            public bool IsAssemblyType { get; set; }
+        }
+
+        /// <summary>
+        /// Builds the statement used to read all rows of a source table or view.
+        ///
+        /// SQL Server CLR types (geography, geometry and hierarchyid) can only be materialized by SqlClient when the
+        /// Microsoft.SqlServer.Types assembly is available, which it is not on modern .NET, so reading them fails with
+        /// "Could not load file or assembly 'Microsoft.SqlServer.Types'". Those columns are instead converted to text by
+        /// the server: [column].ToString() is well-known text for spatial types and the path (e.g. /1/2/) for hierarchyid.
+        /// </summary>
+        private static string BuildSourceSelectStatement(SqlConnection connection, string sourceObjectName)
+        {
+            var columns = connection.Query<SourceColumn>(
+                @"SELECT c.name AS Name, t.is_assembly_type AS IsAssemblyType
+                FROM sys.columns AS c
+                INNER JOIN sys.types AS t ON t.user_type_id = c.user_type_id
+                WHERE c.object_id = OBJECT_ID(@ObjectName)
+                ORDER BY c.column_id", new { ObjectName = sourceObjectName }).ToList();
+
+            if (columns.Count == 0 || columns.Any(o => o.IsAssemblyType) == false)
+            {
+                return $"SELECT * FROM {sourceObjectName}";
+            }
+
+            var selectList = columns.Select(o =>
+            {
+                var quotedName = $"[{o.Name.Replace("]", "]]")}]";
+                return o.IsAssemblyType ? $"{quotedName}.ToString() AS {quotedName}" : quotedName;
+            });
+
+            return $"SELECT {string.Join(", ", selectList)} FROM {sourceObjectName}";
+        }
+
+        /// <summary>
+        /// Converts a source value to the text stored in the document.
+        /// Binary values are stored as hex (0x...) rather than as the type name that byte[].ToString() returns.
+        /// </summary>
+        private static string FormatSourceValue(object? value)
+        {
+            return value switch
+            {
+                null or DBNull => string.Empty,
+                byte[] bytes => $"0x{Convert.ToHexString(bytes)}",
+                _ => value.ToString()?.Trim() ?? string.Empty
+            };
+        }
+
         private static bool IsDeadlock(Exception ex)
         {
             for (var current = ex; current != null; current = current.InnerException)
@@ -426,7 +477,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     long batchBytes = 0;
                     long rowCount = 0;
 
-                    using (var command = new SqlCommand($"SELECT * FROM {item.SourceObjectName}", connection))
+                    using (var command = new SqlCommand(BuildSourceSelectStatement(connection, item.SourceObjectName), connection))
                     {
                         command.CommandTimeout = 10000;
                         command.CommandType = System.Data.CommandType.Text;
@@ -445,7 +496,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                 var dbObject = new Dictionary<string, string>(fieldNames.Length);
                                 for (int iField = 0; iField < fieldNames.Length; iField++)
                                 {
-                                    dbObject[fieldNames[iField]] = dataReader[iField]?.ToString()?.Trim() ?? "";
+                                    dbObject[fieldNames[iField]] = FormatSourceValue(dataReader[iField]);
                                 }
 
                                 var document = new KbDocument(dbObject);
