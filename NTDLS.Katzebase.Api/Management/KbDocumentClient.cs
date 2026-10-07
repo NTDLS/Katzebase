@@ -41,6 +41,35 @@ namespace NTDLS.Katzebase.Api.Management
         }
 
         /// <summary>
+        /// Stores a batch of documents in the given schema using a single round trip to the server.
+        /// The batch is atomic: if any document fails to store (e.g. a unique key violation) then none are stored.
+        /// </summary>
+        /// <returns>The ids of the stored documents, in the order they were given.</returns>
+        public List<uint> StoreMany(string schema, IEnumerable<KbDocument> documents, TimeSpan? queryTimeout = null)
+        {
+            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
+
+            queryTimeout ??= _client.Connection.QueryTimeout;
+
+            var documentList = documents as List<KbDocument> ?? documents.ToList();
+            if (documentList.Count == 0)
+            {
+                return new List<uint>();
+            }
+
+            return _client.Connection.Query(
+                new KbQueryDocumentStoreMany(_client.ServerConnectionId, schema, documentList), (TimeSpan)queryTimeout).DocumentIds;
+        }
+
+        /// <summary>
+        /// Stores a batch of objects (serialized to JSON) in the given schema using a single round trip to the server.
+        /// The batch is atomic: if any document fails to store (e.g. a unique key violation) then none are stored.
+        /// </summary>
+        /// <returns>The ids of the stored documents, in the order they were given.</returns>
+        public List<uint> StoreMany(string schema, IEnumerable<object> documents, TimeSpan? queryTimeout = null)
+            => StoreMany(schema, documents.Select(o => o as KbDocument ?? new KbDocument(o)), queryTimeout);
+
+        /// <summary>
         /// Lists the documents within a given schema with their values.
         /// </summary>
         /// <param name="schema"></param>

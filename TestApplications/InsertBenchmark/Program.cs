@@ -13,12 +13,14 @@ namespace InsertBenchmark
     /// Scenarios:
     ///   1) One row per INSERT, no explicit transaction (every statement runs in its own implicit transaction).
     ///   2) One row per INSERT, inside an explicit transaction that is committed every [--commit-every] rows.
+    ///   3) One document per Document.Store() call, inside an explicit transaction committed every [--commit-every] rows.
+    ///   4) Document.StoreMany() batches of [--batch-size] documents, each batch in its own (implicit) transaction.
     ///
     /// By default an engine and message server are hosted in-process against a fresh, temporary data directory,
     /// so results are repeatable and no running server is required. Use --server to benchmark an external server.
     ///
     /// Usage:
-    ///   InsertBenchmark [--rows 10000] [--commit-every 1000] [--warmup 200] [--no-indexes]
+    ///   InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes]
     ///                   [--server host:port] [--user admin] [--password ""]
     ///                   [--data-path path] [--port 6869] [--keep-data] [--results file.tsv] [--label text]
     /// </summary>
@@ -30,6 +32,7 @@ namespace InsertBenchmark
         {
             public int Rows { get; set; } = 10_000;
             public int CommitEvery { get; set; } = 1_000;
+            public int BatchSize { get; set; } = 1_000;
             public int Warmup { get; set; } = 200;
             public bool CreateIndexes { get; set; } = true;
             public string? Server { get; set; }
@@ -42,9 +45,13 @@ namespace InsertBenchmark
             public string Label { get; set; } = string.Empty;
         }
 
-        private class ScenarioResult(string name, int rows, TimeSpan elapsed, List<double> insertMicroseconds, List<double> commitMicroseconds)
+        private class ScenarioResult(string name, int rows, TimeSpan elapsed, List<double> insertMicroseconds, List<double> commitMicroseconds, string callName = "INSERT")
         {
             public string Name { get; } = name;
+            /// <summary>
+            /// What a single timed call in InsertMicroseconds represents (one INSERT, one Store() or one StoreMany() batch).
+            /// </summary>
+            public string CallName { get; } = callName;
             public int Rows { get; } = rows;
             public TimeSpan Elapsed { get; } = elapsed;
             public List<double> InsertMicroseconds { get; } = insertMicroseconds;
@@ -95,16 +102,22 @@ namespace InsertBenchmark
                     //Warm up the JIT, connection, caches and RocksDB instances so they don't skew the first scenario.
                     RunWithoutTransaction(client, $"{RootSchema}:WarmupNoTransaction", options.Warmup);
                     RunWithTransaction(client, $"{RootSchema}:WarmupTransaction", options.Warmup, options.CommitEvery);
+                    RunDocumentStore(client, $"{RootSchema}:WarmupDocumentStore", options.Warmup, options.CommitEvery);
+                    RunDocumentStoreMany(client, $"{RootSchema}:WarmupDocumentStoreMany", options.Warmup, options.BatchSize);
                 }
 
                 var results = new List<ScenarioResult>
                 {
                     RunWithoutTransaction(client, $"{RootSchema}:NoTransaction", options.Rows),
-                    RunWithTransaction(client, $"{RootSchema}:Transaction", options.Rows, options.CommitEvery)
+                    RunWithTransaction(client, $"{RootSchema}:Transaction", options.Rows, options.CommitEvery),
+                    RunDocumentStore(client, $"{RootSchema}:DocumentStore", options.Rows, options.CommitEvery),
+                    RunDocumentStoreMany(client, $"{RootSchema}:DocumentStoreMany", options.Rows, options.BatchSize)
                 };
 
                 VerifyRowCount(client, $"{RootSchema}:NoTransaction", options.Rows);
                 VerifyRowCount(client, $"{RootSchema}:Transaction", options.Rows);
+                VerifyRowCount(client, $"{RootSchema}:DocumentStore", options.Rows);
+                VerifyRowCount(client, $"{RootSchema}:DocumentStoreMany", options.Rows);
 
                 PrintResults(results);
 
@@ -206,6 +219,82 @@ namespace InsertBenchmark
                 rows, total.Elapsed, insertTimes, commitTimes);
         }
 
+        /// <summary>
+        /// One document per Document.Store() call (no SQL parsing) inside an explicit transaction committed every [commitEvery]
+        /// rows. This is how NTDLS.Katzebase.SQLServerMigration imported data before it switched to Document.StoreMany().
+        /// </summary>
+        static ScenarioResult RunDocumentStore(KbClient client, string schema, int rows, int commitEvery)
+        {
+            var storeTimes = new List<double>(rows);
+            var commitTimes = new List<double>(rows / commitEvery + 1);
+
+            var total = Stopwatch.StartNew();
+            client.Transaction.Begin();
+            int rowsInTransaction = 0;
+
+            for (int i = 0; i < rows; i++)
+            {
+                var document = MakeDocument(i);
+
+                long start = Stopwatch.GetTimestamp();
+                client.Document.Store(schema, document);
+                storeTimes.Add(Stopwatch.GetElapsedTime(start).TotalMicroseconds);
+
+                if (++rowsInTransaction == commitEvery)
+                {
+                    start = Stopwatch.GetTimestamp();
+                    client.Transaction.Commit();
+                    commitTimes.Add(Stopwatch.GetElapsedTime(start).TotalMicroseconds);
+
+                    rowsInTransaction = 0;
+                    if (i < rows - 1)
+                    {
+                        client.Transaction.Begin();
+                    }
+                }
+            }
+
+            if (rowsInTransaction > 0)
+            {
+                long start = Stopwatch.GetTimestamp();
+                client.Transaction.Commit();
+                commitTimes.Add(Stopwatch.GetElapsedTime(start).TotalMicroseconds);
+            }
+            total.Stop();
+
+            return new ScenarioResult($"Document.Store per row, explicit transaction (commit every {commitEvery:N0})",
+                rows, total.Elapsed, storeTimes, commitTimes, "STORE");
+        }
+
+        /// <summary>
+        /// Document.StoreMany() in batches of [batchSize], one round trip and one (implicit) transaction per batch.
+        /// </summary>
+        static ScenarioResult RunDocumentStoreMany(KbClient client, string schema, int rows, int batchSize)
+        {
+            var batchTimes = new List<double>(rows / batchSize + 1);
+            var batch = new List<object>(batchSize);
+
+            var total = Stopwatch.StartNew();
+            for (int i = 0; i < rows; i++)
+            {
+                batch.Add(MakeDocument(i));
+
+                if (batch.Count == batchSize || i == rows - 1)
+                {
+                    long start = Stopwatch.GetTimestamp();
+                    client.Document.StoreMany(schema, batch);
+                    batchTimes.Add(Stopwatch.GetElapsedTime(start).TotalMicroseconds);
+                    batch.Clear();
+                }
+            }
+            total.Stop();
+
+            return new ScenarioResult($"Document.StoreMany, batches of {batchSize:N0}", rows, total.Elapsed, batchTimes, [], "BATCH");
+        }
+
+        static object MakeDocument(int i)
+            => new { Code = $"C{i}", Category = $"cat{i % 100}", Sub = $"sub{i % 10}", Amount = i % 1000, Payload = $"payload {i} lorem ipsum dolor sit amet" };
+
         static string MakeInsert(string schema, int i)
             => $"INSERT INTO {schema}(Code, Category, Sub, Amount, Payload) VALUES('C{i}', 'cat{i % 100}', 'sub{i % 10}', {i % 1000}, 'payload {i} lorem ipsum dolor sit amet')";
 
@@ -249,7 +338,8 @@ namespace InsertBenchmark
             client.Schema.DropIfExists(RootSchema);
             client.Schema.Create(RootSchema);
 
-            foreach (var schema in new[] { "WarmupNoTransaction", "WarmupTransaction", "NoTransaction", "Transaction" })
+            foreach (var schema in new[] { "WarmupNoTransaction", "WarmupTransaction", "WarmupDocumentStore", "WarmupDocumentStoreMany",
+                "NoTransaction", "Transaction", "DocumentStore", "DocumentStoreMany" })
             {
                 var fullName = $"{RootSchema}:{schema}";
                 client.Schema.Create(fullName);
@@ -284,6 +374,7 @@ namespace InsertBenchmark
                 {
                     case "--rows": options.Rows = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                     case "--commit-every": options.CommitEvery = int.Parse(Value(), CultureInfo.InvariantCulture); break;
+                    case "--batch-size": options.BatchSize = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                     case "--warmup": options.Warmup = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                     case "--no-indexes": options.CreateIndexes = false; break;
                     case "--server": options.Server = Value(); break;
@@ -298,7 +389,7 @@ namespace InsertBenchmark
                     case "-h":
                     case "/?":
                         throw new ArgumentException(
-                            "Usage: InsertBenchmark [--rows 10000] [--commit-every 1000] [--warmup 200] [--no-indexes]\n" +
+                            "Usage: InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes]\n" +
                             "                       [--server host:port] [--user admin] [--password \"\"]\n" +
                             "                       [--data-path path] [--port 6869] [--keep-data] [--results file.tsv] [--label text]");
                     default:
@@ -308,6 +399,7 @@ namespace InsertBenchmark
 
             if (options.Rows <= 0) throw new ArgumentException("--rows must be greater than zero.");
             if (options.CommitEvery <= 0) throw new ArgumentException("--commit-every must be greater than zero.");
+            if (options.BatchSize <= 0) throw new ArgumentException("--batch-size must be greater than zero.");
 
             return options;
         }
@@ -321,7 +413,8 @@ namespace InsertBenchmark
             Console.WriteLine("Katzebase insert benchmark");
             Console.WriteLine($"  Server       : {(options.Server == null ? $"embedded ({options.DataPath})" : $"{host}:{port}")}");
             Console.WriteLine($"  Rows         : {options.Rows:N0} per scenario");
-            Console.WriteLine($"  Commit every : {options.CommitEvery:N0} rows (explicit transaction scenario)");
+            Console.WriteLine($"  Commit every : {options.CommitEvery:N0} rows (explicit transaction scenarios)");
+            Console.WriteLine($"  Batch size   : {options.BatchSize:N0} documents (StoreMany scenario)");
             Console.WriteLine($"  Indexes      : {(options.CreateIndexes ? "ix_Category, ix_Category_Sub, uk_Code (unique)" : "none")}");
             Console.WriteLine($"  Build        : {(Debugger.IsAttached ? "debugger attached, " : "")}{GetBuildConfiguration()}");
             Console.WriteLine();
@@ -334,7 +427,7 @@ namespace InsertBenchmark
                 Console.WriteLine(result.Name);
                 Console.WriteLine($"  Total        : {result.Elapsed.TotalMilliseconds,12:N0} ms");
                 Console.WriteLine($"  Throughput   : {result.RowsPerSecond,12:N0} rows/s");
-                Console.WriteLine($"  INSERT (us)  : avg {result.InsertMicroseconds.Average(),8:N0}   p50 {Percentile(result.InsertMicroseconds, 50),8:N0}"
+                Console.WriteLine($"  {result.CallName,-6} (us)  : avg {result.InsertMicroseconds.Average(),8:N0}   p50 {Percentile(result.InsertMicroseconds, 50),8:N0}"
                     + $"   p95 {Percentile(result.InsertMicroseconds, 95),8:N0}   p99 {Percentile(result.InsertMicroseconds, 99),8:N0}   max {result.InsertMicroseconds.Max(),8:N0}");
                 if (result.CommitMicroseconds.Count > 0)
                 {

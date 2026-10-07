@@ -45,6 +45,11 @@ This release targets insert and select throughput. Single statements are now up 
 - `UPDATE` skips index maintenance for any index whose values did not change.
 - `EXPLAIN` output lists every index used for a condition group and notes when the indexes are intersected.
 
+### Bulk inserts
+
+- **New `client.Document.StoreMany(schema, documents)` API.** It sends a batch of documents to the server in one round trip and stores them in a single atomic transaction. It returns the new document ids in the order they were given. With batches of 1,000 documents, inserts run at about 14,000 rows/s with three indexes and about 28,000 rows/s with none. That compares to about 4,100 rows/s with one `Document.Store` call per row.
+- **`NTDLS.Katzebase.SQLServerMigration` now imports data with `StoreMany`**, in batches of up to 1,000 rows or 4 MB.
+
 ### Client/server protocol and logging
 
 - **Compression has been removed from the client/server connection.** Deflate compression of every message cost more time than it saved. Single-row inserts through the client are 10–20% faster without it (2,167 → 2,657 rows/s inside an explicit transaction).
@@ -61,6 +66,7 @@ This release targets insert and select throughput. Single statements are now up 
 - **Concurrent `UPDATE`s on the same schema deadlocked.** `UPDATE` took a schema read lock and then document write locks. Each transaction's read lock blocked the others' write locks, which is a lock-upgrade deadlock. In testing, more than half of concurrent updates were terminated as deadlock victims.
 - `UPDATE`s that named a column with different casing than the index definition (e.g. `SET sub = …` on an index over `Sub`) skipped index maintenance.
 - When deferred IO was enabled, reading a list of objects (such as the index catalog) skipped items not modified by the current transaction.
+- **SQL Server migration could silently lose rows.** Any error other than a deadlock was swallowed and the row was skipped. A deadlock rolled back the whole open transaction (up to 10,000 rows), but only the current row was retried. Now each batch is atomic, so a deadlocked batch is retried in full (up to 10 times with backoff). Any other error stops the import of that table, and the error message is shown in the grid.
 - `IndexSelection.Clone()` copied covered conditions into itself instead of the clone.
 - Debug builds failed to compile due to unqualified types in `SystemShowAggregateFunctions`, `SystemShowScalarFunctions` and `SystemShowSystemFunctions`.
 
@@ -85,4 +91,4 @@ This release targets insert and select throughput. Single statements are now up 
 ### Testing
 
 - Added `TestIndexConsistency`. It covers rolled-back inserts, updates and deletes; failed inserts; updates that move index entries; queries using multiple indexes; and concurrent updates.
-- Added the `InsertBenchmark` test application. It measures single-row inserts through the client API, both without an explicit transaction and inside an explicit transaction committed every N rows. By default it hosts its own server in-process; `--server host:port` targets an existing server instead. Run it with `--help` for all options.
+- Added the `InsertBenchmark` test application. It measures inserts through the client API in four ways: single-row SQL `INSERT`s without an explicit transaction, the same inside an explicit transaction committed every N rows, `Document.Store` per row, and `Document.StoreMany` in batches. By default it hosts its own server in-process; `--server host:port` targets an existing server instead. Run it with `--help` for all options.

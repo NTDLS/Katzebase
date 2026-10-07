@@ -149,5 +149,47 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 throw;
             }
         }
+
+        /// <summary>
+        /// Stores a batch of documents in one round trip. All documents are inserted in a single transaction
+        /// (or within the session's explicit transaction, if one is open), so the batch is atomic.
+        /// </summary>
+        public KbQueryDocumentStoreManyReply DocumentStoreMany(RmContext context, KbQueryDocumentStoreMany param)
+        {
+            var session = _core.Sessions.GetSession(context.ConnectionId);
+
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+            LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceSchemaPolicy(transactionReference.Transaction, param.Schema, SecurityPolicyPermission.Write);
+
+                #endregion
+
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
+
+                var apiResults = new KbQueryDocumentStoreManyReply();
+                apiResults.DocumentIds.Capacity = param.Documents.Count;
+
+                foreach (var document in param.Documents)
+                {
+                    apiResults.DocumentIds.Add(_core.Documents.InsertDocument(
+                        transactionReference.Transaction, physicalSchema, document.Content));
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, apiResults.DocumentIds.Count);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
     }
 }
