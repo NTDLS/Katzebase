@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
+using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Text;
@@ -717,6 +718,13 @@ namespace NTDLS.Katzebase.Management
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(ExecuteType.Execute);
                 }
+                else if (e.ClickedItem?.Text?.Is("Create Index") == true && schema != null)
+                {
+                    var tabFilePage = CreateNewTabBasedOn(node);
+                    tabFilePage.Editor.Text = ScriptCreateIndex(node, schema);
+                    tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                    tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                }
                 else if (e.ClickedItem?.Text?.Is("Drop Schema") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
@@ -1018,6 +1026,10 @@ namespace NTDLS.Katzebase.Management
             if (clickedItem.Text?.Is("Close") == true)
             {
                 CloseTab(clickedTab);
+            }
+            else if (clickedItem.Text?.Is("Find in Server Explorer") == true)
+            {
+                FindInServerExplorer(clickedTab);
             }
             else if (clickedItem.Text?.Is("Open Containing Folder") == true)
             {
@@ -1363,6 +1375,103 @@ namespace NTDLS.Katzebase.Management
 
         #endregion
 
+        /// <summary>
+        /// Builds a CREATE INDEX script for the given schema. The schema's known fields (from the explorer's schema cache)
+        /// are listed in a comment, and the first one is used as the index attribute, so the script only needs editing.
+        /// </summary>
+        private static string ScriptCreateIndex(ServerExplorerNode node, KbSchema schema)
+        {
+            var fields = new List<string>();
+
+            var serverNode = ServerExplorerManager.GetServerNodeFor(node);
+            if (serverNode?.ExplorerConnection != null
+                && serverNode.ExplorerConnection.LazySchemaCache.GetSnapshot().TryGet(schema.Id, out var cachedSchema))
+            {
+                fields.AddRange(cachedSchema.Fields.OrderBy(o => o, StringComparer.InvariantCultureIgnoreCase));
+            }
+
+            var firstField = fields.FirstOrDefault() ?? "FieldName";
+
+            var text = new StringBuilder();
+            if (fields.Count > 0)
+            {
+                text.AppendLine($"--Fields: {string.Join(", ", fields)}");
+            }
+            text.AppendLine("--Use CREATE UNIQUEKEY instead of CREATE INDEX to enforce unique values.");
+            text.AppendLine($"CREATE INDEX IX_{schema.Name}_{firstField}");
+            text.AppendLine("(");
+            text.AppendLine($"    {firstField}");
+            text.Append($") ON {schema.Path}");
+            return text.ToString();
+        }
+
+        /// <summary>
+        /// Selects, in the server explorer, the schema that the tab's script refers to: the schema of the statement under
+        /// the cursor, or failing that, the first schema in the script. Selects the tab's server when no schema is found.
+        /// </summary>
+        private void FindInServerExplorer(CodeEditorTabPage tabFilePage)
+        {
+            var explorerConnection = tabFilePage.ExplorerConnection;
+            if (explorerConnection == null || explorerConnection.ServerNode.TreeView == null)
+            {
+                MessageBox.Show("This tab is not associated with a server in the server explorer.",
+                    KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            TreeNode targetNode = explorerConnection.ServerNode;
+
+            var schemaName = GetSchemaNameAtCaret(tabFilePage);
+            if (schemaName != null)
+            {
+                if (explorerConnection.LazySchemaCache.GetSnapshot().TryGet(schemaName, out var cachedSchema)
+                    && explorerConnection.FindNodeBySchemaId(cachedSchema.Schema.Id) is ServerExplorerNode schemaNode)
+                {
+                    targetNode = schemaNode;
+                }
+                else
+                {
+                    MessageBox.Show($"Schema [{schemaName}] was not found in the server explorer.",
+                        KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+
+            //Make sure the server explorer is visible.
+            splitContainerObjectExplorer.Panel1Collapsed = false;
+
+            treeViewServerExplorer.SelectedNode = targetNode;
+            targetNode.EnsureVisible();
+            treeViewServerExplorer.Focus();
+        }
+
+        /// <summary>
+        /// Returns the schema referenced by the statement under the cursor (or the first schema referenced by the script),
+        /// or null if the script does not reference any schema or cannot be parsed.
+        /// </summary>
+        private static string? GetSchemaNameAtCaret(CodeEditorTabPage tabFilePage)
+        {
+            try
+            {
+                var batch = Parsers.StaticBatchParser.Parse(KbTextUtility.RemoveNonCode(tabFilePage.Editor.Text),
+                    MockEngineCore.Instance.GlobalTokenizerConstants);
+
+                var caretLine = tabFilePage.Editor.TextArea.Caret.Line;
+
+                //Statements are in script order: the statement under the cursor is the last one starting at or before it.
+                var queryAtCaret = batch.LastOrDefault(o => o.ScriptLine != null && o.ScriptLine <= caretLine);
+
+                var schemaNames = (queryAtCaret != null ? [queryAtCaret] : Enumerable.Empty<Parsers.PreparedQuery>())
+                    .Concat(batch)
+                    .SelectMany(o => o.Schemas.Select(s => s.Name));
+
+                return schemaNames.FirstOrDefault(o => string.IsNullOrWhiteSpace(o) == false && o.StartsWith('#') == false);
+            }
+            catch
+            {
+                return null; //The script doesn't parse, there's nothing to go on.
+            }
+        }
+
         private void ReloadRecentFileList()
         {
             recentFilesToolStripMenuItem.DropDownItems.Clear();
@@ -1381,12 +1490,12 @@ namespace NTDLS.Katzebase.Management
                             }
                             else
                             {
+                                MessageBox.Show($"The file no longer exists and has been removed from the recent files list:\r\n{fileName}",
+                                    KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                                 Preferences.Instance.RemoveRecentFile(fileName);
+                                ReloadRecentFileList();
                             }
-                        }
-                        else
-                        {
-                            Preferences.Instance.RemoveRecentFile(recentFilesToolStripMenuItem.Text.EnsureNotNull());
                         }
                     }
                 };

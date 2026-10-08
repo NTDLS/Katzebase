@@ -84,6 +84,12 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
   - `DETACH` unregisters the schema before moving its files, and puts them back if the move fails.
 - Folder paths cannot end with a backslash (`'D:\Exports\'`), because a trailing backslash escapes the closing quote.
 
+### Management UI
+
+- **Create Index** (right-click a schema or its *Indexes* folder) now opens a ready-to-edit `CREATE INDEX` script for the schema, listing the schema's known fields.
+- **Find in Server Explorer** (right-click an editor tab) now selects, in the server explorer, the schema referenced by the statement under the cursor, or the tab's server if the script doesn't reference one.
+- Opening a recent file that no longer exists now says so, and removes it from the *Recent Files* menu immediately.
+
 ### Bug fixes
 
 - **Creating or rebuilding an index leaked a RocksDB column family handle.** Dropping a column family (which `CREATE INDEX`, `REBUILD INDEX`, `DROP INDEX` and transaction rollback all do) never destroyed its handle. That kept part of the schema's database open after it was closed, so the schema's folder could not be moved or renamed until the server restarted.
