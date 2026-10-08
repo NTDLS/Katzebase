@@ -359,6 +359,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
                         var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, query, schema.Alias);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
+
+                        var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, physicalSchema, LockOperation.Read);
+                        var suggestions = IndexAdvisor.Suggest(physicalSchema.VirtualPath, schema.Alias, schema.Conditions, indexCatalog);
+                        if (suggestions != null)
+                        {
+                            transactionReference.Transaction.AddMessage(suggestions, KbMessageType.Explain);
+                        }
                     }
                 }
 
