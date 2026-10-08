@@ -364,7 +364,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var collapsedRight = entry.Right.CollapseScalarQueryField(transaction,
                                 query, givenConditions.FieldCollection, rightDocumentContent)?.ToLowerInvariant();
 
-                            matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
+                            string? collapsedRightHigh = null;
+                            if (entry.RightHigh != null)
+                            {
+                                var rightHighDocumentContent = schemaIntersectionRow.SchemaElements[entry.RightHigh.SchemaAlias];
+                                collapsedRightHigh = entry.RightHigh.CollapseScalarQueryField(transaction,
+                                    query, givenConditions.FieldCollection, rightHighDocumentContent)?.ToLowerInvariant();
+                            }
+
+                            matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight, collapsedRightHigh));
                         }
                         else
                         {
@@ -412,8 +420,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var collapsedLeft = entry.Left.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
                         var collapsedRight = entry.Right.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
+                        var collapsedRightHigh = entry.RightHigh?.CollapseScalarQueryField(transaction, query, givenConditions.FieldCollection, documentElements)?.ToLowerInvariant();
 
-                        matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight));
+                        matchExpression.SetParameter(entry.ExpressionVariable, entry.IsMatch(collapsedLeft, collapsedRight, collapsedRightHigh));
                     }
                     else
                     {

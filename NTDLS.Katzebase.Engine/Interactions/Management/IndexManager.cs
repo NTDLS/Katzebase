@@ -336,13 +336,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                 //Resolve the right-hand value of every condition once up front, rather than once per scanned index key.
-                var attributeConditions = new List<(ConditionEntry Condition, string? Value)>?[attributes.Count];
+                var attributeConditions = new List<(ConditionEntry Condition, string? Value, string? HighValue)>?[attributes.Count];
                 for (int depth = 0; depth < attributes.Count; depth++)
                 {
                     if (indexLookup.AttributeConditionSets.TryGetValue(attributes[depth].Field.EnsureNotNull(), out var conditions))
                     {
                         attributeConditions[depth] = conditions
-                            .Select(condition => (condition, ResolveConditionValue(transaction, query, condition, keyValues))).ToList();
+                            .Select(condition => (condition, ResolveConditionValue(transaction, query, condition.Right, keyValues),
+                                condition.RightHigh == null ? null : ResolveConditionValue(transaction, query, condition.RightHigh, keyValues))).ToList();
                     }
                 }
 
@@ -435,9 +436,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
 
                         string? fieldValue = depth < fieldValues.Length ? fieldValues[depth] : null;
-                        foreach (var (condition, value) in conditions)
+                        foreach (var (condition, value, highValue) in conditions)
                         {
-                            if (!ConditionEntry.IsMatch(fieldValue, condition.Qualifier, value))
+                            if (!ConditionEntry.IsMatch(fieldValue, condition.Qualifier, value, highValue))
                             {
                                 return false;
                             }
@@ -454,19 +455,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Resolves the right-hand value of a condition, checking join key values first,
-        /// then collapsed literals, then falling back to full scalar field collapse.
+        /// Resolves a right-hand value of a condition (the value, or the high value of a BETWEEN), checking join key
+        /// values first, then collapsed literals, then falling back to full scalar field collapse.
         /// </summary>
         private static string? ResolveConditionValue(Transaction transaction, PreparedQuery query,
-            ConditionEntry condition, KbInsensitiveDictionary<string?>? keyValues)
+            IQueryField field, KbInsensitiveDictionary<string?>? keyValues)
         {
-            if (keyValues?.TryGetValue(condition.Right.Value.EnsureNotNull(), out string? keyValue) == true)
+            if (keyValues?.TryGetValue(field.Value.EnsureNotNull(), out string? keyValue) == true)
                 return keyValue;
 
-            if (condition.Right is QueryFieldCollapsedValue collapsedValue)
+            if (field is QueryFieldCollapsedValue collapsedValue)
                 return collapsedValue.Value;
 
-            return condition.Right.CollapseScalarQueryField(transaction, query,
+            return field.CollapseScalarQueryField(transaction, query,
                 query.Conditions.FieldCollection, keyValues ?? new())?.ToLowerInvariant();
         }
 

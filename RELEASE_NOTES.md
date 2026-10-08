@@ -123,6 +123,11 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
   - `IsInteger()` returned the opposite result (0 for `'15'`, 1 for `'1.5'`). It now also accepts integers larger than 32 bits.
   - `CountDistinct(values, caseSensitive)` had its flag reversed. It now ignores case by default and compares case-sensitively when the flag is true.
   - `IsEmpty()`, `IsNumeric()`, `NullWhen()` and `NullWhenNumeric()` were listed by `ShowScalarFunctions` but failed with "not implemented". They now work, and `IsEmpty()` and `IsNumeric()` return `1`/`0` like the other boolean functions.
+- **`BETWEEN low AND high` and `NOT BETWEEN` now work.** The parser treated the `AND` inside `BETWEEN` as a connector between two conditions, and `NOT` was always read as `NOT LIKE`, so both forms failed with a parser error. Only an undocumented `BETWEEN 'low:high'` string form worked; that form has been removed.
+  - The low and high values can be numbers, fields, variables or expressions, and are compared as numbers (culture-invariantly). A missing (null) value matches neither `BETWEEN` nor `NOT BETWEEN`.
+  - `BETWEEN` works in join `ON` conditions (`ON n.Id BETWEEN r.Low AND r.High`) and uses an index on the field when one is available.
+  - `IsBetween()` and `IsNotBetween()` no longer truncate decimal values to integers.
+- A condition with a parenthesized value after a keyword, such as `Id BETWEEN (1 + 1) AND 4`, failed with "Function is undefined: [Id]".
 - `EXEC` with a name that isn't a system procedure failed with "Reimplement user procedures". It now throws `KbObjectNotFoundException` ("Procedure not found"), as does `Procedure.Execute` in the client API.
 - **Removed the `DocumentID()` scalar function.** It was left over from the page-based storage engine and always returned null. Document ids are returned by the client API.
 - Debug builds failed to compile due to unqualified types in `SystemShowAggregateFunctions`, `SystemShowScalarFunctions` and `SystemShowSystemFunctions`.

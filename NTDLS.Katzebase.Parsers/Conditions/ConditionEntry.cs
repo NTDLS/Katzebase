@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Parsers.Fields;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Parsers.Constants;
 
@@ -13,9 +14,14 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         /// <summary>
         /// Used when parsing a condition, contains the left and right value along with the comparison operator.
         /// </summary>
-        public class ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public class ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right, IQueryField? rightHigh = null)
         {
             public IQueryField Right { get; set; } = right;
+
+            /// <summary>
+            /// For BETWEEN and NOT BETWEEN, Right is the low value of the range and this is the high value.
+            /// </summary>
+            public IQueryField? RightHigh { get; set; } = rightHigh;
             public LogicalQualifier Qualifier { get; set; } = qualifier;
             public IQueryField Left { get; set; } = left;
 
@@ -33,6 +39,11 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         public IQueryField Right { get; set; }
 
         /// <summary>
+        /// For BETWEEN and NOT BETWEEN, Right is the low value of the range and this is the high value.
+        /// </summary>
+        public IQueryField? RightHigh { get; set; }
+
+        /// <summary>
         /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
         /// </summary>
         public bool IsIndexOptimized { get; set; } = false;
@@ -43,24 +54,26 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             Left = pair.Left;
             Qualifier = pair.Qualifier;
             Right = pair.Right;
+            RightHigh = pair.RightHigh;
         }
 
-        public ConditionEntry(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public ConditionEntry(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right, IQueryField? rightHigh = null)
         {
             ExpressionVariable = expressionVariable;
             Left = left;
             Qualifier = qualifier;
             Right = right;
+            RightHigh = rightHigh;
         }
 
         public ICondition Clone()
         {
-            return new ConditionEntry(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
+            return new ConditionEntry(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone(), RightHigh?.Clone());
         }
 
-        public bool IsMatch(string? collapsedLeft, string? collapsedRight)
+        public bool IsMatch(string? collapsedLeft, string? collapsedRight, string? collapsedRightHigh = null)
         {
-            return IsMatch(collapsedLeft, Qualifier, collapsedRight);
+            return IsMatch(collapsedLeft, Qualifier, collapsedRight, collapsedRightHigh);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,32 +183,26 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             return input.IsLike(pattern);
         }
 
+        /// <summary>
+        /// Returns whether the value is within the range, including the low and high values. Returns null when any of
+        ///     the values is null, so that a missing value matches neither BETWEEN nor NOT BETWEEN.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(double? value, double? rangeLow, double? rangeHigh)
+        public static bool? IsMatchBetween(string? input, string? rangeLow, string? rangeHigh)
         {
-            if (value == null || rangeLow == null || rangeHigh == null)
-            {
-            }
-
-            return value >= rangeLow && value <= rangeHigh;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(string? input, string? pattern)
-        {
-            if (input == null || pattern == null)
+            if (input == null || rangeLow == null || rangeHigh == null)
             {
                 return null;
             }
 
-            var range = pattern.Split(':');
-
-            if (!double.TryParse(input, out var value) || !double.TryParse(range[0], out var rangeLeft) || !double.TryParse(range[1], out var rangeRight))
+            if (!double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+                || !double.TryParse(rangeLow, NumberStyles.Float, CultureInfo.InvariantCulture, out var low)
+                || !double.TryParse(rangeHigh, NumberStyles.Float, CultureInfo.InvariantCulture, out var high))
             {
-                throw new KbProcessingException($"IsMatchBetween expected numeric value, found: [{input} between {range[0]}<{range[1]}].");
+                throw new KbProcessingException($"Between expected numeric values, found: [{input} between {rangeLow} and {rangeHigh}].");
             }
 
-            return value >= rangeLeft && value <= rangeRight;
+            return value >= low && value <= high;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,7 +212,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString)
+        public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString, string? rightHighString = null)
         {
             if (logicalQualifier == LogicalQualifier.Equals)
             {
@@ -241,11 +248,11 @@ namespace NTDLS.Katzebase.Parsers.Conditions
             }
             else if (logicalQualifier == LogicalQualifier.Between)
             {
-                return IsMatchBetween(leftString, rightString) == true;
+                return IsMatchBetween(leftString, rightString, rightHighString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.NotBetween)
             {
-                return IsMatchBetween(leftString, rightString) == false;
+                return IsMatchBetween(leftString, rightString, rightHighString) == false;
             }
             else
             {

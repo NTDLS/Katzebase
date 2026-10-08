@@ -122,7 +122,8 @@ namespace NTDLS.Katzebase.Engine.Indexes
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
                                 flattenedGroup.Collection.OfType<ConditionEntry>()
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)
+                                    && (o.RightHigh == null || StaticParserField.IsConstantExpression(o.RightHigh.Value))));
                         }
                         else
                         {
@@ -176,6 +177,13 @@ namespace NTDLS.Katzebase.Engine.Indexes
                         var constantValue = condition.Right.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
                         //TODO: Think about the nullability of constantValue.
                         condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue);
+                    }
+
+                    if (condition.Left is QueryFieldDocumentIdentifier && condition.RightHigh != null && StaticParserField.IsConstantExpression(condition.RightHigh.Value))
+                    {
+                        //The high value of a BETWEEN, collapsed for the same reason.
+                        var constantValue = condition.RightHigh.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                        condition.RightHigh = new QueryFieldCollapsedValue(condition.RightHigh.ScriptLine, constantValue);
                     }
 
                     //This Works to collapse the value, but we only index on right hand values... so its commented out.
@@ -237,6 +245,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                                 .Where(o =>
                                        o.Left is QueryFieldDocumentIdentifier identifier
                                     && (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
+                                    && (o.RightHigh == null || o.RightHigh is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
                                     && identifier.SchemaAlias.Is(workingSchemaPrefix)
                                     && o.IsIndexOptimized == false
                                     && identifier.FieldName.Is(attribute.Field) == true).ToList();
