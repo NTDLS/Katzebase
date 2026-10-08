@@ -57,8 +57,8 @@ We even included a tool to import your schema, data and indexes from SQL Server 
 
 ![image](https://github.com/user-attachments/assets/88f99e45-adc1-40e2-a6b2-2cd1776f8716)
 
-## Linux
-Katzebase runs on x64 and arm64 versions of Linux.
+## Supported Operating Systems
+Katzebase runs on Windows and and Linux (x64, arm64).
 
 ## Technologies
 ---
