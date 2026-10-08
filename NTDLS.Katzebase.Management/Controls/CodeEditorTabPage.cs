@@ -623,7 +623,16 @@ namespace NTDLS.Katzebase.Management.Controls
                 }
                 else if (executeType == ExecuteType.Execute)
                 {
-                    var results = client.Query.Fetch(script, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
+                    KbQueryResultCollection results;
+                    try
+                    {
+                        results = client.Query.Fetch(script, Program.Settings.UserQueryTimeOut >= 0 ? TimeSpan.FromSeconds(Program.Settings.UserQueryTimeOut) : Timeout.InfiniteTimeSpan);
+                    }
+                    finally
+                    {
+                        //Even if the script failed, earlier statements in it may have changed schemas.
+                        NotifySchemaCacheOfExecution(client, script);
+                    }
 
                     int batchNumber = 1;
                     foreach (var result in results.Collection)
@@ -646,6 +655,30 @@ namespace NTDLS.Katzebase.Management.Controls
             catch (Exception ex)
             {
                 Group_OnException(group, new KbExceptionBase((ex.GetRoot() ?? ex).Message));
+            }
+        }
+
+        /// <summary>
+        /// Lets the explorer's schema cache reload whatever the executed script may have changed, so the server explorer
+        /// and static analysis reflect it immediately rather than on the next periodic refresh.
+        /// </summary>
+        private void NotifySchemaCacheOfExecution(KbClient client, string script)
+        {
+            var explorerConnection = ExplorerConnection;
+            if (explorerConnection == null
+                || client.Port != explorerConnection.ServerPort
+                || client.Address.Equals(explorerConnection.ServerAddress, StringComparison.InvariantCultureIgnoreCase) == false)
+            {
+                return; //This tab is connected to a different server than the explorer connection it was opened from.
+            }
+
+            try
+            {
+                explorerConnection.LazySchemaCache.NotifyScriptExecuted(script);
+            }
+            catch
+            {
+                //Never let cache maintenance interfere with script execution.
             }
         }
 

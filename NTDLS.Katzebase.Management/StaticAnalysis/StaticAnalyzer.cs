@@ -9,33 +9,36 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
     internal class StaticAnalyzer
     {
         public static List<Action> ClientSideAnalysis(TextDocument textDocument, TextMarkerService textMarkerService,
-            List<CachedSchema>? schemaCache, PreparedQueryBatch batch, PreparedQuery query)
+            SchemaCacheSnapshot? schemaCache, PreparedQueryBatch batch, PreparedQuery query)
         {
             var actions = new List<Action>();
 
-            if (schemaCache?.Any() != true)
+            if (schemaCache == null)
             {
                 return actions;
             }
 
             foreach (var querySchema in query.Schemas)
             {
-                var serverMatchedSchema = schemaCache.FirstOrDefault(o => o.Schema.Path.Is(querySchema.Name));
-
-                if (query.QueryType == Parsers.Constants.QueryType.Create && query.SubQueryType == Parsers.Constants.SubQueryType.Schema)
+                if (string.IsNullOrWhiteSpace(querySchema.Name) || querySchema.Name.StartsWith('#'))
                 {
-                    if (serverMatchedSchema != null)
+                    continue; //Temporary schemas only exist within the session that creates them.
+                }
+
+                //Null when the relevant part of the schema tree hasn't been loaded yet: in that case nothing is reported,
+                //  rather than flagging schemas that simply haven't been discovered yet.
+                var exists = schemaCache.Exists(querySchema.Name);
+
+                //Statements that create the schema require that it does not exist yet.
+                if ((query.QueryType == Parsers.Constants.QueryType.Create || query.QueryType == Parsers.Constants.QueryType.Attach)
+                    && query.SubQueryType == Parsers.Constants.SubQueryType.Schema)
+                {
+                    if (exists == true)
                     {
                         actions.Add(AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]"));
                     }
                 }
-                //else if (serverMatchedSchema != null
-                //    && query.QueryType == Parsers.Constants.QueryType.Create
-                //    && query.SubQueryType == Parsers.Constants.SubQueryType.Schema)
-                //{
-                //    AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema already exists: [{querySchema.Name}]");
-                //}
-                else if (serverMatchedSchema == null)
+                else if (exists == false)
                 {
                     actions.Add(AddSyntaxError(textDocument, textMarkerService, querySchema.ScriptLine, $"Schema does not exist: [{querySchema.Name}]"));
                 }

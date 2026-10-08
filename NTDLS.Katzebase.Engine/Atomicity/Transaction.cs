@@ -111,6 +111,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public ConcurrentDictionary<string, Rdb> ModifiedIndexCatalogs { get; private set; } = new(StringComparer.InvariantCultureIgnoreCase);
 
+        /// <summary>
+        /// Actions that undo changes which the transaction log cannot (such as files moved by ATTACH/DETACH SCHEMA).
+        /// Executed newest first if the transaction is rolled back, after the logged changes have been undone.
+        /// </summary>
+        private readonly ConcurrentStack<Action> _rollbackActions = new();
+
+        internal void AddRollbackAction(Action action)
+            => _rollbackActions.Push(action);
+
         #endregion
 
         private readonly ConcurrentDictionary<string, WriteBatch> _rdbBatches =
@@ -833,6 +842,19 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 _core.Cache.Remove(file.CacheKey);
                             }
                         });
+
+                        //Undo non-transactional changes (newest first), e.g. files moved by ATTACH/DETACH SCHEMA.
+                        while (_rollbackActions.TryPop(out var rollbackAction))
+                        {
+                            try
+                            {
+                                rollbackAction();
+                            }
+                            catch (Exception ex)
+                            {
+                                LogManager.Error($"Failed to execute a rollback action for process {ProcessId}.", ex);
+                            }
+                        }
 
                         try
                         {

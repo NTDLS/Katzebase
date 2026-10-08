@@ -53,17 +53,24 @@ namespace NTDLS.Katzebase.Engine.IO
             DropColumnFamily(name.ToString());
         }
 
+        /// <summary>
+        /// Drops a column family and destroys its handle.
+        ///
+        /// RocksDbSharp's DropColumnFamily() drops the column family and forgets its handle without destroying it. A leaked
+        /// handle keeps part of the database alive after it is closed, which (among other things) holds a handle on the
+        /// database's folder, so the folder cannot be renamed until the process exits.
+        /// </summary>
         public void DropColumnFamily(string name)
         {
             ColumnFamilies.TryRemove(name, out _);
+
+            var handle = Instance.GetColumnFamily(name);
             Instance.DropColumnFamily(name);
+            Native.Instance.rocksdb_column_family_handle_destroy(handle.Handle);
         }
 
         public void DropColumnFamily(RdbKey key)
-        {
-            ColumnFamilies.TryRemove(key.ToString(), out _);
-            Instance.DropColumnFamily(key.ToString());
-        }
+            => DropColumnFamily(key.ToString());
 
         #region CreateColumnFamily
 

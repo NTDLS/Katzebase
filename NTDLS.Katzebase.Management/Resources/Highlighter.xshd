@@ -180,6 +180,7 @@
       <Word>add</Word>
       <Word>alter</Word>
       <Word>analyze</Word>
+      <Word>attach</Word>
       <Word>and</Word>
       <Word>as</Word>
       <Word>asc</Word>
@@ -195,6 +196,7 @@
       <Word>delete</Word>
       <Word>to</Word>
       <Word>deny</Word>
+      <Word>detach</Word>
       <Word>desc</Word>
       <Word>documents</Word>
       <Word>drop</Word>

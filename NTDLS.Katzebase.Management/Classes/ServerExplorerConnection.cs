@@ -25,6 +25,11 @@ namespace NTDLS.Katzebase.Management.Classes
 
         public ServerExplorerNode ServerNode { get; private set; }
 
+        /// <summary>
+        /// Schema nodes by schema id, so that cache events don't need to search the whole tree. Only accessed on the UI thread.
+        /// </summary>
+        private readonly Dictionary<Guid, ServerExplorerNode> _schemaNodes = new();
+
         public ServerExplorerConnection(FormStudio formStudio, ServerExplorerManager serverExplorerManager, string serverAddress, int serverPort, string username, string passwordHash)
         {
             StudioForm = formStudio;
@@ -44,22 +49,73 @@ namespace NTDLS.Katzebase.Management.Classes
 
             Client.Query.ExecuteNonQuery("SET ReadUncommitted TRUE");
 
-            LazySchemaCache = new LazyBackgroundSchemaCache(this);
-            LazySchemaCache.OnCacheUpdated += (List<CachedSchema> schemaCache) =>
-            {
-                StudioForm?.CurrentTabFilePage()?.Editor.PerformStaticAnalysis();
-            };
-
-            LazySchemaCache.OnCacheItemAdded += SchemaCache_OnCacheItemAdded;
-            LazySchemaCache.OnCacheItemRemoved += SchemaCache_OnCacheItemRemoved;
-            LazySchemaCache.OnCacheItemRefreshed += SchemaCache_OnCacheItemRefreshed;
-
+            //The tree must exist before the cache starts raising events for it.
             ServerNode = ServerExplorerNode.CreateServerNode(this);
             var rootSchemaNode = ServerExplorerNode.CreateSchemaNode(new(EngineConstants.RootSchemaGUID, "Root :", "", "", Guid.Empty));
             ServerNode.Nodes.Add(rootSchemaNode);
+            _schemaNodes[EngineConstants.RootSchemaGUID] = rootSchemaNode;
             ServerExplorerManager.ServerExplorerTree.Nodes.Add(ServerNode);
 
             ServerExplorerManager.ServerExplorerTree.SelectedNode = rootSchemaNode;
+
+            LazySchemaCache = new LazyBackgroundSchemaCache(this);
+            LazySchemaCache.OnCacheUpdated += SchemaCache_OnCacheUpdated;
+            LazySchemaCache.OnCacheItemAdded += SchemaCache_OnCacheItemAdded;
+            LazySchemaCache.OnCacheItemRemoved += SchemaCache_OnCacheItemRemoved;
+            LazySchemaCache.OnCacheItemRefreshed += SchemaCache_OnCacheItemRefreshed;
+        }
+
+        /// <summary>
+        /// Posts an action to the UI thread without blocking the cache's worker thread. Posted actions run in the
+        /// order they were posted, so a schema's node is always added before it is refreshed or removed.
+        /// </summary>
+        private void PostToTree(Action action)
+        {
+            var tree = ServerExplorerManager.ServerExplorerTree;
+            if (tree.IsDisposed || tree.IsHandleCreated == false)
+            {
+                return;
+            }
+
+            try
+            {
+                tree.BeginInvoke(() =>
+                {
+                    if (tree.IsDisposed == false)
+                    {
+                        action();
+                    }
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                //The tree's handle was destroyed (the application is closing).
+            }
+        }
+
+        private void SchemaCache_OnCacheUpdated(SchemaCacheSnapshot snapshot)
+        {
+            //Re-run static analysis on the visible editor if it is connected to this server.
+            if (StudioForm == null || StudioForm.IsDisposed || StudioForm.IsHandleCreated == false)
+            {
+                return;
+            }
+
+            try
+            {
+                StudioForm.BeginInvoke(() =>
+                {
+                    var tabFilePage = StudioForm.CurrentTabFilePage();
+                    if (tabFilePage?.ExplorerConnection == this)
+                    {
+                        tabFilePage.Editor.PerformStaticAnalysis();
+                    }
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                //The form's handle was destroyed (the application is closing).
+            }
         }
 
         /// <summary>
@@ -82,75 +138,62 @@ namespace NTDLS.Katzebase.Management.Classes
 
         private void SchemaCache_OnCacheItemAdded(CachedSchema schemaItem)
         {
-            if (ServerExplorerManager.ServerExplorerTree.IsDisposed)
+            //Children arrive in alphabetical order from the server, so no sort is needed here.
+            PostToTree(() =>
             {
-                return;
-            }
-
-            try
-            {
-                // BeginInvoke (async) so the background discovery loop is not blocked
-                // waiting for each individual tree-node insertion. Children arrive in
-                // alphabetical order from the server so no sort is needed here;
-                // SortChildNodes is called in OnCacheItemRefreshed after details load.
-                ServerExplorerManager.ServerExplorerTree.BeginInvoke(() =>
+                try
                 {
-                    try
+                    ServerExplorerManager.ServerExplorerTree.SuspendLayout();
+
+                    var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
+                    if (parentSchemaNode != null && parentSchemaNode.Schema != null)
                     {
-                        ServerExplorerManager.ServerExplorerTree.SuspendLayout();
-
-                        var parentSchemaNode = FindNodeBySchemaId(schemaItem.Schema.ParentId);
-                        if (parentSchemaNode != null && parentSchemaNode.Schema != null)
+                        var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
+                        if (existingNode != null)
                         {
-                            var existingNode = FindNodeBySchemaId(schemaItem.Schema.Id);
-                            if (existingNode != null)
-                            {
-                                return;
-                            }
+                            return;
+                        }
 
-                            var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
-                            parentSchemaNode.Nodes.Add(newSchemaNode);
+                        var newSchemaNode = ServerExplorerNode.CreateSchemaNode(schemaItem.Schema);
+                        parentSchemaNode.Nodes.Add(newSchemaNode);
+                        _schemaNodes[schemaItem.Schema.Id] = newSchemaNode;
 
-                            //Add field folder and any fields which were supplied.
-                            var schemaFieldsFolderNode = ServerExplorerNode.CreateSchemaFieldsFolderNode();
-                            newSchemaNode.Nodes.Add(schemaFieldsFolderNode);
-                            foreach (var fieldName in schemaItem.Fields.OrderBy(o => o))
-                            {
-                                var schemaFieldNode = ServerExplorerNode.CreateSchemaFieldNode(fieldName);
-                                schemaFieldsFolderNode.Nodes.Add(schemaFieldNode);
-                            }
+                        //Add field folder and any fields which were supplied.
+                        var schemaFieldsFolderNode = ServerExplorerNode.CreateSchemaFieldsFolderNode();
+                        newSchemaNode.Nodes.Add(schemaFieldsFolderNode);
+                        foreach (var fieldName in schemaItem.Fields.OrderBy(o => o))
+                        {
+                            var schemaFieldNode = ServerExplorerNode.CreateSchemaFieldNode(fieldName);
+                            schemaFieldsFolderNode.Nodes.Add(schemaFieldNode);
+                        }
 
-                            //Add index folder and any indexes which were supplied.
-                            var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
-                            newSchemaNode.Nodes.Add(schemaIndexFolderNode);
-                            foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
-                            {
-                                var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
-                                schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
-                            }
+                        //Add index folder and any indexes which were supplied.
+                        var schemaIndexFolderNode = ServerExplorerNode.CreateSchemaIndexFolderNode();
+                        newSchemaNode.Nodes.Add(schemaIndexFolderNode);
+                        foreach (var index in schemaItem.Indexes.OrderBy(o => o.Name))
+                        {
+                            var schemaIndexNode = ServerExplorerNode.CreateSchemaIndexNode(index);
+                            schemaIndexFolderNode.Nodes.Add(schemaIndexNode);
+                        }
 
-                            if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
-                            {
-                                //Expand the root schema node when we add the first node.
-                                parentSchemaNode.Parent?.Expand();
-                                parentSchemaNode.Expand();
-                            }
+                        if (parentSchemaNode.Schema.ParentId == Guid.Empty && parentSchemaNode.Nodes.Count == 1)
+                        {
+                            //Expand the root schema node when we add the first node.
+                            parentSchemaNode.Parent?.Expand();
+                            parentSchemaNode.Expand();
                         }
                     }
-                    finally
-                    {
-                        ServerExplorerManager.ServerExplorerTree.ResumeLayout();
-                    }
-                });
-            }
-            catch
-            {
-            }
+                }
+                finally
+                {
+                    ServerExplorerManager.ServerExplorerTree.ResumeLayout();
+                }
+            });
         }
 
         private void SchemaCache_OnCacheItemRefreshed(CachedSchema schemaItem)
         {
-            ServerExplorerManager.ServerExplorerTree.Invoke(() =>
+            PostToTree(() =>
             {
                 try
                 {
@@ -273,15 +316,45 @@ namespace NTDLS.Katzebase.Management.Classes
 
         private void SchemaCache_OnCacheItemRemoved(CachedSchema schemaItem)
         {
-            ServerExplorerManager.ServerExplorerTree.Invoke(() =>
+            PostToTree(() =>
             {
                 var removedSchemaNode = FindNodeBySchemaId(schemaItem.Schema.Id);
-                removedSchemaNode?.Remove();
+                if (removedSchemaNode != null)
+                {
+                    ForgetSchemaNodes(removedSchemaNode);
+                    removedSchemaNode.Remove();
+                }
             });
+        }
+
+        /// <summary>
+        /// Removes a node and all of its descendant schema nodes from the node lookup.
+        /// </summary>
+        private void ForgetSchemaNodes(ServerExplorerNode node)
+        {
+            if (node.NodeType == ServerNodeType.Schema && node.Schema != null)
+            {
+                _schemaNodes.Remove(node.Schema.Id);
+            }
+            foreach (var childNode in node.Nodes.OfType<ServerExplorerNode>())
+            {
+                ForgetSchemaNodes(childNode);
+            }
         }
 
         public ServerExplorerNode? FindNodeBySchemaId(Guid schemaId)
         {
+            //Fast path: the lookup is maintained as nodes are added and removed. Verify the node is still in the tree in case
+            //  it was removed some other way.
+            if (_schemaNodes.TryGetValue(schemaId, out var knownNode))
+            {
+                if (knownNode.TreeView != null)
+                {
+                    return knownNode;
+                }
+                _schemaNodes.Remove(schemaId);
+            }
+
             foreach (var node in ServerNode.Nodes.OfType<ServerExplorerNode>())
             {
                 var result = FindNodeBySchemaIdRecursive(node, schemaId);

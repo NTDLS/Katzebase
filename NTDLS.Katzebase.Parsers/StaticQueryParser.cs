@@ -40,6 +40,8 @@ namespace NTDLS.Katzebase.Parsers
                 QueryType.Create => StaticParserCreate.Parse(queryBatch, tokenizer),
                 QueryType.Declare => StaticParserDeclare.Parse(queryBatch, tokenizer),
                 QueryType.Drop => StaticParserDrop.Parse(queryBatch, tokenizer),
+                QueryType.Attach => StaticParserAttach.Parse(queryBatch, tokenizer),
+                QueryType.Detach => StaticParserDetach.Parse(queryBatch, tokenizer),
 
                 QueryType.Grant => StaticParserGrant.Parse(queryBatch, tokenizer),
                 QueryType.Deny => StaticParserDeny.Parse(queryBatch, tokenizer),

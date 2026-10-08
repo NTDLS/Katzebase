@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to schemas.
     /// </summary>
-    public class SchemaManager
+    public partial class SchemaManager
     {
         private readonly EngineCore _core;
         private readonly string _rootCatalogFile;

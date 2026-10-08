@@ -61,7 +61,32 @@ This release targets insert and select throughput. Single statements are now up 
 
 ---
 
+### New: ATTACH SCHEMA and DETACH SCHEMA
+
+Namespaces (a schema with all of its documents, indexes, policies and child schemas) can now be moved between databases and servers.
+
+```sql
+-- Remove a namespace from this database and move its files to a folder.
+DETACH SCHEMA Sales:Archive TO 'D:\Exports\SalesArchive'
+
+-- Copy a namespace from a folder into this (or another) database, under any name.
+ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
+```
+
+- **`ATTACH SCHEMA <schema> FROM '<folder>'`** copies the folder into the database as a new schema; the source folder is never modified.
+  - Each schema in the attached namespace gets a new id, so the same folder can be attached more than once.
+  - The statement's output reports any indexes created by an older version of Katzebase, which must be rebuilt before use.
+- **`DETACH SCHEMA <schema> TO '<folder>'`** removes the schema from the database and moves its folder out. It waits for other transactions using the schema to finish.
+- The folder can be a quoted string or a string variable. It must be an absolute path that does not yet exist (for `DETACH`), and it must not be inside the server's data or transaction folders.
+- Both statements require an administrator, because they read and write arbitrary folders on the server. They can't be used inside an explicit transaction, because moving files can't be undone by the transaction log.
+- Failures never leave a partially attached or detached namespace:
+  - `ATTACH` copies into a staging folder, checks that every schema in it can be opened, then renames the folder into place.
+  - `DETACH` unregisters the schema before moving its files, and puts them back if the move fails.
+- Folder paths cannot end with a backslash (`'D:\Exports\'`), because a trailing backslash escapes the closing quote.
+
 ### Bug fixes
+
+- **Creating or rebuilding an index leaked a RocksDB column family handle.** Dropping a column family (which `CREATE INDEX`, `REBUILD INDEX`, `DROP INDEX` and transaction rollback all do) never destroyed its handle. That kept part of the schema's database open after it was closed, so the schema's folder could not be moved or renamed until the server restarted.
 
 - **Index entries are now part of the transaction log.** Previously they were written outside the log, which caused these problems:
   - A rolled-back or failed `INSERT` (including one that failed on a unique-key violation) left index entries pointing at documents that no longer existed. Later indexed queries failed with `Document with ID [n] does not exist`, and unique values remained taken.
@@ -98,4 +123,5 @@ This release targets insert and select throughput. Single statements are now up 
 ### Testing
 
 - Added `TestIndexConsistency`. It covers rolled-back inserts, updates and deletes; failed inserts; updates that move index entries; queries using multiple indexes; and concurrent updates.
+- Added `TestAttachDetach`. It covers detaching and re-attaching a namespace (documents, indexes and child schemas), attaching the same folder twice, reporting outdated indexes, and invalid or unsafe requests.
 - Added the `InsertBenchmark` test application. It measures inserts through the client API in four ways: single-row SQL `INSERT`s without an explicit transaction, the same inside an explicit transaction committed every N rows, `Document.Store` per row, and `Document.StoreMany` in batches. By default it hosts its own server in-process; `--server host:port` targets an existing server instead. Run it with `--help` for all options.

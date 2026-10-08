@@ -120,6 +120,12 @@ namespace NTDLS.Katzebase.Management.Controls
 
         private bool _workingOnLastRequest = false;
 
+        /// <summary>
+        /// Set when analysis is requested while a previous analysis is still running (e.g. the schema cache changed),
+        /// so that the request is not lost: analysis is run again as soon as the current one completes.
+        /// </summary>
+        private bool _analysisRequestedWhileWorking = false;
+
         public void PerformStaticAnalysis()
         {
             string codeText = string.Empty;
@@ -149,9 +155,11 @@ namespace NTDLS.Katzebase.Management.Controls
             {
                 if (_workingOnLastRequest)
                 {
+                    _analysisRequestedWhileWorking = true;
                     return;
                 }
                 _workingOnLastRequest = true;
+                _analysisRequestedWhileWorking = false;
             }
 
             Threading.StartThread(() =>
@@ -162,7 +170,7 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                     if (CodeTabPage?.StudioForm != null)
                     {
-                        var schemaCache = CodeTabPage.ExplorerConnection?.LazySchemaCache.GetCache(out var cacheHash);
+                        var schemaCache = CodeTabPage.ExplorerConnection?.LazySchemaCache.GetSnapshot();
 
                         codeText = KbTextUtility.RemoveNonCode(codeText);
 
@@ -192,18 +200,40 @@ namespace NTDLS.Katzebase.Management.Controls
                 {
                 }
 
-                CodeTabPage?.StudioForm.Invoke(() =>
+                try
                 {
-                    _textMarkerService.ClearMarkers();
-
-                    foreach (var action in actions)
+                    CodeTabPage?.StudioForm.Invoke(() =>
                     {
-                        action();
+                        _textMarkerService.ClearMarkers();
+
+                        foreach (var action in actions)
+                        {
+                            action();
+                        }
+
+                        TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
+                    });
+                }
+                catch
+                {
+                    //The form is closing.
+                }
+                finally
+                {
+                    //Always release the request, otherwise a failure here would stop analysis for this editor permanently.
+                    bool rerun;
+                    lock (this)
+                    {
+                        _workingOnLastRequest = false;
+                        rerun = _analysisRequestedWhileWorking;
+                        _analysisRequestedWhileWorking = false;
                     }
 
-                    TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
-                    _workingOnLastRequest = false;
-                });
+                    if (rerun)
+                    {
+                        PerformStaticAnalysis();
+                    }
+                }
             });
         }
 

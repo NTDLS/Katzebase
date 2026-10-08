@@ -13,41 +13,41 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
+        /// <summary>
+        /// The number of documents whose field names are combined to produce a schema's field sample.
+        /// </summary>
+        private const int FieldSampleDocumentCount = 25;
+
+        /// <summary>
+        /// Returns the field names found in a sample of the schema's documents.
+        ///
+        /// The sample is the first few documents in storage order, which is deterministic and always finds documents when
+        /// the schema has any. (It previously probed random document ids and gave up after 10 misses, which frequently
+        /// returned no fields at all: document ids start at 2 and tables with deletions are sparse.) Field names are
+        /// combined across the sampled documents, so schemas whose documents vary are described more completely.
+        /// </summary>
         internal static KbQueryResult SampleSchemaFields(
             EngineCore core, Transaction transaction, string schemaName)
         {
-
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var currentIdentity = core.Documents.GetCurrentIdentity(physicalSchema);
 
-            var rdb = core.IO.AcquireDocumentsRdb(physicalSchema);
+            var fieldNames = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            int sampledDocuments = 0;
 
-            if (currentIdentity > 0)
+            foreach (var (_, physicalDocument) in core.Documents.ScanDocuments(transaction, physicalSchema, LockOperation.Read))
             {
-                int unsuccessfulAttempts = 0;
-
-                while (unsuccessfulAttempts < 10)
+                foreach (var documentValue in physicalDocument.Elements)
                 {
-                    uint documentId = (uint)Random.Shared.NextInt64(0, currentIdentity + 1);
-
-                    var physicalDocument = core.Documents.AcquireDocumentVirtual(transaction, rdb, documentId, LockOperation.Read);
-
-                    if (physicalDocument == null)
+                    if (fieldNames.Add(documentValue.Key))
                     {
-                        unsuccessfulAttempts++;
-                        continue;
+                        result.Fields.Add(new KbQueryField(documentValue.Key));
                     }
+                }
 
-                    if (result.Fields.Count == 0)
-                    {
-                        foreach (var documentValue in physicalDocument.Elements)
-                        {
-                            result.Fields.Add(new KbQueryField(documentValue.Key));
-                        }
-                    }
-
+                if (++sampledDocuments >= FieldSampleDocumentCount)
+                {
                     break;
                 }
             }
