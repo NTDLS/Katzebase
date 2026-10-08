@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         //"Boolean IsEmpty (String value = null)|'Returns true if the given value is null or empty.'"
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            return string.IsNullOrEmpty(function.Get<string?>("value")) ? "true" : "false";
+            return string.IsNullOrEmpty(function.Get<string?>("value")) ? "1" : "0";
         }
     }
 }

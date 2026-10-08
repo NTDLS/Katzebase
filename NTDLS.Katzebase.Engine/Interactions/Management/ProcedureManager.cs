@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Payloads.Response;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Payloads.Response;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
@@ -105,6 +106,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, string schemaName, string procedureName)
         {
+            if (string.IsNullOrEmpty(schemaName) || schemaName == ":")
+            {
+                //Only system procedures live in the root; the caller has already checked those.
+                throw new KbObjectNotFoundException($"Procedure not found: [{procedureName}]. It is not a system procedure, see ShowSystemFunctions.");
+            }
+
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+
+            _ = Acquire(transaction, physicalSchema, procedureName, LockOperation.Read)
+                ?? throw new KbObjectNotFoundException($"Procedure not found: [{schemaName}:{procedureName}].");
+
             throw new NotImplementedException("Reimplement user procedures");
         }
     }

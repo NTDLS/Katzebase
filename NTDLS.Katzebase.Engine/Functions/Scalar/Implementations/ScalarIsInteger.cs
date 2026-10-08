@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Parsers.Functions.Scalar;
+using System.Globalization;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
 {
@@ -11,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
             {
                 return null;
             }
-            return (int.TryParse(value, out _) == false ? 1 : 0).ToString();
+            return (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _) ? 1 : 0).ToString();
         }
     }
 }

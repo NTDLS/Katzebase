@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
 
             var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
-                ?? throw new KbProcessingException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
+                ?? throw new KbObjectNotFoundException($"Procedure not found: [{procedure.SchemaName}:{procedure.ProcedureName}].");
 
             if (physicalProcedure.Parameters.Count > 0)
             {

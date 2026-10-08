@@ -118,6 +118,13 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 - **SQL Server migration could silently lose rows.** Any error other than a deadlock was swallowed and the row was skipped. A deadlock rolled back the whole open transaction (up to 10,000 rows), but only the current row was retried. Now each batch is atomic, so a deadlocked batch is retried in full (up to 10 times with backoff). Any other error stops the import of that table, and the error message is shown in the grid.
 - `ANALYZE SCHEMA ... WITH (IncludePhysicalPages = true)` reported every non-unique index as having no documents. It now counts the new one-entry-per-document layout correctly, and reports indexes in the old format as needing a rebuild.
 - `IndexSelection.Clone()` copied covered conditions into itself instead of the clone.
+- **The server failed to start when a data folder was configured with a Windows 8.3 short name** (such as `C:\Users\JPATTE~1\...`). Some paths were expanded to their long form and others weren't, so the same RocksDB database was opened twice. Configured folders are now always stored as full, long paths.
+- **Scalar and aggregate function fixes:**
+  - `IsInteger()` returned the opposite result (0 for `'15'`, 1 for `'1.5'`). It now also accepts integers larger than 32 bits.
+  - `CountDistinct(values, caseSensitive)` had its flag reversed. It now ignores case by default and compares case-sensitively when the flag is true.
+  - `IsEmpty()`, `IsNumeric()`, `NullWhen()` and `NullWhenNumeric()` were listed by `ShowScalarFunctions` but failed with "not implemented". They now work, and `IsEmpty()` and `IsNumeric()` return `1`/`0` like the other boolean functions.
+- `EXEC` with a name that isn't a system procedure failed with "Reimplement user procedures". It now throws `KbObjectNotFoundException` ("Procedure not found"), as does `Procedure.Execute` in the client API.
+- **Removed the `DocumentID()` scalar function.** It was left over from the page-based storage engine and always returned null. Document ids are returned by the client API.
 - Debug builds failed to compile due to unqualified types in `SystemShowAggregateFunctions`, `SystemShowScalarFunctions` and `SystemShowSystemFunctions`.
 
 ---
