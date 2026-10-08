@@ -16,7 +16,10 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// The total number of times we attempted to lock this object.
         /// If this is a directory lock, then this also includes the number of file locks that deferred to this higher level lock.
         /// </summary>
-        public ulong Hits { get; set; }
+        public ulong Hits => Interlocked.Read(ref _hits);
+        private ulong _hits;
+
+        public void IncrementHits() => Interlocked.Increment(ref _hits);
 
         public ObjectLock(EngineCore core, ObjectLockIntention intention)
         {
@@ -85,6 +88,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                         _core.Locking.Release(key.ObjectLock);
                     }
                 });
+
+                //Wake any transactions that are waiting on a lock, this key may have been what was blocking them.
+                _core.Locking.NotifyLockReleased();
             }
             catch (Exception ex)
             {

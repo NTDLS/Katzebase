@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
-using NTDLS.Semaphore;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -13,10 +13,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class HealthManager
     {
-        internal OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
+        /// <summary>
+        /// Counters are incremented on hot paths (every IO read, cache hit, lock grant, etc.) so they must not share a
+        /// single global write lock. The dictionary is concurrent and each counter is updated under its own lock.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, HealthCounter> _counters = new(StringComparer.InvariantCultureIgnoreCase);
 
         private readonly EngineCore _core;
-        private DateTime lastCheckpoint = DateTime.MinValue;
+        private long _lastCheckpointTicks = DateTime.MinValue.Ticks;
+        private int _isCheckpointing = 0;
 
         internal HealthQueryHandlers QueryHandlers { get; private set; }
         public HealthAPIHandlers APIHandlers { get; private set; }
@@ -37,7 +42,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (physicalCounters != null)
                     {
-                        Counters.Write(o => physicalCounters.ToList().ForEach(kvp => o.Add(kvp.Key, kvp.Value)));
+                        foreach (var kvp in physicalCounters)
+                        {
+                            _counters[kvp.Key] = kvp.Value;
+                        }
                     }
                 }
             }
@@ -55,12 +63,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public KbInsensitiveDictionary<HealthCounter> CloneCounters()
         {
-            return Counters.Read(o => o.Clone());
+            var clone = new KbInsensitiveDictionary<HealthCounter>();
+            foreach (var kvp in _counters)
+            {
+                lock (kvp.Value)
+                {
+                    clone[kvp.Key] = new HealthCounter()
+                    {
+                        Count = kvp.Value.Count,
+                        Value = kvp.Value.Value,
+                        Timestamp = kvp.Value.Timestamp
+                    };
+                }
+            }
+            return clone;
         }
 
         public void ClearCounters()
         {
-            Counters.Write(o => o.Clear());
+            _counters.Clear();
             Checkpoint();
         }
 
@@ -68,18 +89,52 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lastCheckpoint = DateTime.UtcNow;
-
-                Counters.Read(o =>
-                {
-                    IOManager.PutJsonNonTrackedPretty(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o);
-                });
+                Interlocked.Exchange(ref _lastCheckpointTicks, DateTime.UtcNow.Ticks);
+                IOManager.PutJsonNonTrackedPretty(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), CloneCounters());
             }
             catch (Exception ex)
             {
                 LogManager.Error("Failed to checkpoint health manager.", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Checkpoints the counters if the checkpoint interval has elapsed. Only one thread checkpoints at a time
+        /// and no counter locks are held while doing so.
+        /// </summary>
+        private void CheckpointIfDue()
+        {
+            var lastCheckpoint = new DateTime(Interlocked.Read(ref _lastCheckpointTicks));
+            if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringCheckpointSeconds
+                && Interlocked.CompareExchange(ref _isCheckpointing, 1, 0) == 0)
+            {
+                try
+                {
+                    Checkpoint();
+                }
+                finally
+                {
+                    Volatile.Write(ref _isCheckpointing, 0);
+                }
+            }
+        }
+
+        /// <param name="isDiscrete">Discrete counters only count their first occurrence (Value holds the number of occurrences).</param>
+        private void Accumulate(string key, double value, bool isDiscrete)
+        {
+            var counter = _counters.GetOrAdd(key, _ => new HealthCounter());
+            lock (counter)
+            {
+                counter.Value += value;
+                if (isDiscrete == false || counter.Count == 0)
+                {
+                    counter.Count++;
+                }
+                counter.Timestamp = DateTime.UtcNow;
+            }
+
+            CheckpointIfDue();
         }
 
         /// <summary>
@@ -94,32 +149,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                string key = type.ToString();
-
-                Counters.Write(o =>
-                {
-                    if (o.TryGetValue(key, out HealthCounter? value))
-                    {
-                        var counterItem = value;
-                        counterItem.Value += perfValue;
-                        counterItem.Count++;
-                        counterItem.Timestamp = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        o.Add(key, new HealthCounter()
-                        {
-                            Value = perfValue,
-                            Count = 1,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
-
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringCheckpointSeconds)
-                    {
-                        Checkpoint();
-                    }
-                });
+                Accumulate(type.ToString(), perfValue, false);
             }
             catch (Exception ex)
             {
@@ -140,32 +170,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                string key = $"{type}:{instance}";
-
-                Counters.Write(o =>
-                {
-                    if (o.TryGetValue(key, out HealthCounter? value))
-                    {
-                        var counterItem = value;
-                        counterItem.Value += perfValue;
-                        counterItem.Count++;
-                        counterItem.Timestamp = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        o.Add(key, new HealthCounter()
-                        {
-                            Value = perfValue,
-                            Count = 1,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
-
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
-                    {
-                        Checkpoint();
-                    }
-                });
+                Accumulate($"{type}:{instance}", perfValue, false);
             }
             catch (Exception ex)
             {
@@ -186,31 +191,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                string key = type.ToString();
-
-                Counters.Write(o =>
-                {
-                    if (o.TryGetValue(key, out HealthCounter? value))
-                    {
-                        var counterItem = value;
-                        counterItem.Value += 1;
-                        counterItem.Timestamp = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        o.Add(key, new HealthCounter()
-                        {
-                            Value = 1,
-                            Count = 1,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
-
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringCheckpointSeconds)
-                    {
-                        Checkpoint();
-                    }
-                });
+                Accumulate(type.ToString(), 1, true);
             }
             catch (Exception ex)
             {
@@ -231,31 +212,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                string key = $"{type}:{instance}";
-
-                Counters.Write(o =>
-                {
-                    if (o.TryGetValue(key, out HealthCounter? value))
-                    {
-                        var counterItem = value;
-                        counterItem.Value += 1;
-                        counterItem.Timestamp = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        o.Add(key, new HealthCounter()
-                        {
-                            Value = 1,
-                            Count = 1,
-                            Timestamp = DateTime.UtcNow
-                        });
-                    }
-
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
-                    {
-                        Checkpoint();
-                    }
-                });
+                Accumulate($"{type}:{instance}", 1, true);
             }
             catch (Exception ex)
             {

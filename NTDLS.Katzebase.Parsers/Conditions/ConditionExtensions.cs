@@ -124,6 +124,10 @@ namespace NTDLS.Katzebase.Parsers.Conditions
                         {
                             refConditions.Add(right);
                         }
+                        if (entry.RightHigh is QueryFieldDocumentIdentifier rightHigh)
+                        {
+                            refConditions.Add(rightHigh);
+                        }
                     }
                     else
                     {

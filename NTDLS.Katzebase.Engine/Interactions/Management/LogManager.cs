@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
 using Serilog;
+using Serilog.Events;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Api.KbConstants;
 
@@ -37,7 +38,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return $"{namespaceName}.{className}.{methodName}";
         }
 
-        public static void Trace(string message) => Log.Verbose($"{GetCallerFunctionName()}: {message}");
+        /// <summary>
+        /// GetCallerFunctionName() captures a stack trace, which is far too expensive to do unconditionally:
+        ///     Trace() is called on hot paths such as every document read.
+        /// </summary>
+        public static void Trace(string message)
+        {
+            if (Log.IsEnabled(LogEventLevel.Verbose))
+            {
+                Log.Verbose($"{GetCallerFunctionName()}: {message}");
+            }
+        }
         public static void Verbose(string message) => Log.Verbose(message);
         public static void Debug(string message) => Log.Debug(message);
         public static void Information(string message) => Log.Information(message);

@@ -32,7 +32,11 @@ namespace NTDLS.Katzebase.Parsers
             Schema,
             ObjectName,
             Parameters,
-            Batches
+            Batches,
+            /// <summary>
+            /// A file system path, e.g. the folder given to ATTACH SCHEMA ... FROM or DETACH SCHEMA ... TO.
+            /// </summary>
+            FilePath
         }
 
         /// <summary>

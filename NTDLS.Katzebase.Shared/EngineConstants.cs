@@ -15,7 +15,6 @@
         public const string TransactionAtomsFile = "@transaction.kbatom";
         public const string HealthStatsFile = "@health.kblog";
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
-        public const string UIDMarker = "$UID$";
         public const string PrimaryIdentityKey = "Primary";
 
         public enum KbColumnFamilyName
@@ -34,6 +33,12 @@
             Indexes,
             Policy,
             Procedures,
+            /// <summary>
+            /// Transaction log (undo atoms) for all transactions. Keys are [16-byte transaction id][8-byte big-endian sequence].
+            /// A single shared column family is used because creating/dropping a column family per transaction
+            /// forces a synchronous MANIFEST write in RocksDB (~10ms each) and serializes all transactions.
+            /// </summary>
+            TransactionAtoms,
         }
 
         public enum TraceType

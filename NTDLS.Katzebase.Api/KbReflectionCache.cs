@@ -12,7 +12,15 @@ namespace NTDLS.Katzebase.Api
         {
             if (!_cache.TryGetValue(type, out Dictionary<string, PropertyInfo>? properties))
             {
-                properties = type.GetProperties().ToDictionary(p => p.Name, StringComparer.InvariantCultureIgnoreCase);
+                //Only writable, non-indexer properties can be mapped. If two properties differ only by case, the first wins.
+                properties = new Dictionary<string, PropertyInfo>(StringComparer.InvariantCultureIgnoreCase);
+                foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (property.CanWrite && property.GetSetMethod() != null && property.GetIndexParameters().Length == 0)
+                    {
+                        properties.TryAdd(property.Name, property);
+                    }
+                }
 
                 var cacheEntryOptions = new MemoryCacheEntryOptions
                 {

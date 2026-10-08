@@ -28,7 +28,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     internal class Transaction
         : ITransaction, IDisposable
     {
-        private readonly Lock _identityLock = new();
+        /// <summary>
+        /// Starts at 1 so that the first atom has sequence 2, matching the original on-disk identity scheme.
+        /// </summary>
+        private long _atomSequence = 1;
 
         private readonly HashSet<string> _recordedReadObjectKeys = new HashSet<string>();
         private readonly HashSet<string> _recordedWriteObjectKeys = new HashSet<string>();
@@ -83,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// We keep a hash-set of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public OptimisticCriticalResource<HashSet<string>> GrantedLockCache { get; private set; }
+        public ConcurrentDictionary<string, byte> GrantedLockCache { get; private set; } = new();
 
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
@@ -101,6 +104,21 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Any temporary schemas that have been created in this transaction.
         /// </summary>
         public OptimisticCriticalResource<HashSet<string>> TemporarySchemas { get; private set; } = new();
+
+        /// <summary>
+        /// Index catalogs (by documents RDB path) that this transaction has modified. The engine-wide catalog cache is
+        ///     bypassed for these until the transaction completes, at which point they are evicted again.
+        /// </summary>
+        public ConcurrentDictionary<string, Rdb> ModifiedIndexCatalogs { get; private set; } = new(StringComparer.InvariantCultureIgnoreCase);
+
+        /// <summary>
+        /// Actions that undo changes which the transaction log cannot (such as files moved by ATTACH/DETACH SCHEMA).
+        /// Executed newest first if the transaction is rolled back, after the logged changes have been undone.
+        /// </summary>
+        private readonly ConcurrentStack<Action> _rollbackActions = new();
+
+        internal void AddRollbackAction(Action action)
+            => _rollbackActions.Push(action);
 
         #endregion
 
@@ -236,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsCancelled = IsCancelled
             };
 
-            GrantedLockCache.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
+            snapshot.GrantedLockCache = new HashSet<string>(GrantedLockCache.Keys);
             BlockedByKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
             HeldLockKeys.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
             TemporarySchemas.DeadlockAvoidanceTryRead(10, _core.CancellationToken, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
@@ -319,7 +337,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
-            GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Clear());
+            GrantedLockCache.Clear();
 
             HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
@@ -332,7 +350,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         internal void ReleaseLock(ObjectLockKey objectLock)
         {
-            GrantedLockCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) => obj.Remove(objectLock.Key));
+            GrantedLockCache.TryRemove(objectLock.Key, out _);
 
             HeldLockKeys.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
             {
@@ -490,7 +508,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             bool enableInstrumentation = false;
 
-            GrantedLockCache = new(core.LockManagementSemaphore);
             BlockedByKeys = new(core.LockManagementSemaphore);
             HeldLockKeys = new(core.LockManagementSemaphore);
 
@@ -505,25 +522,67 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 enableInstrumentation = session.GetConnectionSetting(StateSetting.TraceWaitTimes, false);
 
-                //Create a transaction log column family for this transaction:
-                transactionManager.TxRdb.CreateColumnFamily(new RdbKey(Id));
-
-                //We also need to put an entry in the identity column family so we can use it to serialize the atoms of the new transaction.
+                //Put an entry in the identity column family, this marks the transaction as open so that it can be
+                //  rolled back by recovery if the process terminates before the transaction is committed or rolled back.
+                //Atoms are stored in the shared TransactionAtoms column family, keyed by the transaction id.
                 _core.IO.PutNonTrackedRaw(transactionManager.TxRdb, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(1L));
             }
 
             Instrumentation = new InstrumentationTracker(enableInstrumentation);
         }
 
+        /// <summary>
+        /// The sequence only has to be unique and ordered within this transaction's lifetime, so it is kept in memory.
+        /// The Identity CF entry for the transaction is only used as a marker for crash recovery.
+        /// </summary>
         public long GetNextAtomSequence()
+            => Interlocked.Increment(ref _atomSequence);
+
+        private const int AtomKeyPrefixLength = 16;
+
+        /// <summary>
+        /// Builds the key for an atom in the shared TransactionAtoms column family: [16-byte transaction id][8-byte big-endian sequence].
+        /// Big-endian ensures that atoms for a transaction are stored in sequence order.
+        /// </summary>
+        private byte[] MakeAtomKey(long sequence)
         {
-            lock (_identityLock)
+            var key = new byte[AtomKeyPrefixLength + sizeof(long)];
+            Id.TryWriteBytes(key.AsSpan(0, AtomKeyPrefixLength));
+            System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(key.AsSpan(AtomKeyPrefixLength), sequence);
+            return key;
+        }
+
+        private void WriteAtom(Atom atom)
+        {
+            var cf = _transactionManager.TxRdb.GetColumnFamily(KbColumnFamilyName.TransactionAtoms);
+            _transactionManager.TxRdb.Put(MakeAtomKey(atom.Sequence), atom.ToBytes(), cf);
+        }
+
+        /// <summary>
+        /// Enumerates this transaction's atoms in reverse order (newest first), which is the order they must be undone in.
+        /// </summary>
+        private IEnumerable<Atom> EnumerateAtomsReverse()
+        {
+            var rdb = _transactionManager.TxRdb;
+
+            var prefix = Id.ToByteArray();
+            using var iterator = rdb.NewIterator(rdb.GetColumnFamily(KbColumnFamilyName.TransactionAtoms));
+            for (iterator.SeekForPrev(MakeAtomKey(long.MaxValue)); iterator.Valid(); iterator.Prev())
             {
-                var bytes = _core.IO.GetNotTrackedRaw(_transactionManager.TxRdb, KbColumnFamilyName.Identity, new RdbKey(Id));
-                var number = bytes == null ? 0L : BitConverter.ToInt64(bytes);
-                number++;
-                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, KbColumnFamilyName.Identity, new RdbKey(Id), BitConverter.GetBytes(number));
-                return number;
+                var key = iterator.Key();
+                if (key.Length < AtomKeyPrefixLength || !key.AsSpan(0, AtomKeyPrefixLength).SequenceEqual(prefix))
+                {
+                    break;
+                }
+
+                //During recovery the in-memory sequence is unknown, track the highest one seen so cleanup can remove them all.
+                var sequence = System.Buffers.Binary.BinaryPrimitives.ReadInt64BigEndian(key.AsSpan(AtomKeyPrefixLength));
+                if (sequence > Interlocked.Read(ref _atomSequence))
+                {
+                    Interlocked.Exchange(ref _atomSequence, sequence);
+                }
+
+                yield return Atom.FromBytes(iterator.Value());
             }
         }
 
@@ -554,8 +613,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 var atom = new Atom(ActionType.KeyCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey);
-                var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                WriteAtom(atom);
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -582,8 +640,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
 
                 var atom = new Atom(ActionType.CfCreate, GetNextAtomSequence(), rdb.Path, columnFamilyName);
-                var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                WriteAtom(atom);
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -619,8 +676,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.AtomRecording);
                 var atom = new Atom(ActionType.KeyDelete, GetNextAtomSequence(), rdb.Path, columnFamilyName, key.Bytes, targetKey, originalData);
-                var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                WriteAtom(atom);
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -693,8 +749,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     OriginalData = originalData
                 };
 
-                var atomJson = JsonConvert.SerializeObject(atom);
-                _core.IO.PutNonTrackedRaw(_transactionManager.TxRdb, new RdbKey(Id), new RdbKey(atom.Sequence), Encoding.UTF8.GetBytes(atomJson));
+                WriteAtom(atom);
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
@@ -731,65 +786,54 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptRollback = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Rollback);
                     try
                     {
-                        var txCf = _transactionManager.TxRdb.GetColumnFamily(new RdbKey(Id));
-
-                        using (var iterator = _transactionManager.TxRdb.NewIterator(txCf))
+                        //Undo the atoms newest-first. The enumerator disposes its iterator before CleanupTransaction() runs.
+                        foreach (var record in EnumerateAtomsReverse())
                         {
-                            for (iterator.SeekToLast(); iterator.Valid(); iterator.Prev())
+                            //We need to eject the rolled back item from the cache since its last known state has changed.
+                            if (record.CacheKey != null)
                             {
-                                var record = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
-                                if (record == null)
-                                {
-                                    LogManager.Warning($"Transaction atom is null for {ProcessId}");
-                                    continue;
-                                }
+                                _core.Cache.Remove(record.CacheKey);
+                            }
 
-                                //We need to eject the rolled back item from the cache since its last known state has changed.
-                                if (record.CacheKey != null)
+                            if (record.Action == ActionType.KeyCreate)
+                            {
+                                try
                                 {
-                                    _core.Cache.Remove(record.CacheKey);
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Remove(record.RdbKey.EnsureNotNull(), originalCf);
                                 }
-
-                                if (record.Action == ActionType.KeyCreate)
+                                catch (Exception ex)
                                 {
-                                    try
-                                    {
-                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                        var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Remove(record.RdbKey.EnsureNotNull(), originalCf);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
-                                    }
-                                }
-                                else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
-                                {
-                                    try
-                                    {
-                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                        var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
-                                        originalRdb.Put(record.RdbKey.EnsureNotNull(), record.OriginalData, originalCf);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
-                                    }
-                                }
-                                else if (record.Action == ActionType.CfCreate)
-                                {
-                                    try
-                                    {
-                                        var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
-                                        originalRdb.DropColumnFamily(record.ColumnFamilyName);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
-                                    }
+                                    LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
                                 }
                             }
-                        } // Iterator closed before CleanupTransaction so the CF handle can be safely destroyed.
+                            else if (record.Action == ActionType.KeyAlter || record.Action == ActionType.KeyDelete)
+                            {
+                                try
+                                {
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    var originalCf = originalRdb.GetColumnFamily(record.ColumnFamilyName);
+                                    originalRdb.Put(record.RdbKey.EnsureNotNull(), record.OriginalData, originalCf);
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to restore key for transaction {ProcessId}.", ex);
+                                }
+                            }
+                            else if (record.Action == ActionType.CfCreate)
+                            {
+                                try
+                                {
+                                    var originalRdb = _core.IO.AcquireRdb(record.RdbPath.EnsureNotNull());
+                                    originalRdb.DropColumnFamily(record.ColumnFamilyName);
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogManager.Error($"Failed to remove key for transaction {ProcessId}.", ex);
+                                }
+                            }
+                        }
 
                         FilesReadForCache.DeadlockAvoidanceTryWrite(10, _core.CancellationToken, (obj) =>
                         {
@@ -798,6 +842,19 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 _core.Cache.Remove(file.CacheKey);
                             }
                         });
+
+                        //Undo non-transactional changes (newest first), e.g. files moved by ATTACH/DETACH SCHEMA.
+                        while (_rollbackActions.TryPop(out var rollbackAction))
+                        {
+                            try
+                            {
+                                rollbackAction();
+                            }
+                            catch (Exception ex)
+                            {
+                                LogManager.Error($"Failed to execute a rollback action for process {ProcessId}.", ex);
+                            }
+                        }
 
                         try
                         {
@@ -813,6 +870,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     }
                     finally
                     {
+                        InvalidateModifiedIndexCatalogs();
                         ReleaseLocks();
                         ptRollback?.StopAndAccumulate();
                         Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
@@ -872,6 +930,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             Exceptions.OnError(() => DeleteTemporarySchemas(),
                                 (ex) => LogManager.Error($"Failed to delete temporary schemas for process {ProcessId} during commit.", ex));
 
+                            Exceptions.OnError(() => InvalidateModifiedIndexCatalogs(),
+                                (ex) => LogManager.Error($"Failed to invalidate index catalogs for process {ProcessId} during commit.", ex));
+
                             Exceptions.OnError(() => ReleaseLocks(),
                                 (ex) => LogManager.Error($"Failed to release locks for process {ProcessId} during commit.", ex));
                         }
@@ -891,6 +952,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 return false;
             });
+        }
+
+        /// <summary>
+        /// Must be called before locks are released so that no other transaction can read a stale cached catalog.
+        /// </summary>
+        private void InvalidateModifiedIndexCatalogs()
+        {
+            foreach (var rdb in ModifiedIndexCatalogs.Values)
+            {
+                _core.Indexes.InvalidateIndexCatalog(rdb);
+            }
+            ModifiedIndexCatalogs.Clear();
         }
 
         private void DeleteTemporarySchemas()
@@ -917,11 +990,22 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                var rdb = _core.IO.AcquireRdb(_core.Settings.TransactionDataPath);
-                //Drop the transaction log column family for this transaction.
-                rdb.DropColumnFamily(new RdbKey(Id));
-                // Remove the identity counter for this transaction.
-                rdb.Remove(new RdbKey(Id).Bytes, rdb.GetColumnFamily(KbColumnFamilyName.Identity));
+                var rdb = _transactionManager.TxRdb;
+
+                using var batch = new WriteBatch();
+
+                //Remove this transaction's atoms (sequences start at 2, see _atomSequence).
+                var atomsCf = rdb.GetColumnFamily(KbColumnFamilyName.TransactionAtoms);
+                var lastSequence = Interlocked.Read(ref _atomSequence);
+                for (long sequence = 2; sequence <= lastSequence; sequence++)
+                {
+                    batch.Delete(MakeAtomKey(sequence), atomsCf.Handle);
+                }
+
+                //Remove the open-transaction marker last (same atomic batch).
+                batch.Delete(new RdbKey(Id).Bytes, rdb.GetColumnFamily(KbColumnFamilyName.Identity).Handle);
+
+                rdb.Write(batch);
             }
             catch (Exception ex)
             {

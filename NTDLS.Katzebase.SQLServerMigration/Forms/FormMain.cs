@@ -2,6 +2,7 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.SQLServerMigration.Classes;
 using NTDLS.Katzebase.SQLServerMigration.Properties;
@@ -335,9 +336,9 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 MoveRowToBottom(param.Item.RowItem);
             }
-            catch
+            catch (Exception ex)
             {
-                UpdateDataGridViewText(param.Item.RowItem, "Exception");
+                UpdateDataGridViewText(param.Item.RowItem, $"Exception: {ex.GetBaseException().Message}");
             }
             finally
             {
@@ -348,17 +349,108 @@ namespace NTDLS.Katzebase.SQLServerMigration
         }
 
         private long _totalRowCount;
-        private object _totalRowCountLock = new();
+
+        /// <summary>
+        /// The maximum number of rows sent to the server in a single Document.StoreMany() call.
+        /// </summary>
+        private const int rowsPerBatch = 1000;
+
+        /// <summary>
+        /// Batches are also sent early once their (approximate) serialized size reaches this, so that wide rows don't produce huge messages.
+        /// </summary>
+        private const long maxBatchBytes = 4 * 1024 * 1024;
+
+        /// <summary>
+        /// How many times a batch is retried when it is chosen as a deadlock victim before the import of the table is failed.
+        /// </summary>
+        private const int maxDeadlockRetries = 10;
+
+        /// <summary>
+        /// Stores a batch of documents. The batch is atomic on the server, so when it is chosen as a deadlock
+        /// victim none of it was stored and the whole batch can safely be sent again. Any other error is thrown
+        /// to the caller rather than being swallowed (which previously silently dropped rows).
+        /// </summary>
+        private static void StoreBatch(KbClient client, string targetSchema, List<KbDocument> batch)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    client.Document.StoreMany(targetSchema, batch);
+                    return;
+                }
+                catch (Exception ex) when (attempt < maxDeadlockRetries && IsDeadlock(ex))
+                {
+                    Thread.Sleep(Random.Shared.Next(50, 250) * attempt);
+                }
+            }
+        }
+
+        private class SourceColumn
+        {
+            public string Name { get; set; } = string.Empty;
+            public bool IsAssemblyType { get; set; }
+        }
+
+        /// <summary>
+        /// Builds the statement used to read all rows of a source table or view.
+        ///
+        /// SQL Server CLR types (geography, geometry and hierarchyid) can only be materialized by SqlClient when the
+        /// Microsoft.SqlServer.Types assembly is available, which it is not on modern .NET, so reading them fails with
+        /// "Could not load file or assembly 'Microsoft.SqlServer.Types'". Those columns are instead converted to text by
+        /// the server: [column].ToString() is well-known text for spatial types and the path (e.g. /1/2/) for hierarchyid.
+        /// </summary>
+        private static string BuildSourceSelectStatement(SqlConnection connection, string sourceObjectName)
+        {
+            var columns = connection.Query<SourceColumn>(
+                @"SELECT c.name AS Name, t.is_assembly_type AS IsAssemblyType
+                FROM sys.columns AS c
+                INNER JOIN sys.types AS t ON t.user_type_id = c.user_type_id
+                WHERE c.object_id = OBJECT_ID(@ObjectName)
+                ORDER BY c.column_id", new { ObjectName = sourceObjectName }).ToList();
+
+            if (columns.Count == 0 || columns.Any(o => o.IsAssemblyType) == false)
+            {
+                return $"SELECT * FROM {sourceObjectName}";
+            }
+
+            var selectList = columns.Select(o =>
+            {
+                var quotedName = $"[{o.Name.Replace("]", "]]")}]";
+                return o.IsAssemblyType ? $"{quotedName}.ToString() AS {quotedName}" : quotedName;
+            });
+
+            return $"SELECT {string.Join(", ", selectList)} FROM {sourceObjectName}";
+        }
+
+        /// <summary>
+        /// Converts a source value to the text stored in the document.
+        /// Binary values are stored as hex (0x...) rather than as the type name that byte[].ToString() returns.
+        /// </summary>
+        private static string FormatSourceValue(object? value)
+        {
+            return value switch
+            {
+                null or DBNull => string.Empty,
+                byte[] bytes => $"0x{Convert.ToHexString(bytes)}",
+                _ => value.ToString()?.Trim() ?? string.Empty
+            };
+        }
+
+        private static bool IsDeadlock(Exception ex)
+        {
+            for (var current = ex; current != null; current = current.InnerException)
+            {
+                if (current is KbDeadlockException || current.Message.Contains("Deadlock", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void ExportSQLServerTableToKatzebase(SelectedImportObject item, string targetServerHost, int targetServerPort, string username, string password, string targetSchema)
         {
-            int rowsPerTransaction = 10000;
-
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                rowsPerTransaction = 100;
-            }
-
             using var client = new KbClient(targetServerHost, targetServerPort, username, password, "SQLServerMigration")
             {
                 QueryTimeout = TimeSpan.FromDays(7)
@@ -377,91 +469,60 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 if (item.ImportData)
                 {
-                    client.Transaction.Begin();
-                    try
+                    //Rows are sent to the server in batches using Document.StoreMany(): one round trip per batch rather than per row.
+                    //  Each batch is stored atomically in its own transaction, so if a batch fails (e.g. it is chosen as a deadlock
+                    //  victim) exactly that batch is rolled back and can be safely re-sent. No explicit transaction is used, because
+                    //  a rollback of an explicit transaction would also discard all of the previously sent batches.
+                    var batch = new List<KbDocument>(rowsPerBatch);
+                    long batchBytes = 0;
+                    long rowCount = 0;
+
+                    using (var command = new SqlCommand(BuildSourceSelectStatement(connection, item.SourceObjectName), connection))
                     {
-                        using (var command = new SqlCommand($"SELECT * FROM {item.SourceObjectName}", connection))
+                        command.CommandTimeout = 10000;
+                        command.CommandType = System.Data.CommandType.Text;
+
+                        using (var dataReader = command.ExecuteReader())
                         {
-                            command.CommandTimeout = 10000;
-                            command.CommandType = System.Data.CommandType.Text;
+                            var fieldNames = Enumerable.Range(0, dataReader.FieldCount).Select(dataReader.GetName).ToArray();
 
-                            using (var dataReader = command.ExecuteReader())
+                            while (dataReader.Read())
                             {
-                                int rowCount = 0;
-
-                                while (dataReader.Read())
+                                if (_isCancelPending)
                                 {
-                                    if (_isCancelPending)
-                                    {
-                                        dataReader.Close();
-                                        break;
-                                    }
+                                    return;
+                                }
 
-                                    var dbObject = new ExpandoObject() as IDictionary<string, object>;
+                                var dbObject = new Dictionary<string, string>(fieldNames.Length);
+                                for (int iField = 0; iField < fieldNames.Length; iField++)
+                                {
+                                    dbObject[fieldNames[iField]] = FormatSourceValue(dataReader[iField]);
+                                }
 
-                                    for (int iField = 0; iField < dataReader.FieldCount; iField++)
-                                    {
-                                        var dataType = dataReader.GetFieldType(iField);
-                                        if (dataType != null)
-                                        {
-                                            dbObject.Add(dataReader.GetName(iField), dataReader[iField]?.ToString()?.Trim() ?? "");
-                                        }
-                                    }
+                                var document = new KbDocument(dbObject);
+                                batch.Add(document);
+                                batchBytes += document.Content.Length;
 
-                                    if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
-                                    {
-                                        client.Transaction.Commit();
-                                        client.Transaction.Begin();
-                                    }
+                                if (batch.Count >= rowsPerBatch || batchBytes >= maxBatchBytes)
+                                {
+                                    StoreBatch(client, targetSchema, batch);
+                                    rowCount += batch.Count;
+                                    Interlocked.Add(ref _totalRowCount, batch.Count);
+                                    batch.Clear();
+                                    batchBytes = 0;
 
-                                    while (true)
-                                    {
-                                        if (_isCancelPending)
-                                        {
-                                            break;
-                                        }
-
-                                        try
-                                        {
-                                            client.Document.Store(targetSchema, new KbDocument(dbObject));
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            if (ex.Message.Contains("Deadlock exception"))
-                                            {
-                                                Thread.Sleep(500);
-                                                client.Transaction.Begin();
-                                                continue;
-                                            }
-                                        }
-                                        break;
-                                    }
-
-                                    lock (_totalRowCountLock)
-                                    {
-                                        //if (_totalRowCount % 100 == 0)
-                                        //{
-                                        //FormProgress.Singleton.Form.SetBodyText($"Total rows processed: {_totalRowCount:n0}...");
-                                        //}
-
-                                        _totalRowCount++;
-                                    }
-
-                                    if (rowCount > 0 && rowCount % 100 == 0)
-                                    {
-                                        UpdateDataGridViewText(item.RowItem, $"Rows {rowCount:n0}");
-                                    }
-
-                                    rowCount++;
+                                    UpdateDataGridViewText(item.RowItem, $"Rows {rowCount:n0}");
                                 }
                             }
                         }
-                        connection.Close();
                     }
-                    catch
+
+                    if (batch.Count > 0 && _isCancelPending == false)
                     {
-                        client.Transaction.Rollback();
-                        throw;
+                        StoreBatch(client, targetSchema, batch);
+                        rowCount += batch.Count;
+                        Interlocked.Add(ref _totalRowCount, batch.Count);
+                        UpdateDataGridViewText(item.RowItem, $"Rows {rowCount:n0}");
                     }
                 }
 
@@ -509,8 +570,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 }
 
                 #endregion
-
-                client.Transaction.Commit();
             }
         }
 

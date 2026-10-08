@@ -35,8 +35,8 @@ namespace NTDLS.Katzebase.Api.Models
 
         public KbProcedure(string schemaName, string procedureName, KbInsensitiveDictionary<KbVariable>? userParameters = null)
         {
-            ProcedureName = schemaName;
-            SchemaName = procedureName;
+            SchemaName = schemaName;
+            ProcedureName = procedureName;
             UserParameters = userParameters;
         }
     }

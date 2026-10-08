@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to schemas.
     /// </summary>
-    public class SchemaManager
+    public partial class SchemaManager
     {
         private readonly EngineCore _core;
         private readonly string _rootCatalogFile;
@@ -529,6 +529,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         transaction.EnsureActive();
 
+                        string attrs = string.Join(", ", physicalIndex.Attributes.Select(a => a.Field));
+
+                        if (!physicalIndex.IsCurrentStorageVersion())
+                        {
+                            result.AddRow([$"Index: {physicalIndex.Name}", $"[{attrs}]"]);
+                            result.AddRow([$"  Unique", $"{physicalIndex.IsUnique}"]);
+                            result.AddRow([$"  Status", "Outdated storage format, run REBUILD INDEX"]);
+                            continue;
+                        }
+
                         var idxCF = rdb.GetColumnFamily(new RdbKey(physicalIndex.Id));
 
                         long distinctKeys = 0;
@@ -536,22 +546,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         int minDocs = int.MaxValue;
                         int maxDocs = 0;
 
-                        using var idxIter = rdb.NewIterator(idxCF);
-                        for (idxIter.SeekToFirst(); idxIter.Valid(); idxIter.Next())
+                        //There is one entry per document and entries with the same values are adjacent,
+                        //  so a "key" (distinct value) is a run of consecutive entries with the same value part.
+                        byte[]? currentValuePart = null;
+                        int docCount2 = 0;
+
+                        void CompleteKey()
                         {
-                            int docCount2 = idxIter.Value().Length / sizeof(uint);
+                            if (docCount2 == 0) return;
                             distinctKeys++;
-                            totalDocRefs += docCount2;
                             if (docCount2 < minDocs) minDocs = docCount2;
                             if (docCount2 > maxDocs) maxDocs = docCount2;
                         }
+
+                        using var idxIter = rdb.NewIterator(idxCF);
+                        for (idxIter.SeekToFirst(); idxIter.Valid(); idxIter.Next())
+                        {
+                            transaction.EnsureActive();
+
+                            var valuePart = IndexKeyBuilder.GetValuePart(physicalIndex.IsUnique, idxIter.Key());
+                            if (currentValuePart == null || !valuePart.SequenceEqual(currentValuePart))
+                            {
+                                CompleteKey();
+                                currentValuePart = valuePart.ToArray();
+                                docCount2 = 0;
+                            }
+
+                            docCount2++;
+                            totalDocRefs++;
+                        }
+                        CompleteKey();
 
                         if (distinctKeys == 0)
                             minDocs = 0;
 
                         double avgDocs = distinctKeys > 0 ? (double)totalDocRefs / distinctKeys : 0.0;
                         double selectivity = totalDocRefs > 0 ? (double)distinctKeys / totalDocRefs * 100.0 : 100.0;
-                        string attrs = string.Join(", ", physicalIndex.Attributes.Select(a => a.Field));
 
                         result.AddRow([$"Index: {physicalIndex.Name}", $"[{attrs}]"]);
                         result.AddRow([$"  Unique", $"{physicalIndex.IsUnique}"]);

@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Expressions;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Parsers;
 using NTDLS.Katzebase.Parsers.Conditions;
 using NTDLS.Katzebase.Parsers.Fields;
@@ -40,6 +41,16 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
+            //Indexes stored in an older layout cannot be read until they are rebuilt. Don't use them for lookups
+            //  (the query falls back to scanning documents, so results are still correct).
+            var outdatedIndexes = indexCatalog.Where(o => !o.IsCurrentStorageVersion()).ToList();
+            if (outdatedIndexes.Count > 0)
+            {
+                LogManager.Warning($"Index(es) [{string.Join("], [", outdatedIndexes.Select(o => o.Name))}] on [{physicalSchema.Name}]"
+                    + " were created by an older version of Katzebase and are not used until rebuilt (REBUILD INDEX).");
+                indexCatalog = indexCatalog.Where(o => o.IsCurrentStorageVersion()).ToList();
+            }
+
             if (WalkConditionTree(optimization, query, transaction, indexCatalog, workingSchemaPrefix))
             {
                 return optimization;
@@ -77,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                         {
                             optimization.IndexingConditionGroup.Clear();
                             invalidateFlattenedGroup.UsableIndexes.Clear();
-                            invalidateFlattenedGroup.IndexLookup = null;
+                            invalidateFlattenedGroup.IndexLookups.Clear();
                         }
 
                         return false; //Invalidate indexing optimization.
@@ -111,7 +122,8 @@ namespace NTDLS.Katzebase.Engine.Indexes
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
                                 flattenedGroup.Collection.OfType<ConditionEntry>()
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)
+                                    && (o.RightHigh == null || StaticParserField.IsConstantExpression(o.RightHigh.Value))));
                         }
                         else
                         {
@@ -167,6 +179,13 @@ namespace NTDLS.Katzebase.Engine.Indexes
                         condition.Right = new QueryFieldCollapsedValue(condition.Right.ScriptLine, constantValue);
                     }
 
+                    if (condition.Left is QueryFieldDocumentIdentifier && condition.RightHigh != null && StaticParserField.IsConstantExpression(condition.RightHigh.Value))
+                    {
+                        //The high value of a BETWEEN, collapsed for the same reason.
+                        var constantValue = condition.RightHigh.CollapseScalarQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                        condition.RightHigh = new QueryFieldCollapsedValue(condition.RightHigh.ScriptLine, constantValue);
+                    }
+
                     //This Works to collapse the value, but we only index on right hand values... so its commented out.
                     /*
                     if (condition.Right is QueryFieldDocumentIdentifier && StaticParserField.IsConstantExpression(condition.Left.Value))
@@ -208,6 +227,8 @@ namespace NTDLS.Katzebase.Engine.Indexes
                         .OrderByDescending(o => o.CoveredConditions.Count).ToList();
                     preferenceOrderedIndexSelections.AddRange(partialMatches);
 
+                    var groupLookups = new List<IndexingConditionLookup>();
+
                     foreach (var indexSelection in preferenceOrderedIndexSelections)
                     {
                         var indexingConditionLookup = new IndexingConditionLookup(indexSelection);
@@ -224,6 +245,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                                 .Where(o =>
                                        o.Left is QueryFieldDocumentIdentifier identifier
                                     && (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
+                                    && (o.RightHigh == null || o.RightHigh is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
                                     && identifier.SchemaAlias.Is(workingSchemaPrefix)
                                     && o.IsIndexOptimized == false
                                     && identifier.FieldName.Is(attribute.Field) == true).ToList();
@@ -244,10 +266,16 @@ namespace NTDLS.Katzebase.Engine.Indexes
                         if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                         {
                             indexingConditionGroup.Lookups.Add(indexingConditionLookup);
-
-                            flattenedGroup.IndexLookup = indexingConditionLookup;
+                            groupLookups.Add(indexingConditionLookup);
                         }
                     }
+
+                    //Previously only the last lookup was kept (which, given the preference ordering above, was the least
+                    //  desirable one). Keep all of them, most selective first, so they can be intersected.
+                    flattenedGroup.IndexLookups = groupLookups
+                        .OrderBy(EstimateLookupCost)
+                        .ThenByDescending(o => o.AttributeConditionSets.Count)
+                        .ToList();
 
                     if (indexingConditionGroup.Lookups.Count > 0)
                     {
@@ -259,6 +287,43 @@ namespace NTDLS.Katzebase.Engine.Indexes
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// The cost of a lookup where every index attribute is constrained by an equality (a single key read).
+        /// </summary>
+        internal const int PointLookupCost = 1;
+
+        /// <summary>
+        /// Rough relative cost of an index lookup, lower is cheaper/more selective:
+        ///   0: unique index with every attribute constrained by equality (at most one document).
+        ///   1: every attribute constrained by equality (single key read).
+        ///   2: leading attribute(s) constrained by equality (prefix seek and scan).
+        ///   3: no leading equality (full index scan).
+        /// </summary>
+        internal static int EstimateLookupCost(IndexingConditionLookup lookup)
+        {
+            var physicalIndex = lookup.IndexSelection.PhysicalIndex;
+
+            int equalityDepth = 0;
+            foreach (var attribute in physicalIndex.Attributes)
+            {
+                if (lookup.AttributeConditionSets.TryGetValue(attribute.Field.EnsureNotNull(), out var conditions)
+                    && conditions.Any(o => o.Qualifier == LogicalQualifier.Equals))
+                {
+                    equalityDepth++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (equalityDepth == physicalIndex.Attributes.Count)
+            {
+                return physicalIndex.IsUnique ? 0 : PointLookupCost;
+            }
+            return equalityDepth > 0 ? 2 : 3;
         }
 
         #endregion
@@ -297,21 +362,24 @@ namespace NTDLS.Katzebase.Engine.Indexes
         {
             if (givenConditionGroup.IndexLookup != null)
             {
-                if (givenConditionGroup.IndexLookup.IndexSelection.IsFullIndexMatch)
+                foreach (var indexLookup in givenConditionGroup.IndexLookups)
                 {
-                    if (givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Attributes.Count > 1)
+                    var indexName = indexLookup.IndexSelection.PhysicalIndex.Name;
+                    var isComposite = indexLookup.IndexSelection.PhysicalIndex.Attributes.Count > 1;
+
+                    if (EstimateLookupCost(indexLookup) <= PointLookupCost)
                     {
-                        result.AppendLine($"Composite index seek [{givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Name}].");
+                        result.AppendLine(isComposite ? $"Composite index seek [{indexName}]." : $"Index seek [{indexName}].");
                     }
-                    else result.AppendLine($"Index seek [{givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Name}].");
+                    else
+                    {
+                        result.AppendLine(isComposite ? $"Composite index scan [{indexName}]." : $"Index scan [{indexName}].");
+                    }
                 }
-                else
+
+                if (givenConditionGroup.IndexLookups.Count > 1)
                 {
-                    if (givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Attributes.Count > 1)
-                    {
-                        result.AppendLine($"Composite index scan [{givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Name}].");
-                    }
-                    result.AppendLine($"Index scan [{givenConditionGroup.IndexLookup.IndexSelection.PhysicalIndex.Name}].");
+                    result.AppendLine("Index intersect operation (most selective first).");
                 }
 
                 if (givenConditionGroup.LogicalConnector == LogicalConnector.Or)

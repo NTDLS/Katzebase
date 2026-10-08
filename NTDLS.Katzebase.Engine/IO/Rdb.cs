@@ -19,12 +19,8 @@ namespace NTDLS.Katzebase.Engine.IO
             Path = path;
             var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-            // Disable RocksDB's internal block cache: Katzebase has its own caching layer,
-            // so the block cache is redundant. More importantly, HyperClockCache (the default
-            // in RocksDB 8+) uses anonymous mmap which fails hard under memory pressure.
-            var defaultCfOptions = new ColumnFamilyOptions()
-                .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                .SetWalTtlSeconds(0);
+            // See RdbOptions for why the block cache is disabled and bloom filters are enabled.
+            var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
             var columnFamilies = new ColumnFamilies();
             foreach (var cf in RocksDb.ListColumnFamilies(options, path))
@@ -57,17 +53,24 @@ namespace NTDLS.Katzebase.Engine.IO
             DropColumnFamily(name.ToString());
         }
 
+        /// <summary>
+        /// Drops a column family and destroys its handle.
+        ///
+        /// RocksDbSharp's DropColumnFamily() drops the column family and forgets its handle without destroying it. A leaked
+        /// handle keeps part of the database alive after it is closed, which (among other things) holds a handle on the
+        /// database's folder, so the folder cannot be renamed until the process exits.
+        /// </summary>
         public void DropColumnFamily(string name)
         {
             ColumnFamilies.TryRemove(name, out _);
+
+            var handle = Instance.GetColumnFamily(name);
             Instance.DropColumnFamily(name);
+            Native.Instance.rocksdb_column_family_handle_destroy(handle.Handle);
         }
 
         public void DropColumnFamily(RdbKey key)
-        {
-            ColumnFamilies.TryRemove(key.ToString(), out _);
-            Instance.DropColumnFamily(key.ToString());
-        }
+            => DropColumnFamily(key.ToString());
 
         #region CreateColumnFamily
 
@@ -81,8 +84,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             return ColumnFamilies.GetOrAdd(name, n =>
             {
-                var cfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true));
+                var cfOptions = RdbOptions.CreateColumnFamilyOptions();
                 return new RdbColumnFamily(n, Instance.CreateColumnFamily(cfOptions, name));
             });
         }
@@ -107,9 +109,7 @@ namespace NTDLS.Katzebase.Engine.IO
                 }
                 catch
                 {
-                    var defaultCfOptions = new ColumnFamilyOptions()
-                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                        .SetWalTtlSeconds(0);
+                    var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
                     return new RdbColumnFamily(n, Instance.CreateColumnFamily(defaultCfOptions, name));
                 }
             });

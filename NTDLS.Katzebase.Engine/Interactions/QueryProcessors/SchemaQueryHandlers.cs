@@ -97,6 +97,64 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryProcessors
             }
         }
 
+        /// <summary>
+        /// ATTACH SCHEMA [name] FROM '[folder]'. Reads arbitrary server folders, so requires an administrator.
+        /// </summary>
+        internal KbActionResponse ExecuteAttach(SessionState session, PreparedQuery query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
+                var schemaName = query.Schemas.Single().Name;
+                var folderPath = query.GetAttribute<string>(PreparedQuery.Attribute.FilePath);
+
+                _core.Schemas.Attach(transactionReference.Transaction, schemaName, folderPath);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// DETACH SCHEMA [name] TO '[folder]'. Writes to arbitrary server folders, so requires an administrator.
+        /// </summary>
+        internal KbActionResponse ExecuteDetach(SessionState session, PreparedQuery query)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.APIAcquire(session);
+
+                #region Security policy enforcment.
+
+                _core.Policy.EnforceAdministratorPolicy(transactionReference.Transaction);
+
+                #endregion
+
+                var schemaName = query.Schemas.Single().Name;
+                var folderPath = query.GetAttribute<string>(PreparedQuery.Attribute.FilePath);
+
+                _core.Schemas.Detach(transactionReference.Transaction, schemaName, folderPath);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{session.ProcessId}].", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery query)
         {
             try

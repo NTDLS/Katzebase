@@ -26,12 +26,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly QueryType[] _nonQueryTypes =
             [
                 QueryType.Alter,
+                QueryType.Attach,
                 QueryType.Begin,
                 QueryType.Commit,
                 QueryType.Create,
                 QueryType.Declare,
                 QueryType.Delete,
                 QueryType.Deny,
+                QueryType.Detach,
                 QueryType.Drop,
                 QueryType.Grant,
                 QueryType.Insert,
@@ -150,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
 
             var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
-                ?? throw new KbProcessingException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
+                ?? throw new KbObjectNotFoundException($"Procedure not found: [{procedure.SchemaName}:{procedure.ProcedureName}].");
 
             if (physicalProcedure.Parameters.Count > 0)
             {
@@ -265,6 +267,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             SubQueryType.Configuration => _core.Environment.QueryHandlers.ExecuteAlter(session, query),
                             SubQueryType.AddUserToRole => _core.Policy.QueryHandlers.ExecuteAddAccountToRole(session, query),
                             SubQueryType.RemoveUserFromRole => _core.Policy.QueryHandlers.ExecuteRemoveAccountFromRole(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
+                    case QueryType.Attach:
+                        return query.SubQueryType switch
+                        {
+                            SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteAttach(session, query),
+                            _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
+                        };
+                    case QueryType.Detach:
+                        return query.SubQueryType switch
+                        {
+                            SubQueryType.Schema => _core.Schemas.QueryHandlers.ExecuteDetach(session, query),
                             _ => throw new KbEngineException($"Invalid query query subtype: [{query.SubQueryType}] for [{query.QueryType}]."),
                         };
                     case QueryType.Drop:

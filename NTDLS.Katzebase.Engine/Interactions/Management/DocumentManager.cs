@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Api.Types;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
@@ -218,6 +219,57 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
+        /// Replaces the entire content of an existing document, keeping its id and creation time, and updates the indexes.
+        /// </summary>
+        internal void ReplaceDocument(Transaction transaction, PhysicalSchema physicalSchema, uint documentId, string content)
+        {
+            try
+            {
+                var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
+
+                var existingDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), LockOperation.Write)
+                    ?? throw new KbObjectNotFoundException($"Document [{documentId}] does not exist in schema [{physicalSchema.Name}].");
+
+                //A new instance rather than modifying the (possibly cached) existing one, which is also needed below as the
+                //  document's original values for index maintenance.
+                var replacementDocument = new PhysicalDocument(content)
+                {
+                    CreatedUTC = existingDocument.CreatedUTC,
+                    ModifiedUTC = DateTime.UtcNow,
+                };
+
+                _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(documentId), replacementDocument);
+
+                _core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema,
+                    new() { { documentId, (existingDocument.Elements, replacementDocument) } }, listOfModifiedFields: null);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"{new StackFrame(1).GetMethod()} failed for process: [{transaction.ProcessId}].", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Deletes the given documents that exist (ignoring ids that do not), returning the number deleted.
+        /// </summary>
+        internal int DeleteExistingDocuments(Transaction transaction, PhysicalSchema physicalSchema, IEnumerable<uint> documentIds)
+        {
+            var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
+
+            var existingDocumentIds = documentIds.Distinct()
+                .Where(id => _core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(id), LockOperation.Delete))
+                .ToList();
+
+            if (existingDocumentIds.Count > 0)
+            {
+                DeleteDocuments(transaction, physicalSchema, existingDocumentIds);
+            }
+
+            return existingDocumentIds.Count;
+        }
+
+        /// <summary>
         /// When we want to update multiple documents in the same schema, this is where we do it - no exceptions.
         /// </summary>
         /// <param name="transaction"></param>
@@ -228,8 +280,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var indexingDocuments = new Dictionary<uint, PhysicalDocument>();
-                var modifiedFieldNames = new HashSet<string>();
+                var indexingDocuments = new Dictionary<uint, (KbInsensitiveDictionary<string?> OriginalElements, PhysicalDocument Document)>();
+                var modifiedFieldNames = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 
                 var rdb = _core.IO.AcquireDocumentsRdb(physicalSchema);
 
@@ -237,6 +289,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var physicalDocument = _core.IO.GetPBuf<PhysicalDocument>(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), LockOperation.Write, populateCache)
                         ?? throw new Exception($"Document with ID [{updatedDocument.Key}] does not exist in schema [{physicalSchema.Name}].");
+
+                    //The indexes need the pre-update values to find the entries the document must be removed from.
+                    var originalElements = new KbInsensitiveDictionary<string?>();
+                    foreach (var element in physicalDocument.Elements)
+                    {
+                        originalElements.Add(element.Key, element.Value);
+                    }
 
                     physicalDocument.ModifiedUTC = DateTime.UtcNow;
 
@@ -248,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     //Keep track of the modified physical documents for indexing:
-                    indexingDocuments.Add(updatedDocument.Key, physicalDocument);
+                    indexingDocuments.Add(updatedDocument.Key, (originalElements, physicalDocument));
 
                     //Save the document page:
                     _core.IO.PutPBuf(transaction, rdb, KbColumnFamilyName.Documents, new RdbKey(updatedDocument.Key), physicalDocument);

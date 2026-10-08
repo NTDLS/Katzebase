@@ -307,16 +307,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (result != null)
                             {
                                 deserializedObject.Add(result);
+                                continue;
                             }
                         }
-                        else
-                        {
-                            var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                            JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(iterator.Value())))
-                            ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdb.Path}].");
 
-                            deserializedObject.Add(obj);
-                        }
+                        //Not modified by this transaction (or deferred IO is disabled): use the stored value.
+                        var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
+                        JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(iterator.Value())))
+                        ?? throw new Exception($"JSON deserialization resulted in null for file: [{rdb.Path}].");
+
+                        deserializedObject.Add(obj);
                     }
                 }
                 else if (format == IOFormat.PBuf)
@@ -348,17 +348,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (result != null)
                             {
                                 deserializedObject.Add(result);
+                                continue;
                             }
                         }
-                        else
+
+                        //Not modified by this transaction (or deferred IO is disabled): use the stored value.
+                        var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         {
-                            var obj = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
-                            {
-                                using var input = new MemoryStream(iterator.Value());
-                                return ProtoBuf.Serializer.Deserialize<T>(input);
-                            }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdb.Path}].");
-                            deserializedObject.Add(obj);
-                        }
+                            using var input = new MemoryStream(iterator.Value());
+                            return ProtoBuf.Serializer.Deserialize<T>(input);
+                        }) ?? throw new Exception($"PBuf deserialization resulted in null for file: [{rdb.Path}].");
+                        deserializedObject.Add(obj);
                     }
                 }
                 else
@@ -420,20 +420,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var documentsFilePath = physicalSchema.DocumentsFilePath();
 
-            var lazy = _rdbInstances.GetOrAdd(documentsFilePath, path =>
+            //GetOrAdd can run the factory on several threads at once (only one result is kept), so the factory must not open
+            //  the database itself: a second RocksDb.Open of the same path fails on its lock file. Opening inside the Lazy runs
+            //  exactly once, for the instance that won the slot.
+            var lazy = _rdbInstances.GetOrAdd(documentsFilePath, path => new Lazy<Rdb>(() =>
             {
                 var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-                var defaultCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
-                var documentsCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var documentsCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 var columnFamilies = new ColumnFamilies();
-                foreach (var cf in RocksDb.ListColumnFamilies(options, documentsFilePath))
+                foreach (var cf in RocksDb.ListColumnFamilies(options, path))
                 {
                     if (cf.Equals(KbColumnFamilyName.Documents.ToString(), StringComparison.InvariantCultureIgnoreCase))
                     {
@@ -445,10 +444,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
-                var instance = RocksDb.Open(options, documentsFilePath, columnFamilies);
-
-                return new Lazy<Rdb>(() => new Rdb(path, instance));
-            });
+                return new Rdb(path, RocksDb.Open(options, path, columnFamilies));
+            }));
 
             try
             {
@@ -471,9 +468,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var rdbOptions = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
-                var defaultCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 //Create schema catalog RDB with necessary column families.
                 var schemaCFs = new ColumnFamilies
@@ -487,9 +482,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //Create documents RDB with necessary column families.
 
-                var documentsCfOptions = new ColumnFamilyOptions()
-                    .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                    .SetWalTtlSeconds(0);
+                var documentsCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 /*
                 if (physicalSchema.someOption)
@@ -557,6 +550,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             transaction.RecordKeyDelete(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
             rdb.Remove(key.Bytes, columnFamilyName);
+
+            //Otherwise a read by key would still find the deleted value in the cache.
+            _core.Cache.Remove(cacheKey);
         }
 
         #endregion
@@ -697,11 +693,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var cacheKey = CacheManager.MakeCacheKey(rdb.Path, columnFamilyName, key);
 
                 transaction.LockSingleObject(LockOperation.Write, cacheKey);
-
-                bool doesKeyExist = DoesKeyExist(transaction, rdb, columnFamilyName, key, lockOp ?? LockOperation.Write, out _);
-                if (doesKeyExist)
+                if (lockOp != null && lockOp != LockOperation.Write)
                 {
-                    transaction.RecordKeyAlter(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
+                    transaction.LockSingleObject(lockOp.Value, cacheKey);
+                }
+
+                //A single read both determines whether the key exists and captures its original value for the transaction log.
+                var originalData = rdb.Get(key.Bytes, columnFamilyName);
+                if (originalData != null)
+                {
+                    transaction.RecordKeyAlter(rdb, columnFamilyName, key, cacheKey, originalData);
                 }
                 else
                 {
@@ -751,6 +752,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 // Write-through caching is intentionally omitted: reads populate cache on demand.
                 // Caching every write inflates memory 3-5x (C# object vs. serialized bytes estimate)
                 // and is counterproductive during bulk import where those entries are rarely re-read.
+                // Any previously cached value is now stale, so it is evicted.
+                _core.Cache.Remove(cacheKey);
             }
             catch (Exception ex)
             {

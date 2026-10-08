@@ -166,7 +166,20 @@ namespace NTDLS.Katzebase.Parsers.Conditions
                         right = $"{FieldCollection.QueryBatch.Variables.Resolve(entry.Right.Value)}";
                     }
 
-                    result.AppendLine("• " + Pad(1 + depth) + $"[{left}] {entry.Qualifier} [{right}].");
+                    if (entry.RightHigh != null)
+                    {
+                        string rightHigh = entry.RightHigh switch
+                        {
+                            QueryFieldExpressionNumeric => "(Numeric Expression)",
+                            QueryFieldExpressionString => "(String Expression)",
+                            _ => $"{FieldCollection.QueryBatch.Variables.Resolve(entry.RightHigh.Value)}"
+                        };
+                        result.AppendLine("• " + Pad(1 + depth) + $"[{left}] {entry.Qualifier} [{right}] AND [{rightHigh}].");
+                    }
+                    else
+                    {
+                        result.AppendLine("• " + Pad(1 + depth) + $"[{left}] {entry.Qualifier} [{right}].");
+                    }
                 }
                 else
                 {

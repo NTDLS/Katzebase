@@ -7,9 +7,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
         //"Boolean IsNumeric (String value = null)|'Returns true if the given value can be converted to a numeric.'",
         public static string? Execute(ScalarFunctionParameterValueCollection function)
         {
-            var text = function.Get<string?>("text");
+            var text = function.Get<string?>("value");
             if (string.IsNullOrEmpty(text))
-                return "false";
+                return "0";
 
             int i = 0;
 
@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
                 i++;
 
             if (i == text.Length)
-                return "false";
+                return "0";
 
             bool hasDecimal = false;
             bool hasDigit = false;
@@ -36,11 +36,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar.Implementations
                 }
                 else
                 {
-                    return "false";
+                    return "0";
                 }
             }
 
-            return hasDigit ? "true" : "false";
+            return hasDigit ? "1" : "0";
         }
     }
 }

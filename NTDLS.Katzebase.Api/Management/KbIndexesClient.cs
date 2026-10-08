@@ -1,111 +1,91 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads;
-using NTDLS.Katzebase.Api.Payloads.Response;
 
 namespace NTDLS.Katzebase.Api.Management
 {
+    /// <summary>
+    /// Index management. Set <see cref="KbIndex.IsUnique"/> to create a unique key.
+    /// </summary>
     public class KbIndexesClient
     {
         private readonly KbClient _client;
 
-        public KbIndexesClient(KbClient client)
+        internal KbIndexesClient(KbClient client)
         {
             _client = client;
         }
 
         /// <summary>
-        /// Creates an index on the given schema.
+        /// Creates an index on the given schema and builds it from the schema's existing documents.
+        /// Throws <see cref="Exceptions.KbDuplicateKeyViolationException"/> if a unique index is created over duplicate values.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="index"></param>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="KbAPIResponseException"></exception>
         public void Create(string schema, KbIndex index, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
+            => _client.Send(new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), queryTimeout);
 
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), (TimeSpan)queryTimeout);
-        }
+        /// <summary>
+        /// Creates an index on the given schema and builds it from the schema's existing documents.
+        /// </summary>
+        public Task CreateAsync(string schema, KbIndex index, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryIndexCreate(_client.ServerConnectionId, schema, index), queryTimeout, cancellationToken);
 
         /// <summary>
         /// Checks for the existence of an index.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="indexName"></param>
         public bool Exists(string schema, string indexName, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout).Value;
-        }
+            => _client.Send(new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), queryTimeout).Value;
 
         /// <summary>
-        /// Gets an index from a specific schema.
+        /// Checks for the existence of an index.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="indexName"></param>
-        public KbQueryIndexGetReply Get(string schema, string indexName, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
-        }
+        public async Task<bool> ExistsAsync(string schema, string indexName, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => (await _client.SendAsync(new KbQueryIndexExists(_client.ServerConnectionId, schema, indexName), queryTimeout, cancellationToken).ConfigureAwait(false)).Value;
 
         /// <summary>
-        /// Rebuilds a given index.
+        /// Gets an index's definition, or null if it does not exist.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="indexName"></param>
-        /// <param name="newPartitionCount"></param>
-        /// <exception cref="Exception"></exception>
-        /// <exception cref="KbAPIResponseException"></exception>
+        public KbIndex? Get(string schema, string indexName, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), queryTimeout).Index;
+
+        /// <summary>
+        /// Gets an index's definition, or null if it does not exist.
+        /// </summary>
+        public async Task<KbIndex?> GetAsync(string schema, string indexName, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => (await _client.SendAsync(new KbQueryIndexGet(_client.ServerConnectionId, schema, indexName), queryTimeout, cancellationToken).ConfigureAwait(false)).Index;
+
+        /// <summary>
+        /// Lists the indexes of a schema.
+        /// </summary>
+        public List<KbIndex> List(string schema, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryIndexList(_client.ServerConnectionId, schema), queryTimeout).Collection;
+
+        /// <summary>
+        /// Lists the indexes of a schema.
+        /// </summary>
+        public async Task<List<KbIndex>> ListAsync(string schema, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => (await _client.SendAsync(new KbQueryIndexList(_client.ServerConnectionId, schema), queryTimeout, cancellationToken).ConfigureAwait(false)).Collection;
+
+        /// <summary>
+        /// Rebuilds an index from the schema's documents.
+        /// </summary>
         public void Rebuild(string schema, string indexName, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
-        }
+            => _client.Send(new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName), queryTimeout);
 
         /// <summary>
-        /// Deletes a given index.
+        /// Rebuilds an index from the schema's documents.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="indexName"></param>
+        public Task RebuildAsync(string schema, string indexName, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryIndexRebuild(_client.ServerConnectionId, schema, indexName), queryTimeout, cancellationToken);
+
+        /// <summary>
+        /// Drops an index.
+        /// </summary>
         public void Drop(string schema, string indexName, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), (TimeSpan)queryTimeout);
-        }
+            => _client.Send(new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), queryTimeout);
 
         /// <summary>
-        /// Lists all indexes on a given schema
+        /// Drops an index.
         /// </summary>
-        /// <param name="schema"></param>
-        public KbActionResponseIndexes List(string schema, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryIndexList(_client.ServerConnectionId, schema), (TimeSpan)queryTimeout);
-        }
+        public Task DropAsync(string schema, string indexName, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryIndexDrop(_client.ServerConnectionId, schema, indexName), queryTimeout, cancellationToken);
     }
 }

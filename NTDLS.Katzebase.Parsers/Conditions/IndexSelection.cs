@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Conditions
 
             foreach (var condition in CoveredConditions)
             {
-                CoveredConditions.Add(condition);
+                clone.CoveredConditions.Add(condition);
             }
 
             return clone;

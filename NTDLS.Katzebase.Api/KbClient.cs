@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
+using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Management;
 using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.Api.Payloads;
@@ -9,6 +9,17 @@ using System.Text;
 
 namespace NTDLS.Katzebase.Api
 {
+    /// <summary>
+    /// A connection (and session) to a Katzebase server.
+    ///
+    /// A client holds a single server session, and a session has at most one open transaction: every request made through
+    /// the client, from any thread, participates in that transaction. Use a separate client per independent unit of work.
+    ///
+    /// All requests throw Katzebase exceptions (see NTDLS.Katzebase.Api.Exceptions): the same exception type that the server
+    /// threw (e.g. <see cref="KbDuplicateKeyViolationException"/>, <see cref="KbObjectNotFoundException"/>,
+    /// <see cref="KbDeadlockException"/>, <see cref="KbParserException"/>), <see cref="KbTimeoutException"/> when the server does
+    /// not reply in time, or <see cref="KbConnectionException"/> when the client is not (or is no longer) connected.
+    /// </summary>
     public class KbClient : IDisposable
     {
         public delegate void ConnectedEvent(KbClient sender, KbSessionInfo sessionInfo);
@@ -21,17 +32,22 @@ namespace NTDLS.Katzebase.Api
         public event CommunicationExceptionEvent? OnCommunicationException;
 
         private TimeSpan _queryTimeout = TimeSpan.FromSeconds(30);
-        private Thread? _heartbeatThread;
+        private Timer? _heartbeatTimer;
+        private readonly Lock _connectionLock = new();
 
+        /// <summary>
+        /// The default amount of time to wait for the server to reply to a request. Every request method also accepts its own timeout.
+        /// </summary>
         public TimeSpan QueryTimeout
         {
-            get { return _queryTimeout; }
+            get => _queryTimeout;
             set
             {
                 _queryTimeout = value;
-                if (Connection?.IsConnected == true)
+                var connection = Connection;
+                if (connection != null)
                 {
-                    Connection.QueryTimeout = _queryTimeout;
+                    connection.QueryTimeout = value;
                 }
             }
         }
@@ -54,6 +70,9 @@ namespace NTDLS.Katzebase.Api
         public KbQueryClient Query { get; private set; }
         public KbProcedureClient Procedure { get; private set; }
 
+        /// <summary>
+        /// Creates a client that is not yet connected, see <see cref="Connect"/>.
+        /// </summary>
         public KbClient()
         {
             Document = new KbDocumentClient(this);
@@ -64,173 +83,222 @@ namespace NTDLS.Katzebase.Api
             Procedure = new KbProcedureClient(this);
         }
 
-        public KbClient(string serverAddress, int serverPort, string userName, string password, string clientName = "")
-        {
-            Document = new KbDocumentClient(this);
-            Schema = new KbSchemaClient(this);
-            Server = new KbServerClient(this);
-            Transaction = new KbTransactionClient(this);
-            Query = new KbQueryClient(this);
-            Procedure = new KbProcedureClient(this);
-
-            Connect(serverAddress, serverPort, userName, password, clientName);
-        }
-
         /// <summary>
-        /// Returns a SHA256 of the given string.
+        /// Creates a client and connects to the server.
         /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        public static string HashPassword(string input)
+        /// <param name="passwordHash">The SHA256 hash of the password, see <see cref="HashPassword(string)"/>.</param>
+        public KbClient(string serverAddress, int serverPort, string userName, string passwordHash, string clientName = "")
+            : this()
         {
-            var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-
-            var builder = new StringBuilder();
-            for (int i = 0; i < hashBytes.Length; i++)
-            {
-                builder.Append(hashBytes[i].ToString("x2"));
-            }
-
-            return builder.ToString();
+            Connect(serverAddress, serverPort, userName, passwordHash, clientName);
         }
 
         /// <summary>
-        /// Connects to an instance of the server
+        /// Returns the SHA256 hash of the given password, which is what the server expects at login.
+        /// </summary>
+        public static string HashPassword(string password)
+            => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(password)));
+
+        #region Connection.
+
+        /// <summary>
+        /// Connects to an instance of the server and starts a session.
         /// </summary>
         /// <param name="hostname">Host or ip of the server.</param>
         /// <param name="port">TCP/IP port of the server</param>
         /// <param name="username">Username to log in with.</param>
-        /// <param name="passwordHash">SHA256 of the password for the given user.</param>
-        /// <param name="clientName">Name of the client that is connecting to the server.</param>
-        /// <exception cref="KbGenericException"></exception>
-        public void Connect(string hostname, int port, string username, string passwordHash, string clientName)
+        /// <param name="passwordHash">SHA256 of the password for the given user, see <see cref="HashPassword(string)"/>.</param>
+        /// <param name="clientName">Name of the client that is connecting to the server (shown in the server's process list).</param>
+        public void Connect(string hostname, int port, string username, string passwordHash, string clientName = "")
         {
-            Address = hostname;
-            Port = port;
-            Username = username;
-            ClientName = clientName;
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
             if (string.IsNullOrWhiteSpace(clientName))
             {
                 clientName = Process.GetCurrentProcess().ProcessName;
             }
 
-            if (Connection?.IsConnected == true)
+            RmClient connection;
+            lock (_connectionLock)
             {
-                throw new KbGenericException("The client is already connected.");
-            }
+                if (Connection?.IsConnected == true)
+                {
+                    throw new KbConnectionException("The client is already connected.");
+                }
 
-            try
-            {
-                Connection = new RmClient(new RmConfiguration
+                Address = hostname;
+                Port = port;
+                Username = username;
+                ClientName = clientName;
+
+                connection = new RmClient(new RmConfiguration
                 {
                     QueryTimeout = _queryTimeout
                 });
 
-                Connection.SetCompressionProvider(new RmDeflateCompressionProvider());
-
-                Connection.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
+                connection.OnException += (RmContext? context, Exception ex, IRmPayload? payload) =>
                 {
-                    var sessionInfo = new KbSessionInfo
-                    {
-                        ConnectionId = ServerConnectionId,
-                        ProcessId = ProcessId
-                    };
-
-                    OnCommunicationException?.Invoke(this, sessionInfo, ex);
+                    OnCommunicationException?.Invoke(this, CurrentSessionInfo(), ex);
                 };
 
-                Connection.OnDisconnected += (RmContext context) =>
+                connection.OnDisconnected += (RmContext context) =>
                 {
-                    var sessionInfo = new KbSessionInfo
-                    {
-                        ConnectionId = ServerConnectionId,
-                        ProcessId = ProcessId
-                    };
-
+                    var sessionInfo = CurrentSessionInfo();
+                    ResetConnectionState(connection);
                     OnDisconnected?.Invoke(this, sessionInfo);
-
-                    Connection = null;
-                    ServerConnectionId = Guid.Empty;
-                    ProcessId = 0;
                 };
 
-                Connection.Connect(hostname, port);
+                Connection = connection;
+            }
+
+            try
+            {
+                connection.Connect(hostname, port);
 
                 var reply = Server.StartSession(username, passwordHash, clientName);
                 ServerConnectionId = reply.ConnectionId;
                 ProcessId = reply.ProcessId;
 
-                _heartbeatThread = new Thread(HeartbeatThread) { IsBackground = true };
-                _heartbeatThread.Start();
-
-                var sessionInfo = new KbSessionInfo
-                {
-                    ConnectionId = ServerConnectionId,
-                    ProcessId = ProcessId
-                };
-                OnConnected?.Invoke(this, sessionInfo);
+                _heartbeatTimer = new Timer(_ => SendHeartbeat(), null,
+                    TimeSpan.FromSeconds(KbConstants.HeartbeatSeconds), TimeSpan.FromSeconds(KbConstants.HeartbeatSeconds));
             }
-            catch
+            catch (Exception ex)
             {
-                Connection = null;
-                ServerConnectionId = Guid.Empty;
-                throw;
+                try { connection.Disconnect(); } catch { }
+                ResetConnectionState(connection);
+
+                throw ex is KbExceptionBase ? ex : new KbConnectionException($"Failed to connect to [{hostname}:{port}]: {ex.Message}", ex);
             }
+
+            OnConnected?.Invoke(this, CurrentSessionInfo());
         }
 
-        private void HeartbeatThread()
+        /// <summary>
+        /// Ends the session (rolling back any open transaction) and disconnects from the server. Safe to call when not connected.
+        /// </summary>
+        public void Disconnect()
         {
-            var lastCheckInTime = DateTime.UtcNow;
-
-            while (IsConnected)
+            RmClient? connection;
+            lock (_connectionLock)
             {
-                if ((DateTime.UtcNow - lastCheckInTime).TotalSeconds >= KbConstants.HeartbeatSeconds)
-                {
-                    Connection?.Notify(new KbNotifySessionHeartbeat());
-                    lastCheckInTime = DateTime.UtcNow;
-                }
-                Thread.Sleep(100);
+                connection = Connection;
             }
-        }
 
-        void Disconnect()
-        {
-            _heartbeatThread = null;
+            if (connection == null)
+            {
+                return;
+            }
+
             try
             {
-                try
+                if (connection.IsConnected)
                 {
-                    if (Connection?.IsConnected == true)
-                    {
-                        Server.CloseSession();
-                    }
-                }
-                catch
-                {
-                    throw;
-                }
-                finally
-                {
-                    Connection?.Disconnect();
-                    Connection = null;
+                    Server.CloseSession();
                 }
             }
             catch
             {
-                throw;
+                //The server ends the session itself when the connection closes.
             }
             finally
             {
+                try { connection.Disconnect(); } catch { }
+                ResetConnectionState(connection);
+            }
+        }
+
+        private void SendHeartbeat()
+        {
+            try
+            {
+                var connection = Connection;
+                if (connection?.IsConnected == true)
+                {
+                    connection.Notify(new KbNotifySessionHeartbeat());
+                }
+            }
+            catch
+            {
+                //A failed heartbeat surfaces as a disconnect.
+            }
+        }
+
+        private void ResetConnectionState(RmClient connection)
+        {
+            lock (_connectionLock)
+            {
+                if (Connection != connection)
+                {
+                    return; //A newer connection has already been established.
+                }
+
+                _heartbeatTimer?.Dispose();
+                _heartbeatTimer = null;
                 Connection = null;
                 ServerConnectionId = Guid.Empty;
                 ProcessId = 0;
             }
         }
 
+        private KbSessionInfo CurrentSessionInfo()
+            => new() { ConnectionId = ServerConnectionId, ProcessId = ProcessId };
+
+        #endregion
+
+        #region Request execution.
+
+        private RmClient GetConnection()
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            var connection = Connection;
+            if (connection?.IsConnected != true)
+            {
+                throw new KbConnectionException("The client is not connected.");
+            }
+            return connection;
+        }
+
+        /// <summary>
+        /// Sends a request to the server and waits for the reply, translating failures into Katzebase exceptions.
+        /// </summary>
+        internal TReply Send<TReply>(IRmQuery<TReply> query, TimeSpan? queryTimeout)
+            where TReply : IRmQueryReply
+        {
+            var connection = GetConnection();
+            try
+            {
+                return connection.Query(query, queryTimeout ?? _queryTimeout);
+            }
+            catch (Exception ex)
+            {
+                throw KbRemoteExceptionMapper.Map(ex, connection.IsConnected);
+            }
+        }
+
+        /// <summary>
+        /// Sends a request to the server and asynchronously waits for the reply, translating failures into Katzebase exceptions.
+        /// </summary>
+        internal async Task<TReply> SendAsync<TReply>(IRmQuery<TReply> query, TimeSpan? queryTimeout, CancellationToken cancellationToken)
+            where TReply : IRmQueryReply
+        {
+            var connection = GetConnection();
+            try
+            {
+                return await connection.QueryAsync(query, queryTimeout ?? _queryTimeout, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw KbRemoteExceptionMapper.Map(ex, connection.IsConnected);
+            }
+        }
+
+        #endregion
+
         #region IDisposable.
 
-        private bool disposed = false;
+        private bool _disposed = false;
+
         public void Dispose()
         {
             Dispose(true);
@@ -239,17 +307,17 @@ namespace NTDLS.Katzebase.Api
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
 
             if (disposing)
             {
-                Disconnect();
+                Disconnect(); //Never throws.
             }
 
-            disposed = true;
+            _disposed = true;
         }
 
         #endregion

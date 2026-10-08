@@ -165,11 +165,7 @@
             get => dataRootPath;
             set
             {
-                dataRootPath = value.TrimEnd(['/', '\\']).Trim();
-                if (Path.IsPathRooted(dataRootPath) == false)
-                {
-                    dataRootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, dataRootPath));
-                }
+                dataRootPath = NormalizePath(value);
             }
         }
         private string dataRootPath = ".\\data\\root";
@@ -182,12 +178,7 @@
             get => transactionDataPath;
             set
             {
-                transactionDataPath = value.TrimEnd(['/', '\\']).Trim();
-
-                if (Path.IsPathRooted(transactionDataPath) == false)
-                {
-                    transactionDataPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, transactionDataPath));
-                }
+                transactionDataPath = NormalizePath(value);
             }
         }
 
@@ -201,11 +192,7 @@
             get => logDirectory;
             set
             {
-                logDirectory = value.TrimEnd(['/', '\\']).Trim();
-                if (Path.IsPathRooted(logDirectory) == false)
-                {
-                    logDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, logDirectory));
-                }
+                logDirectory = NormalizePath(value);
             }
         }
         private string logDirectory = ".\\data\\log";
@@ -224,5 +211,24 @@
         /// Causes the server to write super-verbose information about almost every internal operation.
         /// </summary>
         public bool WriteTraceData { get; set; }
+
+        /// <summary>
+        /// Returns the absolute form of a configured folder (relative paths are relative to the application's folder),
+        ///  without a trailing separator. Path.GetFullPath also expands Windows 8.3 short names (such as JPATTE~1). The
+        ///  engine resolves some of its paths with GetFullPath, so a folder configured with a short name was referred to
+        ///  by two spellings, and the same RocksDB database was opened twice, which fails.
+        /// </summary>
+        private static string NormalizePath(string value)
+        {
+            var path = value.Trim();
+            if (Path.IsPathRooted(path) == false)
+            {
+                path = Path.Combine(AppContext.BaseDirectory, path);
+            }
+            path = Path.GetFullPath(path);
+
+            var root = Path.GetPathRoot(path) ?? string.Empty;
+            return path.Length > root.Length ? path.TrimEnd(['/', '\\']) : path;
+        }
     }
 }

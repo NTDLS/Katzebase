@@ -12,6 +12,22 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
         public DateTime Modified { get; set; }
         public bool IsUnique { get; set; } = false;
 
+        /// <summary>
+        /// The storage layout version of this index's entries.
+        ///   1: one entry per distinct value, valued with the packed list of document ids (index definitions written before
+        ///      this property existed deserialize as 1).
+        ///   2: one entry per document, keyed by the values and the document id.
+        /// Indexes stored in an older layout must be rebuilt (REBUILD INDEX) before they can be used.
+        /// </summary>
+        public int StorageVersion { get; set; } = 1;
+
+        /// <summary>
+        /// The storage layout version written by this version of the engine.
+        /// </summary>
+        public const int CurrentStorageVersion = 2;
+
+        public bool IsCurrentStorageVersion() => StorageVersion == CurrentStorageVersion;
+
         public PhysicalIndex()
         {
         }
@@ -24,7 +40,8 @@ namespace NTDLS.Katzebase.PersistentTypes.Index
                 Name = Name,
                 Created = Created,
                 Modified = Modified,
-                IsUnique = IsUnique
+                IsUnique = IsUnique,
+                StorageVersion = StorageVersion
             };
 
             foreach (var attribute in Attributes)

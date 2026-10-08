@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using Newtonsoft.Json;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -9,6 +10,7 @@ using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using RocksDbSharp;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 
@@ -62,9 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     //If we fail to open the database, then we attempt to create it.
                     var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
-                    var defaultCfOptions = new ColumnFamilyOptions()
-                        .SetBlockBasedTableFactory(new BlockBasedTableOptions().SetNoBlockCache(true))
-                        .SetWalTtlSeconds(0);
+                    var defaultCfOptions = RdbOptions.CreateColumnFamilyOptions();
                     var columnFamilies = new ColumnFamilies
                         {
                             //The Identity column contains one record per transaction with the key being the transaction ID and the value being the incrementing value.
@@ -202,24 +202,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var transactionId in transactionIDs)
                 {
-                    // Assign the orphaned transaction's ID so Rollback() looks up the correct
-                    // column family and CleanupTransaction() drops it afterwards.
+                    // Assign the orphaned transaction's ID so Rollback() finds its atoms and CleanupTransaction() removes them afterwards.
                     var transaction = new Transaction(_core, this, 0, true) { Id = transactionId };
 
-                    long lastSequence = 0;
-
-                    var columnFamily = rdb.GetColumnFamily(new RdbKey(transactionId));
-                    using (var iterator = rdb.NewIterator(columnFamily))
-                    {
-                        iterator.SeekToLast();
-                        if (iterator.Valid())
-                        {
-                            var lastAtom = JsonConvert.DeserializeObject<Atom>(iterator.StringValue());
-                            lastSequence = lastAtom?.Sequence ?? 0;
-                        }
-                    } // Iterator closed before Rollback so CleanupTransaction can drop the CF.
-
-                    LogManager.Warning($"Rolling back orphaned transaction {transactionId} with {lastSequence:N0} actions.");
+                    LogManager.Warning($"Rolling back orphaned transaction {transactionId}.");
 
                     try
                     {
@@ -247,16 +233,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// that multithreaded client operations be aware that if any one client rolls back an operation
         /// that this will cause all active processes for that client connection to also be cancelled.
         /// </summary>
-        internal TransactionReference APIAcquire(SessionState session)
+        internal TransactionReference APIAcquire(SessionState session, [CallerMemberName] string callerName = "")
         {
             var transactionReference = Acquire(session, false);
 
-            var stackFrames = (new StackTrace()).GetFrames();
-            if (stackFrames.Length >= 2)
-            {
-                //Since we go though Interactions.APIHandlers, the top level function will be the name of the API.
-                transactionReference.Transaction.TopLevelOperation = stackFrames[1].GetMethod()?.Name ?? string.Empty;
-            }
+            //Since we go though Interactions.APIHandlers, the calling function will be the name of the API.
+            //  (CallerMemberName is resolved at compile time, capturing a StackTrace on every statement is expensive.)
+            transactionReference.Transaction.TopLevelOperation = callerName;
 
             return transactionReference;
         }
@@ -320,7 +303,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                GetByProcessId(processId)?.Commit();
+                //Committing when there is no open transaction is an error: the transaction may have been rolled back by the
+                //  server (e.g. chosen as a deadlock victim, or a lock wait timeout), and silently "succeeding" would let the
+                //  caller believe that its changes were saved.
+                var transaction = GetByProcessId(processId)
+                    ?? throw new KbTransactionCancelledException("There is no open transaction to commit. It may have been rolled back,"
+                        + " for example after being chosen as a deadlock victim.");
+
+                transaction.Commit();
             }
             catch (Exception ex)
             {

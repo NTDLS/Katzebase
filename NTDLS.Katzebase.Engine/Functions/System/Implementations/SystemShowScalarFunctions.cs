@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     }
                 }
                 wikiPrototype.Append(')');
-                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbMessageType.Verbose));
+                result.Messages.Add(new NTDLS.Katzebase.Api.Models.KbQueryResultMessage(wikiPrototype.ToString(), NTDLS.Katzebase.Api.KbConstants.KbMessageType.Verbose));
 #endif
             }
 
