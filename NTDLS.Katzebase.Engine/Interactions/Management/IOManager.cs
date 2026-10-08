@@ -420,7 +420,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var documentsFilePath = physicalSchema.DocumentsFilePath();
 
-            var lazy = _rdbInstances.GetOrAdd(documentsFilePath, path =>
+            //GetOrAdd can run the factory on several threads at once (only one result is kept), so the factory must not open
+            //  the database itself: a second RocksDb.Open of the same path fails on its lock file. Opening inside the Lazy runs
+            //  exactly once, for the instance that won the slot.
+            var lazy = _rdbInstances.GetOrAdd(documentsFilePath, path => new Lazy<Rdb>(() =>
             {
                 var options = new DbOptions().SetCreateIfMissing(true).SetCreateMissingColumnFamilies(true);
 
@@ -429,7 +432,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var documentsCfOptions = RdbOptions.CreateColumnFamilyOptions();
 
                 var columnFamilies = new ColumnFamilies();
-                foreach (var cf in RocksDb.ListColumnFamilies(options, documentsFilePath))
+                foreach (var cf in RocksDb.ListColumnFamilies(options, path))
                 {
                     if (cf.Equals(KbColumnFamilyName.Documents.ToString(), StringComparison.InvariantCultureIgnoreCase))
                     {
@@ -441,10 +444,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
-                var instance = RocksDb.Open(options, documentsFilePath, columnFamilies);
-
-                return new Lazy<Rdb>(() => new Rdb(path, instance));
-            });
+                return new Rdb(path, RocksDb.Open(options, path, columnFamilies));
+            }));
 
             try
             {

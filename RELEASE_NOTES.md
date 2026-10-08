@@ -97,6 +97,14 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 
 ### Management UI
 
+- **Explain Plan suggests indexes.** For each schema in the query, the explain plan now lists the indexes that would let its conditions be answered by an index lookup instead of reading every document, as ready-to-run `CREATE INDEX` statements (also returned by `Query.ExplainPlan` in the client API).
+  - Fields compared with `=` come first, followed by at most one range field (`>`, `>=`, `<`, `<=`, `BETWEEN`).
+  - Nothing is suggested when the existing indexes already serve the conditions: an index whose leading fields cover them, a unique key that is fully matched, or several indexes whose lookups are intersected. Conditions that no index can serve (`LIKE`, `!=`, expressions) are not considered.
+  - Each `OR` group is considered separately, since one unindexed group makes the whole schema scan. When an `OR` group doesn't filter the schema at all, nothing is suggested for it, because no index could help.
+  - Join conditions are considered for the joined schema.
+  - When an index in the old storage format would serve the conditions, `REBUILD INDEX` is suggested instead of a new index.
+
+- **Attach Schema...** and **Detach Schema...** (right-click a schema) ask for a folder and open a ready-to-run `ATTACH SCHEMA` or `DETACH SCHEMA` script in a new tab. Attach adds the folder as a child of the schema that was clicked, named after the folder. Detach moves the schema into a new folder, named after the schema, inside the selected folder.
 - **Create Index** (right-click a schema or its *Indexes* folder) now opens a ready-to-edit `CREATE INDEX` script for the schema, listing the schema's known fields.
 - **Find in Server Explorer** (right-click an editor tab) now selects, in the server explorer, the schema referenced by the statement under the cursor, or the tab's server if the script doesn't reference one.
 - Opening a recent file that no longer exists now says so, and removes it from the *Recent Files* menu immediately.
@@ -118,6 +126,7 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 - **SQL Server migration could silently lose rows.** Any error other than a deadlock was swallowed and the row was skipped. A deadlock rolled back the whole open transaction (up to 10,000 rows), but only the current row was retried. Now each batch is atomic, so a deadlocked batch is retried in full (up to 10 times with backoff). Any other error stops the import of that table, and the error message is shown in the grid.
 - `ANALYZE SCHEMA ... WITH (IncludePhysicalPages = true)` reported every non-unique index as having no documents. It now counts the new one-entry-per-document layout correctly, and reports indexes in the old format as needing a rebuild.
 - `IndexSelection.Clone()` copied covered conditions into itself instead of the clone.
+- **Concurrent first use of a schema could fail** with "Failed to create lock file ... being used by another process". Two requests that opened a schema's documents database at the same time could both try to open it, and the second failed (for example, two clients logging in at once both opening `Master:Account`). The database is now opened exactly once.
 - **The server failed to start when a data folder was configured with a Windows 8.3 short name** (such as `C:\Users\JPATTE~1\...`). Some paths were expanded to their long form and others weren't, so the same RocksDB database was opened twice. Configured folders are now always stored as full, long paths.
 - **Scalar and aggregate function fixes:**
   - `IsInteger()` returned the opposite result (0 for `'15'`, 1 for `'1.5'`). It now also accepts integers larger than 32 bits.

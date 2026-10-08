@@ -611,7 +611,13 @@ namespace NTDLS.Katzebase.Management
                 popupMenu.Items.Add("Sample Schema", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("Analyze Schema", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("-");
-                popupMenu.Items.Add("Drop Schema", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("Attach Schema...", FormUtility.TransparentImage(Resources.Asset));
+                if (node.Schema?.Id != EngineConstants.RootSchemaGUID)
+                {
+                    popupMenu.Items.Add("Detach Schema...", FormUtility.TransparentImage(Resources.Asset));
+                    popupMenu.Items.Add("-");
+                    popupMenu.Items.Add("Drop Schema", FormUtility.TransparentImage(Resources.Asset));
+                }
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
@@ -725,6 +731,33 @@ namespace NTDLS.Katzebase.Management
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                 }
+                else if (e.ClickedItem?.Text?.Is("Attach Schema...") == true && schema != null)
+                {
+                    //The folder of a detached schema, attached as a child of this schema and named after the folder.
+                    var folder = PickFolder("Select the folder of the detached schema to attach.");
+                    if (folder != null)
+                    {
+                        var schemaName = SchemaNameFromFolder(folder);
+                        var schemaPath = string.IsNullOrEmpty(schema.Path) ? schemaName : $"{schema.Path}:{schemaName}";
+
+                        var tabFilePage = CreateNewTabBasedOn(node);
+                        tabFilePage.Editor.Text = $"ATTACH SCHEMA {schemaPath} FROM '{folder}'\r\n";
+                        tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                        tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                    }
+                }
+                else if (e.ClickedItem?.Text?.Is("Detach Schema...") == true && schema != null)
+                {
+                    //The schema is moved into a new folder, named after the schema, inside the selected folder.
+                    var folder = PickFolder($"Select the folder to detach [{schema.Path}] into.");
+                    if (folder != null)
+                    {
+                        var tabFilePage = CreateNewTabBasedOn(node);
+                        tabFilePage.Editor.Text = $"DETACH SCHEMA {schema.Path} TO '{Path.Combine(folder, schema.Name)}'\r\n";
+                        tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                        tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                    }
+                }
                 else if (e.ClickedItem?.Text?.Is("Drop Schema") == true && schema != null)
                 {
                     var tabFilePage = CreateNewTabBasedOn(node);
@@ -813,6 +846,36 @@ namespace NTDLS.Katzebase.Management
             {
                 MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Shows a folder picker and returns the selected folder (without a trailing separator), or null when cancelled.
+        /// </summary>
+        private static string? PickFolder(string description)
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = description,
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+
+            if (dialog.ShowDialog() != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                return null;
+            }
+
+            //A trailing backslash would escape the closing quote of the folder in the script.
+            return dialog.SelectedPath.TrimEnd('\\', '/');
+        }
+
+        /// <summary>
+        /// A schema name for a folder: the folder name with anything other than letters, digits and underscores replaced.
+        /// </summary>
+        private static string SchemaNameFromFolder(string folder)
+        {
+            var name = new string(Path.GetFileName(folder).Select(c => char.IsLetterOrDigit(c) || c == '_' ? c : '_').ToArray());
+            return string.IsNullOrEmpty(name) ? "AttachedSchema" : name;
         }
 
         #endregion
