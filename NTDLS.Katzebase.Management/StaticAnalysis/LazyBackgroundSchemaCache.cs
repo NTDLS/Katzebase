@@ -590,7 +590,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                 return; //The root has no details, or the schema is not (or no longer) known.
             }
 
-            var indexes = client.Schema.Indexes.List(schemaPath).Collection;
+            var indexes = client.Schema.Indexes.List(schemaPath);
             var fields = client.Schema.FieldSample(schemaPath).Collection.Select(o => o.Name).ToList();
 
             //The schema may have been removed while we were waiting on the server.

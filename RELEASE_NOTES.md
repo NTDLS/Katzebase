@@ -54,6 +54,17 @@ This release targets insert and select throughput. Single statements are now up 
 - **New `client.Document.StoreMany(schema, documents)` API.** It sends a batch of documents to the server in one round trip and stores them in a single atomic transaction. It returns the new document ids in the order they were given. With batches of 1,000 documents, inserts run at about 14,000 rows/s with three indexes and about 28,000 rows/s with none. That compares to about 4,100 rows/s with one `Document.Store` call per row.
 - **`NTDLS.Katzebase.SQLServerMigration` now imports data with `StoreMany`**, in batches of up to 1,000 rows or 4 MB.
 
+### Client API (NTDLS.Katzebase.Api)
+
+- **Typed exceptions.** Server errors used to reach the client as plain `System.Exception`, so callers could only tell them apart by message text. They are now rethrown as the same type the server raised (`KbDuplicateKeyViolationException`, `KbObjectNotFoundException`, `KbDeadlockException`, `KbParserException` with its line number, ...). Timeouts throw `KbTimeoutException`, and requests when not connected (or when the connection is lost) throw the new `KbConnectionException`.
+- **New document operations by id:** `Document.Get`, `Get<T>`, `Replace` (replaces the whole document and updates indexes), `Delete` and `DeleteMany`. `Document.Store` now returns the new document's id.
+- **Async methods.** Every operation has an `...Async` version that accepts a `CancellationToken`.
+- **Transaction scopes.** `Transaction.Begin()` returns a scope; disposing it rolls the transaction back unless `Commit()` was called.
+- **Schema `Attach`/`Detach`** methods for `ATTACH SCHEMA` and `DETACH SCHEMA`.
+- **Simpler parameters.** Each query method takes one `parameters` argument: an anonymous object, any object, or a dictionary of names to values (with or without the leading `@`). Values are sent culture-invariantly, so `1.5` is no longer sent as `"1,5"` on machines using a comma decimal separator. Booleans are sent as `1`/`0` and dates in ISO 8601.
+- **More robust result mapping** (`Fetch<T>`, `MapTo<T>`). Values are parsed culture-invariantly, booleans accept `1`/`0`, enums and nullable types are supported, and read-only properties are skipped instead of failing.
+- `Dispose()` no longer throws when the server is unreachable, and `Disconnect()` is now public.
+
 ### Client/server protocol and logging
 
 - **Compression has been removed from the client/server connection.** Deflate compression of every message cost more time than it saved. Single-row inserts through the client are 10–20% faster without it (2,167 → 2,657 rows/s inside an explicit transaction).
@@ -92,6 +103,9 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 
 ### Bug fixes
 
+- Reading a document by key after it was updated or deleted could return the stale cached version. Writes and deletes now evict the cached copy.
+- `KbProcedure(schemaName, procedureName)` assigned the schema and procedure names to each other.
+
 - **Creating or rebuilding an index leaked a RocksDB column family handle.** Dropping a column family (which `CREATE INDEX`, `REBUILD INDEX`, `DROP INDEX` and transaction rollback all do) never destroyed its handle. That kept part of the schema's database open after it was closed, so the schema's folder could not be moved or renamed until the server restarted.
 
 - **Index entries are now part of the transaction log.** Previously they were written outside the log, which caused these problems:
@@ -108,6 +122,15 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 ---
 
 ### Breaking changes
+
+- **Client API changes:**
+  - Query and procedure methods take a single `object? parameters` argument instead of separate object/dictionary overloads. Pass timeouts by name (`queryTimeout:`) or using the `(statement, TimeSpan)` overloads. A `TimeSpan` passed as parameters is rejected.
+  - Procedures are identified by their fully qualified name (`"Schema:Procedure"`); the separate schema/procedure-name overloads were removed.
+  - `Schema.Indexes.Get` returns the `KbIndex` (or null) and `Schema.Indexes.List` returns `List<KbIndex>`, rather than reply objects.
+  - `Fetch<T>` and friends return `List<T>`.
+  - `Server.StartSession` and `Server.CloseSession` are internal; use `Connect` and `Disconnect`.
+  - Parameters are sent with different representations: booleans as `1`/`0`, dates in ISO 8601, numbers in the invariant culture.
+  - **`COMMIT` (and `Transaction.Commit()`) with no open transaction is now an error** (`KbTransactionCancelledException`). It used to silently succeed, so a transaction the server had rolled back, e.g. as a deadlock victim, looked committed.
 
 - **The wire protocol has changed: client/server compression has been removed.** Clients and servers from this release cannot communicate with clients or servers from earlier releases. Upgrade the server and every application that uses `NTDLS.Katzebase.Api` (including the management tools) together.
 - **The index storage format has changed. Every existing index must be rebuilt** with `REBUILD INDEX <name> ON <schema>` after upgrading. Until it is rebuilt, an index:

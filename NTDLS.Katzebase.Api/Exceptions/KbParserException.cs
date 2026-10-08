@@ -4,6 +4,9 @@
     {
         public int? LineNumber { get; set; }
 
+        protected override string? TransportDetail
+            => LineNumber?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
         public KbParserException()
         {
             Severity = KbConstants.KbLogSeverity.Verbose;

@@ -1,347 +1,226 @@
-﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
-using NTDLS.Katzebase.Api.Types;
+using NTDLS.Katzebase.Api.Payloads.Response;
 
 namespace NTDLS.Katzebase.Api.Management
 {
+    /// <summary>
+    /// Executes statements.
+    ///
+    /// Parameters are referenced in statements as @Name and can be given as an anonymous object (new { Name = "x" }), any other
+    /// object (its public properties), or a dictionary of names to values. See <see cref="KbParameters"/>.
+    /// Always pass values as parameters rather than formatting them into the statement text.
+    /// </summary>
     public class KbQueryClient
     {
         private readonly KbClient _client;
 
-        public KbQueryClient(KbClient client)
+        internal KbQueryClient(KbClient client)
         {
             _client = client;
         }
 
-        #region ExplainOperation.
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, object? userParameters, TimeSpan? queryTimeout = null)
-            => ExplainOperation(statement, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, Dictionary<string, object?>? userParameters = null, TimeSpan? queryTimeout = null)
-            => ExplainOperation(statement, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join operations.
-        /// </summary>
-        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
-        }
-
-        #endregion
-
-        #region ExplainPlan.
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, object? userParameters, TimeSpan? queryTimeout = null)
-            => ExplainPlan(statement, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, Dictionary<string, object?>? userParameters = null, TimeSpan? queryTimeout = null)
-            => ExplainPlan(statement, userParameters?.ToUserParametersInsensitiveDictionary(), queryTimeout);
-
-        /// <summary>
-        /// Explains the condition and join plans, including applicable indexing.
-        /// </summary>
-        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
-        }
-
-        #endregion
-
         #region Fetch.
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Executes a statement (or batch of statements) and returns all of the result sets.
         /// </summary>
-        public KbQueryQueryExecuteQueryReply Fetch(string statement, TimeSpan? queryTimeout = null)
-            => Fetch(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout);
+        public KbQueryQueryExecuteQueryReply Fetch(string statement, object? parameters = null, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout);
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Executes a statement (or batch of statements) and returns all of the result sets.
         /// </summary>
-        public KbQueryQueryExecuteQueryReply Fetch(string statement, object userParameters, TimeSpan? queryTimeout = null)
-            => Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public KbQueryQueryExecuteQueryReply Fetch(string statement, TimeSpan queryTimeout)
+            => Fetch(statement, null, queryTimeout);
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Executes a statement (or batch of statements) and returns all of the result sets.
         /// </summary>
-        public KbQueryQueryExecuteQueryReply Fetch(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
-            => Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public Task<KbQueryQueryExecuteQueryReply> FetchAsync(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout, cancellationToken);
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Executes a statement that returns a single result set and maps its rows to objects (see <see cref="KbExtensions.MapTo{T}"/>).
         /// </summary>
-        public KbQueryQueryExecuteQueryReply Fetch(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
-        }
-
-        #endregion
-
-        #region Fetch<T>.
+        public List<T> Fetch<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null) where T : new()
+            => SingleResultSet(Fetch(statement, parameters, queryTimeout)).MapTo<T>();
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Executes a statement that returns a single result set and maps its rows to objects (see <see cref="KbExtensions.MapTo{T}"/>).
         /// </summary>
-        public IEnumerable<T> Fetch<T>(string statement, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout);
-
+        public async Task<List<T>> FetchAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default) where T : new()
+            => SingleResultSet(await FetchAsync(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false)).MapTo<T>();
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Returns the first row of the result, throwing <see cref="KbObjectNotFoundException"/> if there are no rows.
         /// </summary>
-        public IEnumerable<T> Fetch<T>(string statement, object userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public T FetchFirst<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null) where T : new()
+            => First(Fetch<T>(statement, parameters, queryTimeout));
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Returns the first row of the result, throwing <see cref="KbObjectNotFoundException"/> if there are no rows.
         /// </summary>
-        public IEnumerable<T> Fetch<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public async Task<T> FetchFirstAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default) where T : new()
+            => First(await FetchAsync<T>(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false));
 
         /// <summary>
-        /// Fetches documents using the given query and optional parameters.
+        /// Returns the first row of the result, or default if there are no rows.
         /// </summary>
-        public IEnumerable<T> Fetch<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout) where T : new()
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            var resultCollection = _client.Connection.Query(
-                new KbQueryQueryExecuteQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
-
-            if (resultCollection.Collection.Count > 1)
-            {
-                throw new KbMultipleRecordSetsException();
-            }
-            else if (resultCollection.Collection.Count == 0)
-            {
-                return new List<T>();
-            }
-
-            return resultCollection.Collection[0].MapTo<T>();
-        }
-
-        #endregion
-
-        #region FetchFirst<T>.
+        public T? FetchFirstOrDefault<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null) where T : new()
+            => Fetch<T>(statement, parameters, queryTimeout).FirstOrDefault();
 
         /// <summary>
-        /// Fetches the first row, or throws an exception, using the given query and optional parameters.
+        /// Returns the first row of the result, or default if there are no rows.
         /// </summary>
-        public T FetchFirst<T>(string statement, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout).First();
+        public async Task<T?> FetchFirstOrDefaultAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default) where T : new()
+            => (await FetchAsync<T>(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false)).FirstOrDefault();
 
         /// <summary>
-        /// Fetches the first row, or throws an exception, using the given query and optional parameters.
+        /// Returns the only row of the result, throwing <see cref="KbObjectNotFoundException"/> if there are no rows
+        /// and <see cref="KbProcessingException"/> if there is more than one.
         /// </summary>
-        public T FetchFirst<T>(string statement, object userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).First();
+        public T FetchSingle<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null) where T : new()
+            => Single(Fetch<T>(statement, parameters, queryTimeout), allowNone: false)!;
 
         /// <summary>
-        /// Fetches the first row, or throws an exception, using the given query and optional parameters.
+        /// Returns the only row of the result. See <see cref="FetchSingle{T}"/>.
         /// </summary>
-        public T FetchFirst<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).First();
+        public async Task<T> FetchSingleAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default) where T : new()
+            => Single(await FetchAsync<T>(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false), allowNone: false)!;
 
         /// <summary>
-        /// Fetches the first row, or throws an exception, using the given query and optional parameters.
+        /// Returns the only row of the result, or default if there are no rows. Throws <see cref="KbProcessingException"/> if there is more than one.
         /// </summary>
-        public T FetchFirst<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).First();
-
-        #endregion
-
-        #region FetchFirstOrDefault<T>.
+        public T? FetchSingleOrDefault<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null) where T : new()
+            => Single(Fetch<T>(statement, parameters, queryTimeout), allowNone: true);
 
         /// <summary>
-        /// Fetches the first row, or null using the given query and optional parameters.
+        /// Returns the only row of the result, or default if there are no rows. See <see cref="FetchSingleOrDefault{T}"/>.
         /// </summary>
-        public T? FetchFirstOrDefault<T>(string statement, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout).FirstOrDefault();
-
+        public async Task<T?> FetchSingleOrDefaultAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default) where T : new()
+            => Single(await FetchAsync<T>(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false), allowNone: true);
 
         /// <summary>
-        /// Fetches the first row, or null using the given query and optional parameters.
+        /// Returns the first column of the first row of the result, converted to T, or default if there are no rows.
         /// </summary>
-        public T? FetchFirstOrDefault<T>(string statement, object userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).FirstOrDefault();
+        public T? FetchScalar<T>(string statement, object? parameters = null, TimeSpan? queryTimeout = null)
+            => Scalar<T>(Fetch(statement, parameters, queryTimeout));
 
         /// <summary>
-        /// Fetches the first row, or null using the given query and optional parameters.
+        /// Returns the first column of the first row of the result, converted to T, or default if there are no rows.
         /// </summary>
-        public T? FetchFirstOrDefault<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).FirstOrDefault();
-
-        /// <summary>
-        /// Fetches the first row, or null using the given query and optional parameters.
-        /// </summary>
-        public T? FetchFirstOrDefault<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).FirstOrDefault();
-
-        #endregion
-
-        #region FetchSingle<T>.
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T FetchSingle<T>(string statement, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout).Single();
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T FetchSingle<T>(string statement, object userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).Single();
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T FetchSingle<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).Single();
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T FetchSingle<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).Single();
-
-        #endregion
-
-        #region FetchSingleOrDefault<T>.
-
-        /// <summary>
-        /// Fetches a single row, or null, throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchSingleOrDefault<T>(string statement, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout).SingleOrDefault();
-
-        /// <summary>
-        /// Fetches a single row, or null, throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchSingleOrDefault<T>(string statement, object userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).SingleOrDefault();
-
-        /// <summary>
-        /// Fetches a single row, or null, throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchSingleOrDefault<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).SingleOrDefault();
-
-        /// <summary>
-        /// Fetches a single row, or null, throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchSingleOrDefault<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout) where T : new()
-            => Fetch<T>(statement, userParameters, queryTimeout).SingleOrDefault();
-
-        #endregion
-
-        #region FetchScalar<T>.
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchScalar<T>(string statement, TimeSpan? queryTimeout = null)
-        {
-            var result = Fetch(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout);
-            var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
-            return Converters.ConvertToNullable<T>(firstValue);
-        }
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchScalar<T>(string statement, object userParameters, TimeSpan? queryTimeout = null)
-        {
-            var result = Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
-            var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
-            return Converters.ConvertToNullable<T>(firstValue);
-        }
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchScalar<T>(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
-        {
-            var result = Fetch(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
-            var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
-            return Converters.ConvertToNullable<T>(firstValue);
-        }
-
-        /// <summary>
-        /// Fetches a single row, or throws an exception if more than one row is present, using the given query and optional parameters.
-        /// </summary>
-        public T? FetchScalar<T>(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout)
-        {
-            var result = Fetch(statement, userParameters, queryTimeout);
-            var firstValue = result.Collection.Single().Rows.FirstOrDefault()?.Values?.FirstOrDefault();
-            return Converters.ConvertToNullable<T>(firstValue);
-        }
+        public async Task<T?> FetchScalarAsync<T>(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => Scalar<T>(await FetchAsync(statement, parameters, queryTimeout, cancellationToken).ConfigureAwait(false));
 
         #endregion
 
         #region ExecuteNonQuery.
 
         /// <summary>
-        /// Executes a statements using the supplied statement and optional parameters.
+        /// Executes a statement (or batch of statements) that does not return rows, e.g. INSERT, UPDATE, DELETE or DDL.
+        /// The reply contains the number of affected rows for each statement.
         /// </summary>
-        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, TimeSpan? queryTimeout = null)
-            => ExecuteNonQuery(statement, (KbInsensitiveDictionary<KbVariable>?)null, queryTimeout);
+        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, object? parameters = null, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout);
 
         /// <summary>
-        /// Executes a statements using the supplied statement and optional parameters.
+        /// Executes a statement (or batch of statements) that does not return rows.
         /// </summary>
-        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, object userParameters, TimeSpan? queryTimeout = null)
-            => ExecuteNonQuery(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, TimeSpan queryTimeout)
+            => ExecuteNonQuery(statement, null, queryTimeout);
 
         /// <summary>
-        /// Executes a statements using the supplied statement and optional parameters.
+        /// Executes a statement (or batch of statements) that does not return rows.
         /// </summary>
-        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, Dictionary<string, object?> userParameters, TimeSpan? queryTimeout = null)
-            => ExecuteNonQuery(statement, userParameters.ToUserParametersInsensitiveDictionary(), queryTimeout);
+        public Task<KbQueryQueryExecuteNonQueryReply> ExecuteNonQueryAsync(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout, cancellationToken);
+
+        #endregion
+
+        #region Explain.
 
         /// <summary>
-        /// Executes a statements using the supplied statement and optional parameters.
+        /// Explains how the statement's conditions and joins would be evaluated, including which indexes would be used.
         /// </summary>
-        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(string statement, KbInsensitiveDictionary<KbVariable>? userParameters, TimeSpan? queryTimeout)
+        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, object? parameters = null, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout);
+
+        /// <summary>
+        /// Explains how the statement's conditions and joins would be evaluated, including which indexes would be used.
+        /// </summary>
+        public KbQueryQueryExplainPlanReply ExplainPlan(string statement, TimeSpan queryTimeout)
+            => ExplainPlan(statement, null, queryTimeout);
+
+        /// <summary>
+        /// Explains how the statement's conditions and joins would be evaluated, including which indexes would be used.
+        /// </summary>
+        public Task<KbQueryQueryExplainPlanReply> ExplainPlanAsync(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryQueryExplainPlan(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout, cancellationToken);
+
+        /// <summary>
+        /// Explains the condition and join operations of the statement.
+        /// </summary>
+        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, object? parameters = null, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout);
+
+        /// <summary>
+        /// Explains the condition and join operations of the statement.
+        /// </summary>
+        public KbQueryQueryExplainOperationReply ExplainOperation(string statement, TimeSpan queryTimeout)
+            => ExplainOperation(statement, null, queryTimeout);
+
+        /// <summary>
+        /// Explains the condition and join operations of the statement.
+        /// </summary>
+        public Task<KbQueryQueryExplainOperationReply> ExplainOperationAsync(string statement, object? parameters = null,
+            TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryQueryExplainOperation(_client.ServerConnectionId, statement, KbParameters.Convert(parameters)), queryTimeout, cancellationToken);
+
+        #endregion
+
+        #region Result helpers.
+
+        /// <summary>
+        /// Returns the only result set of a reply. Statements that return no result set (e.g. DDL) yield an empty one.
+        /// </summary>
+        internal static KbQueryResult SingleResultSet(KbQueryResultCollection results)
         {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
+            return results.Collection.Count switch
+            {
+                0 => new KbQueryResult(),
+                1 => results.Collection[0],
+                _ => throw new KbMultipleRecordSetsException($"Expected a single result set, but the statement returned {results.Collection.Count}.")
+            };
+        }
 
-            queryTimeout ??= _client.Connection.QueryTimeout;
+        internal static T First<T>(List<T> rows)
+            => rows.Count > 0 ? rows[0] : throw new KbObjectNotFoundException("The statement returned no rows.");
 
-            return _client.Connection.Query(
-                new KbQueryQueryExecuteNonQuery(_client.ServerConnectionId, statement, userParameters), (TimeSpan)queryTimeout);
+        internal static T? Single<T>(List<T> rows, bool allowNone)
+        {
+            return rows.Count switch
+            {
+                0 when allowNone => default,
+                0 => throw new KbObjectNotFoundException("The statement returned no rows."),
+                1 => rows[0],
+                _ => throw new KbProcessingException($"Expected a single row, but the statement returned {rows.Count}.")
+            };
+        }
+
+        internal static T? Scalar<T>(KbQueryResultCollection results)
+        {
+            var row = SingleResultSet(results).Rows.FirstOrDefault();
+            return row == null || row.Values.Count == 0 ? default : KbValueConverter.Convert<T>(row.Values[0]);
         }
 
         #endregion

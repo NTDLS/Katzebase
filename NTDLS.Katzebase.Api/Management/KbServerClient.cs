@@ -1,60 +1,41 @@
-﻿using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Payloads;
 
 namespace NTDLS.Katzebase.Api.Management
 {
+    /// <summary>
+    /// Server and session management.
+    /// </summary>
     public class KbServerClient
     {
         private readonly KbClient _client;
 
-        public KbServerClient(KbClient client)
+        internal KbServerClient(KbClient client)
         {
             _client = client;
         }
 
         /// <summary>
-        /// Starts a session on the server
+        /// Starts a session on the server. Called by <see cref="KbClient.Connect"/>.
         /// </summary>
-        /// <returns></returns>
-        /// <exception cref="KbAPIResponseException"></exception>
-        public KbQueryServerStartSessionReply StartSession(string username, string passwordHash, string clientName, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            return _client.Connection.Query(
-                new KbQueryServerStartSession(username, passwordHash, clientName), (TimeSpan)queryTimeout);
-        }
+        internal KbQueryServerStartSessionReply StartSession(string username, string passwordHash, string clientName, TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryServerStartSession(username, passwordHash, clientName), queryTimeout);
 
         /// <summary>
-        /// Closes the connected process on the server and rolls back any open transactions.
+        /// Closes the session on the server, rolling back any open transaction. Called by <see cref="KbClient.Disconnect"/>.
         /// </summary>
-        /// <returns></returns>
-        /// <exception cref="KbAPIResponseException"></exception>
-        public void CloseSession(TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
-
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryServerCloseSession(_client.ServerConnectionId), (TimeSpan)queryTimeout);
-        }
+        internal void CloseSession(TimeSpan? queryTimeout = null)
+            => _client.Send(new KbQueryServerCloseSession(_client.ServerConnectionId), queryTimeout);
 
         /// <summary>
-        /// Terminates a process on the server and rolls back any open transactions.
+        /// Terminates a process (session) on the server and rolls back its open transaction.
         /// </summary>
-        /// <returns></returns>
-        /// <exception cref="KbAPIResponseException"></exception>
         public void TerminateProcess(ulong processId, TimeSpan? queryTimeout = null)
-        {
-            if (_client.Connection?.IsConnected != true) throw new Exception("The client is not connected.");
+            => _client.Send(new KbQueryServerTerminateProcess(_client.ServerConnectionId, processId), queryTimeout);
 
-            queryTimeout ??= _client.Connection.QueryTimeout;
-
-            _ = _client.Connection.Query(
-                new KbQueryServerTerminateProcess(_client.ServerConnectionId, processId), (TimeSpan)queryTimeout);
-        }
+        /// <summary>
+        /// Terminates a process (session) on the server and rolls back its open transaction.
+        /// </summary>
+        public Task TerminateProcessAsync(ulong processId, TimeSpan? queryTimeout = null, CancellationToken cancellationToken = default)
+            => _client.SendAsync(new KbQueryServerTerminateProcess(_client.ServerConnectionId, processId), queryTimeout, cancellationToken);
     }
 }

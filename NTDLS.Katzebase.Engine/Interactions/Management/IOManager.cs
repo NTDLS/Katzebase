@@ -549,6 +549,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             transaction.RecordKeyDelete(rdb, columnFamilyName, key, cacheKey, rdb.Get(key.Bytes, columnFamilyName));
             rdb.Remove(key.Bytes, columnFamilyName);
+
+            //Otherwise a read by key would still find the deleted value in the cache.
+            _core.Cache.Remove(cacheKey);
         }
 
         #endregion
@@ -748,6 +751,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 // Write-through caching is intentionally omitted: reads populate cache on demand.
                 // Caching every write inflates memory 3-5x (C# object vs. serialized bytes estimate)
                 // and is counterproductive during bulk import where those entries are rarely re-read.
+                // Any previously cached value is now stale, so it is evicted.
+                _core.Cache.Remove(cacheKey);
             }
             catch (Exception ex)
             {

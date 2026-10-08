@@ -767,12 +767,12 @@ namespace NTDLS.Katzebase.Management
                     if (tabFilePage.Client != null)
                     {
                         var result = tabFilePage.Client.Schema.Indexes.Get(schema.Path, node.Text);
-                        if (result != null && result.Index != null)
+                        if (result != null)
                         {
                             var text = new StringBuilder("REBUILD ");
-                            text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
-                            text.Append($" {result.Index.Name} ON {schema.Path}");
-                            //text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+                            text.Append(result.IsUnique ? "UNIQUEKEY" : "INDEX");
+                            text.Append($" {result.Name} ON {schema.Path}");
+                            //text.AppendLine($" WITH (PARTITIONS={result.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
@@ -787,19 +787,19 @@ namespace NTDLS.Katzebase.Management
                     if (tabFilePage.Client != null)
                     {
                         var result = tabFilePage.Client.Schema.Indexes.Get(schema.Path, node.Text);
-                        if (result != null && result.Index != null)
+                        if (result != null)
                         {
                             var text = new StringBuilder("CREATE ");
-                            text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
-                            text.Append($" {result.Index.Name}");
+                            text.Append(result.IsUnique ? "UNIQUEKEY" : "INDEX");
+                            text.Append($" {result.Name}");
                             text.AppendLine("(");
-                            foreach (var attribute in result.Index.Attributes)
+                            foreach (var attribute in result.Attributes)
                             {
                                 text.AppendLine($"    {attribute.Field},");
                             }
                             text.Length -= 3;//Remove trialing ",\r\n"
                             text.Append($"\r\n) ON {schema.Path}");
-                            //text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+                            //text.AppendLine($" WITH (PARTITIONS={result.Partitions})");
 
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;

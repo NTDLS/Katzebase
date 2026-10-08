@@ -12,5 +12,11 @@
         {
             Severity = KbConstants.KbLogSeverity.Error;
         }
+
+        public KbAPIResponseException(string? message, Exception? innerException)
+            : base(message, innerException)
+        {
+            Severity = KbConstants.KbLogSeverity.Error;
+        }
     }
 }

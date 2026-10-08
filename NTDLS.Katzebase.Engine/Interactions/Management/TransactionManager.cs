@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NTDLS.Katzebase.Api.Exceptions;
+using Newtonsoft.Json;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -302,7 +303,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                GetByProcessId(processId)?.Commit();
+                //Committing when there is no open transaction is an error: the transaction may have been rolled back by the
+                //  server (e.g. chosen as a deadlock victim, or a lock wait timeout), and silently "succeeding" would let the
+                //  caller believe that its changes were saved.
+                var transaction = GetByProcessId(processId)
+                    ?? throw new KbTransactionCancelledException("There is no open transaction to commit. It may have been rolled back,"
+                        + " for example after being chosen as a deadlock victim.");
+
+                transaction.Commit();
             }
             catch (Exception ex)
             {
