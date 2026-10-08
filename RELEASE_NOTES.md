@@ -116,6 +116,7 @@ ATTACH SCHEMA Sales:Archive FROM 'D:\Exports\SalesArchive'
 - `UPDATE`s that named a column with different casing than the index definition (e.g. `SET sub = …` on an index over `Sub`) skipped index maintenance.
 - When deferred IO was enabled, reading a list of objects (such as the index catalog) skipped items not modified by the current transaction.
 - **SQL Server migration could silently lose rows.** Any error other than a deadlock was swallowed and the row was skipped. A deadlock rolled back the whole open transaction (up to 10,000 rows), but only the current row was retried. Now each batch is atomic, so a deadlocked batch is retried in full (up to 10 times with backoff). Any other error stops the import of that table, and the error message is shown in the grid.
+- `ANALYZE SCHEMA ... WITH (IncludePhysicalPages = true)` reported every non-unique index as having no documents. It now counts the new one-entry-per-document layout correctly, and reports indexes in the old format as needing a rebuild.
 - `IndexSelection.Clone()` copied covered conditions into itself instead of the clone.
 - Debug builds failed to compile due to unqualified types in `SystemShowAggregateFunctions`, `SystemShowScalarFunctions` and `SystemShowSystemFunctions`.
 

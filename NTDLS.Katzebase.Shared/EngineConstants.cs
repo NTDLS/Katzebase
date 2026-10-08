@@ -15,7 +15,6 @@
         public const string TransactionAtomsFile = "@transaction.kbatom";
         public const string HealthStatsFile = "@health.kblog";
         public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
-        public const string UIDMarker = "$UID$";
         public const string PrimaryIdentityKey = "Primary";
 
         public enum KbColumnFamilyName
