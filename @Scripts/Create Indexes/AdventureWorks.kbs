@@ -1,17 +1,17 @@
 CREATE INDEX IX_Product_ProductId_Name(
-    productid,
-    name
+    ProductID,
+    Name
 ) ON AdventureWorks:Production:Product
 
 CREATE INDEX IX_Product_Name(
-    name
+    Name
 ) ON AdventureWorks:Production:Product
 
 CREATE INDEX IX_TransactionHistory_ProductID_ActualCost(
-    productid,
-    actualcost
+    ProductID,
+    ActualCost
 ) ON AdventureWorks:Production:TransactionHistory
 
 CREATE UNIQUEKEY IX_TransactionHistory_TransactionId(
-    transactionid
+    TransactionID
 ) ON AdventureWorks:Production:TransactionHistory
