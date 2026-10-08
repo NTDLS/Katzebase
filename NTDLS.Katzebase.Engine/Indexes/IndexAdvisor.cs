@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         /// </summary>
         private static bool IsUsable(PhysicalIndex index, List<string> equalityFields, string? rangeField)
             => index.Attributes.Count > 0
-            && (EqualityDepth(index, equalityFields) > 0 || (rangeField != null && index.Attributes[0].Field.Is(rangeField)));
+            && (EqualityDepth(index, equalityFields) > 0 || (rangeField != null && index.Attributes[0].Field.EnsureNotNull().Is(rangeField)));
 
         /// <summary>
         /// Whether the indexes serve the equality fields (and range field) as well as a suggested index would:

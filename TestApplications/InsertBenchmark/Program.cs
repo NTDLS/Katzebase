@@ -16,11 +16,14 @@ namespace InsertBenchmark
     ///   3) One document per Document.Store() call, inside an explicit transaction committed every [--commit-every] rows.
     ///   4) Document.StoreMany() batches of [--batch-size] documents, each batch in its own (implicit) transaction.
     ///
+    /// With --index-build, instead loads [--rows] documents and measures CREATE INDEX (non-unique, composite and unique)
+    ///  and REBUILD INDEX on them, including the bytes read and written by the process (embedded server on Windows only).
+    ///
     /// By default an engine and message server are hosted in-process against a fresh, temporary data directory,
     /// so results are repeatable and no running server is required. Use --server to benchmark an external server.
     ///
     /// Usage:
-    ///   InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes]
+    ///   InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes] [--index-build]
     ///                   [--server host:port] [--user admin] [--password ""]
     ///                   [--data-path path] [--port 6869] [--keep-data] [--results file.tsv] [--label text]
     /// </summary>
@@ -35,6 +38,7 @@ namespace InsertBenchmark
             public int BatchSize { get; set; } = 1_000;
             public int Warmup { get; set; } = 200;
             public bool CreateIndexes { get; set; } = true;
+            public bool IndexBuild { get; set; }
             public string? Server { get; set; }
             public string User { get; set; } = "admin";
             public string Password { get; set; } = string.Empty;
@@ -94,6 +98,16 @@ namespace InsertBenchmark
 
                 using var client = new KbClient(host, port, options.User, KbClient.HashPassword(options.Password), "InsertBenchmark");
                 client.QueryTimeout = TimeSpan.FromHours(1);
+
+                if (options.IndexBuild)
+                {
+                    RunIndexBuild(client, options, measureIo: options.Server == null);
+                    if (options.Server != null && options.KeepData == false)
+                    {
+                        client.Schema.DropIfExists(RootSchema);
+                    }
+                    return 0;
+                }
 
                 PrepareSchemas(client, options);
 
@@ -292,6 +306,99 @@ namespace InsertBenchmark
             return new ScenarioResult($"Document.StoreMany, batches of {batchSize:N0}", rows, total.Elapsed, batchTimes, [], "BATCH");
         }
 
+        /// <summary>
+        /// Loads [--rows] documents without indexes, then times building indexes on them.
+        /// </summary>
+        static void RunIndexBuild(KbClient client, Options options, bool measureIo)
+        {
+            var schema = $"{RootSchema}:IndexBuild";
+            client.Schema.DropIfExists(RootSchema);
+            client.Schema.Create(RootSchema);
+            client.Schema.Create(schema);
+
+            var load = Stopwatch.StartNew();
+            var batch = new List<object>(options.BatchSize);
+            for (int i = 0; i < options.Rows; i++)
+            {
+                batch.Add(MakeDocument(i));
+                if (batch.Count == options.BatchSize || i == options.Rows - 1)
+                {
+                    client.Document.StoreMany(schema, batch);
+                    batch.Clear();
+                }
+            }
+            load.Stop();
+            Console.WriteLine($"Loaded {options.Rows:N0} documents in {load.Elapsed.TotalMilliseconds:N0} ms.");
+            Console.WriteLine();
+
+            var steps = new (string Name, string Statement)[]
+            {
+                ("CREATE INDEX, 100 distinct values", $"CREATE INDEX ix_Category (Category) ON {schema}"),
+                ("CREATE INDEX, composite", $"CREATE INDEX ix_Category_Sub (Category, Sub) ON {schema}"),
+                ("CREATE UNIQUEKEY", $"CREATE UniqueKey uk_Code (Code) ON {schema}"),
+                ("REBUILD INDEX, 100 distinct values", $"REBUILD INDEX ix_Category ON {schema}"),
+            };
+
+            var lines = new List<string>();
+            foreach (var (name, statement) in steps)
+            {
+                var ioBefore = measureIo ? ProcessIo.Read() : default;
+                var elapsed = Stopwatch.StartNew();
+                client.Query.ExecuteNonQuery(statement);
+                elapsed.Stop();
+                var ioAfter = measureIo ? ProcessIo.Read() : default;
+
+                var line = $"{name,-36} {elapsed.Elapsed.TotalMilliseconds,9:N0} ms {options.Rows / elapsed.Elapsed.TotalSeconds,12:N0} rows/s";
+                if (ioBefore.Valid && ioAfter.Valid)
+                {
+                    double readMb = (ioAfter.ReadBytes - ioBefore.ReadBytes) / 1048576.0;
+                    double writeMb = (ioAfter.WriteBytes - ioBefore.WriteBytes) / 1048576.0;
+                    line += $"   read {readMb,9:N1} MB ({readMb / elapsed.Elapsed.TotalSeconds,7:N0} MB/s)   written {writeMb,7:N1} MB";
+                }
+                Console.WriteLine(line);
+                lines.Add(line);
+            }
+
+            if (options.ResultsFile != null)
+            {
+                using var writer = new StreamWriter(options.ResultsFile, append: true);
+                foreach (var line in lines)
+                {
+                    writer.WriteLine($"{DateTime.Now.ToString("s", CultureInfo.InvariantCulture)}\t{options.Label}\t{options.Rows}\t{line}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// The bytes read and written by this process (which hosts the embedded server). Windows only.
+        /// </summary>
+        static class ProcessIo
+        {
+            [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+            private struct IoCounters
+            {
+                public ulong ReadOperationCount, WriteOperationCount, OtherOperationCount;
+                public ulong ReadTransferCount, WriteTransferCount, OtherTransferCount;
+            }
+
+            [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+            private static extern bool GetProcessIoCounters(IntPtr process, out IoCounters counters);
+
+            public readonly record struct Snapshot(bool Valid, ulong ReadBytes, ulong WriteBytes);
+
+            public static Snapshot Read()
+            {
+                if (!OperatingSystem.IsWindows())
+                {
+                    return default;
+                }
+                using var process = Process.GetCurrentProcess();
+                return GetProcessIoCounters(process.Handle, out var counters)
+                    ? new Snapshot(true, counters.ReadTransferCount, counters.WriteTransferCount)
+                    : default;
+            }
+        }
+
         static object MakeDocument(int i)
             => new { Code = $"C{i}", Category = $"cat{i % 100}", Sub = $"sub{i % 10}", Amount = i % 1000, Payload = $"payload {i} lorem ipsum dolor sit amet" };
 
@@ -377,6 +484,7 @@ namespace InsertBenchmark
                     case "--batch-size": options.BatchSize = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                     case "--warmup": options.Warmup = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                     case "--no-indexes": options.CreateIndexes = false; break;
+                    case "--index-build": options.IndexBuild = true; break;
                     case "--server": options.Server = Value(); break;
                     case "--user": options.User = Value(); break;
                     case "--password": options.Password = Value(); break;
@@ -389,7 +497,7 @@ namespace InsertBenchmark
                     case "-h":
                     case "/?":
                         throw new ArgumentException(
-                            "Usage: InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes]\n" +
+                            "Usage: InsertBenchmark [--rows 10000] [--commit-every 1000] [--batch-size 1000] [--warmup 200] [--no-indexes] [--index-build]\n" +
                             "                       [--server host:port] [--user admin] [--password \"\"]\n" +
                             "                       [--data-path path] [--port 6869] [--keep-data] [--results file.tsv] [--label text]");
                     default:

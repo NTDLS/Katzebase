@@ -834,51 +834,77 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 rdb.DropColumnFamily(new RdbKey(physicalIndex.Id));
                 var indexCF = rdb.CreateColumnFamily(new RdbKey(physicalIndex.Id));
 
-                // Step 2: Collect all document IDs with a sequential key-only scan (no deserialization).
-                var documentIds = new List<uint>();
-                using (var docIter = rdb.NewIterator(documentsCF))
-                {
-                    for (docIter.SeekToFirst(); docIter.Valid(); docIter.Next())
-                        documentIds.Add(RdbKey.ConvertToUint(docIter.Key()));
-                }
-
-                // Step 3: Process documents in batches to keep memory bounded. Each batch builds its entry keys in
-                // parallel and writes them in one WriteBatch. Entries are one per document, so batches never need to
-                // read or merge with each other's entries.
+                // Step 2: Read the documents with a single sequential scan, in batches to keep memory bounded. Each batch
+                // is deserialized and keyed in parallel and written in one WriteBatch. Entries are one per document, so
+                // batches never need to read or merge with each other's entries.
+                //
+                // The values come straight from the iterator, so each data block is read once. (Collecting the ids
+                // first and then reading each document by id read every block once per document it contains, since
+                // the block cache is disabled.) Values are read without transaction tracking: the rebuild writes via a
+                // raw WriteBatch (bypassing the transaction atom log), so tracking reads for rollback-cache-eviction
+                // would be both inconsistent and a source of unbounded memory growth across the full document set.
                 const int batchSize = 50_000;
+                const int chunkSize = 1_000;
 
                 var ptWrite = transaction.Instrumentation.CreateToken(PerformanceCounter.IOWrite);
 
-                for (int batchStart = 0; batchStart < documentIds.Count; batchStart += batchSize)
+                using var docIter = rdb.NewIterator(documentsCF);
+                docIter.SeekToFirst();
+
+                var documents = new List<(uint DocumentId, byte[] Value)>(batchSize);
+
+                while (true)
                 {
-                    var batchEnd = Math.Min(batchStart + batchSize, documentIds.Count);
-                    var entries = new ConcurrentBag<(byte[] Key, byte[] Value)>();
+                    transaction.EnsureActive();
 
-                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<uint>(_core.Settings.IndexingThreadPoolQueueDepth);
-                    for (int i = batchStart; i < batchEnd; i++)
+                    documents.Clear();
+                    for (; docIter.Valid() && documents.Count < batchSize; docIter.Next())
                     {
-                        var documentId = documentIds[i];
-                        childPool.Enqueue(documentId, (threadDocumentId) =>
+                        documents.Add((RdbKey.ConvertToUint(docIter.Key()), docIter.Value()));
+                    }
+
+                    if (documents.Count == 0)
+                    {
+                        break;
+                    }
+
+                    var entryChunks = new ConcurrentBag<List<(byte[] Key, byte[] Value)>>();
+
+                    //Documents are handed to the pool in chunks: queueing one work item per document cost more than keying it.
+                    var childPool = _core.ThreadPool.Indexing.CreateChildPool<(int Start, int End)>(_core.Settings.IndexingThreadPoolQueueDepth);
+                    for (int chunkStart = 0; chunkStart < documents.Count; chunkStart += chunkSize)
+                    {
+                        childPool.Enqueue((chunkStart, Math.Min(chunkStart + chunkSize, documents.Count)), (range) =>
                         {
-                            transaction.EnsureActive();
+                            var chunkEntries = new List<(byte[] Key, byte[] Value)>(range.End - range.Start);
 
-                            // Read directly without transaction tracking: this rebuild already writes
-                            // via raw WriteBatch (bypassing the transaction atom log), so tracking
-                            // reads for rollback-cache-eviction would be both inconsistent and a
-                            // source of unbounded memory growth across the full document set.
-                            var physicalDocument = _core.IO.GetNotTracked<PhysicalDocument>(
-                                rdb, KbColumnFamilyName.Documents, new RdbKey(threadDocumentId).Bytes, IOFormat.PBuf);
-                            if (physicalDocument == null) return;
+                            for (int i = range.Start; i < range.End; i++)
+                            {
+                                transaction.EnsureActive();
 
-                            var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
-                            if (fieldValues.Count != physicalIndex.Attributes.Count)
-                                return; // document is missing one or more indexed fields — skip
+                                var (documentId, value) = documents[i];
 
-                            entries.Add((IndexKeyBuilder.BuildEntryKey(physicalIndex.IsUnique, fieldValues, threadDocumentId),
-                                IndexKeyBuilder.BuildEntryValue(physicalIndex.IsUnique, threadDocumentId)));
+                                PhysicalDocument? physicalDocument;
+                                using (var input = new MemoryStream(value))
+                                {
+                                    physicalDocument = ProtoBuf.Serializer.Deserialize<PhysicalDocument>(input);
+                                }
+                                if (physicalDocument == null) continue;
+
+                                var fieldValues = GetIndexSearchTokens(transaction, physicalIndex, physicalDocument);
+                                if (fieldValues.Count != physicalIndex.Attributes.Count)
+                                    continue; // document is missing one or more indexed fields — skip
+
+                                chunkEntries.Add((IndexKeyBuilder.BuildEntryKey(physicalIndex.IsUnique, fieldValues, documentId),
+                                    IndexKeyBuilder.BuildEntryValue(physicalIndex.IsUnique, documentId)));
+                            }
+
+                            entryChunks.Add(chunkEntries);
                         });
                     }
                     childPool.WaitForCompletion(); // Propagates worker exceptions as AggregateException.
+
+                    var entries = entryChunks.SelectMany(o => o);
 
                     //The values are the whole key of a unique index, so a duplicate shows up as a key that was already
                     //  added in this batch or that was written by a previous batch.
