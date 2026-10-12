@@ -46,19 +46,29 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 return;
             }
 
-            var files = Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly).ToList();
-            files.AddRange(Directory.EnumerateFiles(path, "*.exe", SearchOption.TopDirectoryOnly).ToList());
+            path += @"\..\".Replace('/', '\\').Replace(@"\\", @"\");
+
+            var files = Directory.EnumerateFiles(path, "*.dll", SearchOption.AllDirectories).ToList();
+            files.AddRange(Directory.EnumerateFiles(path, "*.exe", SearchOption.AllDirectories));
+
+            HashSet<string> seenAssemblies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var file in files)
             {
-                AddApplication(file);
+                var fileName = Path.GetFileName(file);
+
+                if (!seenAssemblies.Contains(fileName))
+                {
+                    seenAssemblies.Add(fileName);
+                    AddAssembly(file);
+                }
             }
 
             listViewVersions.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
             listViewVersions.AutoResizeColumn(1, ColumnHeaderAutoResizeStyle.HeaderSize);
         }
 
-        private void AddApplication(string appPath)
+        private void AddAssembly(string appPath)
         {
             try
             {
@@ -68,7 +78,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 if (componentAssembly.Version != null && companyName?.ToLower()?.Contains("networkdls") == true)
                 {
-                    listViewVersions.Items.Add(new ListViewItem(new string[] { componentAssembly.Name ?? "", componentAssembly.Version.ToString() }));
+                    var verStr = string.Join('.', componentAssembly.Version.ToString().Split('.').Take(3));
+                    listViewVersions.Items.Add(new ListViewItem([componentAssembly.Name ?? "", verStr]));
                 }
             }
             catch
