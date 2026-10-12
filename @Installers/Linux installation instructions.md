@@ -1,5 +1,4 @@
 # Direct Linux Install
-
 - Connect to the Linux server with your favorite SSH client. I'm using Putty.
 - You can get the IP address of the Linux machine via ```ip addr show```
 
@@ -9,9 +8,9 @@ sudo apt install -y unzip
 
 ## Download & Extract
 # Download (update version as needed)
-wget https://github.com/NTDLS/Katzebase/releases/download/0.38.0/Katzebase.linux.x64.zip
+wget https://github.com/NTDLS/Katzebase/releases/download/1.0.0/Katzebase.linux.x64.zip
 - or -
-wget https://github.com/NTDLS/Katzebase/releases/download/0.38.0/Katzebase.linux.arm64.zip
+wget https://github.com/NTDLS/Katzebase/releases/download/1.0.0/Katzebase.linux.arm64.zip
 
 # Extract to /opt
 sudo unzip Katzebase.linux.x64.zip -d /opt/katzebase

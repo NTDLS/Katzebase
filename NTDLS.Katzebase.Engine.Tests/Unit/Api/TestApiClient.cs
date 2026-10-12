@@ -57,6 +57,9 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Api
                 => client.Query.ExecuteNonQuery($"INSERT INTO {schema}(Code) VALUES(@Code)", new { Code = "a" }));
 
             Assert.Throws<KbObjectNotFoundException>(() => client.Query.Fetch("SELECT * FROM TestData:Api:DoesNotExist"));
+            //A schema whose parent does not exist (this used to surface a RocksDB IO error).
+            Assert.Throws<KbObjectNotFoundException>(() => client.Query.Fetch("SELECT * FROM TestData:Api:DoesNotExist:Child"));
+            Assert.Throws<KbObjectNotFoundException>(() => client.Query.ExecuteNonQuery("CREATE SCHEMA TestData:Api:DoesNotExist:Child"));
 
             var parserException = Assert.Throws<KbParserException>(() => client.Query.Fetch($"SELECT * FROM {schema}\r\nSELEKT * FROM {schema}"));
             Assert.Equal(2, parserException.LineNumber);
@@ -68,6 +71,24 @@ namespace NTDLS.Katzebase.Engine.Tests.Unit.Api
             using var disconnected = new KbClient();
             Assert.Throws<KbConnectionException>(() => disconnected.Query.Fetch($"SELECT * FROM {schema}"));
             Assert.Throws<KbConnectionException>(() => new KbClient("127.0.0.1", 1, "admin", KbClient.HashPassword("")));
+        }
+
+        [Fact(DisplayName = "A client whose session was terminated disconnects and can reconnect")]
+        public void TerminatedSession()
+        {
+            using var admin = NewClient();
+            using var client = NewClient();
+
+            admin.Server.TerminateProcess(client.ProcessId);
+
+            //The server ended the session but the connection is still open: the next request finds out and disconnects.
+            Assert.Throws<KbSessionNotFoundException>(() => client.Query.Fetch("SELECT 1 FROM Single"));
+            Assert.False(client.IsConnected);
+            Assert.Throws<KbConnectionException>(() => client.Query.Fetch("SELECT 1 FROM Single"));
+
+            client.Connect("127.0.0.1", Constants.LISTEN_PORT, "admin", KbClient.HashPassword(""), "ApiTests");
+            Assert.True(client.IsConnected);
+            Assert.Single(client.Query.Fetch("SELECT 1 FROM Single").Collection.Single().Rows);
         }
 
         [Fact(DisplayName = "Documents can be stored, read, replaced and deleted by id")]

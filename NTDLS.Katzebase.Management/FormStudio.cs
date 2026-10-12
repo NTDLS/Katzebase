@@ -900,7 +900,7 @@ namespace NTDLS.Katzebase.Management
             var systemFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowSystemFunctions").OrderBy(o => o.Name);
             foreach (var systemFunction in systemFunctions)
             {
-                var node = new FunctionTreeNode(systemFunction);
+                var node = new FunctionTreeNode(systemFunction, FunctionType.System);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (systemFunction.Parameters != null)
@@ -927,7 +927,7 @@ namespace NTDLS.Katzebase.Management
             var scalarFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowScalarFunctions").OrderBy(o => o.Name);
             foreach (var scalarFunction in scalarFunctions)
             {
-                var node = new FunctionTreeNode(scalarFunction);
+                var node = new FunctionTreeNode(scalarFunction, FunctionType.Scalar);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (scalarFunction.Parameters != null)
@@ -954,7 +954,7 @@ namespace NTDLS.Katzebase.Management
             var aggregateFunctions = client.Query.Fetch<KbFunctionDescriptor>("EXEC ShowAggregateFunctions").OrderBy(o => o.Name);
             foreach (var aggregateFunction in aggregateFunctions)
             {
-                var node = new FunctionTreeNode(aggregateFunction);
+                var node = new FunctionTreeNode(aggregateFunction, FunctionType.Aggregate);
                 var autoCompleteFunctionParameters = new List<AutoCompleteFunctionParameter>();
 
                 if (aggregateFunction.Parameters != null)
@@ -1414,7 +1414,7 @@ namespace NTDLS.Katzebase.Management
         {
             if (e.Item is FunctionTreeNode functionNode)
             {
-                treeViewMacros.DoDragDrop($"EXEC {functionNode.Function.Name}(/*{functionNode.Function.Parameters}*/)", DragDropEffects.All);
+                treeViewMacros.DoDragDrop(functionNode.GetInsertText(), DragDropEffects.All);
             }
         }
 

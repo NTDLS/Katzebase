@@ -42,11 +42,6 @@ namespace NTDLS.Katzebase.Management.Classes
 
             Client = new KbClient(serverAddress, serverPort, username, passwordHash, $"{KbConstants.FriendlyName}.UI");
             Client.QueryTimeout = TimeSpan.FromSeconds(Program.Settings.UIQueryTimeOut);
-            Client.OnDisconnected += (KbClient sender, Api.Models.KbSessionInfo sessionInfo) =>
-            {
-                LazySchemaCache?.Stop();
-            };
-
             Client.Query.ExecuteNonQuery("SET ReadUncommitted TRUE");
 
             //The tree must exist before the cache starts raising events for it.
@@ -130,8 +125,52 @@ namespace NTDLS.Katzebase.Management.Classes
             return client;
         }
 
+        /// <summary>
+        /// How often a lost explorer connection is re-established.
+        /// </summary>
+        private static readonly TimeSpan ReconnectInterval = TimeSpan.FromSeconds(5);
+        private readonly object _reconnectLock = new();
+        private DateTime _nextReconnectAttemptUtc = DateTime.MinValue;
+        private volatile bool _isDisconnecting = false;
+
+        /// <summary>
+        /// Returns the explorer's client for the schema cache, first reconnecting it (at most every few seconds) when the
+        /// connection was lost: the server was restarted, the network dropped, or the session was terminated or closed
+        /// after being idle. The cache waits while the client is not connected, so the server explorer resumes by itself.
+        /// </summary>
+        internal KbClient? GetConnectedClient()
+        {
+            var client = Client;
+            if (client == null || client.IsConnected || _isDisconnecting)
+            {
+                return client;
+            }
+
+            lock (_reconnectLock)
+            {
+                if (client.IsConnected || _isDisconnecting || DateTime.UtcNow < _nextReconnectAttemptUtc)
+                {
+                    return client;
+                }
+                _nextReconnectAttemptUtc = DateTime.UtcNow + ReconnectInterval;
+
+                try
+                {
+                    client.Connect(ServerAddress, ServerPort, Username, PasswordHash, $"{KbConstants.FriendlyName}.UI");
+                    client.Query.ExecuteNonQuery("SET ReadUncommitted TRUE");
+                }
+                catch
+                {
+                    //The server is still unavailable, try again later.
+                }
+            }
+
+            return client;
+        }
+
         public void Disconnect()
         {
+            _isDisconnecting = true;
             LazySchemaCache.Stop();
             Exceptions.Ignore(() => Client?.Dispose());
         }

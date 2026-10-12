@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
         /// Starts the background schema lazy loader process.
         /// </summary>
         public LazyBackgroundSchemaCache(ServerExplorerConnection serverExplorerConnection)
-            : this(() => serverExplorerConnection.Client)
+            : this(serverExplorerConnection.GetConnectedClient)
         {
         }
 
@@ -427,6 +427,8 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
             _cache[string.Empty] = new CachedSchema(new KbSchema(EngineConstants.RootSchemaGUID, string.Empty, string.Empty, string.Empty, Guid.Empty));
             Enqueue(new WorkItem(WorkKind.Children, string.Empty), WorkPriority.High);
 
+            bool wasDisconnected = false;
+
             while (_keepRunning)
             {
                 try
@@ -434,8 +436,16 @@ namespace NTDLS.Katzebase.Management.StaticAnalysis
                     var client = _clientProvider();
                     if (client == null || client.IsConnected == false)
                     {
+                        wasDisconnected = true;
                         _workSignal.WaitOne(1000);
                         continue;
+                    }
+
+                    if (wasDisconnected)
+                    {
+                        //Reconnected: anything may have changed while we were not connected, so re-check every schema now.
+                        wasDisconnected = false;
+                        _sweepRequested = true;
                     }
 
                     if (_sweepRequested || DateTime.UtcNow >= _nextSweepUtc)

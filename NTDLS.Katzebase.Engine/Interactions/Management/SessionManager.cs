@@ -123,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     session.LastCheckInTime = DateTime.UtcNow;
                     return session;
                 }
-                throw new Exception($"Failed to find session id: [{connectionId}].");
+                throw new KbSessionNotFoundException($"Session not found: [{connectionId}]. It may have been terminated, or closed after being idle.");
             });
         }
 

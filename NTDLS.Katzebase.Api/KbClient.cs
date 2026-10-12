@@ -164,8 +164,7 @@ namespace NTDLS.Katzebase.Api
             }
             catch (Exception ex)
             {
-                try { connection.Disconnect(); } catch { }
-                ResetConnectionState(connection);
+                try { connection.Disconnect(); } catch { } //Raises OnDisconnected and resets the connection state.
 
                 throw ex is KbExceptionBase ? ex : new KbConnectionException($"Failed to connect to [{hostname}:{port}]: {ex.Message}", ex);
             }
@@ -202,8 +201,7 @@ namespace NTDLS.Katzebase.Api
             }
             finally
             {
-                try { connection.Disconnect(); } catch { }
-                ResetConnectionState(connection);
+                try { connection.Disconnect(); } catch { } //Raises OnDisconnected and resets the connection state.
             }
         }
 
@@ -272,7 +270,7 @@ namespace NTDLS.Katzebase.Api
             }
             catch (Exception ex)
             {
-                throw KbRemoteExceptionMapper.Map(ex, connection.IsConnected);
+                throw MapRequestFailure(connection, ex);
             }
         }
 
@@ -289,8 +287,25 @@ namespace NTDLS.Katzebase.Api
             }
             catch (Exception ex)
             {
-                throw KbRemoteExceptionMapper.Map(ex, connection.IsConnected);
+                throw MapRequestFailure(connection, ex);
             }
+        }
+
+        /// <summary>
+        /// Translates a failed request into a Katzebase exception. When the server no longer has this client's session (it
+        /// was terminated, or closed after being idle), the connection is useless even though it is still open, so it is
+        /// closed: IsConnected becomes false and OnDisconnected is raised, which lets the application reconnect.
+        /// </summary>
+        private Exception MapRequestFailure(RmClient connection, Exception ex)
+        {
+            var mapped = KbRemoteExceptionMapper.Map(ex, connection.IsConnected);
+
+            if (mapped is KbSessionNotFoundException)
+            {
+                try { connection.Disconnect(); } catch { } //Raises OnDisconnected and resets the connection state.
+            }
+
+            return mapped;
         }
 
         #endregion

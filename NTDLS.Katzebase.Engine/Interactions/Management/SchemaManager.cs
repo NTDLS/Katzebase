@@ -311,6 +311,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaFile);
+
+                    //When a parent schema does not exist, neither does its catalog. Opening it would fail with a RocksDB IO error
+                    //  (and could leave an empty database folder behind), so check for the catalog's CURRENT file first.
+                    if (File.Exists(Path.Combine(parentCatalogDiskPath, "CURRENT")) == false)
+                    {
+                        var parentSchemaName = string.Join(':', segments.Take(segments.Length - 1));
+                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}]. The parent schema [{parentSchemaName}] does not exist.");
+                    }
+
                     var rdb = _core.IO.AcquireRdb(parentCatalogDiskPath);
                     if (_core.IO.DoesKeyExist(transaction, rdb, KbColumnFamilyName.Schema, new RdbKey(thisSchemaName), LockOperation.Stability) == false)
                     {
