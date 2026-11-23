@@ -1,12 +1,9 @@
 ﻿using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Controls;
 using NTDLS.WinFormsHelpers;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Xml;
 
 namespace NTDLS.Katzebase.Management
 {
@@ -32,11 +29,7 @@ namespace NTDLS.Katzebase.Management
 
         private void FormSnippets_Load(object sender, EventArgs e)
         {
-            using var stringReader = new StringReader(Properties.Resources.Highlighter);
-            using var reader = XmlReader.Create(stringReader);
-            _editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-            reader.Close();
-            stringReader.Close();
+            _editor.SyntaxHighlighting = ThemeColors.LoadHighlighting();
 
             FullyFeaturedCodeEditor.ApplyEditorSettings(_editor);
 

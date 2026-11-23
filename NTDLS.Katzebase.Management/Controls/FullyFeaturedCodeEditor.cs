@@ -2,8 +2,6 @@
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Rendering;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
@@ -16,7 +14,6 @@ using NTDLS.Katzebase.Parsers;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using System.Xml;
 
 namespace NTDLS.Katzebase.Management.Controls
 {
@@ -42,11 +39,7 @@ namespace NTDLS.Katzebase.Management.Controls
         {
             CodeTabPage = codeTabPage;
 
-            using var stringReader = new StringReader(Properties.Resources.Highlighter);
-            using var reader = XmlReader.Create(stringReader);
-            SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-            reader.Close();
-            stringReader.Close();
+            SyntaxHighlighting = ThemeColors.LoadHighlighting();
 
             ApplyEditorSettings(this);
 
@@ -360,6 +353,7 @@ namespace NTDLS.Katzebase.Management.Controls
             editor.FontFamily = new System.Windows.Media.FontFamily(Program.Settings.EditorFontFamily);
             editor.FontSize = Program.Settings.EditorFontSize;
             editor.WordWrap = Program.Settings.EditorWordWrap;
+            ThemeColors.ApplyTheme(editor);
         }
 
         public void CollapseAllFolds()

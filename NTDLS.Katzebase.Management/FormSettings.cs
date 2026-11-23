@@ -1,11 +1,8 @@
 ﻿using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Highlighting;
-using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Controls;
-using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Persistence;
 using NTDLS.WinFormsHelpers;
-using System.Xml;
 
 namespace NTDLS.Katzebase.Management
 {
@@ -43,11 +40,7 @@ namespace NTDLS.Katzebase.Management
                 Child = _fontSampleTextbox
             });
 
-            using var stringReader = new StringReader(Resources.Highlighter);
-            using var reader = XmlReader.Create(stringReader);
-            _fontSampleTextbox.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-            reader.Close();
-            stringReader.Close();
+            _fontSampleTextbox.SyntaxHighlighting = ThemeColors.LoadHighlighting();
 
             foreach (var font in FontFamily.Families)
             {
