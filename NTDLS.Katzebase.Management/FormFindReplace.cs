@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Management
+﻿using NTDLS.WinFormsHelpers;
+
+namespace NTDLS.Katzebase.Management
 {
     public partial class FormFindReplace : Form
     {
@@ -14,11 +16,14 @@
         public FormFindReplace()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
         }
 
         public FormFindReplace(FormStudio studioForm, string searchText, string replaceText)
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
+
             _studioForm = studioForm;
             textBoxFindText.Text = searchText;
             textBoxFindReplaceText.Text = replaceText;

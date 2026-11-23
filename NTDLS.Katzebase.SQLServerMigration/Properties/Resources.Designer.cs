@@ -71,38 +71,12 @@ namespace NTDLS.Katzebase.SQLServerMigration.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SELECT 
-        ///    i.name AS IndexName,
-        ///    case when i.is_unique = 1 OR i.is_unique_constraint = 1 THEN 1 else 0 end IsUnique,
-        ///    c.name AS ColumnName 
-        ///FROM 
-        ///    sys.indexes i
-        ///    INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-        ///    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-        ///    INNER JOIN sys.tables t ON i.object_id = t.object_id
-        ///WHERE 
-        ///    i.is_disabled = 0  -- Exclude disabled indexes
-        /// AND ic.is_included_column = 0 [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static string SqlGetObjectIndexes {
+        internal static System.Drawing.Bitmap Logo128 {
             get {
-                return ResourceManager.GetString("SqlGetObjectIndexes", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SELECT 
-        ///    &apos;[&apos; + OBJECT_SCHEMA_NAME(SysT.[object_id]) + &apos;].[&apos; + SysT.[name] +&apos;]&apos; AS [SourceSchemaObject],
-        ///    OBJECT_SCHEMA_NAME(SysT.[object_id]) + &apos;:&apos; + SysT.[name] AS [TargetSchemaObject], 
-        ///    SysT.[name] AS [TargetObject],
-        ///    ISNULL(SUM(p.reserved_page_count) * 8 * 1024, 0) AS TotalSizeBytes,  -- Total size in bytes
-        ///    ISNULL(SUM(p.row_count), 0) AS TotalRows,                            -- Total rows
-        ///    CASE 
-        ///        WHEN SUM(p.row_count) &gt; 0 THEN (SUM(p.reserved_page_count) * 8 * 1024) / SU [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string SqlGetObjectsAndSizes {
-            get {
-                return ResourceManager.GetString("SqlGetObjectsAndSizes", resourceCulture);
+                object obj = ResourceManager.GetObject("Logo128", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

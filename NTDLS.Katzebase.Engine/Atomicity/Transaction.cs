@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using NTDLS.Helpers;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
 using NTDLS.Katzebase.Api.Models;
@@ -16,7 +15,6 @@ using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using RocksDbSharp;
 using System.Collections.Concurrent;
-using System.Text;
 using static NTDLS.Katzebase.Api.KbConstants;
 using static NTDLS.Katzebase.Shared.EngineConstants;
 

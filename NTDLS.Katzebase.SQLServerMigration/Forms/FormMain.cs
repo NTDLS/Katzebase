@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
+using NTDLS.EmbeddedResource;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Api.Exceptions;
@@ -7,7 +8,7 @@ using NTDLS.Katzebase.Api.Models;
 using NTDLS.Katzebase.SQLServerMigration.Classes;
 using NTDLS.Katzebase.SQLServerMigration.Properties;
 using NTDLS.WinFormsHelpers;
-using System.Dynamic;
+using NTDLS.WinFormsHelpers.Forms;
 
 namespace NTDLS.Katzebase.SQLServerMigration
 {
@@ -537,7 +538,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 if (item.ImportIndexes)
                 {
-                    var sourceIndexes = connection.Query<ObjectSourceIndex>(Resources.SqlGetObjectIndexes, new
+                    var tSQL = EmbeddedResourceReader.LoadText(@"Scripts\SqlGetObjectIndexes.sql");
+                    var sourceIndexes = connection.Query<ObjectSourceIndex>(tSQL, new
                     {
                         ObjectName = item.SourceObjectName
                     }).GroupBy(o => o.IndexName).ToList();
@@ -582,9 +584,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 connection.Open();
 
-                var sourceObjects = connection.Query<ObjectSourceObject>(Resources.SqlGetObjectsAndSizes, new
-                {
-                });
+                var tSQL = EmbeddedResourceReader.LoadText(@"Scripts\SqlGetObjectsAndSizes.sql");
+                var sourceObjects = connection.Query<ObjectSourceObject>(tSQL);
 
                 foreach (var sourceObject in sourceObjects)
                 {
@@ -636,7 +637,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var form = new FormAbout();
+            using var form = new FormAbout(KbConstants.FriendlyName, this.Icon, Resources.Logo128, false);
             form.ShowDialog();
         }
 

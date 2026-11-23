@@ -3,6 +3,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Controls;
+using NTDLS.WinFormsHelpers;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml;
@@ -26,6 +27,7 @@ namespace NTDLS.Katzebase.Management
         public FormSnippets()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
         }
 
         private void FormSnippets_Load(object sender, EventArgs e)

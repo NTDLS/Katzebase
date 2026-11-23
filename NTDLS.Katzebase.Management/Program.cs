@@ -1,6 +1,7 @@
 using NTDLS.Katzebase.Api;
 using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Persistence;
+using NTDLS.WinFormsHelpers;
 
 namespace NTDLS.Katzebase.Management
 {
@@ -12,6 +13,7 @@ namespace NTDLS.Katzebase.Management
         static void Main(string[] arg)
         {
             ApplicationConfiguration.Initialize();
+            Theming.InitializeApplication();
 
             Settings = LocalUserApplicationData.LoadFromDisk($"{KbConstants.FriendlyName}\\Management", new ManagementSettings());
 

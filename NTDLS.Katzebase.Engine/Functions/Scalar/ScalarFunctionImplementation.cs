@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scalar
                 "nullwhen" => ScalarNullWhen.Execute(function),
                 "nullwhennumeric" => ScalarNullWhenNumeric.Execute(function),
                 "isempty" => ScalarIsEmpty.Execute(function),
-                "isnumeric"=> ScalarIsNumeric.Execute(function),
+                "isnumeric" => ScalarIsNumeric.Execute(function),
                 "isnotequal" => ScalarIsNotEqual.Execute(function),
                 "isnotlike" => ScalarIsNotLike.Execute(function),
                 "isnull" => ScalarIsNull.Execute(function),

@@ -7,6 +7,8 @@ using NTDLS.Katzebase.Management.Controls;
 using NTDLS.Katzebase.Management.Properties;
 using NTDLS.Katzebase.Management.StaticAnalysis;
 using NTDLS.Katzebase.Shared;
+using NTDLS.WinFormsHelpers;
+using NTDLS.WinFormsHelpers.Forms;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Management.Classes.Editor.AutoCompleteFunction;
@@ -27,6 +29,8 @@ namespace NTDLS.Katzebase.Management
         public FormStudio()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
+
             Text = KbConstants.FriendlyName;
             _serverExplorerManager = new ServerExplorerManager(this, treeViewServerExplorer);
         }
@@ -34,6 +38,8 @@ namespace NTDLS.Katzebase.Management
         public FormStudio(string firstLoadFilename)
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
+
             _firstLoadFilename = firstLoadFilename;
             Text = KbConstants.FriendlyName;
             _serverExplorerManager = new ServerExplorerManager(this, treeViewServerExplorer);
@@ -1339,7 +1345,7 @@ namespace NTDLS.Katzebase.Management
 
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var form = new FormAbout();
+            using var form = new FormAbout(KbConstants.FriendlyName, this.Icon, Resources.Logo128, false);
             form.ShowDialog();
         }
 

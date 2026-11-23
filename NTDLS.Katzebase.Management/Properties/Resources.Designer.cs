@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Management.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -103,15 +103,25 @@ namespace NTDLS.Katzebase.Management.Properties {
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot;?&gt;
         ///&lt;SyntaxDefinition name=&quot;KBSQL&quot; extensions=&quot;.kbs&quot; xmlns=&quot;http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008&quot;&gt;
-        ///  &lt;Color name=&quot;Punctuation&quot; foreground=&quot;Green&quot; exampleText=&quot;a(b.c);&quot; /&gt;
-        ///  &lt;Color name=&quot;NumberLiteral&quot; foreground=&quot;Blue&quot; exampleText=&quot;3.1415f&quot;/&gt;
-        ///  &lt;Color name=&quot;KbMarkup&quot; foreground=&quot;Brown&quot; fontWeight=&quot;bold&quot; exampleText=&quot;{$INT 10000:30000}&quot; /&gt;
-        ///  &lt;Color name=&quot;KbConfig&quot; fontWeight=&quot;bold&quot; foreground=&quot;DarkCyan&quot; exampleText=&quot;TraceWaitTimes&quot;/&gt;
-        ///  &lt;Color name=&quot;KbFunction&quot; fon [rest of string was truncated]&quot;;.
+        ///  &lt;Color name=&quot;Punctuation&quot;  foreground=&quot;Black&quot;         exampleText=&quot;a(b.c);&quot; /&gt;
+        ///  &lt;Color name=&quot;NumberLiteral&quot; foreground=&quot;Black&quot;         exampleText=&quot;3.1415f&quot; /&gt;
+        ///  &lt;Color name=&quot;KbMarkup&quot;    foreground=&quot;Brown&quot; fontWeight=&quot;bold&quot; exampleText=&quot;{$INT 10000:30000}&quot; /&gt;
+        ///  &lt;Color name=&quot;KbConfig&quot;    foreground=&quot;#000080&quot; fontWeight=&quot;bold&quot; exampleText=&quot;TraceWaitTimes&quot; /&gt;
+        ///  &lt;Co [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Highlighter {
             get {
                 return ResourceManager.GetString("Highlighter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Logo128 {
+            get {
+                object obj = ResourceManager.GetObject("Logo128", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

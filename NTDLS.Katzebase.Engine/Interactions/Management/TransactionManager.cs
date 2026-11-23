@@ -1,12 +1,10 @@
 ﻿using NTDLS.Katzebase.Api.Exceptions;
-using Newtonsoft.Json;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryProcessors;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.PersistentTypes.Atomicity;
 using NTDLS.Semaphore;
 using RocksDbSharp;
 using System.Diagnostics;

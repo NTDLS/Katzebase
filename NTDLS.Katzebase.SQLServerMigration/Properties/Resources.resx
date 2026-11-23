@@ -121,45 +121,7 @@
   <data name="Login" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Login.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="SqlGetObjectsAndSizes" xml:space="preserve">
-    <value>SELECT 
-    '[' + OBJECT_SCHEMA_NAME(SysT.[object_id]) + '].[' + SysT.[name] +']' AS [SourceSchemaObject],
-    OBJECT_SCHEMA_NAME(SysT.[object_id]) + ':' + SysT.[name] AS [TargetSchemaObject], 
-    SysT.[name] AS [TargetObject],
-    ISNULL(SUM(p.reserved_page_count) * 8 * 1024, 0) AS TotalSizeBytes,  -- Total size in bytes
-    ISNULL(SUM(p.row_count), 0) AS TotalRows,                            -- Total rows
-    CASE 
-        WHEN SUM(p.row_count) &gt; 0 THEN (SUM(p.reserved_page_count) * 8 * 1024) / SUM(p.row_count) 
-        ELSE 0 
-    END AS AvgRowSizeBytes                                               -- Avg row size in bytes
-FROM 
-    sys.tables AS SysT
-LEFT JOIN 
-    sys.dm_db_partition_stats AS p ON p.object_id = SysT.object_id AND p.index_id IN (0, 1)  -- Include only heap (0) and clustered index (1)
-WHERE 
-    SysT.type = 'u'  -- Only user tables
-GROUP BY 
-    SysT.[object_id], SysT.[name], OBJECT_SCHEMA_NAME(SysT.[object_id])
-ORDER BY 
-    OBJECT_SCHEMA_NAME(SysT.[object_id]) + '.' + SysT.[name];
-</value>
-  </data>
-  <data name="SqlGetObjectIndexes" xml:space="preserve">
-    <value>SELECT 
-    i.name AS IndexName,
-    case when i.is_unique = 1 OR i.is_unique_constraint = 1 THEN 1 else 0 end IsUnique,
-    c.name AS ColumnName 
-FROM 
-    sys.indexes i
-    INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-    INNER JOIN sys.tables t ON i.object_id = t.object_id
-WHERE 
-    i.is_disabled = 0  -- Exclude disabled indexes
- AND ic.is_included_column = 0
- AND '[' + SCHEMA_NAME(t.schema_id) + '].[' + t.name + ']' = @ObjectName
-ORDER BY 
-    t.name, i.name, ic.key_ordinal
-</value>
+  <data name="Logo128" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Logo128.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

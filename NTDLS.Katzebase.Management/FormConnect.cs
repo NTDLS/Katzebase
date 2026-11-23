@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Api;
+using NTDLS.WinFormsHelpers;
 
 namespace NTDLS.Katzebase.Management
 {
@@ -20,6 +21,7 @@ namespace NTDLS.Katzebase.Management
         public FormConnect()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
 
             textBoxServerAddress.Text = "127.0.0.1";
             textBoxPort.Text = "6858";
@@ -29,6 +31,7 @@ namespace NTDLS.Katzebase.Management
         public FormConnect(string host, int port, string username)
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
 
             textBoxServerAddress.Text = host;
             textBoxPort.Text = port.ToString();

@@ -17,6 +17,7 @@ namespace NTDLS.Katzebase.Management
         public FormSettings()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
 
             _graphics = CreateGraphics();
 
