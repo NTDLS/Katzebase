@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CheckConnectivity_Result ConnectivityResult { get; set; } = new();
 
-        ProgressForm checkConnectivityProgress = new();
+        private ProgressForm _checkConnectivityProgress = new();
 
         #region Constructors / Destructors.
 
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             //checkConnectivityProgress.OnCancel += CheckConnectivityProgress_OnCancel;
             //checkConnectivityProgress.SetCanCancel(true);
-            checkConnectivityProgress.SetBodyText("Checking connectivity...");
+            _checkConnectivityProgress.SetBodyText("Checking connectivity...");
 
             checkConnectivity_Worker = new AbortableBackgroundWorker();
             checkConnectivity_Worker.RunWorkerCompleted += CheckConnectivity_Worker_RunWorkerCompleted;
@@ -103,9 +103,9 @@ namespace NTDLS.Katzebase.SQLServerMigration
             checkConnectivity_Worker.WorkerSupportsCancellation = true;
             checkConnectivity_Worker.RunWorkerAsync("master");
 
-            checkConnectivityProgress.ShowDialog();
+            _checkConnectivityProgress.ShowDialog();
 
-            var workerResult = checkConnectivityProgress.UserData as CheckConnectivity_Result;
+            var workerResult = _checkConnectivityProgress.UserData as CheckConnectivity_Result;
 
             if (workerResult != null)
             {
@@ -123,8 +123,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void CheckConnectivityProgress_OnCancel(object sender, ProgressForm.OnCancelInfo e)
         {
-            if (checkConnectivityProgress != null)
-                checkConnectivityProgress.SetBodyText("Cancelling...");
+            if (_checkConnectivityProgress != null)
+                _checkConnectivityProgress.SetBodyText("Cancelling...");
 
             if (checkConnectivity_Worker != null)
                 checkConnectivity_Worker.CancelAsync();
@@ -132,10 +132,10 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void CheckConnectivity_Worker_RunWorkerCompleted(object? sender, RunWorkerCompletedEventArgs? e)
         {
-            if (checkConnectivityProgress != null && e != null)
+            if (_checkConnectivityProgress != null && e != null)
             {
-                checkConnectivityProgress.UserData = e.Result;
-                checkConnectivityProgress.Close();
+                _checkConnectivityProgress.UserData = e.Result;
+                _checkConnectivityProgress.Close();
             }
         }
 
