@@ -25,6 +25,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         public FormMain()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
 
             Shown += FormMain_Shown;
 

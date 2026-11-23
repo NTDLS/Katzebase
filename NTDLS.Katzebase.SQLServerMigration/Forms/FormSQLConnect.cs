@@ -43,6 +43,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         public FormSQLConnect()
         {
             InitializeComponent();
+            Theming.InitializeForm(this);
 
             comboBoxDatabaseName.DropDown += CboDatabaseName_DropDown;
         }
